@@ -61,7 +61,7 @@ export default function SignupForm() {
     }
     setErrors(prev => ({ ...prev, [name]: error }))
   }
-
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     Object.keys(formData).forEach(key => validateField(key, formData[key as keyof typeof formData]))
@@ -73,15 +73,16 @@ export default function SignupForm() {
       
       if(res.error){
         toast({
-            title:"User not aprroved",
-            description:"Wait until you are approved!",
-            variant:"destructive"
+          title:"User not aprroved",
+          description:"Wait until you are approved!",
+          variant:"destructive"
         })
         setTimeout(()=>{
-            navigate("/")
+          navigate("/")
         },2000)
       }else{
-          navigate('/dashboard')
+        localStorage.setItem("token",res.token);
+        navigate('/addschool')
       }
       setLoading(false)
     }

@@ -1,37 +1,25 @@
 import mongoose from 'mongoose';
 
 
-const userSchema = new mongoose.Schema({
+const studentSchema = new mongoose.Schema({
+  email:{
+    type:String,
+    required:true,
+    unique:true
+  },
   name: {
     type: String,
     required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
     trim: true,
   },
   password: {
     type: String,
     required: true,
   },
-  approved:{
-    type: Boolean,
-    default: false,
-  }
-  ,
   role: {
     type: String,
     enum: ['Admin', 'SchoolAdmin', 'Teacher', 'Student'],
     required: true,
-  },
-  schoolId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'School', 
-    default: null,
   },
   createdAt: {
     type: Date,
@@ -40,15 +28,21 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+  standard:{
+    type:String,
+    default: null
+  },
+  points:{
+    type: Number,
+    default: 0
   }
 });
 
-
-
-userSchema.pre('save', function (next) {
+studentSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
 
-export default mongoose.model('User', userSchema);
+export default mongoose.model('Student', studentSchema);

@@ -71,7 +71,8 @@ export default function LoginForm() {
             navigate("/")
         },2000)
       }else{
-          navigate('/dashboard')
+        localStorage.setItem("token",res.token);
+          navigate('/addschool')
       }
       setLoading(false)
       
