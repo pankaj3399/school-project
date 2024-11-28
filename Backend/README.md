@@ -1,4 +1,6 @@
-```markdown
+
+
+
 ### Backend README
 
 # School Management App - Backend
@@ -40,7 +42,9 @@ MONGO_URI=<your-mongodb-connection-string>
 JWT_SECRET=<your-jwt-secret-key>
 ADMIN_EMAIL=<admin-email>
 ADMIN_PASSWORD=<admin-password>
+```
 
+---
 
 ### 4. Seed Database and Build the Server
 To seed the database and start the server in production:
@@ -60,8 +64,15 @@ The server will run at `http://localhost:5000` by default.
 
 ---
 
+### 6. Access the Admin Dashboard
+Once the server is running and you've logged in as the admin:
+
+- Go to `http://localhost:5000/admin/` to access the admin dashboard.
+- Log in using the admin credentials you set in the `.env` file (`ADMIN_EMAIL` and `ADMIN_PASSWORD`).
+
+---
+
 ### Notes
 - Ensure the `.env` file is correctly configured before running the application.
 - Use the `npm run build` command to build and start the server for production.
 - The `ADMIN_EMAIL` and `ADMIN_PASSWORD` are used for creating an initial system admin account.
-```

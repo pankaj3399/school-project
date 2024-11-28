@@ -4,34 +4,51 @@ import mongoose from "mongoose"
 import dotenv from 'dotenv';
 dotenv.config()
 
-const seed = async () =>{
+const seed = async () => {
     const ADMIN = {
-        role:"Admin",
+        role: "Admin",
         name: "admin",
-        email:process.env.ADMIN_EMAIL,
-        password:process.env.ADMIN_PASSWORD,
-        approved:true
+        email: process.env.ADMIN_EMAIL,
+        password: process.env.ADMIN_PASSWORD,
+        approved: true
     }
+
     const hashedPassword = await bcrypt.hash(ADMIN.password, 12)
 
-    try{
-        if(!process.env.MONGO_URI){
+    try {
+        if (!process.env.MONGO_URI) {
             throw Error("No MONGO_URI specified in environment variables")
         }
+
+        // Connect to the database
         await mongoose.connect(process.env.MONGO_URI)
+
+        // Check if the admin already exists
+        const existingAdmin = await Admin.findOne({ email: ADMIN.email });
+
+        if (existingAdmin) {
+            console.log("ADMIN_ALREADY_EXISTS:");
+            console.log(`EMAIL: ${ADMIN.email}`);
+            process.exit(0);
+        }
+
+        // Create a new admin if not already exists
         const admin = await Admin.create({
             ...ADMIN,
             password: hashedPassword
-        })
-        if(admin){
+        });
+
+        if (admin) {
             console.log("ADMIN_CREATED_SUCCESSFULLY:");
             console.log(`EMAIL: ${ADMIN.email}`);
             console.log(`PASSWORD: ${ADMIN.password}`);
-            process.exit(0)
+            process.exit(0);
         }
-    }catch(err){
-        console.error("SEED_ERROR: ",err);
-        process.exit(0)
+
+    } catch (err) {
+        console.error("SEED_ERROR: ", err);
+        process.exit(1);  // Change to 1 to indicate an error occurred
     }
 }
-seed()
+
+seed();
