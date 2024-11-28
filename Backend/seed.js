@@ -20,10 +20,10 @@ const seed = async () => {
             throw Error("No MONGO_URI specified in environment variables")
         }
 
-        // Connect to the database
+     
         await mongoose.connect(process.env.MONGO_URI)
 
-        // Check if the admin already exists
+        
         const existingAdmin = await Admin.findOne({ email: ADMIN.email });
 
         if (existingAdmin) {
@@ -32,7 +32,7 @@ const seed = async () => {
             process.exit(0);
         }
 
-        // Create a new admin if not already exists
+        
         const admin = await Admin.create({
             ...ADMIN,
             password: hashedPassword
@@ -47,7 +47,7 @@ const seed = async () => {
 
     } catch (err) {
         console.error("SEED_ERROR: ", err);
-        process.exit(1);  // Change to 1 to indicate an error occurred
+        process.exit(1);  
     }
 }
 
