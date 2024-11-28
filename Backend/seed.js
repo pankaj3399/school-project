@@ -2,6 +2,7 @@ import Admin from "./models/Admin.js"
 import bcrypt from "bcryptjs"
 import mongoose from "mongoose"
 import dotenv from 'dotenv';
+
 dotenv.config()
 
 const seed = async () => {
