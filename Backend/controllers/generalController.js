@@ -1,14 +1,15 @@
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
 import User from "../models/Admin.js";
+import {Role} from '../enum.js';
 
 export const getCurrentUser  = async (req, res) =>{
     try{
         let user; 
         switch(req.user.role){
-            case 'Student': user = await Student.findById(req.user.id)
+            case Role.Student: user = await Student.findById(req.user.id)
                             break;
-            case 'Teacher': user = await Teacher.findById(req.user.id)
+            case Role.Teacher: user = await Teacher.findById(req.user.id)
                             break;
             default: user = await User.findById(req.user.id)
                             break;

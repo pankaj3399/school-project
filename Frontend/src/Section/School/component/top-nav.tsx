@@ -35,14 +35,14 @@ export function TopNav() {
       <div className="flex items-center justify-end h-16 px-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Button variant="ghost" className="relative mr-8 h-8 w-8 rounded-full">
               {admin.name}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col  space-y-1">
-                {/* <p className="text-sm font-medium  leading-none">{admin.name}</p> */}
+                <p className="text-sm font-medium  leading-none">{admin.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {admin.email}
                 </p>

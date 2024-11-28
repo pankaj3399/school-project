@@ -3,8 +3,7 @@ import User from "../models/Admin.js"
 import bcrypt from "bcryptjs"
 import Teacher from "../models/Teacher.js"
 import Student from "../models/Student.js"
-
-
+import {Role} from '../enum.js';
 export const addSchool = async (req,res)=>{
     const {
         name,
@@ -27,11 +26,12 @@ export const addSchool = async (req,res)=>{
             logo,
             createdBy: req.user.id
         })
-        await User.findByIdAndUpdate(req.user.id, {
+        const updatedUser = await User.findByIdAndUpdate(req.user.id, {
             schoolId: school._id
-        })
+        },{new:true})
         return res.status(200).json({
-            message: "School Created Successfully"
+            message: "School Created Successfully",
+            user: updatedUser
         })
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });
@@ -54,7 +54,7 @@ export const addTeacher = async (req, res) => {
             email,
             password: hashedPassword,
             subject,
-            role: 'Teacher'
+            role: Role.Teacher
         })
         await School.findOneAndUpdate({
             createdBy: req.user.id
@@ -73,15 +73,10 @@ export const addTeacher = async (req, res) => {
 
 export const addStudent = async (req, res) => {
     const {
-
         name,
-
         password,
-
         email,
-
         standard
-
     } = req.body
 
     console.log(email);
@@ -93,7 +88,7 @@ export const addStudent = async (req, res) => {
             password: hashedPassword,
             standard,
             email,
-            role: 'Student'
+            role: Role.Student
         })
         await School.findOneAndUpdate({
             createdBy: req.user.id

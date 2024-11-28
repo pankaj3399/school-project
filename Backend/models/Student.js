@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+import {Role} from '../enum.js';
 
 const studentSchema = new mongoose.Schema({
   email:{
@@ -18,7 +18,7 @@ const studentSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Admin', 'SchoolAdmin', 'Teacher', 'Student'],
+    enum: Object.values(Role),
     required: true,
   },
   createdAt: {
@@ -36,6 +36,10 @@ const studentSchema = new mongoose.Schema({
   points:{
     type: Number,
     default: 0
+  },
+  parentEmail:{
+    type:String,
+    default: null
   }
 });
 

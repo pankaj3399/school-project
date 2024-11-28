@@ -20,6 +20,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 import schoolAdminRoutes from './routes/schoolAdminRoutes.js';
 import schoolRoutes from './routes/schoolRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
 import { authenticate } from './middlewares/authMiddleware.js';
 import { getCurrentUser } from './controllers/generalController.js';
 
@@ -29,7 +30,14 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET, 
+    resave: false, 
+    saveUninitialized: false, 
+    cookie: { secure: false }, 
+  })
+);
 
 
 
@@ -48,6 +56,9 @@ connectDB().then(() => {
       { resource: Student },
       
     ],
+    resave: false, 
+    saveUninitialized: false, 
+    secret: process.env.SESSION_SECRET,
     rootPath: '/admin',
   });
 
@@ -72,12 +83,21 @@ connectDB().then(() => {
   console.error('Error connecting to database', error);
 });
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET, 
+    resave: false, 
+    saveUninitialized: false, 
+    cookie: { secure: false }, 
+  })
+);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/schoolAdmin', schoolAdminRoutes);
 app.use('/api/school', schoolRoutes);
+app.use('/api/student', studentRoutes);
 app.get("/api/user", authenticate, getCurrentUser);
 
 app.get('/', (req, res) => {
@@ -89,6 +109,7 @@ app.use((err, req, res, next) => {
   res.status(500).send({ message: 'Server Error', error: err.message });
 });
 
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-

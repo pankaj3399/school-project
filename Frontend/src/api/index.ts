@@ -37,7 +37,39 @@ export const addStudent = async (data:{
     
 }, token: string) => {
     try {
-        const response = await axios.post(`${API_URL}/schoolAdmin/addStudent`, data, {
+        const response = await axios.post(`${API_URL}/student/addStudent`, data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const updateStudent = async (data:Partial<{
+    email: string,
+    password: string,
+    standard: string,
+    name: string,
+    parentEmail: string
+}>,id:string, token: string) => {
+    try {
+        const response = await axios.put(`${API_URL}/student/updateStudent/${id}`, data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const deleteStudent = async (id:string, token: string) => {
+    try {
+        const response = await axios.delete(`${API_URL}/student/deleteStudent/${id}`, {
             headers: {
                 token
             }
@@ -72,7 +104,36 @@ export const addTeacher = async (data:{
     subject: string
 }, token: string) => {
     try {
-        const response = await axios.post(`${API_URL}/schoolAdmin/addTeacher`, data, {
+        const response = await axios.post(`${API_URL}/teacher/addTeacher`, data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const updateTeacher = async (data:Partial<{
+    email: string,
+    password: string,
+    name: string,
+    subject: string
+}> , id:string, token: string) => {
+    try {
+        const response = await axios.put(`${API_URL}/teacher/updateTeacher/${id}`, data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const deleteTeacher = async (id:string, token: string) => {
+    try {
+        const response = await axios.delete(`${API_URL}/teacher/deleteTeacher/${id}`, {
             headers: {
                 token
             }

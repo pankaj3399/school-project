@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
 import { addStudent } from "@/api/index"
+import { Checkbox } from "@/components/ui/checkbox"
 
 import Loading from "../Loading"
 
@@ -14,7 +15,8 @@ export default function AddStudent() {
     email: "",
     password: "",
     className: "",
-    name : ""
+    name : "",
+    parentEmail : ""
   })
   const [loading, setLoading] = useState(false)
 
@@ -32,9 +34,9 @@ export default function AddStudent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const { name, password, className, email } = formData
+    const { name, password, className, email, parentEmail } = formData
 
-    if (!name || !password || !className) {
+    if (!name || !password || !className || !parentEmail) {
       toast({
         title: "Error",
         description: "Please fill all fields.",
@@ -62,7 +64,8 @@ export default function AddStudent() {
         name: name,
         password: password,
         standard: className,
-        email : email
+          email : email,
+        parentEmail : parentEmail
         
       }
 
@@ -86,6 +89,13 @@ export default function AddStudent() {
       }
 
       setLoading(false)
+      setFormData({
+        name: "",
+        password: "",
+        className: "",
+        email: "",
+        parentEmail: ""
+      })
 
     } catch (error) {
       console.error("An unexpected error occurred. Please try again.")
@@ -108,11 +118,22 @@ export default function AddStudent() {
   return (
     <div className="grid place-items-center w-full h-full mt-20 ">
 
-      <div className="bg-white shadow-xl p-4 w-40 sm:w-40 md:w-60 lg:w-96 rounded-lg">
+      <div className="bg-white shadow-xl p-4 w-40 sm:w-60 md:w-60 lg:w-96 rounded-lg">
       <h1 className="text-3xl font-bold mb-6">Add Student</h1>
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+       
         <div>
-          <Label htmlFor="name">Email</Label>
+          <Label htmlFor="className">Name</Label>
+          <Input
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             name="email"
@@ -121,6 +142,18 @@ export default function AddStudent() {
             required
           />
         </div>
+        <div>
+          <Label htmlFor="email">Parent Email</Label>
+          <Input
+            id="parentEmail"
+            name="parentEmail"
+            value={formData.parentEmail}
+            onChange={handleChange}
+            required
+          />
+          <Checkbox className="mt-2"  /><span className="text-sm ml-2 gap-x-1 inline-block  text-semibold ">Send email notification to parent</span>
+        </div>
+
         <div>
           <Label htmlFor="password">Password</Label>
           <Input
@@ -142,16 +175,7 @@ export default function AddStudent() {
             required
           />
         </div>
-        <div>
-          <Label htmlFor="className">Name</Label>
-          <Input
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
+       
         <Button type="submit">Add Student</Button>
       </form>
     </div>

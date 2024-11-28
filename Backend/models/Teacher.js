@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+import {Role} from '../enum.js';
 
 const teacherSchema = new mongoose.Schema({
   name: {
@@ -18,7 +18,7 @@ const teacherSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Admin', 'SchoolAdmin', 'Teacher', 'Student'],
+    enum: Object.values(Role),
     required: true,
   },
   createdAt: {

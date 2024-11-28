@@ -3,7 +3,7 @@ import Admin from '../models/Admin.js';
 import bcrypt from "bcryptjs"
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
-
+import {Role} from '../enum.js';
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
@@ -15,11 +15,11 @@ export const login = async (req, res) => {
     try {
       let user;
       switch(role){
-        case 'Teacher':{
+        case Role.Teacher:{
             user = await Teacher.findOne({email})
             break;
         }
-        case 'Student':{
+        case Role.Student:{
             user = await Student.findOne({email})
             break;
         }

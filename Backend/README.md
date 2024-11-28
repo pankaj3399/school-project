@@ -42,6 +42,7 @@ MONGO_URI=<your-mongodb-connection-string>
 JWT_SECRET=<your-jwt-secret-key>
 ADMIN_EMAIL=<admin-email>
 ADMIN_PASSWORD=<admin-password>
+SESSION_SECRET=<session-secret-key>
 ```
 
 ---

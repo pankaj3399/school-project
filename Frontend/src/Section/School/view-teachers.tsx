@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { getTeachers } from "@/api"
+import { getTeachers, deleteTeacher, updateTeacher } from "@/api"
 import Loading from "../Loading"
+import { Button } from "@/components/ui/button"
+
 
 export default function ViewTeachers() {
   const [teachers, setTeachers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingTeacher, setEditingTeacher] = useState<any | null>(null)
   const { toast } = useToast()
-
+  
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
@@ -37,7 +40,55 @@ export default function ViewTeachers() {
     }
 
     fetchTeachers()
-  }, [toast])
+  }, [toast,editingTeacher])
+
+  const handleDelete = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No token found.")
+
+      await deleteTeacher(id, token)
+      setTeachers((prev) => prev.filter((teacher) => teacher._id !== id))
+      toast({
+        title: "Success",
+        description: "Teacher deleted successfully.",
+        variant: "default",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete teacher.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleEditSubmit = async (updatedTeacher: any,id: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No token found.")
+
+      const updatedData = await updateTeacher(updatedTeacher, id, token)
+      setTeachers((prev) =>
+        prev.map((teacher) =>
+          teacher._id === updatedData._id ? updatedData : teacher
+        )
+      )
+      setEditingTeacher(null)
+      toast({
+        title: "Success",
+        description: "Teacher updated successfully.",
+        variant: "default",
+      })
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update teacher.",
+        variant: "destructive",
+      })
+    }
+  }
 
   if (loading) {
     return <Loading />
@@ -55,11 +106,12 @@ export default function ViewTeachers() {
   return (
     <div className="p-5 bg-white rounded-xl shadow-xl mt-10">
       <h1 className="text-3xl font-bold mb-6">View Teachers</h1>
-      <Table >
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Subject</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -67,10 +119,75 @@ export default function ViewTeachers() {
             <TableRow key={teacher._id}>
               <TableCell>{teacher.name}</TableCell>
               <TableCell>{teacher.subject}</TableCell>
+              <TableCell>
+                <Button
+                  onClick={() => setEditingTeacher(teacher)}
+                  className="mr-2 px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                >
+                  Edit
+                </Button>
+                <Button
+                  onClick={() => handleDelete(teacher._id)}
+                  className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+                >
+                  Delete
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {editingTeacher && (
+        <div className="mt-8 p-5 border rounded-xl bg-gray-50">
+          <h2 className="text-2xl font-bold mb-4">Edit Teacher</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleEditSubmit(editingTeacher,editingTeacher._id)
+            }}
+          >
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Name</label>
+              <input
+                type="text"
+                value={editingTeacher.name}
+                onChange={(e) =>
+                  setEditingTeacher({ ...editingTeacher, name: e.target.value })
+                }
+                className="w-full px-4 py-2 border rounded"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Subject</label>
+              <input
+                type="text"
+                value={editingTeacher.subject}
+                onChange={(e) =>
+                  setEditingTeacher({ ...editingTeacher, subject: e.target.value })
+                }
+                className="w-full px-4 py-2 border rounded"
+              />
+            </div>
+            <div className="flex space-x-4">
+              <Button
+                type="submit"
+                className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"
+                
+              >
+                Save
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setEditingTeacher(null)}
+                className="px-6 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

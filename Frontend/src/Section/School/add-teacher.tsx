@@ -85,7 +85,12 @@ export default function AddTeacher() {
       }
 
       setLoading(false)  
-
+      setFormData({
+        name: "",
+        password: "",
+        subject: "",
+        email:""
+      })
     } catch (error) {
       setError("An unexpected error occurred. Please try again.")  
       setLoading(false)  
