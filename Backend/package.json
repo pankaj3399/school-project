@@ -30,5 +30,8 @@
     "nodemon": "^3.1.7",
     "timeout": "^0.2.1"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node"
+}
 }
