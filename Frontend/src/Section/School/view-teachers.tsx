@@ -111,6 +111,7 @@ export default function ViewTeachers() {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Subject</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -119,6 +120,7 @@ export default function ViewTeachers() {
             <TableRow key={teacher._id}>
               <TableCell>{teacher.name}</TableCell>
               <TableCell>{teacher.subject}</TableCell>
+              <TableCell>{teacher.email}</TableCell>
               <TableCell>
                 <Button
                   onClick={() => setEditingTeacher(teacher)}
@@ -168,7 +170,20 @@ export default function ViewTeachers() {
                 }
                 className="w-full px-4 py-2 border rounded"
               />
+             
             </div>
+            <div className="mb-4">
+            <label className="block text-sm font-medium">Email</label>
+
+            <input
+                type="email"
+                value={editingTeacher.email}
+                onChange={(e) =>
+                  setEditingTeacher({ ...editingTeacher, email: e.target.value })
+                }
+                className="w-full px-4 py-2 border rounded"
+              />
+              </div>
             <div className="flex space-x-4">
               <Button
                 type="submit"

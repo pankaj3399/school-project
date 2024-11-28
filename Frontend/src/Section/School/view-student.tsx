@@ -108,6 +108,7 @@ export default function ViewStudents() {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Class</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Parent Email</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -117,7 +118,8 @@ export default function ViewStudents() {
             <TableRow key={student._id}>
               <TableCell>{student.name}</TableCell>
               <TableCell>{student.standard}</TableCell>
-              <TableCell>{student.parentEmail}</TableCell>
+              <TableCell>{student.email}</TableCell>
+              <TableCell>{student.parentEmail || "N/A"}</TableCell>
               <TableCell>
                 <button
                   onClick={() => setEditingStudent(student)}
@@ -172,6 +174,20 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4">
+              <label className="block text-sm font-medium"> Email</label>
+              <input
+                type="email"
+                value={editingStudent.email}
+                onChange={(e) =>
+                  setEditingStudent({
+                    ...editingStudent,
+                    email: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 border rounded"
+              />
+            </div>
+            <div className="mb-4">
               <label className="block text-sm font-medium">Parent Email</label>
               <input
                 type="email"
@@ -185,6 +201,7 @@ export default function ViewStudents() {
                 className="w-full px-4 py-2 border rounded"
               />
             </div>
+           
             <div className="flex space-x-4">
               <button
                 type="submit"

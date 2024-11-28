@@ -116,7 +116,7 @@ export default function AddStudent() {
   
 
   return (
-    <div className="grid place-items-center w-full h-full mt-20 ">
+    <div className="grid place-items-center w-full h-full mt-10 ">
 
       <div className="bg-white shadow-xl p-4 w-40 sm:w-60 md:w-60 lg:w-96 rounded-lg">
       <h1 className="text-3xl font-bold mb-6">Add Student</h1>
