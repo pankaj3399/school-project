@@ -53,9 +53,9 @@ export default function ViewTeachers() {
   }
 
   return (
-    <div>
+    <div className="p-5 bg-white rounded-xl shadow-xl mt-10">
       <h1 className="text-3xl font-bold mb-6">View Teachers</h1>
-      <Table>
+      <Table >
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>

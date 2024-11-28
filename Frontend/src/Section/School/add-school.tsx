@@ -135,10 +135,12 @@ export default function AddSchool() {
   }
 
   return (
-    <div>
+    <div className="grid place-items-center w-full h-full mt-20 ">
+
+      <div className="bg-white shadow-xl p-4 rounded-lg">
       <h1 className="text-3xl font-bold mb-6">Add School</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <div>
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-md ">
+        <div className="">
           <Label htmlFor="schoolName">School Name</Label>
           <Input
             id="schoolName"
@@ -170,6 +172,7 @@ export default function AddSchool() {
         </div>
         <Button type="submit">Add School</Button>
       </form>
+    </div>
     </div>
   );
 }

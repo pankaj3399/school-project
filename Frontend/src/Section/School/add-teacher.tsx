@@ -108,7 +108,9 @@ export default function AddTeacher() {
   }
 
   return (
-    <div>
+    <div className="grid place-items-center w-full h-full mt-20 ">
+
+      <div className="bg-white shadow-xl p-4 w-40 sm:w-40 md:w-60 lg:w-96 rounded-lg">
       <h1 className="text-3xl font-bold mb-6">Add Teacher</h1>
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
       <div>
@@ -154,6 +156,7 @@ export default function AddTeacher() {
         </div>
         <Button type="submit">Add Teacher</Button>
       </form>
+    </div>
     </div>
   )
 }
