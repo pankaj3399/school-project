@@ -114,6 +114,7 @@ export default function ViewTeachers() {
             <TableHead>Email</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
+          
         </TableHeader>
         <TableBody>
           {teachers.map((teacher) => (
