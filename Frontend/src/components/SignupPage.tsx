@@ -77,9 +77,7 @@ export default function SignupForm() {
           description:"Wait until you are approved!",
           variant:"destructive"
         })
-        setTimeout(()=>{
-          navigate("/")
-        },2000)
+      
       }else{
         localStorage.setItem("token",res.token);
         navigate('/addschool')
