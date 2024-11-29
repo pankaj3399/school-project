@@ -23,15 +23,15 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.3",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
-    "timeout": "^0.2.1"
+    "timeout": "^0.2.1",
+    "@rollup/rollup-linux-x64-gnu":"4.9.5"
   },
-  "type": "module",
-  "overrides": {
-    "rollup": "npm:@rollup/wasm-node"
-}
+"optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu":"4.9.5"
+  },
+  "type": "module"
 }
