@@ -96,12 +96,12 @@ export const addSchool = async (data:{
         return {error};
     }
 }
-
 export const addTeacher = async (data:{
     email: string,
     password: string,
     name: string,
-    subject: string
+    subject: string,
+    recieveMails: boolean
 }, token: string) => {
     try {
         const response = await axios.post(`${API_URL}/teacher/addTeacher`, data, {
@@ -118,7 +118,8 @@ export const updateTeacher = async (data:Partial<{
     email: string,
     password: string,
     name: string,
-    subject: string
+    subject: string,
+    recieveMails: boolean
 }> , id:string, token: string) => {
     try {
         const response = await axios.put(`${API_URL}/teacher/updateTeacher/${id}`, data, {

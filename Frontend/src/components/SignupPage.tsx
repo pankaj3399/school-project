@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react'
 import Header from './Header'
 import { Eye, EyeOff } from 'lucide-react'
@@ -13,8 +11,8 @@ import { signUp } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 
 export default function SignupForm() {
-    const {toast} = useToast()
-    const navigate = useNavigate()
+  const { toast } = useToast()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,35 +59,45 @@ export default function SignupForm() {
     }
     setErrors(prev => ({ ...prev, [name]: error }))
   }
-  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     Object.keys(formData).forEach(key => validateField(key, formData[key as keyof typeof formData]))
     if (Object.values(errors).every(error => error === '')) {
       setLoading(true)
-      console.log('Form submitted:', formData)
-      const res = await signUp(formData)
-      console.log("Result",res);
-      
-      if(res.error){
+      try {
+        const res = await signUp(formData)
+        if (res.error) {
+          toast({
+            title: "User not approved",
+            description: "Wait until you are approved!",
+            variant: "destructive"
+          })
+        } else {
+          localStorage.setItem("token", res.token)
+          
+          if (formData.role === 'SchoolAdmin') {
+            navigate('/addschool')
+         
+          }
+        }
+      } catch (error) {
+        console.error("Signup error:", error)
         toast({
-          title:"User not aprroved",
-          description:"Wait until you are approved!",
-          variant:"destructive"
+          title: "Signup failed",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive"
         })
-      
-      }else{
-        localStorage.setItem("token",res.token);
-        navigate('/addschool')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white  py-12 px-4 sm:px-6 lg:px-8">
-        <Header/>
-      <Card className="w-full  max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white py-12 px-4 sm:px-6 lg:px-8">
+      <Header />
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create your account</CardTitle>
           <CardDescription className="text-center">Enter your information to get started</CardDescription>
@@ -110,11 +118,7 @@ export default function SignupForm() {
                 aria-invalid={errors.name ? "true" : "false"}
                 aria-describedby="name-error"
               />
-              {errors.name && (
-                <p className="text-sm text-red-500" id="name-error">
-                  {errors.name}
-                </p>
-              )}
+              {errors.name && <p className="text-sm text-red-500" id="name-error">{errors.name}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email-address">Email address</Label>
@@ -131,11 +135,7 @@ export default function SignupForm() {
                 aria-invalid={errors.email ? "true" : "false"}
                 aria-describedby="email-error"
               />
-              {errors.email && (
-                <p className="text-sm text-red-500" id="email-error">
-                  {errors.email}
-                </p>
-              )}
+              {errors.email && <p className="text-sm text-red-500" id="email-error">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -161,11 +161,7 @@ export default function SignupForm() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-red-500" id="password-error">
-                  {errors.password}
-                </p>
-              )}
+              {errors.password && <p className="text-sm text-red-500" id="password-error">{errors.password}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
@@ -174,14 +170,11 @@ export default function SignupForm() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SchoolAdmin">School Administartion</SelectItem>
+                  <SelectItem value="SchoolAdmin">School Administration</SelectItem>
+
                 </SelectContent>
               </Select>
-              {errors.role && (
-                <p className="text-sm text-red-500" id="role-error">
-                  {errors.role}
-                </p>
-              )}
+              {errors.role && <p className="text-sm text-red-500" id="role-error">{errors.role}</p>}
             </div>
             <Button
               type="submit"

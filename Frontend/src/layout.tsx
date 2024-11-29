@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 
   // Define routes for the simple layout
-  const simpleLayoutRoutes = ['/', '/signup', '/signin'];
+  const simpleLayoutRoutes = ['/', '/signup', '/signin','/students','/teachers'];
 
   const isSimpleLayout = simpleLayoutRoutes.includes(pathname);
 

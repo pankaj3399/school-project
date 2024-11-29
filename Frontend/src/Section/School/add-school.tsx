@@ -1,23 +1,54 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
 import Loading from "../Loading";
-import { addSchool } from "@/api";
+import { addSchool, getCurrrentSchool } from "@/api";
 
-export default function AddSchool() {
+export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
   const [address, setAddress] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [school, setSchool] = useState<any>(null); 
   const { toast } = useToast();
   const navigate = useNavigate();
+
+ 
+  useEffect(() => {
+    const fetchSchool = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast({
+            title: "Error",
+            description: "No token found.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const data = await getCurrrentSchool(token);
+        setSchool(data.school || null);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch school data.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchool();
+  }, [toast]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -39,8 +70,8 @@ export default function AddSchool() {
   };
 
   const handleImageUpload = async (file: File) => {
-    const CLOUD_NAME = import.meta.env.VITE_CLOUD_NAME as string; 
-    const UPLOAD_PRESET = import.meta.env.VITE_UPLOAD_PRESET as string; 
+    const CLOUD_NAME = import.meta.env.VITE_CLOUD_NAME as string;
+    const UPLOAD_PRESET = import.meta.env.VITE_UPLOAD_PRESET as string;
 
     const formData = new FormData();
     formData.append("file", file);
@@ -52,7 +83,7 @@ export default function AddSchool() {
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
         formData
       );
-      return response.data.secure_url; 
+      return response.data.secure_url;
     } catch (error) {
       toast({
         title: "Error",
@@ -68,13 +99,7 @@ export default function AddSchool() {
     if (validateForm()) {
       try {
         setLoading(true);
-        setError(null);
-
         const token = localStorage.getItem("token");
-        console.log("xinidsni",token);
-        const logoUrl = await handleImageUpload(logo as File);
-
-
         if (!token) {
           toast({
             title: "Error",
@@ -85,12 +110,13 @@ export default function AddSchool() {
           return;
         }
 
+        const logoUrl = await handleImageUpload(logo as File);
+
         const formData = {
           name: schoolName,
           address,
           logo: logoUrl,
         };
-        console.log("dbibujdeb",formData);
 
         const response = await addSchool(formData, token);
 
@@ -99,7 +125,7 @@ export default function AddSchool() {
             title: "School added successfully",
             description: `${schoolName} has been added to the system.`,
           });
-          navigate("/viewschool");
+          setSchool(response.data.school); 
         } else {
           toast({
             title: "Error",
@@ -107,72 +133,94 @@ export default function AddSchool() {
             variant: "destructive",
           });
         }
-
-        setLoading(false);
       } catch (error) {
         setError("An unexpected error occurred. Please try again.");
-        setLoading(false);
-
         toast({
           title: "Error",
           description: "Failed to add the school. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     }
   };
 
-  if (loading) {
-    return <Loading />;
-  }
+  if (loading) return <Loading />;
 
-  if (error) {
+  
+  if (school) {
     return (
-      <div>
-        <p>{error}</p>
+      <div className="grid place-items-center">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 items-center space-x-4">
+            <img
+              src={school.logo || "/default-logo.png"}
+              alt={school.name}
+              className="w-72 h-72 object-cover rounded-full"
+            />
+            <div className="text-center">
+              <h2 className="text-4xl font-bold">Schoolname: {school.name}</h2>
+              <p className="text-xl">Address: {school.address}</p>
+            </div>
+            <div className="flex gap-4">
+              <Button variant={"outline"} onClick={() => navigate("/addteacher")}>
+                Add Teacher
+              </Button>
+              <Button variant={"outline"} onClick={() => navigate("/viewteacher")}>
+                View Teacher
+              </Button>
+              <Button variant={"outline"} onClick={() => navigate("/addstudent")}>
+                Add Students
+              </Button>
+              <Button variant={"outline"} onClick={() => navigate("/viewstudent")}>
+                View Students
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid place-items-center w-full h-full mt-20 ">
-
+    <div className="grid place-items-center w-full h-full mt-20">
       <div className="bg-white shadow-xl p-4 rounded-lg">
-      <h1 className="text-3xl font-bold mb-6">Add School</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md ">
-        <div className="">
-          <Label htmlFor="schoolName">School Name</Label>
-          <Input
-            id="schoolName"
-            value={schoolName}
-            onChange={(e) => setSchoolName(e.target.value)}
-            required
-          />
-          {errors.schoolName && <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>}
-        </div>
-        <div>
-          <Label htmlFor="address">Address</Label>
-          <Input
-            id="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-          />
-          {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-        </div>
-        <div>
-          <Label htmlFor="logo">Logo</Label>
-          <Input
-            id="logo"
-            type="file"
-            onChange={(e) => setLogo(e.target.files?.[0] || null)}
-            accept="image/*"
-          />
-          {errors.logo && <p className="text-red-500 text-sm mt-1">{errors.logo}</p>}
-        </div>
-        <Button type="submit">Add School</Button>
-      </form>
-    </div>
+        <h1 className="text-3xl font-bold mb-6">Add School</h1>
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-md ">
+          <div>
+            <Label htmlFor="schoolName">School Name</Label>
+            <Input
+              id="schoolName"
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              required
+            />
+            {errors.schoolName && <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>}
+          </div>
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Input
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+            />
+            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+          </div>
+          <div>
+            <Label htmlFor="logo">Logo</Label>
+            <Input
+              id="logo"
+              type="file"
+              onChange={(e) => setLogo(e.target.files?.[0] || null)}
+              accept="image/*"
+            />
+            {errors.logo && <p className="text-red-500 text-sm mt-1">{errors.logo}</p>}
+          </div>
+          <Button type="submit">Add School</Button>
+        </form>
+      </div>
     </div>
   );
 }

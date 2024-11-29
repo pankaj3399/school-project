@@ -33,6 +33,10 @@ const teacherSchema = new mongoose.Schema({
     type:String,
     default: null
   },
+  recieveMails:{
+    type:Boolean,
+    default: false
+  }
 });
 
 

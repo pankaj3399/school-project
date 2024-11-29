@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/addschool', label: 'Add School', icon: School },
-  { href: '/viewschool', label: 'View Schools', icon: School },
+  { href: '/addschool', label: 'School', icon: School },
   { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
   { href: '/addstudent', label: 'Add Student', icon: UserPlus },
   { href: '/viewteacher', label: 'View Teachers', icon: Users },
