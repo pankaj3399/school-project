@@ -14,7 +14,6 @@ export default function SchoolPage() {
   const [logo, setLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [school, setSchool] = useState<any>(null); 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -134,7 +133,7 @@ export default function SchoolPage() {
           });
         }
       } catch (error) {
-        setError("An unexpected error occurred. Please try again.");
+        console.error("An unexpected error occurred. Please try again.");
         toast({
           title: "Error",
           description: "Failed to add the school. Please try again.",
