@@ -1,97 +1,100 @@
-import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
-import { useToast } from "@/hooks/use-toast"
-import { getTeachers, deleteTeacher, updateTeacher } from "@/api"
-import Loading from "../Loading"
-import { Button } from "@/components/ui/button"
-
+import { useEffect, useState } from "react";
+import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { getTeachers, deleteTeacher, updateTeacher } from "@/api";
+import Loading from "../Loading";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import Modal from "./Modal";
 
 export default function ViewTeachers() {
-  const [teachers, setTeachers] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editingTeacher, setEditingTeacher] = useState<any | null>(null)
-  const { toast } = useToast()
-  
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
+  const [showModal, setShowModal] = useState(false); // State to control modal visibility
+  const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null); // Store the teacher id to delete
+  const { toast } = useToast();
+
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const token = localStorage.getItem("token")
+        const token = localStorage.getItem("token");
         if (!token) {
           toast({
             title: "Error",
             description: "No token found.",
             variant: "destructive",
-          })
-          setLoading(false)
-          return
+          });
+          setLoading(false);
+          return;
         }
 
-        const data = await getTeachers(token)
-        setTeachers(data.teachers)
-        setLoading(false)
+        const data = await getTeachers(token);
+        setTeachers(data.teachers);
+        setLoading(false);
       } catch (error) {
         toast({
           title: "Error",
           description: "Failed to fetch teacher data.",
           variant: "destructive",
-        })
-        setLoading(false)
+        });
+        setLoading(false);
       }
-    }
+    };
 
-    fetchTeachers()
-  }, [toast,editingTeacher])
+    fetchTeachers();
+  }, [toast, editingTeacher]);
 
   const handleDelete = async (id: string) => {
     try {
-      const token = localStorage.getItem("token")
-      if (!token) throw new Error("No token found.")
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found.");
 
-      await deleteTeacher(id, token)
-      setTeachers((prev) => prev.filter((teacher) => teacher._id !== id))
+      await deleteTeacher(id, token);
+      setTeachers((prev) => prev.filter((teacher) => teacher._id !== id));
+      setShowModal(false); // Close the modal
       toast({
         title: "Success",
         description: "Teacher deleted successfully.",
         variant: "default",
-      })
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete teacher.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const handleEditSubmit = async (updatedTeacher: any,id: string) => {
+  const handleEditSubmit = async (updatedTeacher: any, id: string) => {
     try {
-      const token = localStorage.getItem("token")
-      if (!token) throw new Error("No token found.")
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found.");
 
-      const updatedData = await updateTeacher(updatedTeacher, id, token)
+      const updatedData = await updateTeacher(updatedTeacher, id, token);
       setTeachers((prev) =>
         prev.map((teacher) =>
           teacher._id === updatedData._id ? updatedData : teacher
         )
-      )
-      setEditingTeacher(null)
+      );
+      setEditingTeacher(null);
       toast({
         title: "Success",
         description: "Teacher updated successfully.",
         variant: "default",
-      })
-      
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update teacher.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
-    return <Loading />
+    return <Loading />;
   }
 
   if (teachers.length === 0) {
@@ -100,7 +103,7 @@ export default function ViewTeachers() {
         <h1 className="text-xl font-bold">No teachers found</h1>
         <p>Please ensure there are teachers in the system and try again.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -129,7 +132,10 @@ export default function ViewTeachers() {
                   Edit
                 </Button>
                 <Button
-                  onClick={() => handleDelete(teacher._id)}
+                  onClick={() => {
+                    setTeacherToDelete(teacher._id); // Store the teacher id to delete
+                    setShowModal(true); // Open the modal
+                  }}
                   className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
                 >
                   Delete
@@ -145,8 +151,8 @@ export default function ViewTeachers() {
           <h2 className="text-2xl font-bold mb-4">Edit Teacher</h2>
           <form
             onSubmit={(e) => {
-              e.preventDefault()
-              handleEditSubmit(editingTeacher,editingTeacher._id)
+              e.preventDefault();
+              handleEditSubmit(editingTeacher, editingTeacher._id);
             }}
           >
             <div className="mb-4">
@@ -170,12 +176,10 @@ export default function ViewTeachers() {
                 }
                 className="w-full px-4 py-2 border rounded"
               />
-             
             </div>
             <div className="mb-4">
-            <label className="block text-sm font-medium">Email</label>
-
-            <input
+              <label className="block text-sm font-medium">Email</label>
+              <input
                 type="email"
                 value={editingTeacher.email}
                 onChange={(e) =>
@@ -183,12 +187,23 @@ export default function ViewTeachers() {
                 }
                 className="w-full px-4 py-2 border rounded"
               />
-              </div>
+            </div>
+            <div className="mb-4 flex items-center">
+              <Checkbox
+                checked={editingTeacher.recieveMails}
+                onCheckedChange={(e) =>
+                  setEditingTeacher({
+                    ...editingTeacher,
+                    recieveMails: e as boolean,
+                  })
+                }
+              />
+              <span className="text-sm ml-2">Receive Emails</span>
+            </div>
             <div className="flex space-x-4">
               <Button
                 type="submit"
                 className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"
-                
               >
                 Save
               </Button>
@@ -203,6 +218,16 @@ export default function ViewTeachers() {
           </form>
         </div>
       )}
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={() => {
+          if (teacherToDelete) handleDelete(teacherToDelete);
+        }}
+        title="Confirm Deletion"
+        description="Are you sure you want to delete this teacher? This action cannot be undone."
+      />
     </div>
-  )
+  );
 }
