@@ -8,17 +8,17 @@ import Footer from "@/components/Footer"
 import RootLayout from "@/layout"
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-800">
+    <div className=" bg-white text-gray-800">
       <RootLayout>
       <Header />
-      <main>
-        <HeroSection />
+      <main className="min-h-screen overflow-y-auto">
+      <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />
         <TestimonialsSection />
         <PricingSection />
-      </main>
       <Footer />
+      </main>
       </RootLayout>
     </div>
   )
