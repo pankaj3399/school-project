@@ -207,3 +207,20 @@ export const getCurrentUser = async (token: string) => {
         return {error};
     }
 }
+
+export const updateSchool = async (data:Partial<{
+    address: string,
+    logo: string,
+    name: string
+}>, id:string, token: string) => {
+    try {
+        const response = await axios.put(`${API_URL}/school/updateSchool/${id}`, data,{
+            headers:{
+                token
+            }
+        });
+        return response;
+    } catch (error) {
+        return {error};
+    }
+}

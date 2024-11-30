@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Loading from "../Loading";
-import { addSchool, getCurrrentSchool } from "@/api";
+import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
 
 export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
@@ -14,11 +14,11 @@ export default function SchoolPage() {
   const [logo, setLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
-  const [school, setSchool] = useState<any>(null); 
+  const [school, setSchool] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
- 
   useEffect(() => {
     const fetchSchool = async () => {
       try {
@@ -60,7 +60,7 @@ export default function SchoolPage() {
       newErrors.address = "Address is required";
     }
 
-    if (!logo) {
+    if (!logo && !isEditing) {
       newErrors.logo = "Logo is required";
     }
 
@@ -109,7 +109,7 @@ export default function SchoolPage() {
           return;
         }
 
-        const logoUrl = await handleImageUpload(logo as File);
+        const logoUrl = logo ? await handleImageUpload(logo) : school.logo;
 
         const formData = {
           name: schoolName,
@@ -117,26 +117,35 @@ export default function SchoolPage() {
           logo: logoUrl,
         };
 
-        const response = await addSchool(formData, token);
+        const response = isEditing
+          ? await updateSchool(formData, school._id, token)
+          : await addSchool(formData, token);
 
         if (response.status === 200) {
+          
           toast({
-            title: "School added successfully",
-            description: `${schoolName} has been added to the system.`,
+            title: isEditing
+              ? "School updated successfully"
+              : "School added successfully",
+            description: `${schoolName} has been ${
+              isEditing ? "updated" : "added"
+            } to the system.`,
           });
-          setSchool(response.data.school); 
+          setSchool(response.data.school);
+          setIsEditing(false);
+          // Redirect to the school page after a successful update
+          navigate(`/addschool`);
         } else {
           toast({
             title: "Error",
-            description: "Failed to add the school. Please try again.",
+            description: "Failed to process the request. Please try again.",
             variant: "destructive",
           });
         }
       } catch (error) {
-        console.error("An unexpected error occurred. Please try again.");
         toast({
           title: "Error",
-          description: "Failed to add the school. Please try again.",
+          description: "Failed to process the request. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -147,7 +156,6 @@ export default function SchoolPage() {
 
   if (loading) return <Loading />;
 
-  
   if (school) {
     return (
       <div className="grid place-items-center">
@@ -175,18 +183,20 @@ export default function SchoolPage() {
               <Button variant={"outline"} onClick={() => navigate("/viewstudent")}>
                 View Students
               </Button>
+              <Button variant={"outline"} onClick={() => setIsEditing(true)}>
+                Edit School
+              </Button>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid place-items-center w-full h-full mt-20">
+        {
+          isEditing && (
+            <div className="grid place-items-center w-full h-full mt-20">
       <div className="bg-white shadow-xl p-4 rounded-lg">
-        <h1 className="text-3xl font-bold mb-6">Add School</h1>
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-md ">
+        <h1 className="text-3xl font-bold mb-6">
+          {isEditing ? "Edit School" : "Add School"}
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
           <div>
             <Label htmlFor="schoolName">School Name</Label>
             <Input
@@ -195,7 +205,9 @@ export default function SchoolPage() {
               onChange={(e) => setSchoolName(e.target.value)}
               required
             />
-            {errors.schoolName && <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>}
+            {errors.schoolName && (
+              <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="address">Address</Label>
@@ -205,19 +217,83 @@ export default function SchoolPage() {
               onChange={(e) => setAddress(e.target.value)}
               required
             />
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            {errors.address && (
+              <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+            )}
+          </div>
+          {isEditing && (
+            <div>
+              <Label htmlFor="logo">Logo</Label>
+              <Input
+                id="logo"
+                type="file"
+                onChange={(e) => setLogo(e.target.files?.[0] || null)}
+                accept="image/*"
+              />
+              {errors.logo && (
+                <p className="text-red-500 text-sm mt-1">{errors.logo}</p>
+              )}
+            </div>
+          )}
+          <Button type="submit">
+            {isEditing ? "Update School" : "Add School"}
+          </Button>
+        </form>
+      </div>
+    </div>
+          )
+        }
+      </div>
+    );
+  }
+  return (
+    <div className="grid place-items-center w-full h-full mt-20">
+      <div className="bg-white shadow-xl p-4 rounded-lg">
+        <h1 className="text-3xl font-bold mb-6">
+          {isEditing ? "Edit School" : "Add School"}
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+          <div>
+            <Label htmlFor="schoolName">School Name</Label>
+            <Input
+              id="schoolName"
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              required
+            />
+            {errors.schoolName && (
+              <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>
+            )}
           </div>
           <div>
-            <Label htmlFor="logo">Logo</Label>
+            <Label htmlFor="address">Address</Label>
             <Input
-              id="logo"
-              type="file"
-              onChange={(e) => setLogo(e.target.files?.[0] || null)}
-              accept="image/*"
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
             />
-            {errors.logo && <p className="text-red-500 text-sm mt-1">{errors.logo}</p>}
+            {errors.address && (
+              <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+            )}
           </div>
-          <Button type="submit">Add School</Button>
+          {isEditing && (
+            <div>
+              <Label htmlFor="logo">Logo</Label>
+              <Input
+                id="logo"
+                type="file"
+                onChange={(e) => setLogo(e.target.files?.[0] || null)}
+                accept="image/*"
+              />
+              {errors.logo && (
+                <p className="text-red-500 text-sm mt-1">{errors.logo}</p>
+              )}
+            </div>
+          )}
+          <Button type="submit">
+            {isEditing ? "Update School" : "Add School"}
+          </Button>
         </form>
       </div>
     </div>
