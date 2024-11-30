@@ -39,7 +39,7 @@ export function SideNav() {
     {
       toogle && <nav className={`w-64 bg-white shadow-lg  ${!toogle ? "max-md:hidden":""}`}>
       <div className="p-4">
-        <h1 className="text-2xl font-semibold text-blue-600">PointEdu</h1>
+      <img src="/logo2.png" alt="" className='w-14  h-14' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (
@@ -66,7 +66,7 @@ export function SideNav() {
 
 <nav className={`w-64 bg-white shadow-lg max-md:hidden`}>
       <div className="p-4">
-        <h1 className="text-2xl font-semibold text-blue-600">PointEdu</h1>
+      <img src="/logo2.png" alt="" className='w-14  h-14' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (
