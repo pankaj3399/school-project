@@ -34,7 +34,8 @@ export const addStudent = async (data:{
     password: string,
     standard: string,
     name: string,
-    
+    sendNotifications: boolean,
+    parentEmail: string
 }, token: string) => {
     try {
         const response = await axios.post(`${API_URL}/student/addStudent`, data, {
@@ -220,6 +221,30 @@ export const updateSchool = async (data:Partial<{
             }
         });
         return response;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getForms = async (token: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/form/getForms`, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const createForm = async (data:any, token: string) => {
+    try {
+        const response = await axios.post(`${API_URL}/schoolAdmin/createForm`, data, {
+            headers: {token}
+        });
+        return response.data;
     } catch (error) {
         return {error};
     }
