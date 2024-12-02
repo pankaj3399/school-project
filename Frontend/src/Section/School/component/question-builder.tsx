@@ -5,14 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Trash2 } from 'lucide-react'
-
-type Question = {
-  id: string
-  text: string
-  type: 'text' | 'select' | 'number'
-  isCompulsory: boolean
-  options?: string[]
-}
+import { Question } from '@/lib/types'
 
 type QuestionBuilderProps = {
   question: Question
@@ -26,7 +19,7 @@ export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilde
   }
 
   const handleTypeChange = (value: 'text' | 'select') => {
-    onUpdate({ ...question, type: value, options: value === 'select' ? [''] : undefined })
+    onUpdate({ ...question, type: value, options: value === 'select' ? [] : undefined })
   }
 
   const handleCompulsoryChange = (checked: boolean) => {
@@ -36,14 +29,14 @@ export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilde
   const handleOptionChange = (index: number, value: string) => {
     if (question.options) {
       const newOptions = [...question.options]
-      newOptions[index] = value
+      newOptions[index] = {value, points: 0}
       onUpdate({ ...question, options: newOptions })
     }
   }
 
   const addOption = () => {
     if (question.options) {
-      onUpdate({ ...question, options: [...question.options, ''] })
+      onUpdate({ ...question, options: [...question.options, {value: '', points: 0}] })
     }
   }
 
@@ -82,6 +75,18 @@ export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilde
           />
           <Label htmlFor={`compulsory-${question.id}`}>Compulsory</Label>
         </div>
+        {(question.type === 'number' || question.type === 'text') && (
+          <div className="flex items-center space-x-2">
+            <Label htmlFor={`points-${question.id}`}>Points</Label>
+            <Input
+              type="number"
+              value={question.points}
+              onChange={(e) => onUpdate({ ...question, points: parseInt(e.target.value, 10) || 0 })}
+              placeholder="Enter points"
+              className="w-full"
+            />
+          </div>
+        )}
       </div>
       {question.type === 'select' && question.options && (
         <div className="space-y-2">
@@ -89,11 +94,19 @@ export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilde
             <div key={index} className="flex items-center space-x-2">
               <Input
                 type="text"
-                value={option}
+                value={option.value}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
                 placeholder={`Option ${index + 1}`}
                 className="flex-grow"
               />
+              <Input
+                 type="number"
+                 value={option.points}
+                 onChange={(e) => onUpdate({ ...question, options: question.options?.map((o, i) => i === index ? {...o, points: parseInt(e.target.value, 10) || 0} : o) })}
+                 placeholder="Enter points"
+                className="w-full"
+              />
+
               <Button onClick={() => removeOption(index)} variant="destructive" size="sm">
                 <Trash2 />
               </Button>

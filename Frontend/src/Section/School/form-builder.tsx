@@ -6,15 +6,10 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { createForm } from '@/api'
 import { toast } from '@/hooks/use-toast'
+import { Question } from '@/lib/types'
 
 type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
-type Question = {
-  id: string
-  text: string
-  type: 'text' | 'select' | 'number'
-  isCompulsory: boolean
-  options?: string[]
-}
+
 
 export default function FormBuilder() {
   const [formName, setFormName] = useState('')
@@ -104,7 +99,8 @@ const clearForm = () => {
         id: Date.now().toString(),
         text: '',
         type: 'text',
-        isCompulsory: false
+        isCompulsory: false,
+        points: 0
       })}>
         Add Question
       </Button>

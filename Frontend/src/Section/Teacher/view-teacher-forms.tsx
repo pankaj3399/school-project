@@ -5,27 +5,15 @@ import { FormDetails } from '@/Section/School/component/form-details'
 import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon } from 'lucide-react'
 import { getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
+import { useNavigate } from 'react-router-dom'
+import { Form } from '@/lib/types'
 
-type Question = {
-  id: string
-  text: string
-  type: string
-  isCompulsory: boolean
-  options: string[]
-}
-
-type Form = {
-  _id: string
-  formName: string
-  formType: string
-  questions: Question[]
-  createdAt: string
-  schoolId: string | null
-}
 
 export default function ViewTeacherForms() {
   const [forms, setForms] = useState<Form[]>([])
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     // Fetch forms from your API
@@ -84,7 +72,7 @@ export default function ViewTeacherForms() {
               </div>
               <Button
                 className="mt-4 w-full"
-                onClick={() => setSelectedForm(form)}
+                onClick={() => navigate(`/teachers/submitform/${form._id}`)}
               >
                 Use Form
               </Button>

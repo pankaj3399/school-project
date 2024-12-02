@@ -1,5 +1,17 @@
 import mongoose from "mongoose";
 import { QuestionType, FormType } from "../enum.js";
+
+const optionSchema = new mongoose.Schema({
+  value: {
+    type: String,
+    required: true,
+  },
+  points: {
+    type: Number,
+    required: true,
+  },
+});
+
 const questionSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -19,8 +31,12 @@ const questionSchema = new mongoose.Schema({
     required: true,
   },
   options: {
-    type: [String],
+    type: [optionSchema],
     default: [],    
+  },
+  points: {
+    type: Number,
+    required: true,
   },
 });
 

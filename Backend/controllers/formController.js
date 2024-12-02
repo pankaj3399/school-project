@@ -1,6 +1,7 @@
 import { Role } from "../enum.js"
 import Admin from "../models/Admin.js"
 import Form from "../models/Form.js"
+import FormSubmissions from "../models/FormSubmissions.js"
 import School from "../models/School.js"
 import Teacher from "../models/Teacher.js"
 
@@ -58,4 +59,35 @@ export const getForms = async (req, res) => {
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });
     }   
+}
+
+export const getFormById = async (req, res) => {
+    const id = req.params.id
+    try{
+        const form = await Form.findById(id)
+        return res.status(200).json({form})
+    }catch(error){
+        return res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+}
+
+export const submitFormTeacher = async (req, res) => {
+    const formId = req.params.formId
+    const {
+        answers
+    } = req.body
+    const teacherId = req.user.id
+    try{
+        const formSubmission = await FormSubmissions.create({
+            formId,
+            teacherId,
+            answers
+        })
+        return res.status(200).json({
+            message: "Form Submitted Successfully",
+            formSubmission: formSubmission
+        })
+    }catch(error){
+        return res.status(500).json({ message: 'Server Error', error: error.message });
+    }
 }

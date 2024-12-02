@@ -1,27 +1,12 @@
-import  { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FormDetails } from '@/Section/School/component/form-details'
 import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon } from 'lucide-react'
 import { getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
+import { Form, Question } from '@/lib/types'
 
-type Question = {
-  id: string
-  text: string
-  type: string
-  isCompulsory: boolean
-  options: string[]
-}
-
-type Form = {
-  _id: string
-  formName: string
-  formType: string
-  questions: Question[]
-  createdAt: string
-  schoolId: string | null
-}
 
 export default function ViewForms() {
   const [forms, setForms] = useState<Form[]>([])
@@ -32,13 +17,13 @@ export default function ViewForms() {
     const fetchForms = async () => {
       try {
         const data = await getForms(localStorage.getItem('token')!)
-        if(data.error){     
+        if (data.error) {
           toast({
             title: 'Error',
             description: data.error,
             variant: 'destructive'
           })
-        }else{
+        } else {
           setForms(data.forms)
         }
       } catch (error) {
@@ -64,6 +49,21 @@ export default function ViewForms() {
     }
   }
 
+  const calculateTotalPoints = (questions: Question[]) =>
+  {
+    if(questions.length === 0) return 0
+    let sum = questions.reduce((sum, question) => sum + (question.points || 0), 0) 
+     questions.forEach(question => {
+      if(question.type == 'select'){
+        question.options?.forEach(option => {
+          sum += option.points
+        })
+      }
+    })
+    return sum
+  }
+
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Forms</h1>
@@ -76,6 +76,9 @@ export default function ViewForms() {
             </CardHeader>
             <CardContent>
               <CardDescription>{form.formType}</CardDescription>
+              <div className="flex items-center pt-2 text-xs text-muted-foreground">
+                Total Points: {calculateTotalPoints(form.questions)}
+              </div>
               <div className="flex items-center pt-4">
                 <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
                 <span className="text-xs text-muted-foreground">

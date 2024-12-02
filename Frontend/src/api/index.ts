@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
 const API_URL= import.meta.env.VITE_API_URL
 console.log(API_URL);
@@ -244,6 +244,40 @@ export const createForm = async (data:any, token: string) => {
         const response = await axios.post(`${API_URL}/schoolAdmin/createForm`, data, {
             headers: {token}
         });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getFormById = async (id:string, token: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/form/getFormById/${id}`,{
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const submitFormTeacher = async (data:AnswerType, formId:string, token: string) => {
+    try {
+        const answers:AnswerTypeArray = Object.entries(data).map(([questionId, answer]) => ({
+            questionId,
+            answer: answer.answer,
+            isAward: answer.isAward,
+            points: 0
+        }))
+        console.log(answers);
+        
+        const response = await axios.post(`${API_URL}/form/submitFormTeacher/${formId}`, {
+            answers
+        }, {headers: {
+            token
+        }});
         return response.data;
     } catch (error) {
         return {error};
