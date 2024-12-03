@@ -1,20 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { School, UserPlus, Users, BookOpen, LogOut,X,MenuIcon} from 'lucide-react';
+import { Users, LogOut,X,MenuIcon} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/addschool', label: 'School', icon: School },
-  { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
-  { href: '/addstudent', label: 'Add Student', icon: UserPlus },
-  { href: '/viewteacher', label: 'View Teachers', icon: Users },
-  { href: '/viewstudent', label: 'View Students', icon: BookOpen },
-  // { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
-  // { href: '/viewforms', label: 'View Forms', icon: ClipboardIcon },
-  // { href: '/pointhistory', label: 'Point History', icon: ClipboardIcon },
+  { href: '/teachers/viewstudent', label: 'Students', icon: Users },
+  // { href: '/teachers/viewforms', label: 'Manage Points', icon: ClipboardIcon },
+  // { href: '/teachers/pointhistory', label: 'Point History', icon: ClipboardIcon },
 ];
 
-export function SideNav() {
+export function TeacherSideNav() {
   const navigate = useNavigate();
   const[toogle,Settoogle] = useState(false);
 
@@ -67,7 +62,7 @@ export function SideNav() {
     </nav>
     }
 
-<nav className={`w-64 bg-white shadow-lg max-md:hidden`}>
+<nav className={ `w-64 bg-white shadow-lg max-md:hidden`}>
       <div className="p-4">
       <img src="/logo2.png" alt="" className='w-14  h-14' />
       </div>
@@ -81,7 +76,6 @@ export function SideNav() {
           </li>
         ))}
       </ul>
-      {/* Logout Button */}
       <div className="px-4 py-2 mt-4 border-t">
         <button
           onClick={handleLogout}

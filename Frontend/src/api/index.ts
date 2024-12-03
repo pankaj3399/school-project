@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
 const API_URL= import.meta.env.VITE_API_URL
 console.log(API_URL);
@@ -34,7 +34,8 @@ export const addStudent = async (data:{
     password: string,
     standard: string,
     name: string,
-    
+    sendNotifications: boolean,
+    parentEmail: string
 }, token: string) => {
     try {
         const response = await axios.post(`${API_URL}/student/addStudent`, data, {
@@ -220,6 +221,70 @@ export const updateSchool = async (data:Partial<{
             }
         });
         return response;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getForms = async (token: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/form/getForms`, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const createForm = async (data:any, token: string) => {
+    try {
+        const response = await axios.post(`${API_URL}/schoolAdmin/createForm`, data, {
+            headers: {token}
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getFormById = async (id:string, token: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/form/getFormById/${id}`,{
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const submitFormTeacher = async (data:AnswerType, submittedFor:string, formId:string, token: string) => {
+    try {
+        const answers:AnswerTypeArray = Object.entries(data).map(([questionId, answer]) => ({
+            questionId,
+            answer: answer.answer,
+            points: answer.points
+        }))
+        const response = await axios.post(`${API_URL}/form/submitFormTeacher/${formId}`, {
+            answers,
+            submittedFor
+        }, {headers: {
+            token
+        }});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getPointHistory = async (token: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/form/getPointHistory`, {headers: {token}});
+        return response.data;
     } catch (error) {
         return {error};
     }
