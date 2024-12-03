@@ -17,3 +17,9 @@ export const QuestionType = Object.freeze({
     Select: 'select',
     Number: 'number'
 });
+
+export const PointsType = Object.freeze({
+    Award: 'Award',
+    Deduct: 'Deduct',
+    None: 'None'
+});

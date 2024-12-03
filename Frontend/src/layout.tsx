@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 
   const simpleLayoutRoutes = ['/', '/signup', '/signin','/students'];
-  const teacherLayoutRoutes = ['/teachers/viewstudent','/teachers/viewforms','/teachers'];
+  const teacherLayoutRoutes = ['/teachers/viewstudent','/teachers/viewforms','/teachers','/teachers/pointhistory'];
 
   const isSimpleLayout = simpleLayoutRoutes.includes(pathname);
   const isTeacherLayout = teacherLayoutRoutes.includes(pathname);

@@ -11,6 +11,7 @@ const navItems = [
   { href: '/viewstudent', label: 'View Students', icon: BookOpen },
   { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
   { href: '/viewforms', label: 'View Forms', icon: ClipboardIcon },
+  { href: '/pointhistory', label: 'Point History', icon: ClipboardIcon },
 ];
 
 export function SideNav() {

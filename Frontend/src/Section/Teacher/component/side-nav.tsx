@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 const navItems = [
   { href: '/teachers/viewstudent', label: 'Students', icon: Users },
   { href: '/teachers/viewforms', label: 'Manage Points', icon: ClipboardIcon },
+  { href: '/teachers/pointhistory', label: 'Point History', icon: ClipboardIcon },
 ];
 
 export function TeacherSideNav() {
@@ -61,7 +62,7 @@ export function TeacherSideNav() {
     </nav>
     }
 
-<nav className={`w-64 bg-white shadow-lg max-md:hidden`}>
+<nav className={ `w-64 bg-white shadow-lg max-md:hidden`}>
       <div className="p-4">
       <img src="/logo2.png" alt="" className='w-14  h-14' />
       </div>

@@ -46,7 +46,7 @@ export function FormDetails({ form, onClose }: FormDetailsProps) {
                   </div>
                 )}
                 {
-                  question.type === 'select' ? <p>{question.options?.reduce((acc, curr) => acc + curr.points, 0)} Points</p>:<p>{question.points} Points</p>
+                  question.type === 'select' ? <p>{question.options?.reduce((acc, curr) => acc + curr.points, 0)} Points</p>:<p>{question.maxPoints} Points</p>
                 }
               </div>
             ))}
