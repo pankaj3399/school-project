@@ -1,17 +1,15 @@
 import { Role } from "../enum.js";
 import School from "../models/School.js";
+import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
 export const getAllSchools = async (req, res) => {
-    try{
-        const schools = await School.find()
-        return res.status(200).json({
-            message:"Schools Fetched Successfully",
-            schools
-        })
-    }catch(error){
-        return res.status(500).json({ message: 'Server Error', error: error.message });
+    try {
+      const schools = await School.find();
+      res.status(200).json({ message: "Schools fetched successfully", schools });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-}
+  };
 
 export const getStudents = async (req, res) => {
     try {
@@ -58,28 +56,24 @@ export const getCurrentSchool = async (req, res) => {
 };
 
 export const updateSchool = async (req, res) => {
-    const {
-        name,
-        address,
-        logo
-    } = req.body
-    try{
-        const school = await School.findByIdAndUpdate(req.params.id, {
-            name,
-            address,
-            logo
-        },{new:true})
-        if(!school){
-            return res.status(404).json({ message: 'School not found' });
-        }
-        return res.status(200).json({
-            message:"School Updated Successfully",
-            school
-        })
-    }catch(error){
-        return res.status(500).json({ message: 'Server Error', error: error.message });
+    const { name, address } = req.body;
+    const logo = req.file;
+  
+    try {
+      const logoUrl = await uploadImageFromDataURI(logo);
+      const updatedSchool = await School.findByIdAndUpdate(
+        req.params.id,
+        { name, address, logo: logoUrl },
+        { new: true }
+      );
+  
+      if (!updatedSchool) return res.status(404).json({ message: "School not found." });
+  
+      res.status(200).json({ message: "School updated successfully", school: updatedSchool });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-}
+  };
 
 export const deleteSchool = async (req, res) => {
    

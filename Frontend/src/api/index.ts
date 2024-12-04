@@ -81,11 +81,7 @@ export const deleteStudent = async (id:string, token: string) => {
     }
 }
 
-export const addSchool = async (data:{
-    address: string,
-    logo: string,
-    name: string
-}, token: string) => {
+export const addSchool = async (data:FormData, token: string) => {
     try {
         const response = await axios.post(`${API_URL}/schoolAdmin/addSchool`, data,{
             headers:{
@@ -97,6 +93,7 @@ export const addSchool = async (data:{
         return {error};
     }
 }
+
 export const addTeacher = async (data:{
     email: string,
     password: string,
@@ -209,11 +206,7 @@ export const getCurrentUser = async (token: string) => {
     }
 }
 
-export const updateSchool = async (data:Partial<{
-    address: string,
-    logo: string,
-    name: string
-}>, id:string, token: string) => {
+export const updateSchool = async (data:FormData, id:string, token: string) => {
     try {
         const response = await axios.put(`${API_URL}/school/updateSchool/${id}`, data,{
             headers:{

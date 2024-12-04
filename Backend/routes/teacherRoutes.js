@@ -4,6 +4,7 @@ import { authorizeRoles } from '../middlewares/roleMiddleware.js';
 import { addTeacher,updateTeacher,deleteTeacher } from '../controllers/teacherController.js';
 import {Role} from '../enum.js';
 const router = express.Router();
+//comment
 
 router.get('/dashboard', authenticate, authorizeRoles(Role.Teacher), (req, res) => {
     res.json({ message:` Welcome Teacher: ${req.user.id}` });
