@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Header from './Header'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 
-export default function SignupForm() {
+interface SignupFormProps {
+  setAuth: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export  const SignupForm:React.FC<SignupFormProps> = ({setAuth})=> {
   const { toast } = useToast()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -75,7 +79,7 @@ export default function SignupForm() {
           })
         } else {
           localStorage.setItem("token", res.token)
-          
+          setAuth(true)
           if (formData.role === 'SchoolAdmin') {
             navigate('/addschool')
          
