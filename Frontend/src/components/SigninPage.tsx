@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,13 @@ import Header from './Header'
 import { signIn } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 
-export default function LoginForm() {
+
+interface LoginFormProps {
+    setAuth: React.Dispatch<React.SetStateAction<boolean>>;
+  }
+
+
+export const LoginForm:React.FC<LoginFormProps> = ({setAuth}) =>{
     const { toast } = useToast()
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
@@ -71,7 +77,7 @@ export default function LoginForm() {
             } else {
               
                 localStorage.setItem("token", res.token)
-                setTimeout(()=>{
+                setAuth(true);
                   if (formData.role === 'SchoolAdmin') {
                     navigate('/addschool')
                 } else if (formData.role === 'Teacher') {
@@ -79,7 +85,7 @@ export default function LoginForm() {
                 } else if (formData.role === 'Student') {
                     navigate('/students')
                 }
-                },1000)
+                setAuth(true)
               
             }
             setLoading(false)
