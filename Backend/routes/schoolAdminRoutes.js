@@ -4,6 +4,7 @@ import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import express from 'express';
 import {Role} from '../enum.js';
 import { createForm } from "../controllers/formController.js";
+import upload from "../middlewares/multer.js";
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin), (req, r
     res.json({ message:` Welcome School Admin: ${req.user.id} `});
 });
 
-router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin),addSchool)
+router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin),upload.single('logo'),addSchool)
 
 router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin),addTeacher)
 router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)

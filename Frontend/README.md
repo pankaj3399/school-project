@@ -29,13 +29,11 @@ Create a `.env` file in the root of the `Frontend` directory and add the followi
 
 ```
 VITE_API_URL=<your-backend-url>/api
-VITE_CLOUD_NAME=<your-cloudinary-cloud-name>
-VITE_UPLOAD_PRESET=<your-upload-preset>
+
 ```
 
 - Replace `<your-backend-url>` with the URL where the backend server is running (e.g., `http://localhost:5000`).
-- Replace `<your-cloudinary-cloud-name>` with your Cloudinary cloud name (e.g., `abcdgd`).
-- Replace `<your-upload-preset>` with your Cloudinary upload preset (e.g., `schol_preset`).
+
 
 
 

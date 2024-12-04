@@ -1,8 +1,4 @@
 
-
-
-### Backend README
-
 # School Management App - Backend
 
 This is the backend for the School Management App, responsible for managing the database, authentication, and server-side logic.
@@ -32,17 +28,20 @@ cd School_project/Backend
 npm install
 ```
 
----
+
 
 ### 3. Set Up Environment Variables
-Create a `.env` file in the root of the `Backend` directory and add the following keys:
+Create a `.env` file in the root of the `Backend` directory and add the following variables:
 
 ```
-MONGO_URI=<your-mongodb-connection-string>
-JWT_SECRET=<your-jwt-secret-key>
-ADMIN_EMAIL=<admin-email>
-ADMIN_PASSWORD=<admin-password>
-SESSION_SECRET=<session-secret-key>
+MONGO_URI=
+JWT_SECRET=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+SESSION_SECRET=
+CLOUDINARY_API_SECRET=
+CLOUD_NAME=
+CLOUDINARY_API_KEY=
 ```
 
 ---
@@ -77,3 +76,4 @@ Once the server is running and you've logged in as the admin:
 - Ensure the `.env` file is correctly configured before running the application.
 - Use the `npm run build` command to build and start the server for production.
 - The `ADMIN_EMAIL` and `ADMIN_PASSWORD` are used for creating an initial system admin account.
+```

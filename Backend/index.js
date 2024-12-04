@@ -2,13 +2,14 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
-import AdminJs from 'adminjs';
-import AdminJSExpress from '@adminjs/express';
+// import AdminJs from 'adminjs';
+// import AdminJSExpress from '@adminjs/express';
 
-import * as AdminJSMongoose from '@adminjs/mongoose'
+// import * as AdminJSMongoose from '@adminjs/mongoose'
 
 import bcrypt from 'bcryptjs';
-import session from 'express-session'; 
+import session from 'express-session';
+import bodyParser from 'body-parser'; 
 
 import User from './models/Admin.js';
 import School from './models/School.js';
@@ -31,6 +32,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json({limit: "10mb"}));
 app.use(
   session({
     secret: process.env.SESSION_SECRET, 

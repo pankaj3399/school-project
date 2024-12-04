@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
 
@@ -18,6 +17,10 @@ export default function SchoolPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+
+
+
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -72,30 +75,6 @@ export default function SchoolPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleImageUpload = async (file: File) => {
-    const CLOUD_NAME = import.meta.env.VITE_CLOUD_NAME as string;
-    const UPLOAD_PRESET = import.meta.env.VITE_UPLOAD_PRESET as string;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
-    formData.append("cloud_name", CLOUD_NAME);
-
-    try {
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        formData
-      );
-      return response.data.secure_url;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
-      throw new Error("Failed to upload image");
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,20 +91,17 @@ export default function SchoolPage() {
           setLoading(false);
           return;
         }
-
-        const logoUrl = logo ? await handleImageUpload(logo) : school.logo;
-
-        const formData = {
-          name: schoolName,
-          address,
-          logo: logoUrl,
-        };
-
+        const formData = new FormData();
+        formData.append("name", schoolName);
+        formData.append("address", address);
+        if (logo) {
+          formData.append("logo", logo);
+        }
         const response = isEditing
           ? await updateSchool(formData, school._id, token)
           : await addSchool(formData, token);
 
-        if (response.status === 200) {
+        if (!response.error) {
           toast({
             title: isEditing
               ? "School updated successfully"
@@ -136,7 +112,7 @@ export default function SchoolPage() {
           });
           setSchool(response.data.school);
           setIsEditing(false);
-          navigate(`/addschool`);
+          navigate("/addschool");
         } else {
           toast({
             title: "Error",
