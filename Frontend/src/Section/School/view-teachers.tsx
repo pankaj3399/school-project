@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+  TableHead,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { getTeachers, deleteTeacher, updateTeacher } from "@/api";
 import Loading from "../Loading";
@@ -11,8 +18,8 @@ export default function ViewTeachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
-  const [showModal, setShowModal] = useState(false); // State to control modal visibility
-  const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null); // Store the teacher id to delete
+  const [showModal, setShowModal] = useState(false);
+  const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,7 +59,7 @@ export default function ViewTeachers() {
 
       await deleteTeacher(id, token);
       setTeachers((prev) => prev.filter((teacher) => teacher._id !== id));
-      setShowModal(false); // Close the modal
+      setShowModal(false);
       toast({
         title: "Success",
         description: "Teacher deleted successfully.",
@@ -97,54 +104,52 @@ export default function ViewTeachers() {
     return <Loading />;
   }
 
-  if (teachers.length === 0) {
-    return (
-      <div className="text-center">
-        <h1 className="text-xl font-bold">No teachers found</h1>
-        <p>Please ensure there are teachers in the system and try again.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-5 bg-white rounded-xl shadow-xl mt-10">
       <h1 className="text-3xl font-bold mb-6">View Teachers</h1>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {teachers.map((teacher) => (
-            <TableRow key={teacher._id}>
-              <TableCell>{teacher.name}</TableCell>
-              <TableCell>{teacher.subject}</TableCell>
-              <TableCell>{teacher.email}</TableCell>
-              <TableCell>
-                <Button
-                  onClick={() => setEditingTeacher(teacher)}
-                  className="mr-2 px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-                >
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => {
-                    setTeacherToDelete(teacher._id); // Store the teacher id to delete
-                    setShowModal(true); // Open the modal
-                  }}
-                  className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
-                >
-                  Delete
-                </Button>
-              </TableCell>
+      {teachers.length === 0 ? (
+        <div className="text-center">
+          <h2 className="text-xl font-bold">No Teachers Found</h2>
+          <p>Please ensure there are teachers in the system and try again.</p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Subject</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {teachers.map((teacher) => (
+              <TableRow key={teacher._id}>
+                <TableCell>{teacher.name}</TableCell>
+                <TableCell>{teacher.subject}</TableCell>
+                <TableCell>{teacher.email}</TableCell>
+                <TableCell>
+                  <Button
+                    onClick={() => setEditingTeacher(teacher)}
+                    className="mr-2 px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setTeacherToDelete(teacher._id);
+                      setShowModal(true);
+                    }}
+                    className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
       {editingTeacher && (
         <div className="mt-8 p-5 border rounded-xl bg-gray-50">
@@ -172,7 +177,10 @@ export default function ViewTeachers() {
                 type="text"
                 value={editingTeacher.subject}
                 onChange={(e) =>
-                  setEditingTeacher({ ...editingTeacher, subject: e.target.value })
+                  setEditingTeacher({
+                    ...editingTeacher,
+                    subject: e.target.value,
+                  })
                 }
                 className="w-full px-4 py-2 border rounded"
               />
