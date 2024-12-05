@@ -5,6 +5,7 @@ import { TopNav } from "@/Section/School/component/top-nav";
 import { Breadcrumb } from "@/Section/School/component/breadcrumb";
 import { useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
+import { AuthProvider } from "./authContext";
 // import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -12,22 +13,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = location.pathname;
 
 
-
+  // Define routes for the simple layout
   const simpleLayoutRoutes = ['/', '/signup', '/signin','/students'];
-  const teacherLayoutRoutes = ['/teachers/viewstudent','/teachers/viewforms','/teachers','/teachers/pointhistory'];
 
   const isSimpleLayout = simpleLayoutRoutes.includes(pathname);
-  const isTeacherLayout = teacherLayoutRoutes.includes(pathname);
+  const isTeacherLayout = pathname.startsWith('/teachers');
   if (isSimpleLayout) {
     return (
+      <AuthProvider>
       <div>
         <Toaster />
         {children}
       </div>
+      </AuthProvider>
     );
   }
   if (isTeacherLayout) {
     return (
+      <AuthProvider>
       <div className="flex h-screen bg-gray-100">
       <TeacherSideNav />
       <Toaster />
@@ -41,10 +44,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
       </div>
     </div>
+    </AuthProvider>
     );
   }
 
   return (
+    <AuthProvider>
     <div className="flex h-screen bg-gray-100">
       <SideNav />
       <Toaster />
@@ -58,5 +63,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
       </div>
     </div>
-  );
+    </AuthProvider>
+    );
 }

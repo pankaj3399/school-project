@@ -9,12 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '@/api'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/authContext'
 
-interface SignupFormProps {
-  setAuth: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
-export  const SignupForm:React.FC<SignupFormProps> = ({setAuth})=> {
+
+export  const SignupForm = ()=> {
+  const { login } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -78,11 +78,9 @@ export  const SignupForm:React.FC<SignupFormProps> = ({setAuth})=> {
             variant: "destructive"
           })
         } else {
-          localStorage.setItem("token", res.token)
-          setAuth(true)
+          login(res.token)
           if (formData.role === 'SchoolAdmin') {
             navigate('/addschool')
-         
           }
         }
       } catch (error) {
