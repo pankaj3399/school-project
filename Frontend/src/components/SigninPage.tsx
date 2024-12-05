@@ -78,13 +78,16 @@ export const LoginForm:React.FC<LoginFormProps> = ({setAuth}) =>{
               
                 localStorage.setItem("token", res.token)
                 setAuth(true);
-                  if (formData.role === 'SchoolAdmin') {
-                    navigate('/addschool')
-                } else if (formData.role === 'Teacher') {
-                    navigate('/teachers/viewstudent')
-                } else if (formData.role === 'Student') {
-                    navigate('/students')
-                }
+                setTimeout(() => {
+                    if (formData.role === 'SchoolAdmin') {
+                        navigate('/addschool');
+                    } else if (formData.role === 'Teacher') {
+                        navigate('/teachers/viewstudent');
+                    } else if (formData.role === 'Student') {
+                        navigate('/students');
+                    }
+                }, 100); 
+                
                 setAuth(true)
               
             }

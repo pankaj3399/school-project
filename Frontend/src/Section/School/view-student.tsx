@@ -98,18 +98,24 @@ export default function ViewStudents() {
     return <Loading />
   }
 
-  if (students.length === 0) {
-    return (
-      <div className="text-center">
-        <h1 className="text-xl font-bold">No students found</h1>
-        <p>Please ensure there are students in the system and try again.</p>
-      </div>
-    )
-  }
+  // if (students.length === 0) {
+  //   return (
+  //     <div className="text-center">
+  //       <h1 className="text-xl font-bold">No students found</h1>
+  //       <p>Please ensure there are students in the system and try again.</p>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="p-5 bg-white rounded-xl shadow-xl mt-10">
       <h1 className="text-3xl font-bold mb-6">View Students</h1>
+      {students.length === 0 ? (
+      <div className="text-center">
+        <h2 className="text-xl font-bold">No Students Found</h2>
+        <p>Please ensure there are students in the system and try again.</p>
+      </div>
+    ) : (
       <Table>
         <TableHeader>
           <TableRow>
@@ -148,7 +154,7 @@ export default function ViewStudents() {
           ))}
         </TableBody>
       </Table>
-
+    )}
       {editingStudent && (
         <div className="mt-8 p-5 border rounded-xl bg-gray-50">
           <h2 className="text-2xl font-bold mb-4">Edit Student</h2>
@@ -242,5 +248,6 @@ export default function ViewStudents() {
         description="Are you sure you want to delete this student? This action cannot be undone."
       />
     </div>
+    
   )
 }
