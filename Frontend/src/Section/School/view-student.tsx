@@ -120,9 +120,9 @@ export default function ViewStudents() {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Class</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Parent Email</TableHead>
+            <TableHead>Parents Email</TableHead>
+            {/* <TableHead></TableHead> */}
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -130,9 +130,9 @@ export default function ViewStudents() {
           {students.map((student) => (
             <TableRow key={student._id}>
               <TableCell>{student.name}</TableCell>
-              <TableCell>{student.standard}</TableCell>
               <TableCell>{student.email}</TableCell>
-              <TableCell>{student.parentEmail || "N/A"}</TableCell>
+              <TableCell>{student.parentEmail || "N/A"}<br/>{student.standard}</TableCell>
+              {/* <TableCell></TableCell> */}
               <TableCell>
                 <button
                   onClick={() => setEditingStudent(student)}
@@ -176,18 +176,8 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium">Class</label>
-              <input
-                type="text"
-                value={editingStudent.standard}
-                onChange={(e) =>
-                  setEditingStudent({
-                    ...editingStudent,
-                    standard: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border rounded"
-              />
+              {/* <label className="block text-sm font-medium">Class</label> */}
+             
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium">Email</label>
@@ -203,7 +193,7 @@ export default function ViewStudents() {
                 className="w-full px-4 py-2 border rounded"
               />
             </div>
-            <div className="mb-4">
+            <div className="mb-4 space-y-2">
               <label className="block text-sm font-medium">Parent Email</label>
               <input
                 type="email"
@@ -215,6 +205,18 @@ export default function ViewStudents() {
                   })
                 }
                 className="w-full px-4 py-2 border rounded"
+              />
+              
+               <input
+                type="text"
+                value={editingStudent.standard}
+                onChange={(e) =>
+                  setEditingStudent({
+                    ...editingStudent,
+                    standard: e.target.value,
+                  })
+                }
+                className=" w-full px-4 py-2 border rounded"
               />
             <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e)=>setEditingStudent({...editingStudent,sendNotifications:e as boolean})} className="mt-2" />
               <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to parent</span>
