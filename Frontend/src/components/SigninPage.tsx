@@ -67,20 +67,34 @@ export default function LoginForm() {
     try {
       const res = await signIn(formData);
       if (res.error) {
+        // if (res.message === "User not found") {
+        //   toast({
+        //     title: "Teacher Not Found",
+        //     description: "The entered teacher credentials are invalid. Please try again.",
+        //     variant: "destructive",
+        //   });
+        // } else {
+        //   toast({
+        //     title: res.error,
+        //     description: "Please try again!",
+        //     variant: "destructive",
+        //   });
+        // }
         toast({
-          title: res.error,
-          description: "Please try again!",
+          title: res.error.message,
+          description: res.error?.response?.data?.message || "Please Try Again!!",
           variant: "destructive",
         });
+        console.log("Login error:", res.error);
+        
       } else {
         await login(res.token);
         toast({
           title: "Login Successful",
           description: "Redirecting to your dashboard...",
-          variant: "default",   
+          variant: "default",
         });
 
-        // Redirect based on the role
         if (formData.role === "SchoolAdmin") {
           navigate("/addschool");
         } else if (formData.role === "Teacher") {
@@ -96,6 +110,7 @@ export default function LoginForm() {
         description: "An error occurred. Please try again.",
         variant: "destructive",
       });
+      alert("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

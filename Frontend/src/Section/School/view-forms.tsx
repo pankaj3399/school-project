@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { FormDetails } from '@/Section/School/component/form-details'
 import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon } from 'lucide-react'
-import { getForms } from '@/api'
+import {  getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Form, Question } from '@/lib/types'
 
@@ -13,7 +13,7 @@ export default function ViewForms() {
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
 
   useEffect(() => {
-    // Fetch forms from your API
+    
     const fetchForms = async () => {
       try {
         const data = await getForms(localStorage.getItem('token')!)

@@ -25,6 +25,7 @@ export const signIn = async (data:{
     try {
         const response = await axios.post(`${API_URL}/auth/login`, data);
         return response.data;
+        
     } catch (error) {
         return {error};
     }
