@@ -146,7 +146,7 @@ export default function AddStudent() {
           />
         </div>
         <div>
-          <Label htmlFor="email">Parent Email</Label>
+          <Label htmlFor="email">Parent/Guardian Email</Label>
           <Input
             id="parentEmail"
             name="parentEmail"
@@ -154,9 +154,18 @@ export default function AddStudent() {
             onChange={handleChange}
             required
           />
+        </div>
+        <div>
+          
+          <Input
+            id="className"
+            name="className"
+            value={formData.className}
+            onChange={handleChange}
+            required
+          />
           <Checkbox className="mt-2" checked={formData.sendNotifications} onCheckedChange={(e)=>setFormData({...formData,sendNotifications:e as boolean})}  /><span className="text-sm ml-2 gap-x-1 inline-block  text-semibold ">Send email notification to parent</span>
         </div>
-
         <div>
           <Label htmlFor="password">Password</Label>
           <Input
@@ -168,16 +177,7 @@ export default function AddStudent() {
             required
           />
         </div>
-        <div>
-          <Label htmlFor="className">Class</Label>
-          <Input
-            id="className"
-            name="className"
-            value={formData.className}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        
        
         <Button type="submit">Add Student</Button>
       </form>

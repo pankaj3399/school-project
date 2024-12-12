@@ -79,7 +79,6 @@ export default function SchoolPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      try {
         setLoading(true);
         const token = localStorage.getItem("token");
         if (!token) {
@@ -98,38 +97,32 @@ export default function SchoolPage() {
           formData.append("logo", logo);
         }
         const response = isEditing
-          ? await updateSchool(formData, school._id, token)
-          : await addSchool(formData, token);
+    ? await updateSchool(formData, school._id, token)
+    : await addSchool(formData, token);
 
-        if (!response.error) {
-          toast({
-            title: isEditing
-              ? "School updated successfully"
-              : "School added successfully",
-            description: `${schoolName} has been ${
-              isEditing ? "updated" : "added"
-            } to the system.`,
-          });
-          setSchool(response.data.school);
-          setIsEditing(false);
-          navigate("/addschool");
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to process the request. Please try again.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to process the request. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
+
+if (!response.error) {
+    toast({
+        title: isEditing
+            ? "School updated successfully"
+            : "School added successfully",
+        description: `${schoolName} has been ${
+            isEditing ? "updated" : "added"
+        } to the system.`,
+    });
+    setLoading(false);
+    setSchool(response.data.school);
+    setIsEditing(false);
+    navigate("/addschool");
+  } else {
+    toast({
+      title: "Error",
+      description: "Failed to process the request. Please try again.",
+      variant: "destructive",
+      });
     }
+    setLoading(false);
+  }
   };
 
   if (loading) return <Loading />;

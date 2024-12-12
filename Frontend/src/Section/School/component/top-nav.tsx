@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -8,27 +7,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getCurrentUser } from "@/api"
+import { useAuth } from "@/authContext"
 
 export function TopNav() {
-  const [admin, setAdmin] = useState<{ name: string; email: string }>({
-    name: "",
-    email: "",
-  })
+  const {user} = useAuth();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token') // Replace with actual token retrieval logic
-    const fetchUser = async () => {
-      if (token) {
-        const userData = await getCurrentUser(token)
-        if (userData && userData.user.name) {
-          setAdmin({ name: userData.user.name, email: userData.user.email })
-        }
-      }
-    }
-
-    fetchUser()
-  }, [])
 
   return (
     <header className="bg-white shadow-sm">
@@ -36,15 +19,15 @@ export function TopNav() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative mr-8 h-8 w-8 rounded-full">
-              {admin.name}
+              {user?.name}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col  space-y-1">
-                <p className="text-sm font-medium  leading-none">{admin.name}</p>
+                <p className="text-sm font-medium  leading-none">{user?.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {admin.email}
+                  {user?.email}
                 </p>
               </div>
             </DropdownMenuLabel>
