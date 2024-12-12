@@ -13,6 +13,11 @@ import FormBuilder from "./Section/School/form-builder";
 import ViewTeacherStudents from "./Section/Teacher/view-students";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./authContext";
+import ViewForms from "./Section/School/view-forms";
+import ViewTeacherForms from "./Section/Teacher/view-teacher-forms";
+import FormPage from "./Section/Teacher/submit-form";
+import ViewPointHistory from "./Section/School/component/point-history";
+
 
 // Reusable ProtectedRoute component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -25,12 +30,11 @@ export default function App() {
     <div className="min-h-screen bg-white text-gray-800">
       <RootLayout>
         <Routes>
-          {/* Public Routes */}
+          
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
 
-          {/* Protected Routes */}
           <Route path="/addschool" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
@@ -41,12 +45,12 @@ export default function App() {
           <Route path="/teachers/viewstudent" element={<ProtectedRoute><ViewTeacherStudents /></ProtectedRoute>} />
           <Route path="/createform" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
 
-          {/* Uncomment when ready */}
-          {/* <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} /> */}
-          {/* <Route path="/teachers/viewforms" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} /> */}
-          {/* <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} /> */}
-          {/* <Route path="/teachers/pointhistory" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} /> */}
-          {/* <Route path="/pointhistory" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} /> */}
+ 
+          <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
+          <Route path="/teachers/viewforms" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} />
+          <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
+          <Route path="/teachers/pointhistory" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
+          <Route path="/pointhistory" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
         </Routes>
       </RootLayout>
     </div>
