@@ -1,16 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { School, UserPlus, Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon} from 'lucide-react';
+import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
   { href: '/addschool', label: 'School', icon: School },
-  { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
-  { href: '/addstudent', label: 'Add Student', icon: UserPlus },
-  { href: '/viewteacher', label: 'View Teachers', icon: Users },
-  { href: '/viewstudent', label: 'View Students', icon: BookOpen },
-  { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
-  { href: '/viewforms', label: 'View Forms', icon: ClipboardIcon },
+  // { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
+  // { href: '/addstudent', label: 'Add Student', icon: UserPlus },
+  { href: '/viewteacher', label: 'Teachers', icon: Users },
+  { href: '/viewstudent', label: 'Students', icon: BookOpen },
+  // { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
+  { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
   { href: '/pointhistory', label: 'Point History', icon: ClipboardIcon },
 ];
 
@@ -46,14 +46,14 @@ export function SideNav() {
         >
           <nav className="w-64">
             <div className="p-4">
-              <img src="/logo2.png" alt="Logo" className="w-14 h-14" />
+              <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
             </div>
             <ul className="space-y-2 py-4">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     to={item.href}
-                    className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-4 py-2  hover:bg-gray-100"
                     onClick={toggleMenu} // Close menu after navigation
                   >
                     <item.icon className="h-5 w-5 mr-2" />
@@ -69,7 +69,7 @@ export function SideNav() {
                   handleLogout();
                   toggleMenu(); // Close menu on logout
                 }}
-                className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100"
+                className="flex items-center w-full px-4 py-2  hover:bg-blue-500"
               >
                 <LogOut className="h-5 w-5 mr-2" />
                 Logout
@@ -80,16 +80,16 @@ export function SideNav() {
       )}
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:block w-64 bg-white shadow-lg h-screen">
+      <nav className="hidden md:block w-64 bg-[#0056d2] text-white  shadow-lg h-screen">
         <div className="p-4">
-          <img src="/logo2.png" alt="Logo" className="w-14 h-14" />
+          <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
         </div>
         <ul className="space-y-2 py-4">
           {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 to={item.href}
-                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
+                className="flex items-center px-4 py-2  hover:bg-blue-500"
               >
                 <item.icon className="h-5 w-5 mr-2" />
                 {item.label}
@@ -101,7 +101,7 @@ export function SideNav() {
         <div className="px-4 py-2 mt-4 border-t">
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100"
+            className="flex items-center w-full px-4 py-2  hover:bg-blue-500"
           >
             <LogOut className="h-5 w-5 mr-2" />
             Logout

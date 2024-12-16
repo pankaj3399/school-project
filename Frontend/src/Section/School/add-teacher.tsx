@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { addTeacher } from "@/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import Loading from "../Loading";
+// import ViewTeachers from "./view-teachers";
 
 export default function AddTeacher() {
   const [formData, setFormData] = useState({
@@ -77,7 +78,7 @@ export default function AddTeacher() {
           description: `${name} has been added.`,
         });
 
-        navigate("/viewteachers");
+        navigate("/viewteacher");
       } else {
         toast({
           title: "Error",
@@ -115,7 +116,7 @@ export default function AddTeacher() {
 
   return (
     <div className="grid place-items-center w-full h-full mt-20">
-      <div className="bg-white shadow-xl p-4 w-40 sm:w-40 md:w-60 lg:w-96 rounded-lg">
+      <div className="bg-white shadow-xl p-4 w-72  sm:w-72 md:w-72 lg:w-96 rounded-lg">
         <h1 className="text-3xl font-bold mb-6">Add Teacher</h1>
         <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
           <div>
@@ -171,6 +172,7 @@ export default function AddTeacher() {
           <Button type="submit">Add Teacher</Button>
         </form>
       </div>
+      {/* <ViewTeachers/> */}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon } from 'lucide-r
 import {  getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Form, Question } from '@/lib/types'
+import { useNavigate } from 'react-router-dom'
 
 
 export default function ViewForms() {
@@ -33,6 +34,7 @@ export default function ViewForms() {
 
     fetchForms()
   }, [])
+  const navigate = useNavigate();
 
   const getFormTypeIcon = (formType: string) => {
     switch (formType) {
@@ -66,10 +68,13 @@ export default function ViewForms() {
 
   return (
     <div className="container mx-auto p-4">
+      <div className='flex justify-between'>
       <h1 className="text-2xl font-bold mb-6">Forms</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Button onClick={()=>navigate('/createform')} >Create Form </Button>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 ">
         {forms.map((form) => (
-          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow bg-slate-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{form.formName}</CardTitle>
               {getFormTypeIcon(form.formType)}

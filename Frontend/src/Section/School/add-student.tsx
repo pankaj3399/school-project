@@ -37,7 +37,7 @@ export default function AddStudent() {
 
     const { name, password, className, email, parentEmail, sendNotifications } = formData
 
-    if (!name || !password || !className || !parentEmail) {
+    if (!name || !password  || !parentEmail) {
       toast({
         title: "Error",
         description: "Please fill all fields.",
@@ -64,7 +64,7 @@ export default function AddStudent() {
       const studentData = {
         name: name,
         password: password,
-        standard: className,
+        standard: className || "",
         email : email,
         parentEmail : parentEmail,
         sendNotifications : sendNotifications
@@ -81,7 +81,7 @@ export default function AddStudent() {
           description:` ${name} has been added.`,
         })
         
-        navigate("/viewstudents")
+        navigate("/viewstudent")
       } else {
         toast({
           title: "Error",
@@ -162,8 +162,9 @@ export default function AddStudent() {
             name="className"
             value={formData.className}
             onChange={handleChange}
-            required
+           
           />
+          (optional)<br/>
           <Checkbox className="mt-2" checked={formData.sendNotifications} onCheckedChange={(e)=>setFormData({...formData,sendNotifications:e as boolean})}  /><span className="text-sm ml-2 gap-x-1 inline-block  text-semibold ">Send email notification to parent</span>
         </div>
         <div>

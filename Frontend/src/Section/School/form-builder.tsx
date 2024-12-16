@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { createForm } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Question } from '@/lib/types'
+import { useNavigate } from 'react-router-dom'
 
 type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
 
@@ -20,6 +21,8 @@ const clearForm = () => {
   setFormType('AwardPoints')
   setQuestions([])
 }
+
+const navigate = useNavigate()
 
   const handleCreateForm = async () => {
     console.log(JSON.stringify({formName, formType, questions}))
@@ -36,6 +39,7 @@ const clearForm = () => {
         description: 'Form Created Successfully'
       })
       clearForm()
+      navigate('/viewforms')
     }
   }
 
@@ -53,7 +57,7 @@ const clearForm = () => {
 
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
-      <h1 className="text-2xl font-bold">Form Builder</h1>
+      <h1 className="text-2xl font-bold">Create Form</h1>
       <div>
             <Label htmlFor="formName">Form Name</Label>
             <Input
