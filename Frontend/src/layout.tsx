@@ -50,12 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <AuthProvider>
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-200 ">
       <SideNav />
       <Toaster />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden bg-[#0056d2]">
         <TopNav />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto  rounded-2xl border bg-white   ">
           <div className="container mx-auto px-6 py-8">
             <Breadcrumb />
             {children}
