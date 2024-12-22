@@ -11,7 +11,7 @@ export const FormType = Object.freeze({
     PointWithdraw: 'PointWithdraw',
     DeductPoints: 'DeductPoints'
 });
-
+//hello
 export const QuestionType = Object.freeze({
     Text: 'text',
     Select: 'select',
