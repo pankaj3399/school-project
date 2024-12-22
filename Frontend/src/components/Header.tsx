@@ -6,7 +6,7 @@ export default function Header() {
 <header className="fixed top-0 left-0 right-0 z-50 bg-[#fafafa] shadow-md h-20">
 <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/hero2.jpg" alt="" className='w-14  h-14' />
+          <img src="/logo2.png" alt="" className='w-14  h-14' />
         </Link>
          
           {location.pathname === '/' ? ( <div className='flex gap-x-96 items-center '>
