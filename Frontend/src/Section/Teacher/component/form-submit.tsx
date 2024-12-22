@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { AnswerType, Form, Question } from '@/lib/types'
 import { getStudents } from '@/api'
-import { Checkbox } from '@/components/ui/checkbox'
+
 
 
 
@@ -58,6 +58,7 @@ export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(answers, submittedFor, isSendEmail)
+    setIsSendEmail((prev)=>prev)
   }
 
   const renderQuestion = (question: Question) => {
