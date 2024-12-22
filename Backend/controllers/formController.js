@@ -6,11 +6,16 @@ import PointsHistory from "../models/PointsHistory.js"
 import School from "../models/School.js"
 import Teacher from "../models/Teacher.js"
 import Student from "../models/Student.js"
+import { sendEmail } from "../services/nodemailer.js"
 export const createForm = async (req, res) => {
     const {
         formName,
         formType,
-        questions
+        questions,
+        studentEmail = false,
+        teacherEmail = false,
+        schoolAdminEmail = false,
+        parentEmail = false,
     } = req.body
     const id = req.user.id
     const school = await School.findOne({createdBy:id})
@@ -19,7 +24,11 @@ export const createForm = async (req, res) => {
             schoolId: school._id,
             formName,
             formType,
-            questions
+            questions,
+            studentEmail,
+            teacherEmail,
+            schoolAdminEmail,
+            parentEmail
         })
         return res.status(200).json({
             message: "Form Created Successfully",
@@ -76,7 +85,7 @@ export const submitFormTeacher = async (req, res) => {
     const formId = req.params.formId
     const {
         submittedFor,
-        answers
+        answers,
     } = req.body
     const teacherId = req.user.id
     const teacher = await Teacher.findById(teacherId)
@@ -91,6 +100,21 @@ export const submitFormTeacher = async (req, res) => {
             teacherId,
             answers
         })
+
+        const info = `Form ${form.formName} submitted by ${teacher.name} for ${submittedForStudent.name} with ${totalPoints} points`
+
+        let sentToTeacher, sentToStudent, sentToAdmin, sentToParent1, sentToParent2;
+
+        if(form.teacherEmail && teacher.recieveMails)
+             sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info)
+        if(form.studentEmail)
+             sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info)
+        if(form.schoolAdminEmail)
+             sentToAdmin = await sendEmail(teacher.schoolAdmin.email, 'Form Submitted', info, info)
+        if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications)
+             sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info)
+        if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications)
+             sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info)
 
         const pointsHistory = await PointsHistory.create({
             formId: form._id,
@@ -107,7 +131,14 @@ export const submitFormTeacher = async (req, res) => {
 
         return res.status(200).json({
             message: "Form Submitted Successfully",
-            formSubmission: formSubmission
+            formSubmission: formSubmission,
+            email: {
+                sentToTeacher,
+                sentToStudent,
+                sentToAdmin,
+                sentToParent1,
+                sentToParent2
+            }
         })
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });

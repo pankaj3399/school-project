@@ -5,13 +5,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { AnswerType, Form, Question } from '@/lib/types'
 import { getStudents } from '@/api'
+import { Checkbox } from '@/components/ui/checkbox'
 
 
 
 
 type FormSubmissionProps = {
   form: Form
-  onSubmit: (answers: AnswerType, submittedFor: string) => void
+  onSubmit: (answers: AnswerType, submittedFor: string, isSendEmail: {
+    studentEmail: boolean;
+    teacherEmail: boolean;
+    schoolAdminEmail: boolean;
+    parentEmail: boolean;
+}) => void
 }
 
 export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
@@ -19,6 +25,12 @@ export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
   const [answers, setAnswers] = useState<AnswerType>({})
   const [isFormValid, setIsFormValid] = useState(false)
   const [student, setStudent] = useState<any>([])
+  const [isSendEmail, setIsSendEmail] = useState({
+    studentEmail: false,
+    teacherEmail: false,
+    schoolAdminEmail: false,
+    parentEmail: false
+  })
 
   useEffect(() => {
     const allCompulsoryQuestionsAnswered = form.questions
@@ -45,7 +57,7 @@ export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(answers, submittedFor)
+    onSubmit(answers, submittedFor, isSendEmail)
   }
 
   const renderQuestion = (question: Question) => {
@@ -126,6 +138,25 @@ export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className='flex gap-2'>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
+              <p>Notify Student</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, teacherEmail: !prev.teacherEmail}))}/>
+              <p>Notify Teacher</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, schoolAdminEmail: !prev.schoolAdminEmail}))}/>
+              <p>Notify Admin</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
+              <p>Notify Parents</p>
+            </div>
+           
           </div>
           {form.questions.map((question, index) => (
             <div key={question.id} className="border-b pb-4 ">

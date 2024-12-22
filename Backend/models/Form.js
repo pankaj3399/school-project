@@ -68,6 +68,22 @@ const formSchema = new mongoose.Schema({
     ref: 'School', 
     default: null,
   },
+  studentEmail : {
+    type : Boolean,
+    default : false
+  },
+  teacherEmail : {
+    type : Boolean,
+    default : false
+  },
+  schoolAdminEmail : {
+    type : Boolean,
+    default : false
+  },
+  parentEmail : {
+    type : Boolean,
+    default : false
+  }
 });
 
 export default mongoose.model("Form", formSchema);

@@ -8,6 +8,7 @@ import { createForm } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
+import { Checkbox } from '@/components/ui/checkbox'
 
 type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
 
@@ -15,6 +16,12 @@ export default function FormBuilder() {
   const [formName, setFormName] = useState('')
   const [formType, setFormType] = useState<FormType>('AwardPoints')
   const [questions, setQuestions] = useState<Question[]>([])
+  const [isSendEmail, setIsSendEmail] = useState({
+    studentEmail: false,
+    teacherEmail: false,
+    schoolAdminEmail: false,
+    parentEmail: false
+  })
 
 const clearForm = () => {
   setFormName('')
@@ -26,7 +33,7 @@ const navigate = useNavigate()
 
   const handleCreateForm = async () => {
     console.log(JSON.stringify({formName, formType, questions}))
-    const response = await createForm({formName, formType, questions},localStorage.getItem('token')!)
+    const response = await createForm({formName, formType, questions, ...isSendEmail},localStorage.getItem('token')!)
     if(response.error){
       toast({
         title: 'Error',
@@ -86,6 +93,25 @@ const navigate = useNavigate()
           </SelectContent>
         </Select>
       </div>
+      <div className='flex gap-2'>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
+              <p>Notify Student</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, teacherEmail: !prev.teacherEmail}))}/>
+              <p>Notify Teacher</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, schoolAdminEmail: !prev.schoolAdminEmail}))}/>
+              <p>Notify Admin</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
+              <p>Notify Parents</p>
+            </div>
+           
+          </div>
       <div className="space-y-4">
         {questions.map((question, index) => (
           <>
