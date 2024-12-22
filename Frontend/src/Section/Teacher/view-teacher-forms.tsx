@@ -57,21 +57,21 @@ export default function ViewTeacherForms() {
       <h1 className="text-2xl font-bold mb-6">Forms</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {forms.map((form) => (
-          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow bg-[#00a58c] hover:bg-[#00a58c]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{form.formName}</CardTitle>
+              <CardTitle className="text-sm font-medium text-black">{form.formName}</CardTitle>
               {getFormTypeIcon(form.formType)}
             </CardHeader>
             <CardContent>
-              <CardDescription>{form.formType}</CardDescription>
+              <CardDescription className='text-black'>{form.formType}</CardDescription>
               <div className="flex items-center pt-4">
                 <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground text-black">
                   {new Date(form.createdAt).toLocaleDateString()}
                 </span>
               </div>
               <Button
-                className="mt-4 w-full"
+                className="mt-4 w-full bg-[#ffff16] text-black"
                 onClick={() => navigate(`/teachers/submitform/${form._id}`)}
               >
                 Use Form

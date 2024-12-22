@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <Toaster />
       <div className="flex flex-col flex-1 overflow-hidden">
         <TopNav />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#ffff66]">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#ffffff]">
           <div className="container mx-auto px-6 py-8">
             <Breadcrumb />
             {children}
@@ -55,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <Toaster />
       <div className="flex flex-col flex-1 overflow-hidden bg-[#023d54]">
         <TopNav />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto  rounded-2xl border bg-[#ffff66]   ">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto  rounded-2xl border bg-[#ffffff]   ">
           <div className="container mx-auto px-6 py-8">
             <Breadcrumb />
             {children}

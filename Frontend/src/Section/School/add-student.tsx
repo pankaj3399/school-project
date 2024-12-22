@@ -180,7 +180,7 @@ export default function AddStudent() {
         </div>
         
        
-        <Button type="submit">Add Student</Button>
+        <Button type="submit" className="bg-[#00a58c]">Add Student</Button>
       </form>
     </div>
     </div>

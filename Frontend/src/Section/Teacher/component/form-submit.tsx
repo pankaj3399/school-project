@@ -139,7 +139,7 @@ export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className='flex gap-2'>
+          {/* <div className='flex gap-2'>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
               <p>Notify Student</p>
@@ -157,7 +157,7 @@ export function FormSubmission({ form, onSubmit }: FormSubmissionProps) {
               <p>Notify Parents</p>
             </div>
            
-          </div>
+          </div> */}
           {form.questions.map((question, index) => (
             <div key={question.id} className="border-b pb-4 ">
               

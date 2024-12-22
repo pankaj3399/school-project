@@ -93,7 +93,7 @@ const navigate = useNavigate()
           </SelectContent>
         </Select>
       </div>
-      <div className='flex gap-2'>
+      <div className='flex gap-2 text-sm'>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
               <p>Notify Student</p>
@@ -137,7 +137,7 @@ const navigate = useNavigate()
       })}>
         Add Question
       </Button>
-      <Button className='w-full' onClick={handleCreateForm}>Create Form</Button>
+      <Button className='w-full bg-[#00a58c] hover:bg-[#00a58c]' onClick={handleCreateForm}>Create Form</Button>
     </div>
   )
 }
