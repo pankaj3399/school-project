@@ -129,7 +129,7 @@ if (!response.error) {
 
   if (school) {
     return (
-      <div className="grid place-items-center">
+      <div className="grid  place-items-center">
         <div className="space-y-4">
           <div className="flex flex-col gap-4 items-center space-x-4">
             <img
@@ -142,19 +142,19 @@ if (!response.error) {
               <p className="text-xl">Address: {school.address}</p>
             </div>
             <div className="flex gap-4">
-              <Button variant={"outline"} onClick={() => navigate("/addteacher")}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
                 Add Teacher
               </Button>
-              <Button variant={"outline"} onClick={() => navigate("/viewteacher")}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewteacher")}>
                 View Teacher
               </Button>
-              <Button variant={"outline"} onClick={() => navigate("/addstudent")}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addstudent")}>
                 Add Students
               </Button>
-              <Button variant={"outline"} onClick={() => navigate("/viewstudent")}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewstudent")}>
                 View Students
               </Button>
-              <Button variant={"outline"} onClick={() => setIsEditing(true)}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(true)}>
                 Edit School
               </Button>
             </div>
@@ -205,7 +205,7 @@ if (!response.error) {
                     )}
                   </div>
                 )}
-                <Button type="submit">
+                <Button type="submit" className="bg-[#00a58c] hover:bg-[#00a58c]">
                   {isEditing ? "Update School" : "Add School"}
                 </Button>
               </form>
@@ -216,8 +216,8 @@ if (!response.error) {
     );
   }
   return (
-    <div className="grid place-items-center w-full h-full mt-20">
-      <div className="bg-white shadow-xl p-4 rounded-lg">
+    <div className="grid  place-items-center w-full h-full mt-20">
+      <div className=" shadow-xl p-4 rounded-lg">
         <h1 className="text-3xl font-bold mb-6">
           {isEditing ? "Edit School" : "Add School"}
         </h1>

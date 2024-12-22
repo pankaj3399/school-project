@@ -108,10 +108,10 @@ export default function ViewTeachers() {
   }
 
   return (
-    <div className="p-5 bg-gray-200 rounded-xl shadow-xl mt-10">
+    <div className="p-5 mt-10">
       <div className="flex justify-between">
       <h1 className="text-3xl font-bold mb-6">View Teachers</h1>
-      <Button className="" onClick={()=>navigate('/addteacher')}>Add Teachers</Button>
+      <Button className=" bg-[#00a58c] hover:bg-[#00a58c]" onClick={()=>navigate('/addteacher')}>Add Teachers</Button>
       </div>
       {teachers.length === 0 ? (
         <div className="text-center">
@@ -121,7 +121,7 @@ export default function ViewTeachers() {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="border-b-black">
               <TableHead className="text-gray-700">Name</TableHead>
               <TableHead className="text-gray-700">Subject</TableHead>
               <TableHead className="text-gray-700">Email</TableHead>
@@ -130,14 +130,14 @@ export default function ViewTeachers() {
           </TableHeader>
           <TableBody>
             {teachers.map((teacher) => (
-              <TableRow key={teacher._id}>
+              <TableRow key={teacher._id} className="border-b-black">
                 <TableCell>{teacher.name}</TableCell>
                 <TableCell>{teacher.subject}</TableCell>
                 <TableCell>{teacher.email}</TableCell>
                 <TableCell>
                   <Button
                     onClick={() => setEditingTeacher(teacher)}
-                    className="mr-2 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800"
+                    className="mr-2 px-4 py-2 text-white bg-[#2DA194] rounded hover:bg-blue-800"
                   >
                     Edit
                   </Button>

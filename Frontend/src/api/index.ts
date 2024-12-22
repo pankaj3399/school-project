@@ -256,7 +256,12 @@ export const getFormById = async (id:string, token: string) => {
         return {error};
     }
 }
-export const submitFormTeacher = async (data:AnswerType, submittedFor:string, formId:string, token: string) => {
+export const submitFormTeacher = async (data:AnswerType, submittedFor:string, isSendEmail:{
+    studentEmail: boolean;
+    teacherEmail: boolean;
+    schoolAdminEmail: boolean;
+    parentEmail: boolean;
+} , formId:string, token: string) => {
     try {
         const answers:AnswerTypeArray = Object.entries(data).map(([questionId, answer]) => ({
             questionId,
@@ -265,7 +270,8 @@ export const submitFormTeacher = async (data:AnswerType, submittedFor:string, fo
         }))
         const response = await axios.post(`${API_URL}/form/submitFormTeacher/${formId}`, {
             answers,
-            submittedFor
+            submittedFor,
+            ...isSendEmail
         }, {headers: {
             token
         }});

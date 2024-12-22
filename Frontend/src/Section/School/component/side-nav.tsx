@@ -80,7 +80,7 @@ export function SideNav() {
       )}
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:block w-64 bg-[#0056d2] text-white  shadow-lg h-screen">
+      <nav className="hidden md:block w-64 bg-[#023d54] text-white  shadow-lg h-screen">
         <div className="p-4">
           <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
         </div>

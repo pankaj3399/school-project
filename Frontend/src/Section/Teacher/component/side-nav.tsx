@@ -35,7 +35,7 @@ export function TeacherSideNav() {
     </div>
     
     {
-      toogle && <nav className={`w-64 bg-white shadow-lg  ${!toogle ? "max-md:hidden":""}`}>
+      toogle && <nav className={`w-64 bg-[#023d54] text-black shadow-lg  ${!toogle ? "max-md:hidden":""}`}>
       <div className="p-4">
       <img src="/hero1.png" alt="" className='w-14  h-14' />
       </div>
@@ -62,14 +62,14 @@ export function TeacherSideNav() {
     </nav>
     }
 
-<nav className={ `w-64 bg-white shadow-lg max-md:hidden`}>
+<nav className={ `w-64 bg-[#023d54] shadow-lg max-md:hidden`}>
       <div className="p-4">
       <img src="/hero1.png" alt="" className='w-14  h-14' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (
           <li key={item.href}>
-            <Link to={item.href} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <Link to={item.href} className="flex items-center px-4 py-2 text-white ">
               <item.icon className="h-5 w-5 mr-2" />
               {item.label}
             </Link>
@@ -79,7 +79,7 @@ export function TeacherSideNav() {
       <div className="px-4 py-2 mt-4 border-t">
         <button
           onClick={handleLogout}
-          className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100"
+          className="flex items-center w-full px-4 py-2 text-white"
         >
           <LogOut className="h-5 w-5 mr-2" />
           Logout

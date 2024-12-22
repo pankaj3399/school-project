@@ -111,10 +111,10 @@ export default function ViewStudents() {
   // }
 
   return (
-    <div className="p-5 bg-gray-200 rounded-xl shadow-xl mt-10">
+    <div className="p-5 mt-10">
       <div className="flex justify-between">
       <h1 className="text-3xl font-bold mb-6">View Students</h1>
-      <Button className="" onClick={()=>navigate('/addstudent')}>Add Students</Button>
+      <Button className="bg-[#00a58c] hover:bg-[#00a58c]" onClick={()=>navigate('/addstudent')}>Add Students</Button>
 
       </div>
       {students.length === 0 ? (
@@ -125,7 +125,7 @@ export default function ViewStudents() {
     ) : (
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="border-b-black">
             <TableHead className="text-gray-700">Name</TableHead>
             <TableHead className="text-gray-700">Email</TableHead>
             <TableHead className="text-gray-700">Parents Email</TableHead>
@@ -135,7 +135,7 @@ export default function ViewStudents() {
         </TableHeader>
         <TableBody>
           {students.map((student) => (
-            <TableRow key={student._id}>
+            <TableRow key={student._id} className="border-b-black">
               <TableCell>{student.name}</TableCell>
               <TableCell>{student.email}</TableCell>
               <TableCell>{student.parentEmail || "N/A"}<br/>{student.standard}</TableCell>
@@ -143,7 +143,7 @@ export default function ViewStudents() {
               <TableCell>
                 <button
                   onClick={() => setEditingStudent(student)}
-                  className="mr-2 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800"
+                  className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#00a58c]"
                 >
                   Edit
                 </button>

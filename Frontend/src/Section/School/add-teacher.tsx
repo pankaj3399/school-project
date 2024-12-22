@@ -169,7 +169,7 @@ export default function AddTeacher() {
               required
             />
           </div>
-          <Button type="submit">Add Teacher</Button>
+          <Button type="submit" className="bg-[#00a58c]">Add Teacher</Button>
         </form>
       </div>
       {/* <ViewTeachers/> */}
