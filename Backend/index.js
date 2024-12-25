@@ -30,7 +30,13 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+  origin: process.env.FRONTEND_URL, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+  credentials: true, 
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(bodyParser.json({limit: "10mb"}));
 app.use(

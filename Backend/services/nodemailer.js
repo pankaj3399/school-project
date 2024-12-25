@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { generateCouponImage } from '../utils/generateImage.js';
 
 dotenv.config();
 const transporter = nodemailer.createTransport({
@@ -12,7 +13,17 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendEmail = async (to, subject, text, html) => {
+// noOfTokens,
+// student,
+// teacher,
+// subject,
+// date,
+// schoolLogoURL,
+// schoolName,
+// teacherEmail,
+// parentEmail,
+
+export const sendEmail = async (to, subject, text, html, attachment) => {
     try {
         const info = await transporter.sendMail({
             from: process.env.EMAIL_USER,
@@ -20,6 +31,13 @@ export const sendEmail = async (to, subject, text, html) => {
             subject,
             text,
             html,
+            attachments: [
+                {
+                  filename: 'coupon.png',
+                  content: attachment,
+                  cid: 'couponImage', // Content-ID for referencing in the email body
+                },
+              ],
         });
         console.log('Email sent successfully', info);
         return true
@@ -28,4 +46,3 @@ export const sendEmail = async (to, subject, text, html) => {
         return false
     }
 }
-

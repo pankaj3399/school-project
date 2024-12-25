@@ -1,12 +1,14 @@
+//f
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FormDetails } from '@/Section/School/component/form-details'
-import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon } from 'lucide-react'
-import {  getForms } from '@/api'
+import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon, Edit2Icon, Trash2Icon } from 'lucide-react'
+import {  deleteForm, getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Form, Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
+import { AxiosError } from 'axios'
 
 
 export default function ViewForms() {
@@ -65,6 +67,38 @@ export default function ViewForms() {
     return sum
   }
 
+  const removeFromState = (id:string) => {
+    setForms(prev => prev.filter(form => form._id != id))
+  }
+
+  const removeForm  = async (id:string) => {
+    const removedForm = forms.filter(form => form._id == id)[0]
+    try{
+      const token = localStorage.getItem('token')
+      if(!token) throw new Error("Unauthorized request")
+      const res = await deleteForm(id,token)
+      removeFromState(id)
+      if(res)
+        return toast({
+          title:"Success",
+          description: `Successfully Deleted form ${res.formName}`
+        })
+    }catch(err){
+      setForms([...forms, removedForm])
+      console.log(err);
+      if(err instanceof AxiosError)
+        toast({
+          title:"Error",
+          description: err.message
+        })
+      else
+        toast({
+          title:"Error",
+          description: "Something Went Wrong"
+        })
+  }
+}
+
 
   return (
     <div className="container mx-auto p-4">
@@ -74,10 +108,10 @@ export default function ViewForms() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 ">
         {forms.map((form) => (
-          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow bg-[#00a58c] hover:bg-[#00a58c] ">
+          <Card key={form._id} className=" cursor-pointer hover:shadow-lg transition-shadow bg-[#00a58c] hover:bg-[#00a58c] ">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-black">{form.formName}</CardTitle>
-              {getFormTypeIcon(form.formType)}
+              <div className='p-1 bg-white rounded-md'>{getFormTypeIcon(form.formType)}</div>
             </CardHeader>
             <CardContent>
               <CardDescription className='text-black'>{form.formType}</CardDescription>
@@ -90,12 +124,26 @@ export default function ViewForms() {
                   {new Date(form.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <Button
-                className="mt-4 w-full bg-[#ffff16] text-black hover:bg-[#ffff16] hover:text-black"
-                onClick={() => setSelectedForm(form)}
-              >
-                View Details
-              </Button>
+              <div className='flex items-center mt-4 gap-2'>
+                <Button
+                  className="flex-1 bg-[#ffff16] text-black hover:bg-[#ffff16] hover:text-black"
+                  onClick={() => setSelectedForm(form)}
+                >
+                  View Details
+                </Button>
+                <Button
+                  className="bg-blue-500 hover:bg-blue-700"
+                  onClick={() => navigate(`/editform/${form._id}`)}
+                >
+                  <Edit2Icon />
+                </Button>
+                <Button
+                  className="bg-red-500 hover:bg-red-700"
+                  onClick={() => removeForm(form._id)}
+                >
+                  <Trash2Icon />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
