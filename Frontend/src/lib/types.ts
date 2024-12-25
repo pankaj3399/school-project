@@ -16,7 +16,11 @@ export type Form = {
     formType: string
     questions: Question[]
     createdAt: string
-    schoolId: string | null
+    schoolId: string | null,
+    studentEmail: boolean,
+    parentEmail: boolean,
+    teacherEmail: boolean,
+    schoolAdminEmail: boolean
   }
 
 export type AnswerType = {

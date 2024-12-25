@@ -1,3 +1,4 @@
+//b
 import { Role } from "../enum.js"
 import Admin from "../models/Admin.js"
 import Form from "../models/Form.js"
@@ -7,6 +8,7 @@ import School from "../models/School.js"
 import Teacher from "../models/Teacher.js"
 import Student from "../models/Student.js"
 import { sendEmail } from "../services/nodemailer.js"
+import { generateCouponImage } from "../utils/generateImage.js"
 export const createForm = async (req, res) => {
     const {
         formName,
@@ -32,6 +34,36 @@ export const createForm = async (req, res) => {
         })
         return res.status(200).json({
             message: "Form Created Successfully",
+            form: form
+        })
+    }catch(error){
+        return res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+}
+
+export const editForm = async (req, res) => {
+    const formId = req.params.id
+    const {
+        formName,
+        formType,
+        questions,
+        studentEmail = false,
+        teacherEmail = false,
+        schoolAdminEmail = false,
+        parentEmail = false,
+    } = req.body
+    try{
+        const form = await Form.findByIdAndUpdate(formId,{
+            formName,
+            formType,
+            questions,
+            studentEmail,
+            teacherEmail,
+            schoolAdminEmail,
+            parentEmail
+        })
+        return res.status(200).json({
+            message: "Form Edited Successfully",
             form: form
         })
     }catch(error){
@@ -81,6 +113,18 @@ export const getFormById = async (req, res) => {
     }
 }
 
+export const deleteForm = async (req, res) => {
+    const id = req.params.id
+    try{
+        const form = await Form.findByIdAndDelete(id)
+        if(!form)
+            return res.status(404).json({message:"Form doesn't exist"})
+        return res.status(200).json({formName:form.formName})
+    }catch(error){
+        return res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+}
+
 export const submitFormTeacher = async (req, res) => {
     const formId = req.params.formId
     const {
@@ -92,6 +136,9 @@ export const submitFormTeacher = async (req, res) => {
     const form = await Form.findById(formId)
     const submittedForStudent = await Student.findById(submittedFor)
     const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
+    const school = await School.findById(teacher.schoolId)
+    const schoolAdmin = await Admin.findById(school.createdBy)
+
 
 
     try{
@@ -101,20 +148,41 @@ export const submitFormTeacher = async (req, res) => {
             answers
         })
 
+        if(school && teacher && submittedForStudent){
+            const attachment = await generateCouponImage(totalPoints,submittedForStudent.name, teacher.name,teacher.subject,new Date().toDateString(),school.logo,school.name,teacher.email, submittedForStudent.parentEmail);
         const info = `Form ${form.formName} submitted by ${teacher.name} for ${submittedForStudent.name} with ${totalPoints} points`
 
         let sentToTeacher, sentToStudent, sentToAdmin, sentToParent1, sentToParent2;
+        
 
         if(form.teacherEmail && teacher.recieveMails)
-             sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info)
+             sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
         if(form.studentEmail)
-             sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info)
+             sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
         if(form.schoolAdminEmail)
-             sentToAdmin = await sendEmail(teacher.schoolAdmin.email, 'Form Submitted', info, info)
+             sentToAdmin = await sendEmail(schoolAdmin.email,'Form Submitted', info, info, attachment)
         if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications)
-             sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info)
+             sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
         if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications)
-             sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info)
+             sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
+
+        }
+        // const attachment = await generateCouponImage(totalPoints,submittedForStudent.name, teacher.name,teacher.subject,new Date().toDateString(),school.logo,school.name,teacher.email, submittedForStudent.parentEmail);
+        // const info = `Form ${form.formName} submitted by ${teacher.name} for ${submittedForStudent.name} with ${totalPoints} points`
+
+        // let sentToTeacher, sentToStudent, sentToAdmin, sentToParent1, sentToParent2;
+        
+
+        // if(form.teacherEmail && teacher.recieveMails)
+        //      sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
+        // if(form.studentEmail)
+        //      sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
+        // if(form.schoolAdminEmail)
+        //      sentToAdmin = await sendEmail(teacher.schoolAdmin.email, 'Form Submitted', info, info, attachment)
+        // if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications)
+        //      sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
+        // if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications)
+        //      sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
 
         const pointsHistory = await PointsHistory.create({
             formId: form._id,
@@ -132,13 +200,6 @@ export const submitFormTeacher = async (req, res) => {
         return res.status(200).json({
             message: "Form Submitted Successfully",
             formSubmission: formSubmission,
-            email: {
-                sentToTeacher,
-                sentToStudent,
-                sentToAdmin,
-                sentToParent1,
-                sentToParent2
-            }
         })
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });

@@ -1,3 +1,4 @@
+//f
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
@@ -236,6 +237,27 @@ export const getForms = async (token: string) => {
 export const createForm = async (data:any, token: string) => {
     try {
         const response = await axios.post(`${API_URL}/schoolAdmin/createForm`, data, {
+            headers: {token}
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const editForm = async (id:string,data:any, token: string) => {
+    try {
+        const response = await axios.post(`${API_URL}/schoolAdmin/editForm/${id}`, data, {
+            headers: {token}
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const deleteForm = async (id:string, token: string) => {
+    try {
+        const response = await axios.delete(`${API_URL}/schoolAdmin/deleteForm/${id}`, {
             headers: {token}
         });
         return response.data;
