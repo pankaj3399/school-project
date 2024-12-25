@@ -64,7 +64,7 @@ export function TeacherSideNav() {
 
 <nav className={ `w-64 bg-[#023d54] shadow-lg max-md:hidden`}>
       <div className="p-4">
-      <img src="/hero1.png" alt="" className='w-14  h-14' />
+      <img src="/hero1.png" alt="" className='w-56  h-56' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (

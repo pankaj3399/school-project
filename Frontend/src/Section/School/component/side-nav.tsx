@@ -46,7 +46,7 @@ export function SideNav() {
         >
           <nav className="w-64">
             <div className="p-4">
-              <img src="/hero1.png" alt="Logo" className="w-56 h-56" />
+              <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
             </div>
             <ul className="space-y-2 py-4">
               {navItems.map((item) => (
@@ -82,7 +82,7 @@ export function SideNav() {
       {/* Desktop Navigation */}
       <nav className="hidden md:block w-64 bg-[#023d54] text-white  shadow-lg h-screen">
         <div className="p-4">
-          <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
+          <img src="/hero1.png" alt="Logo" className="w-56 h-56" />
         </div>
         <ul className="space-y-2 py-4">
           {navItems.map((item) => (
