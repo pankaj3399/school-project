@@ -25,7 +25,6 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (to, subject, text, html, attachment) => {
     try {
-        const imageBuffer = await generateCouponImage(97, "Mayank", "Yash","Englis","12/12/12","https://placehold.co/400x400.png","EPR RAP SCHOOL","yashvardhan@gmail.com","mandar@gmail.com");
         const info = await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to,
