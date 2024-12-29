@@ -142,7 +142,7 @@ if (!response.error) {
               <p className="text-xl">Address: {school.address}</p>
             </div>
             <div className="flex gap-4">
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
+{/*               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
                 Add Teacher
               </Button>
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewteacher")}>
@@ -153,7 +153,7 @@ if (!response.error) {
               </Button>
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewstudent")}>
                 View Students
-              </Button>
+              </Button> */}
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(true)}>
                 Edit School
               </Button>
