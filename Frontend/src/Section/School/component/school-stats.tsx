@@ -1,6 +1,5 @@
 //school/component
-import { getStats } from "@/api"
-import { memo, useEffect, useState } from "react"
+import { memo } from "react"
 
 
 const SchoolStats = memo(({stats}:{
