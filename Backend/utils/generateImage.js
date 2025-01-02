@@ -19,7 +19,7 @@ export const generateCouponImage = async (
     const __dirname = dirname(fileURLToPath(import.meta.url));
     
     // Load the background image
-    const backgroundImage = await loadImage(path.join(__dirname, './school_token.png').replaceAll("\\","/"));
+    const backgroundImage = await loadImage(path.join(__dirname, './school_token.jpg').replaceAll("\\","/"));
     
     // Load the school logo
     const schoolLogo = await loadImage(schoolLogoURL);
