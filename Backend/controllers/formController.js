@@ -154,16 +154,11 @@ export const submitFormTeacher = async (req, res) => {
 
         
 
-        if(form.teacherEmail && teacher.recieveMails)
-             sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
-        if(form.studentEmail)
-             sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
-        if(form.schoolAdminEmail)
-             sentToAdmin = await sendEmail(schoolAdmin.email,'Form Submitted', info, info, attachment)
-        if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications)
-             sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
-        if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications)
-             sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
+        if(form.teacherEmail && teacher.recieveMails) await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
+        if(form.studentEmail) await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
+        if(form.schoolAdminEmail) await sendEmail(schoolAdmin.email,'Form Submitted', info, info, attachment)
+        if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications) await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
+        if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications) await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
 
         }
 
