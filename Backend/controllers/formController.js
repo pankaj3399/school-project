@@ -152,37 +152,15 @@ export const submitFormTeacher = async (req, res) => {
             const attachment = await generateCouponImage(totalPoints,submittedForStudent.name, teacher.name,teacher.subject,new Date().toDateString(),school.logo,school.name,teacher.email, submittedForStudent.parentEmail);
         const info = `Form ${form.formName} submitted by ${teacher.name} for ${submittedForStudent.name} with ${totalPoints} points`
 
-        let sentToTeacher, sentToStudent, sentToAdmin, sentToParent1, sentToParent2;
         
 
-        if(form.teacherEmail && teacher.recieveMails)
-             sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
-        if(form.studentEmail)
-             sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
-        if(form.schoolAdminEmail)
-             sentToAdmin = await sendEmail(schoolAdmin.email,'Form Submitted', info, info, attachment)
-        if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications)
-             sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
-        if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications)
-             sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
+        if(form.teacherEmail && teacher.recieveMails) await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
+        if(form.studentEmail) await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
+        if(form.schoolAdminEmail) await sendEmail(schoolAdmin.email,'Form Submitted', info, info, attachment)
+        if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications) await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
+        if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications) await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
 
         }
-        // const attachment = await generateCouponImage(totalPoints,submittedForStudent.name, teacher.name,teacher.subject,new Date().toDateString(),school.logo,school.name,teacher.email, submittedForStudent.parentEmail);
-        // const info = `Form ${form.formName} submitted by ${teacher.name} for ${submittedForStudent.name} with ${totalPoints} points`
-
-        // let sentToTeacher, sentToStudent, sentToAdmin, sentToParent1, sentToParent2;
-        
-
-        // if(form.teacherEmail && teacher.recieveMails)
-        //      sentToTeacher = await sendEmail(teacher.email, 'Form Submitted', info, info, attachment)
-        // if(form.studentEmail)
-        //      sentToStudent = await sendEmail(submittedForStudent.email, 'Form Submitted', info, info, attachment)
-        // if(form.schoolAdminEmail)
-        //      sentToAdmin = await sendEmail(teacher.schoolAdmin.email, 'Form Submitted', info, info, attachment)
-        // if(form.parentEmail && submittedForStudent.parentEmail && submittedForStudent.sendNotifications)
-        //      sentToParent1 = await sendEmail(submittedForStudent.parentEmail, 'Form Submitted', info, info, attachment)
-        // if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications)
-        //      sentToParent2 = await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
 
         const pointsHistory = await PointsHistory.create({
             formId: form._id,
@@ -195,8 +173,6 @@ export const submitFormTeacher = async (req, res) => {
             points: totalPoints,
             schoolId: teacher.schoolId
         })
-
-
         return res.status(200).json({
             message: "Form Submitted Successfully",
             formSubmission: formSubmission,
@@ -206,6 +182,7 @@ export const submitFormTeacher = async (req, res) => {
     }
 }
 
+//b
 export const getPointHistory = async (req, res) => {
     const id = req.user.id
     let user;   

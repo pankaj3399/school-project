@@ -5,6 +5,9 @@ import { AnswerType, AnswerTypeArray } from "@/lib/types";
 const API_URL= import.meta.env.VITE_API_URL
 console.log(API_URL);
 
+
+const getToken = () => localStorage.getItem('token')
+
 export const signUp = async (data:{
     email: string,
     password: string,
@@ -169,18 +172,8 @@ export const getStudents = async (token: string) => {
         return {error};
     }
 }
-export const getTeachers = async (token: string) => {
-    try {
-        const response = await axios.get(`${API_URL}/school/teachers`, {
-            headers: {
-                token
-            }
-        });
-        return response.data;
-    } catch (error) {
-        return {error};
-    }
-}
+
+
 
 export const getCurrrentSchool = async (token: string) => {
     try {
@@ -306,6 +299,78 @@ export const submitFormTeacher = async (data:AnswerType, submittedFor:string, is
 export const getPointHistory = async (token: string) => {
     try {
         const response = await axios.get(`${API_URL}/form/getPointHistory`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getStats = async () => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const getPointsGivenPerMonth = async () => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats/pointsgiven`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const getPointsGivenPerMonthPerTeacher = async (id:string) => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats/pointsgiven/${id}`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getPointsReceivedPerMonth = async (id:string) => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats/pointsreceived/${id}`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const getFormsSubmittedPerMonth = async () => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats/formsubmitted`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getFormsSubmittedPerMonthPerTeacher = async (id:string) => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats/formsubmitted/${id}`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+
+export const getTeachers = async () => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/school/teachers`, {
+            headers: {
+                token
+            }
+        });
         return response.data;
     } catch (error) {
         return {error};
