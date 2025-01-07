@@ -1,3 +1,5 @@
+process.env.FONTCONFIG_PATH = '/dev/null'
+
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
