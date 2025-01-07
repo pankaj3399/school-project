@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
-import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
+import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
+import SchoolStats from "./component/school-stats";
 
 export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
@@ -17,6 +18,26 @@ export default function SchoolPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+
+  const [stats, setStats] = useState({
+      teachers:0,
+      students:0,
+      points:0
+    })
+  
+    useEffect(()=>{
+      const fetchStats = async () => {
+          const res = await getStats()
+          console.log(res);
+          setStats({
+              teachers: res.totalTeachers,
+              students: res.totalStudents,
+              points: res.totalPoints
+          })
+      }
+      fetchStats()
+    },[])
 
 
 
@@ -141,8 +162,8 @@ if (!response.error) {
               <h2 className="text-4xl font-bold">Schoolname: {school.name}</h2>
               <p className="text-xl">Address: {school.address}</p>
             </div>
-            <div className="flex gap-4">
-{/*               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
+            <div className="flex flex-col gap-4">
+              {/*               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
                 Add Teacher
               </Button>
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewteacher")}>
@@ -153,13 +174,16 @@ if (!response.error) {
               </Button>
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewstudent")}>
                 View Students
-              </Button> */}
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(true)}>
-                Edit School
+                </Button> */}
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>
+                {isEditing ? "Cancel":"Edit School"}
               </Button>
             </div>
           </div>
         </div>
+        { 
+          !isEditing && <SchoolStats stats={stats} />
+        }
         {isEditing && (
           <div className="grid place-items-center w-full h-full mt-20">
             <div className="bg-white shadow-xl p-4 rounded-lg">

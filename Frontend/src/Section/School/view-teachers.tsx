@@ -37,7 +37,7 @@ export default function ViewTeachers() {
           return;
         }
 
-        const data = await getTeachers(token);
+        const data = await getTeachers();
         setTeachers(data.teachers);
         setLoading(false);
       } catch (error) {

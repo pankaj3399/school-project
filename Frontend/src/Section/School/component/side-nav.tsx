@@ -1,9 +1,11 @@
+//school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon} from 'lucide-react';
+import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Home} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
+  { href: '/schoolAdmin', label: 'Home', icon: Home },
   { href: '/addschool', label: 'School', icon: School },
   // { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
   // { href: '/addstudent', label: 'Add Student', icon: UserPlus },
@@ -32,16 +34,16 @@ export function SideNav() {
   return (
     <>
       {/* Hamburger Icon for Small Screens */}
-      <div className="bg-white md:hidden p-2 fixed top-4 left-4 z-50">
+      <div className=" md:hidden p-2 fixed top-4 left-4 z-50">
         <Button variant="ghost" onClick={toggleMenu}>
-          {isOpen ? <X /> : <MenuIcon />}
+          {isOpen ? <X /> : <MenuIcon color='#fff' />}
         </Button>
       </div>
 
       {/* Mobile Navigation */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-white shadow-lg z-40 md:hidden overflow-y-auto"
+          className="fixed inset-0 shadow-lg z-40 md:hidden overflow-y-auto"
           style={{ height: '100vh' }}
         >
           <nav className="w-64">
