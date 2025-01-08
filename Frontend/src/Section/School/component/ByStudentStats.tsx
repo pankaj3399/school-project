@@ -1,7 +1,6 @@
 //School/component/
 import { getPointsReceivedPerMonth, getStudents } from '@/api'
 import { useEffect, useState } from 'react'
-import LineChartCard from './line-chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import BarChartCard from './bar-chart'
 

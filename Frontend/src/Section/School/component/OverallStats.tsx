@@ -1,7 +1,6 @@
 //school/component
 import { getFormsSubmittedPerMonth, getPointsGivenPerMonth } from '@/api'
 import { useEffect, useState } from 'react'
-import LineChartCard from './line-chart'
 import BarChartCard from './bar-chart'
 
 const OverallStats = () => {
