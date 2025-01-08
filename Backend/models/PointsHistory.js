@@ -5,6 +5,10 @@ const PointsHistorySchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Form'
     },
+    formType:{
+        type:String,
+        default:"N/A"
+    },
     formName: {
         type: String,
         required: true

@@ -108,10 +108,10 @@ export default function ViewForms() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 ">
         {forms.map((form) => (
-          <Card key={form._id} className=" cursor-pointer hover:shadow-lg transition-shadow bg-[#00a58c] hover:bg-[#00a58c] ">
+          <Card key={form._id} className=" cursor-pointer hover:shadow-lg transition-shadow bg-[#97d8b2] hover:bg-[#97d8b2] ">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-black">{form.formName}</CardTitle>
-              <div className='p-1 bg-white rounded-md'>{getFormTypeIcon(form.formType)}</div>
+              <CardTitle className="text-2xl font-medium text-black">{form.formName}</CardTitle>
+              <div className='p-1  rounded-md'>{getFormTypeIcon(form.formType)}</div>
             </CardHeader>
             <CardContent>
               <CardDescription className='text-black'>{form.formType}</CardDescription>
@@ -126,19 +126,19 @@ export default function ViewForms() {
               </div>
               <div className='flex items-center mt-4 gap-2'>
                 <Button
-                  className="flex-1 bg-[#ffff16] text-black hover:bg-[#ffff16] hover:text-black"
+                  className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black  hover:text-black"
                   onClick={() => setSelectedForm(form)}
                 >
                   View Details
                 </Button>
                 <Button
-                  className="bg-blue-500 hover:bg-blue-700"
+                  className="bg-[#5c95ff] hover:bg-[#5c95ff]"
                   onClick={() => navigate(`/editform/${form._id}`)}
                 >
                   <Edit2Icon />
                 </Button>
                 <Button
-                  className="bg-red-500 hover:bg-red-700"
+                  className="bg-[#c7b8da] hover:bg-[#c7b8da]"
                   onClick={() => removeForm(form._id)}
                 >
                   <Trash2Icon />

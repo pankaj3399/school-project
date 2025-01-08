@@ -19,6 +19,7 @@ import FormPage from "./Section/Teacher/submit-form";
 import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
 import AdminDashboard from "./Section/School/dashboard";
+import ViewPointHistoryTeacher from "./Section/Teacher/component/point-history-teacher";
 
 
 // Reusable ProtectedRoute component
@@ -52,7 +53,7 @@ export default function App() {
           <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
           <Route path="/teachers/viewforms" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} />
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
-          <Route path="/teachers/pointhistory" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
+          <Route path="/teachers/pointhistory" element={<ProtectedRoute><ViewPointHistoryTeacher /></ProtectedRoute>} />
           <Route path="/pointhistory" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
           {/*Dashboards*/}

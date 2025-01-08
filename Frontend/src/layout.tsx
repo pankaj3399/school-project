@@ -53,9 +53,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <div className="flex h-screen bg-gray-200 ">
       <SideNav />
       <Toaster />
-      <div className="flex flex-col flex-1 overflow-hidden bg-[#023d54]">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <TopNav />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto  rounded-2xl border bg-[#ffffff]   ">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto  border bg-[#ffffff]   ">
           <div className="container mx-auto px-6 py-8">
             <Breadcrumb />
             {children}

@@ -57,9 +57,9 @@ export default function ViewTeacherForms() {
       <h1 className="text-2xl font-bold mb-6">Forms</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {forms.map((form) => (
-          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow bg-[#00a58c] hover:bg-[#00a58c]">
+          <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow bg-[#97d8b2] hover:bg-[#97d8b2]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-black">{form.formName}</CardTitle>
+              <CardTitle className="text-2xl font-medium text-black">{form.formName}</CardTitle>
               {getFormTypeIcon(form.formType)}
             </CardHeader>
             <CardContent>
@@ -71,7 +71,7 @@ export default function ViewTeacherForms() {
                 </span>
               </div>
               <Button
-                className="mt-4 w-full bg-[#ffff16] text-black"
+                className="mt-4 w-full bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black"
                 onClick={() => navigate(`/teachers/submitform/${form._id}`)}
               >
                 Use Form

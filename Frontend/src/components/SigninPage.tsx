@@ -98,7 +98,7 @@ export default function LoginForm() {
         if (formData.role === "SchoolAdmin") {
           navigate("/addschool");
         } else if (formData.role === "Teacher") {
-          navigate("/teachers/viewstudent");
+          navigate("/teachers/viewforms");
         } else if (formData.role === "Student") {
           navigate("/students");
         }

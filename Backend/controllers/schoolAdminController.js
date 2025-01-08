@@ -1,4 +1,4 @@
-//b
+
 import School from "../models/School.js"
 import User from "../models/Admin.js"
 import bcrypt from "bcryptjs"
@@ -117,13 +117,35 @@ export const getStats = async (req, res) => {
             { $group: { _id: null, totalPoints: { $sum: "$points" } } } // Sum the points
         ]);
 
-        const totalPoints = totalPointsData.length > 0 ? totalPointsData[0].totalPoints : 0;
+        const totalPointsAndFeedbackCount = await PointsHistory.aggregate([
+            { 
+                $match: { schoolId } // Filter by schoolId 
+            },
+            { 
+                $group: { 
+                    _id: null, 
+                    totalNegativePoints: { 
+                        $sum: { $cond: [ { $lt: ["$points", 0] }, "$points", 0 ] } // Sum only negative points 
+                    },
+                    feedbackCount: { 
+                        $sum: { $cond: [ { $eq: ["$formType", "Feedback"] }, 1, 0 ] } // Count formType as "Feedback"
+                    }
+                } 
+            }
+        ]);
+        
 
-        // Return the stats
+        const totalPoints = totalPointsData.length > 0 ? totalPointsData[0].totalPoints : 0;
+        const totalOopsiePoints = totalPointsAndFeedbackCount.length > 0 ? totalPointsAndFeedbackCount[0].totalNegativePoints : 0;
+        const totalFeedbackCount = totalPointsAndFeedbackCount.length > 0 ? totalPointsAndFeedbackCount[0].feedbackCount : 0;
+
+        
         return res.status(200).json({
             totalTeachers,
             totalStudents,
-            totalPoints
+            totalPoints,
+            totalOopsiePoints,
+            totalFeedbackCount
         });
     } catch (error) {
         return res.status(500).json({ message: "Server Error", error: error.message });
@@ -302,3 +324,57 @@ export const getFormsSubmittedPerMonthPerTeacher = async (req, res) => {
     }
 };
 
+export const getMonthlyStats = async (req, res) => {
+    try {
+        const id = req.user.id; // Get the authenticated user's ID
+
+        // Find the school admin by ID to extract the schoolId
+        const schoolAdmin = await Admin.findById(id);
+        if (!schoolAdmin) {
+            return res.status(404).json({ message: "School admin not found" });
+        }
+
+        const schoolId = schoolAdmin.schoolId;
+
+
+        // Calculate monthly stats from the PointHistory model
+        const monthlyStats = await PointsHistory.aggregate([
+            { 
+                $match: { schoolId } // Filter by schoolId 
+            },
+            { 
+                $group: { 
+                    _id: { 
+                        year: { $year: "$createdAt" }, // Group by year
+                        month: { $month: "$createdAt" } // Group by month
+                    },
+                    totalPoints: { $sum: "$points" }, // Total points
+                    totalNegativePoints: { 
+                        $sum: { $cond: [ { $lt: ["$points", 0] }, "$points", 0 ] } // Sum only negative points 
+                    },
+                    feedbackCount: { 
+                        $sum: { $cond: [ { $eq: ["$formType", "Feedback"] }, 1, 0 ] } // Count formType as "Feedback"
+                    }
+                } 
+            },
+            { 
+                $sort: { "_id.year": -1, "_id.month": -1 } // Sort by year and month (descending)
+            }
+        ]);
+
+        // Format the response
+        const formattedMonthlyStats = monthlyStats.map(stat => ({
+            year: stat._id.year,
+            month: stat._id.month,
+            totalPoints: stat.totalPoints,
+            totalNegativePoints: stat.totalNegativePoints,
+            feedbackCount: stat.feedbackCount
+        }));
+
+        return res.status(200).json({
+            monthlyStats: formattedMonthlyStats
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
