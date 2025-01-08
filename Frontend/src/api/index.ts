@@ -314,6 +314,15 @@ export const getStats = async () => {
         return {error};
     }
 }
+export const getMonthlyStats = async () => {
+    try {
+        const token = getToken()
+        const response = await axios.get(`${API_URL}/schoolAdmin/stats/monthly`, {headers: {token}});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
 export const getPointsGivenPerMonth = async () => {
     try {
         const token = getToken()

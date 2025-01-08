@@ -1,5 +1,5 @@
 //b
-import { addSchool, addStudent, addTeacher, getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats } from "../controllers/schoolAdminController.js";
+import { addSchool, addStudent, addTeacher, getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats } from "../controllers/schoolAdminController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import express from 'express';
@@ -23,6 +23,7 @@ router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin),editFo
 router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin),deleteForm)
 
 router.get('/stats', authenticate, authorizeRoles(Role.SchoolAdmin), getStats);
+router.get('/stats/monthly', authenticate, authorizeRoles(Role.SchoolAdmin), getMonthlyStats);
 router.get('/stats/pointsgiven', authenticate, authorizeRoles(Role.SchoolAdmin), getPointsGivenPerMonth);
 router.get('/stats/pointsgiven/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getPointsGivenPerMonthPerTeacher);
 router.get('/stats/pointsreceived/:studentId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Student), getPointsReceivedPerMonth);

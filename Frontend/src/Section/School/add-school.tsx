@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
+import OverallStats from "./component/OverallStats";
 
 export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
@@ -23,7 +24,9 @@ export default function SchoolPage() {
   const [stats, setStats] = useState({
       teachers:0,
       students:0,
-      points:0
+      points:0,
+      oopsie: 0,
+      feedbacks: 0
     })
   
     useEffect(()=>{
@@ -33,7 +36,9 @@ export default function SchoolPage() {
           setStats({
               teachers: res.totalTeachers,
               students: res.totalStudents,
-              points: res.totalPoints
+              points: res.totalPoints,
+              oopsie: res.totalOopsiePoints,
+              feedbacks: res.totalFeedbackCount
           })
       }
       fetchStats()
@@ -183,6 +188,11 @@ if (!response.error) {
         </div>
         { 
           !isEditing && <SchoolStats stats={stats} />
+        }
+        { 
+          !isEditing && <div className="w-full mt-5">
+            <OverallStats />
+          </div>
         }
         
         {isEditing && (
