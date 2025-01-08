@@ -14,7 +14,7 @@ export function TopNav() {
 
 
   return (
-    <header className="bg-[#023d54] text-white shadow-sm">
+    <header className="bg-[#654f6f] text-white shadow-sm">
       <div className="flex items-center justify-end h-16 px-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

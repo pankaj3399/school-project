@@ -184,6 +184,7 @@ if (!response.error) {
         { 
           !isEditing && <SchoolStats stats={stats} />
         }
+        
         {isEditing && (
           <div className="grid place-items-center w-full h-full mt-20">
             <div className="bg-white shadow-xl p-4 rounded-lg">

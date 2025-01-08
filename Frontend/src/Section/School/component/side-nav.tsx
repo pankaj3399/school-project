@@ -71,7 +71,7 @@ export function SideNav() {
                   handleLogout();
                   toggleMenu(); // Close menu on logout
                 }}
-                className="flex items-center w-full px-4 py-2  hover:bg-blue-500"
+                className="flex items-center w-full px-4 py-2  "
               >
                 <LogOut className="h-5 w-5 mr-2" />
                 Logout
@@ -82,16 +82,16 @@ export function SideNav() {
       )}
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:block w-64 bg-[#023d54] text-white  shadow-lg h-screen">
+      <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg h-screen">
         <div className="p-4">
-          <img src="/hero1.png" alt="Logo" className="w-56 h-56" />
+          <img src="/logo3.png" alt="Logo" className="w-56 h-56 invert" />
         </div>
         <ul className="space-y-2 py-4">
           {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 to={item.href}
-                className="flex items-center px-4 py-2  hover:bg-blue-500"
+                className="flex items-center px-4 py-2  "
               >
                 <item.icon className="h-5 w-5 mr-2" />
                 {item.label}
@@ -103,7 +103,7 @@ export function SideNav() {
         <div className="px-4 py-2 mt-4 border-t">
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-2  hover:bg-blue-500"
+            className="flex items-center w-full px-4 py-2  "
           >
             <LogOut className="h-5 w-5 mr-2" />
             Logout

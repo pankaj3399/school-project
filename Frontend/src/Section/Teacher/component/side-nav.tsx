@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, LogOut,X,MenuIcon,ClipboardIcon} from 'lucide-react';
+import { Users, LogOut,X,MenuIcon,ClipboardIcon, Target} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/teachers/viewstudent', label: 'Students', icon: Users },
   { href: '/teachers/viewforms', label: 'Manage Points', icon: ClipboardIcon },
-  { href: '/teachers/pointhistory', label: 'Point History', icon: ClipboardIcon },
+  { href: '/teachers/pointhistory', label: 'History', icon: Target },
+  { href: '/teachers/viewstudent', label: 'Students', icon: Users },
 ];
 
 export function TeacherSideNav() {
@@ -35,7 +35,7 @@ export function TeacherSideNav() {
     </div>
     
     {
-      toogle && <nav className={`w-64 bg-[#023d54] text-black shadow-lg  ${!toogle ? "max-md:hidden":""}`}>
+      toogle && <nav className={`w-64 bg-[#654f6f] text-black shadow-lg  ${!toogle ? "max-md:hidden":""}`}>
       <div className="p-4">
       <img src="/hero1.png" alt="" className='w-14  h-14' />
       </div>
@@ -62,9 +62,9 @@ export function TeacherSideNav() {
     </nav>
     }
 
-<nav className={ `w-64 bg-[#023d54] shadow-lg max-md:hidden`}>
+<nav className={ `w-64 bg-[#654f6f] shadow-lg max-md:hidden`}>
       <div className="p-4">
-      <img src="/hero1.png" alt="" className='w-56  h-56' />
+      <img src="/logo3.png" alt="" className='w-56 h-56 invert' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (
