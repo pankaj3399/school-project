@@ -5,15 +5,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/schoolAdmin', label: 'Home', icon: Home },
-  { href: '/addschool', label: 'School', icon: School },
+  { href: '/home', label: 'Home', icon: Home },
+  { href: '/school', label: 'School', icon: School },
   // { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
   // { href: '/addstudent', label: 'Add Student', icon: UserPlus },
-  { href: '/viewteacher', label: 'Teachers', icon: Users },
-  { href: '/viewstudent', label: 'Students', icon: BookOpen },
+  { href: '/teacher', label: 'Teachers', icon: Users },
+  { href: '/students', label: 'Students', icon: BookOpen },
   // { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
-  { href: '/pointhistory', label: 'Point History', icon: ClipboardIcon },
+  { href: '/history', label: 'Point History', icon: ClipboardIcon },
 ];
 
 export function SideNav() {

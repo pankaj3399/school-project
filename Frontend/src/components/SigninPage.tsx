@@ -96,9 +96,9 @@ export default function LoginForm() {
         });
 
         if (formData.role === "SchoolAdmin") {
-          navigate("/addschool");
+          navigate("/school");
         } else if (formData.role === "Teacher") {
-          navigate("/teachers/viewforms");
+          navigate("/teachers/managepoints");
         } else if (formData.role === "Student") {
           navigate("/students");
         }
@@ -117,7 +117,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white py-44 px-4 sm:px-6 lg:px-8">
       <Header />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">

@@ -147,7 +147,11 @@ export const submitFormTeacher = async (req, res) => {
             teacherId,
             answers
         })
-        
+
+        submittedForStudent.$set({
+            points: submittedForStudent.points + totalPoints
+        })
+        await submittedForStudent.save()
         if(school && teacher && submittedForStudent){
             const attachment = await generateCouponImage(totalPoints,submittedForStudent.name, teacher.name,teacher.subject,new Date().toDateString(),school.logo,school.name,teacher.email, submittedForStudent.parentEmail);
         const info = `Form ${form.formName} submitted by ${teacher.name} for ${submittedForStudent.name} with ${totalPoints} points`
@@ -161,6 +165,8 @@ export const submitFormTeacher = async (req, res) => {
         if(form.parentEmail && submittedForStudent.standard && submittedForStudent.sendNotifications) await sendEmail(submittedForStudent.standard, 'Form Submitted', info, info, attachment)
 
         }
+
+
 
         const pointsHistory = await PointsHistory.create({
             formId: form._id,

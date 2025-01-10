@@ -110,7 +110,7 @@ export default function ViewTeachers() {
   return (
     <div className="p-5 mt-10">
       <div className="flex justify-between">
-      <h1 className="text-3xl font-bold mb-6">View Teachers</h1>
+      <h1 className="text-3xl font-bold mb-6">Teacher Roster</h1>
       <Button className=" bg-[#00a58c] hover:bg-[#00a58c]" onClick={()=>navigate('/addteacher')}>Add Teachers</Button>
       </div>
       {teachers.length === 0 ? (

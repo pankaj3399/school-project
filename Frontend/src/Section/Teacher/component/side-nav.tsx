@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/teachers/viewforms', label: 'Manage Points', icon: ClipboardIcon },
-  { href: '/teachers/pointhistory', label: 'History', icon: Target },
-  { href: '/teachers/viewstudent', label: 'Students', icon: Users },
+  { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon },
+  { href: '/teachers/history', label: 'History', icon: Target },
+  { href: '/teachers/students', label: 'Students', icon: Users },
 ];
 
 export function TeacherSideNav() {

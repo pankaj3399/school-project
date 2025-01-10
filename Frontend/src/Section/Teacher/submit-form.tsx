@@ -44,7 +44,7 @@ export default function FormPage( ) {
           title: 'Form submitted successfully',
           description: 'Form submitted successfully',
         })
-        navigate('/teachers/viewforms')
+        navigate('/teachers/managepoints')
       }else{
         toast({
           title: 'Error submitting form',
@@ -60,7 +60,7 @@ export default function FormPage( ) {
     }
     await new Promise(resolve => setTimeout(resolve, 1000))
     setIsSubmitting(false)
-    navigate('/teachers/viewforms')
+    navigate('/teachers/managepoints')
   }
 
   if (!form) {

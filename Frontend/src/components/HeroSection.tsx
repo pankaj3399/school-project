@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
-    <section id="about" className="relative bg-[#eef1f1] text-white py-20  md:py-96 mt-20 h-screen">
+    <section id="about" className="relative bg-[#eef1f1] text-white py-20  md:py-96 mt-32 h-screen">
       
       <div className="absolute inset-0 z-0 opacity-85">
         <img
