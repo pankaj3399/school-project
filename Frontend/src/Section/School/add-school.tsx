@@ -139,7 +139,7 @@ if (!response.error) {
     setLoading(false);
     setSchool(response.data.school);
     setIsEditing(false);
-    navigate("/addschool");
+    navigate("/school");
   } else {
     toast({
       title: "Error",
@@ -164,20 +164,20 @@ if (!response.error) {
               className="w-72 h-72 object-cover rounded-full"
             />
             <div className="text-center">
-              <h2 className="text-4xl font-bold">Schoolname: {school.name}</h2>
-              <p className="text-xl">Address: {school.address}</p>
+              <h2 className="text-4xl font-bold">{school.name}</h2>
+              <p className="text-xl">{school.address}</p>
             </div>
             <div className="flex flex-col gap-4">
               {/*               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
                 Add Teacher
               </Button>
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewteacher")}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/teacher")}>
                 View Teacher
               </Button>
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addstudent")}>
                 Add Students
               </Button>
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/viewstudent")}>
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/students")}>
                 View Students
                 </Button> */}
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>

@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button'
 
 export default function Header() {
   return (
-<header className="fixed top-0 left-0 right-0 z-50 bg-[#fafafa] shadow-md h-20">
+<header className="fixed top-0 left-0 right-0 z-50 bg-[#fafafa] shadow-md h-fit">
 <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/logo3.png" alt="" className='w-14  h-14' />
+          <img src="/logo3.png" alt="" className='w-32  h-32' />
         </Link>
          
           {location.pathname === '/' ? ( <div className='flex gap-x-96 items-center '>

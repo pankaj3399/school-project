@@ -113,7 +113,7 @@ export default function ViewStudents() {
   return (
     <div className="p-5 mt-10">
       <div className="flex justify-between">
-      <h1 className="text-3xl font-bold mb-6">View Students</h1>
+      <h1 className="text-3xl font-bold mb-6">Student Roster</h1>
       <Button className="bg-[#00a58c] hover:bg-[#00a58c]" onClick={()=>navigate('/addstudent')}>Add Students</Button>
 
       </div>

@@ -8,6 +8,7 @@ import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select } from "@
 
 export default function ViewPointHistoryTeacher() {
   const [pointHistory, setPointHistory] = useState<any[]>([])
+  const [showPointHistory, setShowPointHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
   const [students, setStudents] = useState<any[]>([])
@@ -39,6 +40,7 @@ export default function ViewPointHistoryTeacher() {
 
         const data = await getPointHistory(token)
         setPointHistory(data.pointHistory)
+        setShowPointHistory(data.pointHistory)
         setLoading(false)
       } catch (error) {
         toast({
@@ -54,7 +56,7 @@ export default function ViewPointHistoryTeacher() {
   }, [toast])
 
   useEffect(()=>{
-    setPointHistory(pointHistory.filter(point => point.submittedForName == studentName))
+    setShowPointHistory(pointHistory.filter(point => point.submittedForName == studentName))
   },[studentName])
 
  
@@ -68,8 +70,7 @@ export default function ViewPointHistoryTeacher() {
   if (pointHistory.length === 0 && !studentName) {
     return (
       <div className="text-center">
-        <h1 className="text-xl font-bold">No students found</h1>
-        <p>Please ensure there are students in the system and try again.</p>
+        <h1 className="text-xl font-bold">No History found</h1>
       </div>
     )
   }
@@ -77,7 +78,7 @@ export default function ViewPointHistoryTeacher() {
   return (
     <div className="p-5 bg-white rounded-xl shadow-xl mt-10">
       <div>
-        <h1 className="text-3xl font-bold mb-6">View Students</h1>
+        <h1 className="text-3xl font-bold mb-6">History</h1>
         <Select value={studentId} onValueChange={(value) => {
                 setStudentId(value)
                 setStudentName(students.filter(student => value === student._id)[0].name)
@@ -105,7 +106,7 @@ export default function ViewPointHistoryTeacher() {
           </TableRow>
         </TableHeader>
         <TableBody>
-                {pointHistory.map((history) => (
+                {showPointHistory.map((history) => (
                 <TableRow key={history._id}>
                 <TableCell>{new Date(history.submittedAt).toLocaleDateString()}</TableCell>
                 <TableCell>{new Date(history.submittedAt).toLocaleTimeString([],{hour:"2-digit", minute:"2-digit"})}</TableCell>

@@ -31,7 +31,7 @@ const StatCard = ({label, value}:{
     value:number
 }) => {
 
-    return <div className='p-4 bg-white shadow-md rounded-lg min-w-[150px]'>
+    return <div className='p-4 bg-white shadow-md rounded-lg min-w-[150px] text-center'>
         <h3 className='text-sm'>{label}</h3>
         <p className='text-xl font-semibold text-[#023d54]'>{value}</p>
     </div>

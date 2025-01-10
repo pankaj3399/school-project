@@ -80,7 +80,7 @@ export  const SignupForm = ()=> {
         } else {
           login(res.token)
           if (formData.role === 'SchoolAdmin') {
-            navigate('/addschool')
+            navigate('/school')
           }
         }
       } catch (error) {
@@ -97,7 +97,7 @@ export  const SignupForm = ()=> {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white py-44 px-4 sm:px-6 lg:px-8">
       <Header />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">

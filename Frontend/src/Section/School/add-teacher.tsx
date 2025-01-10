@@ -78,7 +78,7 @@ export default function AddTeacher() {
           description: `${name} has been added.`,
         });
 
-        navigate("/viewteacher");
+        navigate("/teacher");
       } else {
         toast({
           title: "Error",

@@ -81,7 +81,7 @@ export default function AddStudent() {
           description:` ${name} has been added.`,
         })
         
-        navigate("/viewstudent")
+        navigate("/students")
       } else {
         toast({
           title: "Error",

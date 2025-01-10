@@ -38,26 +38,25 @@ export default function App() {
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
 
-          <Route path="/addschool" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
+          <Route path="/school" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
-          <Route path="/viewteacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
-          <Route path="/viewstudent" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />
-          <Route path="/teachers/viewstudent" element={<ProtectedRoute><ViewTeacherStudents /></ProtectedRoute>} />
+          <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />
+          <Route path="/teachers/students" element={<ProtectedRoute><ViewTeacherStudents /></ProtectedRoute>} />
           <Route path="/createform" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
           <Route path="/editform/:id" element={<ProtectedRoute><EditForm /></ProtectedRoute>} />
 
  
           <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
-          <Route path="/teachers/viewforms" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} />
+          <Route path="/teachers/managepoints" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} />
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
-          <Route path="/teachers/pointhistory" element={<ProtectedRoute><ViewPointHistoryTeacher /></ProtectedRoute>} />
-          <Route path="/pointhistory" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
+          <Route path="/teachers/history" element={<ProtectedRoute><ViewPointHistoryTeacher /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
           {/*Dashboards*/}
-          <Route path="/schoolAdmin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/home" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
         </Routes>
