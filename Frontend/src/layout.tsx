@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/Section/School/component/breadcrumb";
 import { useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./authContext";
+import { OtpProvider } from "./components/OtpContextProvider";
 // import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,17 +15,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 
   // Define routes for the simple layout
-  const simpleLayoutRoutes = ['/', '/signup', '/signin'];
+  const simpleLayoutRoutes = ['/', '/signup', '/signin','/forgotpassword', '/verify','/resetpassword'];
 
   const isSimpleLayout = simpleLayoutRoutes.includes(pathname);
   const isTeacherLayout = pathname.startsWith('/teachers');
   if (isSimpleLayout) {
     return (
       <AuthProvider>
+        <OtpProvider>
       <div>
         <Toaster />
         {children}
       </div>
+        </OtpProvider>
       </AuthProvider>
     );
   }
