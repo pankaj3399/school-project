@@ -67,19 +67,6 @@ export default function LoginForm() {
     try {
       const res = await signIn(formData);
       if (res.error) {
-        // if (res.message === "User not found") {
-        //   toast({
-        //     title: "Teacher Not Found",
-        //     description: "The entered teacher credentials are invalid. Please try again.",
-        //     variant: "destructive",
-        //   });
-        // } else {
-        //   toast({
-        //     title: res.error,
-        //     description: "Please try again!",
-        //     variant: "destructive",
-        //   });
-        // }
         toast({
           title: res.error.message,
           description: res.error?.response?.data?.message || "Please Try Again!!",
@@ -176,6 +163,7 @@ export default function LoginForm() {
                   {errors.password}
                 </p>
               )}
+              <Link className="text-xs hover:underline" to={"/forgotpassword"}>Forgot Password ?</Link>
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
