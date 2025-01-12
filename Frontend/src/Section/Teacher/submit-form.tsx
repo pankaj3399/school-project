@@ -69,8 +69,9 @@ export default function FormPage( ) {
 
   return (
     <div className="container mx-auto py-8 ">
-      <FormSubmission form={form} onSubmit={handleSubmit} />
-      {isSubmitting && <div className="mt-4 text-center">Submitting...</div>}
+      <FormSubmission form={form} isSubmitting={isSubmitting} onSubmit={handleSubmit} />
+      
+      
     </div>
   )
 }

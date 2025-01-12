@@ -56,14 +56,24 @@ export const getCurrentSchool = async (req, res) => {
 };
 
 export const updateSchool = async (req, res) => {
-    const { name, address } = req.body;
+    const { name, address, district } = req.body;
     const logo = req.file;
   
     try {
-      const logoUrl = await uploadImageFromDataURI(logo);
-      const updatedSchool = await School.findByIdAndUpdate(
+      let logoUrl = null;
+      if(logo)
+        logoUrl = await uploadImageFromDataURI(logo);
+      let updatedSchool;
+      if(logoUrl)
+       updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address, logo: logoUrl },
+        { name, address,district, logo: logoUrl },
+        { new: true }
+      );
+      else
+      updatedSchool = await School.findByIdAndUpdate(
+        req.params.id,
+        { name, address,district },
         { new: true }
       );
   

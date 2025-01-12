@@ -16,7 +16,10 @@ export function Breadcrumb() {
         {pathSegments.map((segment, index) => {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
-          const label = segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
+          const label = /^\d/.test(segment)
+          ? "E-Tokens"
+          : segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
+        
 
           return (
             <li key={href} className="flex items-center">

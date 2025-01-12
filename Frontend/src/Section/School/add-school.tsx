@@ -12,6 +12,7 @@ import OverallStats from "./component/OverallStats";
 export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
   const [address, setAddress] = useState("");
+  const [district, setDistrict] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
@@ -119,6 +120,7 @@ export default function SchoolPage() {
         const formData = new FormData();
         formData.append("name", schoolName);
         formData.append("address", address);
+        formData.append("district", district);
         if (logo) {
           formData.append("logo", logo);
         }
@@ -163,23 +165,13 @@ if (!response.error) {
               alt={school.name}
               className="w-72 h-72 object-cover rounded-full"
             />
+            
             <div className="text-center">
+              <p className="text-xl">{school.district}</p>
               <h2 className="text-4xl font-bold">{school.name}</h2>
               <p className="text-xl">{school.address}</p>
             </div>
             <div className="flex flex-col gap-4">
-              {/*               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addteacher")}>
-                Add Teacher
-              </Button>
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/teacher")}>
-                View Teacher
-              </Button>
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/addstudent")}>
-                Add Students
-              </Button>
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => navigate("/students")}>
-                View Students
-                </Button> */}
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>
                 {isEditing ? "Cancel":"Edit School"}
               </Button>
@@ -224,6 +216,18 @@ if (!response.error) {
                   />
                   {errors.address && (
                     <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="district">District</Label>
+                  <Input
+                    id="district"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    required
+                  />
+                  {errors.district && (
+                    <p className="text-red-500 text-sm mt-1">{errors.district}</p>
                   )}
                 </div>
                 {isEditing && (
@@ -281,6 +285,18 @@ if (!response.error) {
               <p className="text-red-500 text-sm mt-1">{errors.address}</p>
             )}
           </div>
+          <div>
+                  <Label htmlFor="district">District</Label>
+                  <Input
+                    id="district"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    required
+                  />
+                  {errors.district && (
+                    <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                  )}
+                </div>
           {!isEditing && (
             <div>
               <Label htmlFor="logo">Logo</Label>

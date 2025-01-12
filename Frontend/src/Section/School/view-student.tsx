@@ -255,6 +255,7 @@ export default function ViewStudents() {
         onConfirm={() => studentToDelete && handleDelete(studentToDelete)}
         title="Delete Student"
         description="Are you sure you want to delete this student? This action cannot be undone."
+        callToAction="Delete"
       />
     </div>
     
