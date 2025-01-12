@@ -385,3 +385,44 @@ export const getTeachers = async () => {
         return {error};
     }
 }
+
+export const sendOtp = async ({email, role}:{
+    email: string,
+    role: string
+}) => {
+    try {
+        const response = await axios.post(`${API_URL}/auth/sendotp`,{
+            email,
+            role
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const verifyOtp = async ({otp, email, role}:{
+    email:string,
+    role:string,
+    otp: string
+}) => {
+    try {
+        const response = await axios.post(`${API_URL}/auth/verify`,{
+            otp, email, role
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const resetPassword = async (data: any) => {
+    try {
+        const response = await axios.post(`${API_URL}/auth/resetpassword`,{
+            ...data
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
