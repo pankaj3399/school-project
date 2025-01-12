@@ -11,7 +11,7 @@ import PointsHistory from "../models/PointsHistory.js"
 import mongoose from "mongoose"
 
 export const addSchool = async (req, res) => {
-    const { name, address } = req.body;
+    const { name, address, district } = req.body;
     const logo = req.file;
     try {
       const existingSchool = await School.findOne({ createdBy: req.user.id });
@@ -19,7 +19,7 @@ export const addSchool = async (req, res) => {
         return res.status(403).json({ message: "School already exists for this admin." });
       }
       const logoUrl = await uploadImageFromDataURI(logo);
-      const newSchool = await School.create({ name, address, logo: logoUrl, createdBy: req.user.id });
+      const newSchool = await School.create({ name, address,district, logo: logoUrl, createdBy: req.user.id });
   
       await User.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
   

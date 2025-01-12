@@ -241,6 +241,7 @@ export default function ViewTeachers() {
         }}
         title="Confirm Deletion"
         description="Are you sure you want to delete this teacher? This action cannot be undone."
+        callToAction="Delete"
       />
     </div>
   );

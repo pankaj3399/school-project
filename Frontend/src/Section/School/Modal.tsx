@@ -6,9 +6,10 @@ interface ModalProps {
   onConfirm: () => void;
   title: string;
   description: string;
+  callToAction:string
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, description }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, description, callToAction }) => {
   if (!isOpen) return null;
 
   return (
@@ -23,12 +24,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, descri
           >
             Cancel
           </button>
-          <button
+          {
+            callToAction == 'Delete' ? <button
             onClick={onConfirm}
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
             Delete
+          </button>:<button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {callToAction}
           </button>
+          }
         </div>
       </div>
     </div>

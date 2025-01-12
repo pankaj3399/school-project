@@ -30,7 +30,7 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
             to,
             subject,
             text,
-            html,
+            html:html,
             attachments: [
                 {
                   filename: 'coupon.png',
