@@ -20,6 +20,9 @@ import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
 import AdminDashboard from "./Section/School/dashboard";
 import ViewPointHistoryTeacher from "./Section/Teacher/component/point-history-teacher";
+import ForgotPassword from "./components/ForgotPassword";
+import OtpVerificationPage from "./components/OtpVerification";
+import { ResetPassword } from "./components/ResetPassword";
 
 
 // Reusable ProtectedRoute component
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
+          <Route path="/forgotpassword" element={<ForgotPassword />} />
+          <Route path="/verify" element={<OtpVerificationPage />} />
+          <Route path="/resetpassword" element={<ResetPassword />} />
 
           <Route path="/school" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
