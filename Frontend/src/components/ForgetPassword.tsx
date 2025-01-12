@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,25 +6,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "./Header";
-import { useAuth } from "@/authContext";
-import { signIn } from "@/api";
 import { useToast } from "@/hooks/use-toast";
+import { useOtpContext } from "./OtpContextProvider";
+import { sendOtp } from "@/api";
 
-export default function LoginForm() {
+export default function ForgotPassword() {
+    const {updateEmail, updateRole, updateOtpId} = useOtpContext()
   const { toast } = useToast();
-  const { login } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
     role: "",
   });
   const [errors, setErrors] = useState({
     email: "",
-    password: "",
     role: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,9 +41,6 @@ export default function LoginForm() {
       case "email":
         error = !/\S+@\S+\.\S+/.test(value) ? "Invalid email format" : "";
         break;
-      case "password":
-        error = value.length < 6 ? "Password must be at least 6 characters" : "";
-        break;
       case "role":
         error = value === "" ? "Role is required" : "";
         break;
@@ -65,7 +58,11 @@ export default function LoginForm() {
 
     setLoading(true);
     try {
-      const res = await signIn(formData);
+      const res = await sendOtp(formData);
+      if(updateEmail && updateOtpId && updateRole){
+          updateEmail(formData.email)
+          updateRole(formData.role)
+      }
       if (res.error) {
         toast({
           title: res.error.message,
@@ -75,23 +72,15 @@ export default function LoginForm() {
         console.log("Login error:", res.error);
         
       } else {
-        await login(res.token);
         toast({
-          title: "Login Successful",
-          description: "Redirecting to your dashboard...",
+          title: "OTP Sent Successfully",
+          description: "Redirecting to your verification",
           variant: "default",
         });
-
-        if (formData.role === "SchoolAdmin") {
-          navigate("/school");
-        } else if (formData.role === "Teacher") {
-          navigate("/teachers/managepoints");
-        } else if (formData.role === "Student") {
-          navigate("/students");
-        }
+        navigate("/verify")
       }
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("OTP error:", err);
       toast({
         title: "Unexpected Error",
         description: "An error occurred. Please try again.",
@@ -108,8 +97,8 @@ export default function LoginForm() {
       <Header />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Login to your account</CardTitle>
-          <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
+          <CardDescription className="text-center">Enter your email & role to get a password reset email</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -135,37 +124,6 @@ export default function LoginForm() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  className="w-full pr-10"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  aria-invalid={errors.password ? "true" : "false"}
-                  aria-describedby="password-error"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-red-500" id="password-error">
-                  {errors.password}
-                </p>
-              )}
-              <Link className="text-xs hover:underline" to={"/forgotpassword"}>Forgot Password ?</Link>
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <Select onValueChange={handleRoleChange} value={formData.role}>
                 <SelectTrigger className="w-full">
@@ -187,14 +145,14 @@ export default function LoginForm() {
               type="submit"
               className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg"
             >
-              {loading ? "Loading..." : "Login"}
+              {loading ? "Loading..." : "Send Email"}
             </Button>
           </form>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign up
+              OR Go back to{" "}
+              <Link to="/signin" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign In
               </Link>
             </p>
           </div>
