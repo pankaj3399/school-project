@@ -20,7 +20,7 @@ import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
 import AdminDashboard from "./Section/School/dashboard";
 import ViewPointHistoryTeacher from "./Section/Teacher/component/point-history-teacher";
-import ForgotPassword from "./components/ForgotPassword";
+import ForgotPassword from "./components/ForgetPassword";
 import OtpVerificationPage from "./components/OtpVerification";
 import { ResetPassword } from "./components/ResetPassword";
 
