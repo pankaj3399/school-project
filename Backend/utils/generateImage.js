@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 
 
+
 function loadFontFromURL(url, familyName) {
   registerFont(url, { family: familyName });
 }
@@ -25,8 +26,11 @@ export const generateCouponImage = async (
   try {
     loadFontFromURL(path.join(__dirname, '../fonts/courbd.ttf'),'Courier New Bold')
     const backgroundImage = await loadImage(path.join(__dirname, './school_token.png'));
+    console.log(backgroundImage);
+    
     const schoolLogo = await loadImage(schoolLogoURL);
-
+    console.log(schoolLogo);
+    
     const canvas = createCanvas(690, 400)
     const ctx = canvas.getContext('2d')
 

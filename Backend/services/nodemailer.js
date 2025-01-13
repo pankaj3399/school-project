@@ -13,15 +13,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// noOfTokens,
-// student,
-// teacher,
-// subject,
-// date,
-// schoolLogoURL,
-// schoolName,
-// teacherEmail,
-// parentEmail,
 
 export const sendEmail = async (to, subject, text, html, attachment) => {
     try {
