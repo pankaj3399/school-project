@@ -149,74 +149,18 @@ export const submitFormTeacher = async (req, res) => {
     const formSubmission = await FormSubmissions.create({
       formId,
       teacherId,
-      answers,
+      answers: answers.map(ans => {return {
+        ...ans,
+        answer: ans.answer || "No Answer"
+      }}),
     });
 
     submittedForStudent.$set({
       points: submittedForStudent.points + totalPoints,
     });
     await submittedForStudent.save();
-    if (school && teacher && submittedForStudent) {
-      const {body, subject, attachment} = await emailGenerator(form.formType, {
-        points: totalPoints,
-        submission: formSubmission,
-        teacher: teacher,
-        student: submittedForStudent,
-        schoolAdmin: schoolAdmin,
-        school: school
-      })
-      
-      if (form.teacherEmail && teacher.recieveMails)
-        await sendEmail(
-          teacher.email,
-          subject,
-          body,
-          body,
-          attachment
-        );
-      if (form.studentEmail)
-        await sendEmail(
-          submittedForStudent.email,
-          subject,
-          body,
-          body,
-          attachment
-        );
-      if (form.schoolAdminEmail)
-        await sendEmail(
-          schoolAdmin.email,
-          subject,
-          body,
-          body,
-          attachment
-        );
-      if (
-        form.parentEmail &&
-        submittedForStudent.parentEmail &&
-        submittedForStudent.sendNotifications
-      )
-        await sendEmail(
-          submittedForStudent.parentEmail,
-          subject,
-          body,
-          body,
-          attachment
-        );
-      if (
-        form.parentEmail &&
-        submittedForStudent.standard &&
-        submittedForStudent.sendNotifications
-      )
-        await sendEmail(
-          submittedForStudent.standard,
-          subject,
-          body,
-          body,
-          attachment
-        );
-    }
 
-    const pointsHistory = await PointsHistory.create({
+    await PointsHistory.create({
       formId: form._id,
       formType: form.formType,
       formName: form.formName,
@@ -228,6 +172,19 @@ export const submitFormTeacher = async (req, res) => {
       points: totalPoints,
       schoolId: teacher.schoolId,
     });
+
+    if (school && teacher && submittedForStudent) {
+      emailGenerator(form, {
+        points: totalPoints,
+        submission: formSubmission,
+        teacher: teacher,
+        student: submittedForStudent,
+        schoolAdmin: schoolAdmin,
+        school: school
+      })
+    }
+
+   
     return res.status(200).json({
       message: "Form Submitted Successfully",
       formSubmission: formSubmission,
