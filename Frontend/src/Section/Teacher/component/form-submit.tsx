@@ -36,6 +36,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     schoolAdminEmail: false,
     parentEmail: false
   })
+  const [description, setDescription] = useState("")
 
   const [totalPoints, setTotalPoints] = useState(0)
 
@@ -66,6 +67,23 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     }
     getStudent()
   }, [])
+
+  useEffect(()=>{
+    switch(form.formType){
+      case 'AwardPoints':
+      case 'DeductPoints':{
+        setDescription(`You will ${form.formType == 'AwardPoints' ? "AWARD":"REMOVE"} ${Math.abs(totalPoints)} POINTS TO ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`)
+      }
+      break;
+      case 'Feedback':{
+        setDescription(`You will submit feedback about  ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`)
+      }
+      break;
+      default:{
+        setDescription(`You will withdraw ${Math.abs(totalPoints)} POINTS`)
+      }      
+    }
+  },[submittedFor])
 
   const handleInputChange = (questionId: string, value: {answer: string, points: number}) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
@@ -140,7 +158,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
         <form onSubmit={(e)=> {
           e.preventDefault()
           setShowModal(true)
-        }} className="space-y-8 max-w-2xl mx-auto p-3 bg-white rounded-lg shadow-md">
+        }} className="space-y-8 min-w-[300px] max-w-2xl mx-auto p-3 bg-white rounded-lg shadow-md">
           <div>
             <h1 className="text-2xl font-bold">{form.formName}</h1>
             <p className="text-muted-foreground">Form Type: {form.formType}</p>
@@ -162,25 +180,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   </SelectContent>
                 </Select>
               </div>
-              {/* <div className='flex gap-2'>
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
-                  <p>Notify Student</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, teacherEmail: !prev.teacherEmail}))}/>
-                  <p>Notify Teacher</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, schoolAdminEmail: !prev.schoolAdminEmail}))}/>
-                  <p>Notify Admin</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
-                  <p>Notify Parents</p>
-                </div>
               
-              </div> */}
               {form.questions.map((question, index) => (
                 <div key={question.id} className="border-b pb-4 ">
                   
@@ -218,7 +218,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
         onClose={() => setShowModal(false)}
         onConfirm={() => handleSubmit()}
         title="Submit Form"
-        description={`You will ${form.formType == 'AwardPoints' ? "AWARD":"REMOVE"} ${Math.abs(totalPoints)} POINTS TO ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`}
+        description={description}
         callToAction='Submit'
       />
     </>
