@@ -1,9 +1,10 @@
 import { FormType } from "../enum.js";
+import { sendEmail } from "../services/nodemailer.js";
 import { generateCouponImage } from "./generateImage.js";
 
 
 
-export const emailGenerator = async (formType, {
+export const emailGenerator = async (form, {
     points,
     submission,
     teacher,
@@ -17,7 +18,7 @@ export const emailGenerator = async (formType, {
         return {subject, body, attachment}
     }
 
-    switch(formType){
+    switch(form.formType){
         case FormType.AwardPoints: {
             subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`
             body = `
@@ -44,7 +45,7 @@ export const emailGenerator = async (formType, {
                     student.parentEmail
                   );
 
-            return {subject, body, attachment}
+            break;
         }
         case FormType.Feedback: {
             const teacherNameArray = teacher.name.split(" ")
@@ -53,7 +54,7 @@ export const emailGenerator = async (formType, {
             const feedback = submission.answers.map((item) => `<p>${item.answer}</p>`).join(`<br/>`)
             body = `<p>On ${new Date().toLocaleDateString()}, the teacher ${teacherLastName} issued the next feedback about ${student.name}: <br/> ${feedback} </p>
             `;
-            return {subject, body, attachment}
+            break;
         }
         case FormType.DeductPoints: {
             subject = `Oopsie Points have been deducted.`
@@ -66,7 +67,7 @@ export const emailGenerator = async (formType, {
               ${school.name}
             </p>
             `;
-            return {subject, body, attachment}
+            break;
         }
         case FormType.PointWithdraw: {
             subject = `Oopsie Points have been deducted.`
@@ -102,7 +103,55 @@ export const emailGenerator = async (formType, {
             </html>
             `;
 
-            return {subject, body, attachment}
+            break;
         }
     }
+    if (form.teacherEmail && teacher.recieveMails)
+        sendEmail(
+         teacher.email,
+         subject,
+         body,
+         body,
+         attachment
+       );
+     if (form.studentEmail)
+       sendEmail(
+         student.email,
+         subject,
+         body,
+         body,
+         attachment
+       );
+     if (form.schoolAdminEmail)
+       sendEmail(
+         schoolAdmin.email,
+         subject,
+         body,
+         body,
+         attachment
+       );
+     if (
+       form.parentEmail &&
+       student.parentEmail &&
+       student.sendNotifications
+     )
+       sendEmail(
+         student.parentEmail,
+         subject,
+         body,
+         body,
+         attachment
+       );
+     if (
+       form.parentEmail &&
+       student.standard &&
+       student.sendNotifications
+     )
+       sendEmail(
+         student.standard,
+         subject,
+         body,
+         body,
+         attachment
+       );
 }

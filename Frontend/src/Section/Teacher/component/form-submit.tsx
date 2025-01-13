@@ -83,14 +83,16 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
         setDescription(`You will withdraw ${Math.abs(totalPoints)} POINTS`)
       }      
     }
-  },[submittedFor])
+  },[submittedFor, totalPoints])
 
   const handleInputChange = (questionId: string, value: {answer: string, points: number}) => {
+    
     setAnswers(prev => ({ ...prev, [questionId]: value }))
   }
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
+
     onSubmit(answers, submittedFor, isSendEmail)
     setIsSendEmail((prev)=>prev)
     setShowModal(false)
@@ -103,7 +105,16 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
           <Input
             type="text"
             value={answers[question.id]?.answer as string || ''}
-            onChange={(e) => handleInputChange(question.id, {answer: e.target.value, points: question.maxPoints})}
+            onChange={(e) => {
+              const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)
+              if(points > question.maxPoints){
+                e.target.setCustomValidity(`Value must be less than or equal to ${question.maxPoints}`)
+              }else{
+                e.target.setCustomValidity('')
+              }
+              e.target.reportValidity()
+              handleInputChange(question.id, {answer: e.target.value, points})
+            }}
             required={question.isCompulsory}
           />
         )
@@ -113,7 +124,15 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
           <Input
             type="number"
             value={answers[question.id]?.answer as string || ''}
-            onChange={(e) => handleInputChange(question.id, {answer: e.target.value, points: question.pointsType !== 'Deduct' ? parseInt(e.target.value) : parseInt(e.target.value) * -1})}
+            onChange={(e) => {
+                
+              if(isNaN(Number(e.target.value))){
+                console.log("value"+e.target.value);
+                handleInputChange(question.id, {answer: e.target.value, points: 0})
+              }else{
+                handleInputChange(question.id, {answer: e.target.value, points: question.pointsType !== 'Deduct' ? Number(e.target.value) : Number(e.target.value) * -1})
+              }
+            }}
             required={question.isCompulsory}
             max={question.maxPoints}
             min={0}
@@ -157,6 +176,9 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     <div className='flex'>
         <form onSubmit={(e)=> {
           e.preventDefault()
+          const form = e.target as HTMLFormElement
+          const ip = form.querySelectorAll('input')
+          ip.forEach(i => i.reportValidity())
           setShowModal(true)
         }} className="space-y-8 min-w-[300px] max-w-2xl mx-auto p-3 bg-white rounded-lg shadow-md">
           <div>
