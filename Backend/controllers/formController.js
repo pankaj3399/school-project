@@ -9,6 +9,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { sendEmail } from "../services/nodemailer.js";
 import { generateCouponImage } from "../utils/generateImage.js";
+import { emailGenerator } from "../utils/emailHelper.js";
 export const createForm = async (req, res) => {
   const {
     formName,
@@ -156,55 +157,37 @@ export const submitFormTeacher = async (req, res) => {
     });
     await submittedForStudent.save();
     if (school && teacher && submittedForStudent) {
-      const attachment = await generateCouponImage(
-        totalPoints,
-        submittedForStudent.name,
-        teacher.name,
-        teacher.subject,
-        new Date().toDateString(),
-        school.logo,
-        school.name,
-        teacher.email,
-        submittedForStudent.parentEmail
-      );
-
-      const subject = `GOOD NEWS, YOU EARNED ${totalPoints} E-TOKENS!`
-
+      const {body, subject, attachment} = await emailGenerator(form.formType, {
+        points: totalPoints,
+        submission: formSubmission,
+        teacher: teacher,
+        student: submittedForStudent,
+        schoolAdmin: schoolAdmin,
+        school: school
+      })
       
-const infoHtml = `
-<p>Congratulations <strong>${submittedForStudent.name}</strong>!</p>
-<p>The <strong>${teacher.subject}</strong> teacher, <strong>${teacher.name}</strong>, has just awarded you with <strong>${totalPoints} E-Tokens</strong> for achieving your goals today.</p>
-<p>Please, check your E-Token's balance and exchange them at the AN Center or school store.</p>
-<p>Keep up the good work!!!</p>
-<p>
-  ${schoolAdmin.name}<br>
-  ${schoolAdmin.email}<br>
-  Affective Needs Special Education Teacher<br>
-  ${school.name}
-</p>
-`;
       if (form.teacherEmail && teacher.recieveMails)
         await sendEmail(
           teacher.email,
           subject,
-          infoHtml,
-          infoHtml,
+          body,
+          body,
           attachment
         );
       if (form.studentEmail)
         await sendEmail(
           submittedForStudent.email,
           subject,
-          infoHtml,
-          infoHtml,
+          body,
+          body,
           attachment
         );
       if (form.schoolAdminEmail)
         await sendEmail(
           schoolAdmin.email,
           subject,
-          infoHtml,
-          infoHtml,
+          body,
+          body,
           attachment
         );
       if (
@@ -215,8 +198,8 @@ const infoHtml = `
         await sendEmail(
           submittedForStudent.parentEmail,
           subject,
-          infoHtml,
-          infoHtml,
+          body,
+          body,
           attachment
         );
       if (
@@ -227,8 +210,8 @@ const infoHtml = `
         await sendEmail(
           submittedForStudent.standard,
           subject,
-          infoHtml,
-          infoHtml,
+          body,
+          body,
           attachment
         );
     }
