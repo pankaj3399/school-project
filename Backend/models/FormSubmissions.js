@@ -24,7 +24,10 @@ const formSubmissionSchema = new mongoose.Schema({
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Teacher",
-        required: true,
+    },
+    schoolAdminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
     },
     answers: {
         type: [AnswerSchema],
