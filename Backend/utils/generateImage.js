@@ -62,5 +62,45 @@ export const generateCouponImage = async (
   }
 };
 
+export const generateRecieptImage = async (
+  noOfTokens,
+  student,
+  date,
+  schoolName,
+  schoolAddress,
+  schoolDistrict,
+) => {
+  try {
+    loadFontFromURL(path.join(__dirname, '../fonts/courbd.ttf'),'Courier New Bold')
+    const backgroundImage = await loadImage(path.join(__dirname, './Withdraw_reciept.png'));
+    console.log(backgroundImage);
+    
+    const canvas = createCanvas(404, 567)
+    const ctx = canvas.getContext('2d')
+
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+    
+    
+    ctx.font = 'bold 15px "Courier New Bold"';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    console.log(ctx.font);
+    
+    ctx.font = 'bold 16px "Courier New Bold"'
+    ctx.fillText(`${schoolDistrict.toUpperCase()}`, canvas.width / 2, 155);
+    ctx.fillText(`${schoolName.toUpperCase()}`, canvas.width / 2, 169);
+    ctx.fillText(`${schoolAddress.toUpperCase()}`, canvas.width / 2, 183);
+    ctx.fillText(`DATE: ${date}`, 83, 258);
+    ctx.fillText(`ISUUED TO: ${student.toUpperCase()}`, 100, 273);
+    ctx.font = 'bold 70px "Courier New Bold"'
+    ctx.fillText(`${Math.abs(noOfTokens)}`, canvas.width / 2, 350);
+    return canvas.toBuffer();
+  } catch (error) {
+    console.error('Error generating coupon image:', error);
+    throw error;
+  }
+};
+
 
 
