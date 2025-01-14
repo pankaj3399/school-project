@@ -196,6 +196,66 @@ export const submitFormTeacher = async (req, res) => {
   }
 };
 
+export const submitFormAdmin = async (req, res) => {
+  const formId = req.params.formId;
+  const { submittedFor, answers } = req.body;
+  const form = await Form.findById(formId);
+  const submittedForStudent = await Student.findById(submittedFor);
+  const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
+  const schoolAdmin = await Admin.findById(req.user.id);
+  const school = await School.findById(schoolAdmin.schoolId);
+
+  try {
+    const formSubmission = await FormSubmissions.create({
+      formId,
+      schoolAdminId: schoolAdmin._id,
+      answers: answers.map(ans => {return {
+        ...ans,
+        answer: ans.answer || "No Answer"
+      }}),
+    });
+
+    submittedForStudent.$set({
+      points: submittedForStudent.points + totalPoints,
+    });
+    await submittedForStudent.save();
+
+    await PointsHistory.create({
+      formId: form._id,
+      formType: form.formType,
+      formName: form.formName,
+      formSubmissionId: formSubmission._id,
+      submittedById: schoolAdmin._id,
+      submittedByName: schoolAdmin.name,
+      submittedForId: submittedFor,
+      submittedForName: submittedForStudent.name,
+      points: totalPoints,
+      schoolId: schoolAdmin.schoolId,
+    });
+
+    if (school && submittedForStudent) {
+      emailGenerator(form, {
+        points: totalPoints,
+        submission: formSubmission,
+        teacher: null,
+        student: submittedForStudent,
+        schoolAdmin: schoolAdmin,
+        school: school
+      })
+    }
+
+   
+    return res.status(200).json({
+      message: "Form Submitted Successfully",
+      formSubmission: formSubmission,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
+  }
+};
+
 //b
 export const getPointHistory = async (req, res) => {
   const id = req.user.id;
