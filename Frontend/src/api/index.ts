@@ -296,6 +296,32 @@ export const submitFormTeacher = async (data:AnswerType, submittedFor:string, is
     }
 }
 
+export const submitFormAdmin = async (data:AnswerType, submittedFor:string, isSendEmail:{
+    studentEmail: boolean;
+    teacherEmail: boolean;
+    schoolAdminEmail: boolean;
+    parentEmail: boolean;
+} , formId:string) => {
+    try {
+        const token = getToken()
+        const answers:AnswerTypeArray = Object.entries(data).map(([questionId, answer]) => ({
+            questionId,
+            answer: answer.answer,
+            points: answer.points
+        }))
+        const response = await axios.post(`${API_URL}/form/submitFormAdmin/${formId}`, {
+            answers,
+            submittedFor,
+            ...isSendEmail
+        }, {headers: {
+            token
+        }});
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
 export const getPointHistory = async (token: string) => {
     try {
         const response = await axios.get(`${API_URL}/form/getPointHistory`, {headers: {token}});

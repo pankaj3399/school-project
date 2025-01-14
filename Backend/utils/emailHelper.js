@@ -1,6 +1,6 @@
 import { FormType } from "../enum.js";
 import { sendEmail } from "../services/nodemailer.js";
-import { generateCouponImage } from "./generateImage.js";
+import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 
 
 
@@ -12,10 +12,10 @@ export const emailGenerator = async (form, {
     schoolAdmin,
     school
 }) => {
-    let subject, body, attachment;
+    let subject, body, attachment, attachmentName;
 
     if(!student && !teacher && !schoolAdmin){
-        return {subject, body, attachment}
+        return {subject, body, attachment, attachmentName}
     }
 
     switch(form.formType){
@@ -44,6 +44,7 @@ export const emailGenerator = async (form, {
                     teacher.email,
                     student.parentEmail
                   );
+             attachmentName='coupon.png'
 
             break;
         }
@@ -70,39 +71,10 @@ export const emailGenerator = async (form, {
             break;
         }
         case FormType.PointWithdraw: {
-            subject = `Oopsie Points have been deducted.`
-            body = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; line-height: 1.6; margin: 0; padding: 0; }
-                .container { margin: auto; padding: 20px; max-width: 600px; border: 1px solid #ccc; border-radius: 10px; background-color: #f9f9f9; }
-                .header { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-                .sub-header { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-                .points { font-size: 36px; font-weight: bold; color: #4caf50; margin: 20px 0; }
-                .footer { font-size: 14px; color: #555; margin-top: 20px; }
-            </style>
-            </head>
-            <body>
-            <div class="container">
-                <div class="header">E-TOKEN EXCHANGE RECEIPT</div>
-                <hr>
-                <div class="sub-header">${school.district}</div>
-                <div>${school.name}</div>
-                <div>${school.address}</div>
-                <div>SCHOOL STORE</div>
-                <hr>
-                <div><strong>DATE:</strong> ${new Date().toLocaleDateString()}</div>
-                <div><strong>ISSUED TO:</strong> ${student.name}</div>
-                <div class="points">${points}<br>Points</div>
-                <hr>
-                <div class="footer">THANK YOU!<br>Keep on the great job!!!</div>
-            </div>
-            </body>
-            </html>
-            `;
-
+            subject = `${Math.abs(points)} points Withdrawn from student ${student.name}.`
+            body = `${Math.abs(points)} points Withdrawn from student ${student.name}.`
+            attachment = await generateRecieptImage(points,student.name,new Date().toLocaleDateString(),school.name,school.address,school.district)
+            attachmentName='reciept.png'
             break;
         }
     }
@@ -112,7 +84,8 @@ export const emailGenerator = async (form, {
          subject,
          body,
          body,
-         attachment
+         attachment,
+         attachmentName
        );
      if (form.studentEmail)
        sendEmail(
@@ -120,7 +93,8 @@ export const emailGenerator = async (form, {
          subject,
          body,
          body,
-         attachment
+         attachment,
+         attachmentName
        );
      if (form.schoolAdminEmail)
        sendEmail(
@@ -128,7 +102,8 @@ export const emailGenerator = async (form, {
          subject,
          body,
          body,
-         attachment
+         attachment,
+         attachmentName
        );
      if (
        form.parentEmail &&
@@ -140,7 +115,8 @@ export const emailGenerator = async (form, {
          subject,
          body,
          body,
-         attachment
+         attachment,
+         attachmentName
        );
      if (
        form.parentEmail &&
@@ -152,6 +128,7 @@ export const emailGenerator = async (form, {
          subject,
          body,
          body,
-         attachment
+         attachment,
+         attachmentName
        );
 }

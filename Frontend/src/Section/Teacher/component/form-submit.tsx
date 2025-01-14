@@ -7,6 +7,7 @@ import { AnswerType, Form, Question } from '@/lib/types'
 import { getStudents } from '@/api'
 import Modal from '@/Section/School/Modal'
 import { Loader2 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 
 
 
@@ -56,8 +57,10 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
         const answer = answers[q.id]
         return answer !== undefined && answer.answer !== '' && (Array.isArray(answer.answer) ? answer.answer.length > 0 : true)
       })
-    setIsFormValid(allCompulsoryQuestionsAnswered)
-  }, [answers, form.questions])
+      const isInvalid = student.find(st => st._id == submittedFor)?.points + totalPoints < 0
+  
+      setIsFormValid(allCompulsoryQuestionsAnswered && !isInvalid)
+  }, [answers,totalPoints, form.questions])
 
   useEffect(() => {
     const getStudent = async () => {
@@ -101,9 +104,25 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const renderQuestion = (question: Question) => {
     switch (question.type) {
       case 'text':
-        return (
+        return form.formType != 'Feedback' ? (
           <Input
             type="text"
+            value={answers[question.id]?.answer as string || ''}
+            onChange={(e) => {
+              const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)
+              if(points > question.maxPoints){
+                e.target.setCustomValidity(`Value must be less than or equal to ${question.maxPoints}`)
+              }else{
+                e.target.setCustomValidity('')
+              }
+              
+              e.target.reportValidity()
+              handleInputChange(question.id, {answer: e.target.value, points})
+            }}
+            required={question.isCompulsory}
+          />
+        ) : (
+          <Textarea
             value={answers[question.id]?.answer as string || ''}
             onChange={(e) => {
               const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)
@@ -228,7 +247,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             isSubmitting ?  <Loader2 className='w-3 h-3 animate-spin' />:"Submit"  
           }</Button>
         </form>
-        {form.formType == 'DeductPoints' && submittedFor && <div>
+        {form.formType == 'DeductPoints' || form.formType == 'PointWithdraw' && submittedFor && <div>
           <div className='bg-white p-4 border'>
             <h6 className='text-xl font-semibold'>Available Points</h6>
             <p className='text-3xl font-semibold text-green-500'>{student.find(item => item._id == submittedFor)?.points || "Unknown"}</p>
