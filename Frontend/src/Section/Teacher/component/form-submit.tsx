@@ -59,8 +59,8 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
       })
       const isInvalid = student.find(st => st._id == submittedFor)?.points + totalPoints < 0
   
-      setIsFormValid(allCompulsoryQuestionsAnswered && !isInvalid)
-  }, [answers,totalPoints, form.questions])
+      setIsFormValid(allCompulsoryQuestionsAnswered && !isInvalid && !!submittedFor)
+  }, [answers,totalPoints, form.questions, submittedFor])
 
   useEffect(() => {
     const getStudent = async () => {
