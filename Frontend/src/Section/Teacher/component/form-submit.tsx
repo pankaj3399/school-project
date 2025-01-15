@@ -110,11 +110,25 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             value={answers[question.id]?.answer as string || ''}
             onChange={(e) => {
               const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)
-              if(points > question.maxPoints){
+              if(question.pointsType != 'Deduct' && points > question.maxPoints){
                 e.target.setCustomValidity(`Value must be less than or equal to ${question.maxPoints}`)
               }else{
                 e.target.setCustomValidity('')
               }
+              console.log(question.pointsType, points, question.maxPoints);
+              
+              if(question.pointsType == 'Deduct' && points > 0){
+                e.target.setCustomValidity(`Value must be less than or equal to 0`)
+              }else{  
+                e.target.setCustomValidity('')
+                if(question.pointsType == 'Deduct' && points < question.maxPoints * -1){
+                  e.target.setCustomValidity(`Value must be greater than or equal to ${question.maxPoints * -1}`)
+                }else{
+                  e.target.setCustomValidity('')
+                }
+              }
+
+              
               
               e.target.reportValidity()
               handleInputChange(question.id, {answer: e.target.value, points})
@@ -149,12 +163,12 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                 console.log("value"+e.target.value);
                 handleInputChange(question.id, {answer: e.target.value, points: 0})
               }else{
-                handleInputChange(question.id, {answer: e.target.value, points: question.pointsType !== 'Deduct' ? Number(e.target.value) : Number(e.target.value) * -1})
+                handleInputChange(question.id, {answer: e.target.value, points: Number(e.target.value)})
               }
             }}
             required={question.isCompulsory}
-            max={question.maxPoints}
-            min={0}
+            max={question.pointsType === 'Deduct' ? 0 : question.maxPoints}
+            min={question.pointsType === 'Deduct' ? question.maxPoints * -1 : 0}
           />
         )
       
@@ -168,7 +182,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               const points = selectedOption ? selectedOption.points : 0;
               handleInputChange(question.id, {
                 answer: value,
-                points: question.pointsType !== 'Deduct' ? points : points * -1,
+                points: points
               });
             }}
             required={question.isCompulsory}
@@ -179,7 +193,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             <SelectContent>
               {question.options?.map((option, index) => (
                 <SelectItem key={index} value={option.value}>
-                  {option.value} {option.points ? <span className="text-muted-foreground">({question.pointsType === 'Award' ? '+' : '-'} {option.points} Points)</span> : ''}
+                  {option.value} {option.points ? <span className="text-muted-foreground">( {option.points} Points)</span> : ''}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -227,7 +241,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   
                   <h3 className="font-medium mb-2">
                     {index + 1}. {question.text} {
-                      question.type === 'select' || question.pointsType === 'None' ? <span className="text-muted-foreground"></span> : <span className="text-muted-foreground">(Upto {question.maxPoints} Points)</span>
+                      question.type === 'select' || question.pointsType === 'None' ? <span className="text-muted-foreground"></span> : <span className="text-muted-foreground">(Upto {question.pointsType == 'Deduct' ? question.maxPoints*-1:question.maxPoints} Points)</span>
                     }
                     {
                       question.pointsType === 'Award' ? <span className="text-green-500 ml-1">Award</span> : question.pointsType === 'Deduct' ? <span className="text-red-500 ml-1">Deduct</span> : ''
@@ -247,7 +261,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             isSubmitting ?  <Loader2 className='w-3 h-3 animate-spin' />:"Submit"  
           }</Button>
         </form>
-        {form.formType == 'DeductPoints' || form.formType == 'PointWithdraw' && submittedFor && <div>
+        {(form.formType == 'DeductPoints' || form.formType == 'PointWithdraw') && submittedFor && <div>
           <div className='bg-white p-4 border'>
             <h6 className='text-xl font-semibold'>Available Points</h6>
             <p className='text-3xl font-semibold text-green-500'>{student.find(item => item._id == submittedFor)?.points || "Unknown"}</p>
