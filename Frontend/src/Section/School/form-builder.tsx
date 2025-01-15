@@ -62,6 +62,19 @@ const navigate = useNavigate()
     setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q))
   }
 
+  const getDefaultPointsType = (formType: FormType) => {
+    switch(formType){
+      case 'AwardPoints':
+        return 'Award'
+      case 'Feedback':
+        return 'None'
+      case 'PointWithdraw':
+        return 'Deduct'
+      case 'DeductPoints':
+        return 'Deduct'
+    }
+  }
+
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
       <h1 className="text-2xl font-bold">Create Form</h1>
@@ -117,6 +130,7 @@ const navigate = useNavigate()
           <>
           <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
           <QuestionBuilder
+            formType={formType}
             key={question.id}
             question={question}
             onUpdate={updateQuestion}
@@ -133,7 +147,7 @@ const navigate = useNavigate()
         type: 'text',
         isCompulsory: false,
         maxPoints: 0,
-        pointsType: 'Award'
+        pointsType: getDefaultPointsType(formType)
       })}>
         Add Question
       </Button>

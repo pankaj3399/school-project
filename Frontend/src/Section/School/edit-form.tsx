@@ -156,6 +156,7 @@ export default function EditForm() {
           <>
           <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
           <QuestionBuilder
+            formType={formType}
             key={question.id}
             question={question}
             onUpdate={updateQuestion}

@@ -132,7 +132,7 @@ export default function ViewForms() {
                   View Details
                 </Button>
                 {
-                  form.formType == 'PointWithdraw' && (
+                  (
                     <Button
                   className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black  hover:text-black"
                   onClick={() => navigate(`/schoolAdmin/submitform/${form._id}`)}
