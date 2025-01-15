@@ -11,9 +11,10 @@ type QuestionBuilderProps = {
   question: Question
   onUpdate: (question: Question) => void
   onRemove: (id: string) => void
+  formType: 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
 }
 
-export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilderProps) {
+export function QuestionBuilder({ question, onUpdate, onRemove, formType }: QuestionBuilderProps) {
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({ ...question, text: e.target.value })
   }
@@ -80,17 +81,31 @@ export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilde
           <Label htmlFor={`compulsory-${question.id}`}>Compulsory</Label>
         </div>
         {(question.type === 'number' || question.type === 'text') && question.pointsType !== 'None' && (
+          <>
+           
           <div className="flex items-center space-x-2">
             <Label htmlFor={`points-${question.id}`}>Max Points</Label>
             <Input
               type="number"
               value={question.maxPoints === 0 ? '' : question.maxPoints}
-              onChange={(e) => onUpdate({ ...question, maxPoints: parseInt(e.target.value, 10) || 0 })}
+              onChange={(e) => {
+                if(e.target.value === '') {
+                  onUpdate({ ...question, maxPoints: 0 })
+                  return
+                }
+                if(Number(e.target.value) < 0)  
+                  onUpdate({ ...question, maxPoints: -1*Number(e.target.value) || 0 })
+                else
+                  onUpdate({ ...question, maxPoints: Number(e.target.value) || 0 })
+              }}
               placeholder="0"
               className="w-full"
               min={0}
             />
           </div>
+          <p className='text-xs flex-1'>{question.pointsType == 'Deduct' && "*(The max points value will be taken as negative for Deduct question type)"}</p>
+          </>
+
         )}
       </div>
       {question.type === 'select' && question.options && (
@@ -130,8 +145,8 @@ export function QuestionBuilder({ question, onUpdate, onRemove }: QuestionBuilde
             <SelectValue placeholder="Points Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Award">Award</SelectItem>
-            <SelectItem value="Deduct">Deduct</SelectItem>
+            {formType == 'AwardPoints' && <SelectItem value="Award">Award</SelectItem>}
+            {(formType=='DeductPoints' || formType=='PointWithdraw') && <SelectItem value="Deduct">Deduct</SelectItem>}
             <SelectItem value="None">None</SelectItem>
           </SelectContent>
         </Select>
