@@ -237,7 +237,7 @@ export const submitFormAdmin = async (req, res) => {
       emailGenerator(form, {
         points: totalPoints,
         submission: formSubmission,
-        teacher: null,
+        teacher: schoolAdmin,
         student: submittedForStudent,
         schoolAdmin: schoolAdmin,
         school: school
