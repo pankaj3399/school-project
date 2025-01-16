@@ -109,29 +109,14 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             type="text"
             value={answers[question.id]?.answer as string || ''}
             onChange={(e) => {
-              const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)
-              if(question.pointsType != 'Deduct' && points > question.maxPoints){
+              const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)              
+              if(points > question.maxPoints){
                 e.target.setCustomValidity(`Value must be less than or equal to ${question.maxPoints}`)
               }else{
                 e.target.setCustomValidity('')
               }
-              console.log(question.pointsType, points, question.maxPoints);
-              
-              if(question.pointsType == 'Deduct' && points > 0){
-                e.target.setCustomValidity(`Value must be less than or equal to 0`)
-              }else{  
-                e.target.setCustomValidity('')
-                if(question.pointsType == 'Deduct' && points < question.maxPoints * -1){
-                  e.target.setCustomValidity(`Value must be greater than or equal to ${question.maxPoints * -1}`)
-                }else{
-                  e.target.setCustomValidity('')
-                }
-              }
-
-              
-              
               e.target.reportValidity()
-              handleInputChange(question.id, {answer: e.target.value, points})
+              handleInputChange(question.id, {answer: e.target.value, points: question.pointsType === 'Deduct' ? points*-1:points})
             }}
             required={question.isCompulsory}
           />
@@ -160,15 +145,14 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             onChange={(e) => {
                 
               if(isNaN(Number(e.target.value))){
-                console.log("value"+e.target.value);
                 handleInputChange(question.id, {answer: e.target.value, points: 0})
               }else{
-                handleInputChange(question.id, {answer: e.target.value, points: Number(e.target.value)})
+                handleInputChange(question.id, {answer: e.target.value, points: question.pointsType === 'Deduct' ? Number(e.target.value)*-1:Number(e.target.value)})
               }
             }}
             required={question.isCompulsory}
-            max={question.pointsType === 'Deduct' ? 0 : question.maxPoints}
-            min={question.pointsType === 'Deduct' ? question.maxPoints * -1 : 0}
+            max={ question.maxPoints}
+            min={0}
           />
         )
       
@@ -182,7 +166,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               const points = selectedOption ? selectedOption.points : 0;
               handleInputChange(question.id, {
                 answer: value,
-                points: points
+                points: question.pointsType === 'Deduct' ? points*-1:points
               });
             }}
             required={question.isCompulsory}
@@ -241,7 +225,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   
                   <h3 className="font-medium mb-2">
                     {index + 1}. {question.text} {
-                      question.type === 'select' || question.pointsType === 'None' ? <span className="text-muted-foreground"></span> : <span className="text-muted-foreground">(Upto {question.pointsType == 'Deduct' ? question.maxPoints*-1:question.maxPoints} Points)</span>
+                      question.type === 'select' || question.pointsType === 'None' ? <span className="text-muted-foreground"></span> : <span className="text-muted-foreground">(Upto {question.maxPoints} Points)</span>
                     }
                     {
                       question.pointsType === 'Award' ? <span className="text-green-500 ml-1">Award</span> : question.pointsType === 'Deduct' ? <span className="text-red-500 ml-1">Deduct</span> : ''
