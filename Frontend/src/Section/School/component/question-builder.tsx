@@ -103,7 +103,7 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
               min={0}
             />
           </div>
-          <p className='text-xs flex-1'>{question.pointsType == 'Deduct' && "*(The max points value will be taken as negative for Deduct question type)"}</p>
+        
           </>
 
         )}
