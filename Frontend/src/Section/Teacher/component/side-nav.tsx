@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon },
-  { href: '/teachers/history', label: 'History', icon: Target },
-  { href: '/teachers/students', label: 'Students', icon: Users },
+  { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon }
 ];
 
 export function TeacherSideNav() {
