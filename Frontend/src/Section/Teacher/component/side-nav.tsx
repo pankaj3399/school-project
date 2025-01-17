@@ -1,12 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, LogOut,X,MenuIcon,ClipboardIcon, Target} from 'lucide-react';
+import {LogOut,X,MenuIcon,ClipboardIcon} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon },
-  { href: '/teachers/history', label: 'History', icon: Target },
-  { href: '/teachers/students', label: 'Students', icon: Users },
+  { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon }
 ];
 
 export function TeacherSideNav() {

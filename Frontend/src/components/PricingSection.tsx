@@ -4,12 +4,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 const plans = [
   {
     name: 'Basic',
-    price: '$49',
+    price: 'TBD',
     features: ['Up to 500 students', 'Basic reporting', 'Email support'],
   },
   {
     name: 'Pro',
-    price: '$99',
+    price: 'TBD',
     features: ['Up to 2000 students', 'Advanced reporting', 'Priority support'],
   },
   {
@@ -58,4 +58,3 @@ export default function PricingSection() {
     </section>
   )
 }
-

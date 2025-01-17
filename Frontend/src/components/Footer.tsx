@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">PointEdu</h3>
+            <h3 className="text-lg font-semibold mb-4">The RADU Framework &#9415;</h3>
             <p className="text-sm">Empowering schools with innovative point management solutions.</p>
           </div>
           <div>
@@ -45,11 +45,10 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-700 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} PointEdu. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} The RADU Framework &#9415; All rights reserved.</p>
           <p className="mt-2">Powered by InnoTech Solutions</p>
         </div>
       </div>
     </footer>
   )
 }
-

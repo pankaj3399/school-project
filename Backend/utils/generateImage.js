@@ -75,7 +75,7 @@ export const generateRecieptImage = async (
     const backgroundImage = await loadImage(path.join(__dirname, './Withdraw_reciept.png'));
     console.log(backgroundImage);
     
-    const canvas = createCanvas(404, 567)
+    const canvas = createCanvas(404, 621)
     const ctx = canvas.getContext('2d')
 
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
@@ -86,15 +86,20 @@ export const generateRecieptImage = async (
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     console.log(ctx.font);
+
+    ctx.font = 'bold 30px "Courier New Bold"'
+    ctx.fillText(`THE RADU FRAMEWORK`, canvas.width / 2, 80);
+    ctx.fillText(`E-TOKEN`, canvas.width / 2, 110);
+    ctx.fillText(`EXCHANGE RECEIPT`, canvas.width / 2, 140);
     
     ctx.font = 'bold 16px "Courier New Bold"'
-    ctx.fillText(`${schoolDistrict.toUpperCase()}`, canvas.width / 2, 155);
-    ctx.fillText(`${schoolName.toUpperCase()}`, canvas.width / 2, 169);
-    ctx.fillText(`${schoolAddress.toUpperCase()}`, canvas.width / 2, 183);
-    ctx.fillText(`DATE: ${date}`, 83, 258);
-    ctx.fillText(`ISUUED TO: ${student.toUpperCase()}`, 100, 273);
-    ctx.font = 'bold 70px "Courier New Bold"'
-    ctx.fillText(`${Math.abs(noOfTokens)}`, canvas.width / 2, 350);
+    ctx.fillText(`${schoolDistrict.toUpperCase()}`, canvas.width / 2, 200);
+    ctx.fillText(`${schoolName.toUpperCase()}`, canvas.width / 2, 220);
+    ctx.fillText(`${schoolAddress.toUpperCase()}`, canvas.width / 2, 240);
+    ctx.fillText(`DATE: ${date}`, canvas.width /2, 310);
+    ctx.fillText(`ISUUED TO: ${student.toUpperCase()}`, canvas.width /2, 330);
+    ctx.font = 'bold 100px "Courier New Bold"'
+    ctx.fillText(`${Math.abs(noOfTokens)}`, canvas.width / 2, 420);
     return canvas.toBuffer();
   } catch (error) {
     console.error('Error generating coupon image:', error);

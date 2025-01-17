@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { School, UserCheck, Award, Gift, BarChart } from 'lucide-react'
+import { School, UserCheck, Award, Gift, BarChart, Target } from 'lucide-react'
 
 const features = [
   {
@@ -26,6 +26,11 @@ const features = [
     title: 'Personalized Dashboards',
     description: 'Role-specific dashboards for personalized insights.',
     icon: BarChart,
+  },
+  {
+    title: 'Compliance Certified',
+    description: 'Aligned with FERPA, COPPA, CIPA, DPAs, and other educational regulations.',
+    icon: Target,
   },
 ]
 
