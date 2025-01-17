@@ -121,7 +121,7 @@ const navigate = useNavigate()
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
-              <p>Notify Parents</p>
+              <p>Notify Parents/Guardians</p>
             </div>
            
           </div>
