@@ -128,7 +128,7 @@ export default function ViewStudents() {
           <TableRow className="border-b-black">
             <TableHead className="text-gray-700">Name</TableHead>
             <TableHead className="text-gray-700">Email</TableHead>
-            <TableHead className="text-gray-700">Parents Email</TableHead>
+            <TableHead className="text-gray-700">Parents/Guardians Email</TableHead>
             {/* <TableHead></TableHead> */}
             <TableHead className="text-gray-700">Actions</TableHead>
           </TableRow>
@@ -201,7 +201,7 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4 space-y-2">
-              <label className="block text-sm font-medium">Parent Email</label>
+              <label className="block text-sm font-medium">Parent/Gaurdian Email</label>
               <input
                 type="email"
                 value={editingStudent.parentEmail}
@@ -226,7 +226,7 @@ export default function ViewStudents() {
                 className=" w-full px-4 py-2 border rounded"
               />
             <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e)=>setEditingStudent({...editingStudent,sendNotifications:e as boolean})} className="mt-2" />
-              <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to parent</span>
+              <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to Parents/Guardians.</span>
             </div>
 
             <div className="flex space-x-4">
