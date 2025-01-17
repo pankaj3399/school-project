@@ -120,7 +120,7 @@ export default function EditForm() {
         <label htmlFor="formType" className="block text-sm font-medium text-gray-700 mb-1">
           Select Form Type
         </label>
-        <Select value={formType} onValueChange={(value: FormType) => setFormType(value)}>
+        <Select value={formType} defaultValue={formType} onValueChange={(value: FormType) => setFormType(value)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select form type" />
           </SelectTrigger>
@@ -147,7 +147,7 @@ export default function EditForm() {
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
-              <p>Notify Parents</p>
+              <p>Notify Parents/Guardians</p>
             </div>
            
           </div>
