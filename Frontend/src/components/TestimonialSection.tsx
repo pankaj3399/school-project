@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const testimonials = [
   {
-    quote: "PointEdu has revolutionized our school's reward system. Students are more engaged than ever!",
+    quote: "The RADU Framework has revolutionized our school's reward system. Students are more engaged than ever!",
     author: "Jane Doe",
     role: "Principal, XYZ School",
   },
