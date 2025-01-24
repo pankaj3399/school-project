@@ -24,6 +24,7 @@ import ForgotPassword from "./components/ForgetPassword";
 import OtpVerificationPage from "./components/OtpVerification";
 import { ResetPassword } from "./components/ResetPassword";
 import FormPageAdmin from "./Section/School/submit-form";
+import DetailedHistory from "./Section/School/detailed-history";
 
 
 // Reusable ProtectedRoute component
@@ -67,6 +68,10 @@ export default function App() {
           <Route path="/home" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+
+          
+          <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
+
         </Routes>
       </RootLayout>
     </div>
