@@ -452,3 +452,62 @@ export const resetPassword = async (data: any) => {
         return {error};
     }
 }
+
+export const getHistoryOfYear = async () => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/school/getYearPointsHistory`,{}, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const getHistoryOfCurrentWeek = async (data: any) => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/school/getCurrentWeekPoints`,data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+export const getHistoryByTime = async (data: any) => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/school/getHistoryByTime`,data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getRanks = async () => {
+    try {
+        const token = getToken()
+        const response1 = await axios.post(`${API_URL}/school/getTeacherPoints`,{}, {
+            headers: {
+                token
+            }
+        });
+        const response2 = await axios.post(`${API_URL}/school/getStudentPoints`,{}, {
+            headers: {
+                token
+            }
+        });
+        return {teachers: response1.data, students: response2.data};
+    } catch (error) {
+        return {error};
+    }
+}
