@@ -80,7 +80,7 @@ export  const SignupForm = ()=> {
         } else {
           login(res.token)
           if (formData.role === 'SchoolAdmin') {
-            navigate('/school')
+            navigate("/analytics");
           }
         }
       } catch (error) {
