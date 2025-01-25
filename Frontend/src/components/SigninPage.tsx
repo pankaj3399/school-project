@@ -83,7 +83,7 @@ export default function LoginForm() {
         });
 
         if (formData.role === "SchoolAdmin") {
-          navigate("/school");
+          navigate("/analytics");
         } else if (formData.role === "Teacher") {
           navigate("/teachers/managepoints");
         } else if (formData.role === "Student") {
