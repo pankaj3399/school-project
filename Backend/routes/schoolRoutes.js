@@ -4,7 +4,7 @@ import { authenticate } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/roleMiddleware.js';
 import {Role} from '../enum.js';
 import upload from '../middlewares/multer.js';
-import { getWeekPointsHistory, getYearPointsHistory, getHistoricalPointsData, getPointsByTeacher, getPointsByStudent } from '../controllers/pointhistoryController.js';
+import { getWeekPointsHistory, getYearPointsHistory, getHistoricalPointsData, getPointsByTeacher, getPointsByStudent, getYearPointsHistoryByStudent, getWeekPointsHistoryByStudent } from '../controllers/pointhistoryController.js';
 const router = express.Router();
 
 router.get('/',getAllSchools);
@@ -14,7 +14,9 @@ router.get('/school',authenticate,authorizeRoles(Role.SchoolAdmin),getCurrentSch
 router.put('/updateSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin),upload.single('logo'),updateSchool);
 router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin),deleteSchool);
 router.post('/getYearPointsHistory',authenticate,authorizeRoles(Role.SchoolAdmin),getYearPointsHistory);
+router.post('/getYearPointsHistory/:id',authenticate,authorizeRoles(Role.SchoolAdmin),getYearPointsHistoryByStudent);
 router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin),getWeekPointsHistory);
+router.post('/getCurrentWeekPoints/:id',authenticate,authorizeRoles(Role.SchoolAdmin),getWeekPointsHistoryByStudent);
 router.post('/getHistoryByTime',authenticate,authorizeRoles(Role.SchoolAdmin),getHistoricalPointsData);
 router.post('/getTeacherPoints',authenticate,authorizeRoles(Role.SchoolAdmin),getPointsByTeacher);
 router.post('/getStudentPoints',authenticate,authorizeRoles(Role.SchoolAdmin),getPointsByStudent);

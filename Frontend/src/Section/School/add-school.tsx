@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
-import OverallStats from "./component/OverallStats";
+
+import AllCharts from "./component/all-charts";
 
 export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
@@ -163,12 +164,13 @@ if (!response.error) {
             <img
               src={school.logo || "/default-logo.png"}
               alt={school.name}
-              className="w-72 h-72 object-cover rounded-full"
+              className="w-36 h-36 object-cover rounded-full"
             />
             
             <div className="text-center">
               <p className="text-xl">{school.district}</p>
               <h2 className="text-4xl font-bold">{school.name}</h2>
+              <p className="text-xl">{school.createdBy.name?.toUpperCase()} - LEAD TEACHER</p>
               <p className="text-xl">{school.address}</p>
             </div>
             <div className="flex flex-col gap-4">
@@ -181,11 +183,10 @@ if (!response.error) {
         { 
           !isEditing && <SchoolStats stats={stats} />
         }
-        { 
-          !isEditing && <div className="w-full mt-5">
-            <OverallStats />
-          </div>
+        {
+          !isEditing && <AllCharts />
         }
+       
         
         {isEditing && (
           <div className="grid place-items-center w-full h-full mt-20">

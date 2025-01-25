@@ -18,9 +18,9 @@ const Ranks = () => {
     fetchRanks()
   },[])
   return (
-    <div>
-        <PointsBarChart data={teacherRanks} title="Total Points Issued By Teacher" barColor="#faac11"/>
-        <PointsBarChart data={studentRanks} title="Total Points Received By Student" barColor="#0af"/>
+    <div className="pt-10">
+        <PointsBarChart data={teacherRanks} title="TOTAL POINTS ISSUED BY TEACHER" barColor="#FFD700"/>
+        <PointsBarChart data={studentRanks} title="TOTAL POINTS RECEIVED BY STUDENT" barColor="#1E90FF"/>
     </div>
   )
 }
@@ -44,7 +44,9 @@ const PointsBarChart = ({
     }, [data]);
     return (
     <div className="w-full grid grid-cols-8 place-items-center border-2 py-5 rounded-lg h-[400px]  mb-6 mt-10">
-        <h2 className="text-nowrap col-span-8 px-4 flex flex-col items-center font-bold text-center mb-4">
+        <h2 className="text-wrap  text-sm col-span-8 px-4 flex flex-col items-center font-bold text-center mb-4"
+        style={{color: barColor}}
+        >
             {title}
         </h2>
         

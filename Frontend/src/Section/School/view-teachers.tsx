@@ -38,7 +38,7 @@ export default function ViewTeachers() {
         }
 
         const data = await getTeachers();
-        setTeachers(data.teachers);
+        setTeachers(data.teachers.sort((a: any, b: any) => a.name.localeCompare(b.name)));
         setLoading(false);
       } catch (error) {
         toast({

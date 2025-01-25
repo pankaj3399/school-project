@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import {LogOut,X,MenuIcon,ClipboardIcon} from 'lucide-react';
+import { LogOut,X,MenuIcon,ClipboardIcon} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -62,7 +62,7 @@ export function TeacherSideNav() {
 
 <nav className={ `w-64 bg-[#654f6f] shadow-lg max-md:hidden`}>
       <div className="p-4">
-      <img src="/logo3.png" alt="" className='w-56 h-56 invert' />
+      <img src="/logo3.png" alt="" className='w-56 invert object-cover' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (

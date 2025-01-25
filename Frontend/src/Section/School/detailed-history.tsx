@@ -4,7 +4,13 @@ import { useSearchParams } from "react-router-dom"
 import PointsBarChart from "./component/points-bar-chart";
 import ViewPointHistoryByData from "./component/point-history-data";
 
-const periods = ['1W', '1M', '3M', '6M', '1Y'];
+const periods = [
+    {label: '1W', value: '1 WEEK'},
+    {label: '1M', value: '1 MONTH'},
+    {label: '3M', value: '3 MONTHS'},
+    {label: '6M', value: '6 MONTHS'},
+    {label: '1Y', value: '1 YEAR'},
+]
 
 const DetailedHistory = () => {
     const [searchParams, _] = useSearchParams();
@@ -145,7 +151,7 @@ const DetailedHistory = () => {
     <div>
         <div className='flex mt-4 space-x-4'>
             {periods.map((p, index) => (
-            <button key={index} onClick={() => setPeriod(p)} className={`flex-1 px-4 py-4 text-xl ${period === p ? `bg-blue-500 text-white` : 'bg-gray-200 text-gray-800'} rounded-md`}>{p}</button>
+            <button key={index} onClick={() => setPeriod(p.label)} className={`flex-1 px-4 py-4 text-xl ${period === p.label ? `bg-blue-500 text-white` : 'bg-gray-200 text-gray-800'} rounded-md`}>{p.value}</button>
             ))}
             
         </div>

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -8,6 +7,10 @@ import { getStudents } from '@/api'
 import Modal from '@/Section/School/Modal'
 import { Loader2 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
+
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ChevronsUpDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 
 
@@ -29,8 +32,10 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const [submittedFor, setSubmittedFor] = useState("")
   const [answers, setAnswers] = useState<AnswerType>({})
   const [isFormValid, setIsFormValid] = useState(false)
-  const [student, setStudent] = useState<any[]>([])
   const [showModal, setShowModal] = useState(false)
+  const [filteredStudent, setfilteredStudent] = useState<any[]>([])
+  const [isPopOverOpen, setIsPopOverOpen] = useState(false)
+  const [student, setStudent] = useState<any[]>([])
   const [isSendEmail, setIsSendEmail] = useState({
     studentEmail: false,
     teacherEmail: false,
@@ -67,6 +72,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
       const token = localStorage.getItem("token") || ""
       const response = await getStudents(token)
       setStudent(response.students)
+      setfilteredStudent(response.students)
     }
     getStudent()
   }, [])
@@ -75,7 +81,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     switch(form.formType){
       case 'AwardPoints':
       case 'DeductPoints':{
-        setDescription(`You will ${form.formType == 'AwardPoints' ? "AWARD":"REMOVE"} ${Math.abs(totalPoints)} POINTS TO ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`)
+        setDescription(`You will ${form.formType == 'AwardPoints' ? "AWARD":"DEDUCT"} ${Math.abs(totalPoints)} POINTS ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`)
       }
       break;
       case 'Feedback':{
@@ -206,18 +212,38 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             <div className="space-y-6 px-2">
               <div>
                 <p>Student:</p>
-                <Select value={submittedFor} onValueChange={(value) => setSubmittedFor(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {student && student.map((student: any) => (
-                      <SelectItem key={student._id} value={student._id}>
-                        {student.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {Array.isArray(student) && student.length > 0 ? (
+  <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
+    <PopoverTrigger asChild>
+      <Button
+        variant="outline"
+        role="combobox"
+        className="w-full justify-between"
+      >
+        {submittedFor
+          ? student.find((s: any) => s._id === submittedFor)?.name
+          : "Select student..."}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-[320px] p-0 flex flex-col space-y-0">
+          <Input onChange={(e)=>{
+            const value = e.target.value
+            setfilteredStudent(student.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase())))
+          }} />
+          {
+            filteredStudent.map((s: any) => (
+              <Button onClick={()=>{ setSubmittedFor(s._id)
+
+                setIsPopOverOpen(false)
+              }} key={s._id} className='justify-start' variant={"ghost"}>{s.name}</Button>
+            ))
+          }
+    </PopoverContent>
+  </Popover>
+) : (
+  <div>No students available</div>
+)}
               </div>
               
               {form.questions.map((question, index) => (

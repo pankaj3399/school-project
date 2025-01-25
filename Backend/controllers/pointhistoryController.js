@@ -8,12 +8,12 @@ import Student from "../models/Student.js";
 const getEducationalYearStart = () => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const octFirst = new Date(currentYear, 9, 1); // October is 9 in zero-indexed months
+    const augFirst = new Date(currentYear, 7, 1); // August is 7 in zero-indexed months
 
-    // If current date is before Oct 1, use previous year's start
-    return currentDate < octFirst 
+    // If current date is before AUg 1, use previous year's start
+    return currentDate < augFirst 
         ? new Date(currentYear - 1, 9, 1)
-        : octFirst;
+        : augFirst;
 };
 
 // 1. Whole Year Points History Controller
@@ -55,6 +55,8 @@ export const getYearPointsHistory = async (req, res) => {
                         $first: { 
                             $switch: { 
                                 branches: [
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 8] }, then: 'Aug' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 9] }, then: 'Sep' },
                                     { case: { $eq: [{ $month: '$submittedAt' }, 10] }, then: 'Oct' },
                                     { case: { $eq: [{ $month: '$submittedAt' }, 11] }, then: 'Nov' },
                                     { case: { $eq: [{ $month: '$submittedAt' }, 12] }, then: 'Dec' },
@@ -62,24 +64,25 @@ export const getYearPointsHistory = async (req, res) => {
                                     { case: { $eq: [{ $month: '$submittedAt' }, 2] }, then: 'Feb' },
                                     { case: { $eq: [{ $month: '$submittedAt' }, 3] }, then: 'Mar' },
                                     { case: { $eq: [{ $month: '$submittedAt' }, 4] }, then: 'Apr' },
-                                    { case: { $eq: [{ $month: '$submittedAt' }, 5] }, then: 'May' }
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 5] }, then: 'May' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 6] }, then: 'Jun' }
                                 ],
                                 default: 'Unknown'
                             }
                         }
                     },
                     avgDeductedPoints: { 
-                        $avg: { 
+                        $sum: { 
                             $cond: [{ $eq: ['$formType', 'DeductPoints'] }, '$points', 0] 
                         } 
                     },
                     avgAwardedPoints: { 
-                        $avg: { 
+                        $sum: { 
                             $cond: [{ $eq: ['$formType', 'AwardPoints'] }, '$points', 0] 
                         } 
                     },
                     avgWithdrawPoints: { 
-                        $avg: { 
+                        $sum: { 
                             $cond: [{ $eq: ['$formType', 'PointWithdraw'] }, '$points', 0] 
                         } 
                     },
@@ -106,6 +109,109 @@ export const getYearPointsHistory = async (req, res) => {
                 }
             }
         ]);
+
+        res.status(200).json({ data: pointsHistory });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getYearPointsHistoryByStudent = async (req, res) => {
+    try {
+        const adminId = req.user.id
+        const studentId = req.params.id;
+        
+
+        const school = await School.findOne({ createdBy: adminId });
+
+        if(!school) {
+            return res.status(404).json({ message: 'School not found' });
+        }
+
+        const schoolId = school._id;
+        
+        
+        const yearStart = getEducationalYearStart();
+        const today = new Date();
+
+        const pointsHistory = await PointsHistory.aggregate([
+            
+            {
+                $match: {
+                    schoolId: new mongoose.Types.ObjectId(schoolId),
+                    submittedForId: new mongoose.Types.ObjectId(studentId),
+                    submittedAt: { 
+                        $gte: yearStart, 
+                        $lte: today 
+                    }
+                }
+            },
+           
+            {
+                $group: {
+                    _id: {
+                        month: { $month: '$submittedAt' },
+                        year: { $year: '$submittedAt' }
+                    },
+                    monthName: { 
+                        $first: { 
+                            $switch: { 
+                                branches: [
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 8] }, then: 'Aug' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 9] }, then: 'Sep' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 10] }, then: 'Oct' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 11] }, then: 'Nov' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 12] }, then: 'Dec' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 1] }, then: 'Jan' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 2] }, then: 'Feb' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 3] }, then: 'Mar' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 4] }, then: 'Apr' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 5] }, then: 'May' },
+                                    { case: { $eq: [{ $month: '$submittedAt' }, 6] }, then: 'Jun' }
+                                ],
+                                default: 'Unknown'
+                            }
+                        }
+                    },
+                    avgDeductedPoints: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$formType', 'DeductPoints'] }, '$points', 0] 
+                        } 
+                    },
+                    avgAwardedPoints: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$formType', 'AwardPoints'] }, '$points', 0] 
+                        } 
+                    },
+                    avgWithdrawPoints: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$formType', 'PointWithdraw'] }, '$points', 0] 
+                        } 
+                    },
+                    totalPoints: { $sum: '$points' },
+                    days: {
+                        $push: {
+                            day: { $dayOfMonth: '$submittedAt' },
+                            formType: '$formType',
+                            points: '$points'
+                        }
+                    }
+                }
+            },
+            // Sort by month
+            { $sort: { '_id.year': 1, '_id.month': 1 } },
+            // Project final output format
+            {
+                $project: {
+                    month: '$monthName',
+                    avgDeductedPoints: { $abs: '$avgDeductedPoints' },
+                    avgAwardedPoints: '$avgAwardedPoints',
+                    avgWithdrawPoints: '$avgWithdrawPoints',
+                    days: '$days'
+                }
+            }
+        ]);
+        
 
         res.status(200).json({ data: pointsHistory });
     } catch (error) {
@@ -145,6 +251,67 @@ export const getWeekPointsHistory = async (req, res) => {
                 $match: {
                     schoolId: new mongoose.Types.ObjectId(schoolId),
                     formType: formType,
+                    submittedAt: { 
+                        $gte: weekStart, 
+                        $lte: weekEnd 
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dayOfWeek: '$submittedAt' },
+                    points: { $sum: '$points' }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    day: { $arrayElemAt: [daysOfWeek, { $subtract: ['$_id', 1] }] },
+                    points: 1
+                }
+            },
+            { $sort: { day: 1 } }
+        ]);
+
+        res.status(200).json({ data: weekPoints });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getWeekPointsHistoryByStudent = async (req, res) => {
+    try {
+        const adminId = req.user.id
+        const studentId = req.params.id;
+
+        const school = await School.findOne({ createdBy: adminId });
+
+        if(!school) {
+            return res.status(404).json({ message: 'School not found' });
+        }
+
+        const schoolId = school._id;
+
+        const { startDate, formType } = req.body;
+
+        const start = startDate ? new Date(startDate) : new Date();
+        
+        const weekStart = new Date(start);
+        weekStart.setDate(start.getDate() - start.getDay());
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+
+        
+
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        const weekPoints = await PointsHistory.aggregate([
+            {
+                $match: {
+                    schoolId: new mongoose.Types.ObjectId(schoolId),
+                    formType: formType,
+                    submittedForId: new mongoose.Types.ObjectId(studentId),
                     submittedAt: { 
                         $gte: weekStart, 
                         $lte: weekEnd 

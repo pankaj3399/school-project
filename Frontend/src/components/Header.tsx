@@ -11,23 +11,23 @@ export default function Header() {
          
           {location.pathname === '/' ? ( <div className='flex gap-x-96 items-center '>
             <nav className="hidden lg:flex space-x-4">
-          <a href="/" className="text-gray-600 hover:text-blue-600 transition-colors">
-            Home
+          <a href="/" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
+            HOME
           </a>
-          <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
-            About
+          <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
+            ABOUT
           </a>
-          <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">
-            Features
+          <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
+            FEATURES
           </a>
-          <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
-            Pricing
+          <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
+            PRICING
           </a>
         </nav>
         <div className="flex items-center space-x-2">
-          <Link to='/signin'><Button variant="outline">Login</Button></Link>
+          <Link to='/signin'><Button  className='text-lg py-2' variant="outline">LOGIN</Button></Link>
           <Link to='/signup'>
-          <Button>Get Started</Button>
+          <Button className='text-lg py-2' >GET STARTED</Button>
           </Link>
         </div>
         </div>
