@@ -1,12 +1,11 @@
 //school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Home} from 'lucide-react';
+import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/home', label: 'Home', icon: Home },
-  { href: '/school', label: 'School', icon: School },
+  { href: '/analytics', label: 'Analytics', icon: School },
   // { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
   // { href: '/addstudent', label: 'Add Student', icon: UserPlus },
   { href: '/teacher', label: 'Teachers', icon: Users },
@@ -84,7 +83,7 @@ export function SideNav() {
       {/* Desktop Navigation */}
       <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg h-screen">
         <div className="p-4">
-          <img src="/logo3.png" alt="Logo" className="w-56 h-56 invert" />
+          <img src="/logo3.png" alt="Logo" className="w-56  invert object-cover" />
         </div>
         <ul className="space-y-2 py-4">
           {navItems.map((item) => (
