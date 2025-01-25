@@ -44,7 +44,7 @@ export const getTeachers = async (req, res) => {
 };
 export const getCurrentSchool = async (req, res) => {
     try {
-        const school = await School.findOne({ createdBy: req.user.id });
+        const school = await School.findOne({ createdBy: req.user.id }).populate('createdBy');
         if (!school) {
             return res.status(404).json({ message: 'School not found' });
         }
@@ -69,13 +69,13 @@ export const updateSchool = async (req, res) => {
         req.params.id,
         { name, address,district, logo: logoUrl },
         { new: true }
-      );
+      ).populate('createdBy');
       else
       updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
         { name, address,district },
         { new: true }
-      );
+      ).populate('createdBy');
   
       if (!updatedSchool) return res.status(404).json({ message: "School not found." });
   
