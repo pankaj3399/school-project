@@ -8,8 +8,8 @@ const AdminDashboard = () => {
   return (
     <div className='space-y-4 grid grid-cols-4'>
       <div className='col-span-3'>
-        <EducationYearChart />
-        <CurrentWeekCharts />
+        <EducationYearChart studentId='' />
+        <CurrentWeekCharts studentId='' />
       </div>
       <Ranks/>
     </div>
