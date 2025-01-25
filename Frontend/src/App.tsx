@@ -46,7 +46,7 @@ export default function App() {
           <Route path="/verify" element={<OtpVerificationPage />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
 
-          <Route path="/school" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
