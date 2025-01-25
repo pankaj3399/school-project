@@ -1,4 +1,4 @@
-import { getHistoryOfYear } from '@/api';
+import { getHistoryOfYear, getHistoryOfYearByStudent } from '@/api';
 import { useEffect, useState } from 'react';
 import { 
   ComposedChart, 
@@ -12,17 +12,15 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
+ // Months in the US educational year
+ const months = ['Aug','Sep','Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May','Jun'];
 
-
-const generateData = async (month: string | null = null) => {
+const generateData = async (month: string | null = null, studentId:string | null = null) => {
     let data:any[] = [];
     try{
-        const res = await getHistoryOfYear();
+        let res = studentId ? await getHistoryOfYearByStudent(studentId):await getHistoryOfYear();
         if (!month) {
-            const months = [
-                'Oct', 'Nov', 'Dec', 'Jan', 
-                'Feb', 'Mar', 'Apr', 'May'
-              ];
+            
 
               data = months.map(monthName => ({
                 month: monthName,
@@ -38,10 +36,10 @@ const generateData = async (month: string | null = null) => {
                 const index = months.indexOf(monthData.month);
                 data[index] = {
                     month: monthData.month,
-                    withdrawals: Math.round(monthData.avgDeductedPoints),
+                    withdrawals: Math.round(Math.abs(monthData.avgWithdrawPoints)),
                     tokens: Math.round(monthData.avgAwardedPoints),
                     oopsies: Math.round(monthData.avgDeductedPoints),
-                    yellowTrend: Math.round(monthData.avgDeductedPoints),
+                    yellowTrend: Math.round(Math.abs(monthData.avgWithdrawPoints)),
                     blueTrend: Math.round(monthData.avgAwardedPoints),
                     redTrend: Math.round(monthData.avgDeductedPoints)
                 }
@@ -116,23 +114,25 @@ const generateData = async (month: string | null = null) => {
     }
 }
 
-const EducationYearChart = () => {
+const EducationYearChart = ({studentId}:{
+  studentId: string
+}) => {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
-  // Months in the US educational year
-  const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
+ 
   
   // Get data based on selected month
   
 
   useEffect(() => {
     const fetchData = async () => {
-        const data = await generateData(selectedMonth);
+        const data = await generateData(selectedMonth,studentId);
         setChartData(data);
     }
 
     fetchData();
-  },[selectedMonth])
+  },[selectedMonth, studentId])
+
 
   return (
     <div className="w-full">
@@ -154,21 +154,22 @@ const EducationYearChart = () => {
         ))}
       </div>
 
-      <div className="w-full h-[450px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full h-[450px] ">
+        <ResponsiveContainer width="100%" height="100%"   >
           <ComposedChart
             data={chartData}
             margin={{
               top: 20,
               right: 30,
               left: 20,
-              bottom: 5,
+              bottom: 10,
             }}
+            
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey={selectedMonth ? "day" : "month"} 
-              label={{ value: selectedMonth ? `Days in ${selectedMonth}` : 'Months', position: 'insideBottom', offset: -10 }}
+              label={{ value: selectedMonth ? `${selectedMonth}` : `${new Date().getFullYear()}`, position: 'insideBottom', offset: -5, fontSize: 16 }}
 
             />
             <YAxis  />
@@ -193,6 +194,8 @@ const EducationYearChart = () => {
               dot={false}
               legendType='none'
               tooltipType='none'
+               strokeWidth={2}
+              className='opacity-40'
               />
             <Line 
               type="monotone" 
@@ -202,6 +205,8 @@ const EducationYearChart = () => {
               name="Blue Trend" 
               dot={false}
               legendType='none'
+              strokeWidth={2}
+              className='opacity-40'
               />
             <Line 
               type="monotone" 
@@ -211,6 +216,8 @@ const EducationYearChart = () => {
               name="Red Trend" 
               dot={false}
               legendType='none'
+               strokeWidth={2}
+              className='opacity-35'
             />
           </ComposedChart>
         </ResponsiveContainer>
