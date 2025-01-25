@@ -31,7 +31,7 @@ export default function ViewStudents() {
         }
 
         const data = await getStudents(token)
-        setStudents(data.students)
+        setStudents(data.students.sort((a: any, b: any) => a.name.localeCompare(b.name)))
         setLoading(false)
       } catch (error) {
         toast({
