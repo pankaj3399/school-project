@@ -466,10 +466,39 @@ export const getHistoryOfYear = async () => {
         return {error};
     }
 }
+
+export const getHistoryOfYearByStudent = async (id:string) => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/school/getYearPointsHistory/${id}`,{}, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
 export const getHistoryOfCurrentWeek = async (data: any) => {
     try {
         const token = getToken()
         const response = await axios.post(`${API_URL}/school/getCurrentWeekPoints`,data, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const getHistoryOfCurrentWeekByStudent = async (id:string,data: any) => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/school/getCurrentWeekPoints/${id}`,data, {
             headers: {
                 token
             }
