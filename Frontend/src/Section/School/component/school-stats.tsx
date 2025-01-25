@@ -19,7 +19,6 @@ const SchoolStats = memo(({stats}:{
         <StatCard label={"Awarded Points"} value={stats.points} />
         <StatCard label={"Feedbacks"} value={stats.feedbacks} />
         <StatCard label={"Total Oopsies"} value={stats.oopsie} />
-        <StatCard label={"Average Points"} value={Math.floor(stats.points/stats.students)} />
 
     </div>
   )
