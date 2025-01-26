@@ -115,7 +115,7 @@ const CurrentWeekCharts = ({studentId}:{
     }) => (
       <div className="w-full grid grid-cols-8 place-items-center border-2 py-5 rounded-lg h-64 mb-6 mt-10">
         <h2 className="text-nowrap col-span-1 px-4 flex flex-col items-center font-bold text-center mb-4">
-          <img src={icon} />
+          <img className='w-44  aspect-square' src={icon} />
           {title}
         </h2>
         <ResponsiveContainer
