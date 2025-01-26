@@ -19,7 +19,7 @@ const Ranks = () => {
   },[])
   return (
     <div className="pt-10">
-        <PointsBarChart data={teacherRanks} title="TOTAL POINTS ISSUED BY TEACHER" barColor="#FFD700"/>
+        <PointsBarChart data={teacherRanks} title="TOTAL POINTS ISSUED BY TEACHER" barColor="#bb45d9"/>
         <PointsBarChart data={studentRanks} title="TOTAL POINTS RECEIVED BY STUDENT" barColor="#1E90FF"/>
     </div>
   )

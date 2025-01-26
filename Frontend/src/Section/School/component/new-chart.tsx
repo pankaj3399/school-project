@@ -181,31 +181,31 @@ const EducationYearChart = ({studentId}:{
 />
             
             {/* Bars */}
-            <Bar dataKey="withdrawals" fill="#FFD700" name="Withdrawals" barSize={20} />
-            <Bar dataKey="tokens" fill="#1E90FF" name="Total tokens" barSize={20} />
-            <Bar dataKey="oopsies" fill="#FF4500" name="Oopsies" barSize={20} />
+            <Bar dataKey="withdrawals" fill="#3d59f5" name="Withdrawals" barSize={20} />
+            <Bar dataKey="tokens" fill="#4CAF50" name="Total tokens" barSize={20} />
+            <Bar dataKey="oopsies" fill="#F44336" name="Oopsies" barSize={20} />
             
             {/* Trend Lines */}
             <Line 
               type="monotone" 
               dataKey="yellowTrend" 
-              stroke="#DAA520" 
-              name="Yellow Trend" 
+              stroke="#3d59f5" 
+              name="Withdraw Trend" 
               dot={false}
               legendType='none'
               tooltipType='none'
-               strokeWidth={2}
+               strokeWidth={4}
               className='opacity-40'
               />
             <Line 
               type="monotone" 
               tooltipType='none'
               dataKey="blueTrend" 
-              stroke="#4169E1" 
-              name="Blue Trend" 
+              stroke="#4CAF50" 
+              name="Token Trend" 
               dot={false}
               legendType='none'
-              strokeWidth={2}
+              strokeWidth={4}
               className='opacity-40'
               />
             <Line 
@@ -216,7 +216,7 @@ const EducationYearChart = ({studentId}:{
               name="Red Trend" 
               dot={false}
               legendType='none'
-               strokeWidth={2}
+               strokeWidth={4}
               className='opacity-35'
             />
           </ComposedChart>
