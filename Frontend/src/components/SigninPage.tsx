@@ -86,9 +86,7 @@ export default function LoginForm() {
           navigate("/analytics");
         } else if (formData.role === "Teacher") {
           navigate("/teachers/managepoints");
-        } else if (formData.role === "Student") {
-          navigate("/students");
-        }
+        } 
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -174,7 +172,6 @@ export default function LoginForm() {
                 <SelectContent>
                   <SelectItem value="SchoolAdmin">Lead Teacher</SelectItem>
                   <SelectItem value="Teacher">Teacher</SelectItem>
-                  <SelectItem value="Student">Student</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (
