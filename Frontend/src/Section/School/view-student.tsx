@@ -201,7 +201,7 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4 space-y-2">
-              <label className="block text-sm font-medium">Parent/Gaurdian Email</label>
+              <label className="block text-sm font-medium">Parent/Guardian Email</label>
               <input
                 type="email"
                 value={editingStudent.parentEmail}
