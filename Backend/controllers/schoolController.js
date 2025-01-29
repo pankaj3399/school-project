@@ -2,6 +2,7 @@ import { Role } from "../enum.js";
 import School from "../models/School.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
+import Student from "../models/Student.js";
 export const getAllSchools = async (req, res) => {
     try {
       const schools = await School.find();
@@ -11,25 +12,33 @@ export const getAllSchools = async (req, res) => {
     }
   };
 
-export const getStudents = async (req, res) => {
+  export const getStudents = async (req, res) => {
     try {
-        let school;
-        if(req.user.role === Role.Teacher){
-            const teacher = await Teacher.findById(req.user.id);
-            school = await School.findOne({ _id: teacher.schoolId }).populate('students');
-        }else{
-            school = await School.findOne({ createdBy: req.user.id }).populate('students');
+      let students;
+      if(req.user.role === Role.Teacher) {
+        const teacher = await Teacher.findById(req.user.id);
+        if(teacher.type === 'Lead') {
+          // Lead teachers only see their grade's students
+          students = await Student.find({ 
+            schoolId: teacher.schoolId,
+            grade: teacher.grade 
+          });
+        } else {
+          // Special teachers see all students
+          students = await Student.find({ schoolId: teacher.schoolId });
         }
-
-        if (!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-        return res.status(200).json({ students: school.students });
+      } else {
+        // School admin sees all students
+        const school = await School.findOne({ createdBy: req.user.id });
+        students = await Student.find({ schoolId: school._id });
+      }
+      return res.status(200).json({ students });
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'An error occurred', error: err.message });
+      return res.status(500).json({ error: err.message });
     }
-};
+  };
+
+
 export const getTeachers = async (req, res) => {
     try {
         const school = await School.findOne({ createdBy: req.user.id }).populate('teachers');
@@ -102,4 +111,45 @@ export const deleteSchool = async (req, res) => {
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });
     }
+}
+
+export const promote = async (req, res) => {
+  try {
+      const id = req.user.id;
+      let school;
+      
+      // Get school based on user role
+      if(req.user.role === Role.Teacher) {
+          const user = await Teacher.findById(id);
+          school = await School.findById(user.schoolId);
+      } else {
+          school = await School.findOne({ createdBy: id });
+      }
+
+      if(!school) {
+          return res.status(404).json({ message: 'School not found' });
+      }
+
+      // Get all students except those in grade 6
+      const students = await Student.find({ 
+          schoolId: school._id,
+          grade: { $lt: 12 } 
+      });
+
+      // Promote students
+      await Student.updateMany(
+          { 
+              _id: { $in: students.map(s => s._id) },
+              grade: { $lt: 12 }
+          },
+          { $inc: { grade: 1 } }
+      );
+
+      return res.status(200).json({
+          message: "Students promoted successfully",
+          promotedCount: students.length
+      });
+  } catch(error) {
+      return res.status(500).json({ message: 'Server Error', error: error.message });
+  }
 }
