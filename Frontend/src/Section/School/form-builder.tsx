@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast'
 import { Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 
 type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
 
@@ -16,6 +17,8 @@ export default function FormBuilder() {
   const [formName, setFormName] = useState('')
   const [formType, setFormType] = useState<FormType>('AwardPoints')
   const [questions, setQuestions] = useState<Question[]>([])
+  const [isSpecial, setIsSpecial] = useState(false)
+const [grade, setGrade] = useState<number>(1)
   const [isSendEmail, setIsSendEmail] = useState({
     studentEmail: false,
     teacherEmail: false,
@@ -33,7 +36,17 @@ const navigate = useNavigate()
 
   const handleCreateForm = async () => {
     console.log(JSON.stringify({formName, formType, questions}))
-    const response = await createForm({formName, formType, questions, ...isSendEmail},localStorage.getItem('token')!)
+    const response = await createForm(
+      {
+        formName, 
+        formType, 
+        questions, 
+        isSpecial,
+        grade: isSpecial ? null : grade,
+        ...isSendEmail
+      },
+      localStorage.getItem('token')!
+    )
     if(response.error){
       toast({
         title: 'Error',
@@ -75,6 +88,8 @@ const navigate = useNavigate()
     }
   }
 
+  const grades = Array.from({length: 12}, (_, i) => i + 1);
+
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
       <h1 className="text-2xl font-bold">Create Form</h1>
@@ -106,6 +121,34 @@ const navigate = useNavigate()
           </SelectContent>
         </Select>
       </div>
+      <div className="space-y-4">
+  <div className="flex items-center justify-between">
+    <Label htmlFor="isSpecial">Special Teacher Form</Label>
+    <Switch
+      id="isSpecial"
+      checked={isSpecial}
+      onCheckedChange={setIsSpecial}
+    />
+  </div>
+
+  {!isSpecial && (
+    <div>
+      <Label htmlFor="grade">Grade</Label>
+      <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select grade" />
+        </SelectTrigger>
+        <SelectContent>
+          {grades.map((g) => (
+            <SelectItem key={g} value={g.toString()}>
+              Grade {g}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )}
+</div>
       <div className='flex gap-2 text-sm'>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
