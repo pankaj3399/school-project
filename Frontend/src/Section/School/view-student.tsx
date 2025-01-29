@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { getStudents, deleteStudent, updateStudent } from "@/api"
+import { getStudents, deleteStudent, updateStudent, promote } from "@/api"
 import Loading from "../Loading"
 import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "./Modal"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 
 export default function ViewStudents() {
   const [students, setStudents] = useState<any[]>([])
+  const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [promoting, setPromoting] = useState(false)
+  const [selectedGrade, setSelectedGrade] = useState<string>("all")
   const [editingStudent, setEditingStudent] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
@@ -31,7 +36,9 @@ export default function ViewStudents() {
         }
 
         const data = await getStudents(token)
-        setStudents(data.students.sort((a: any, b: any) => a.name.localeCompare(b.name)))
+        const sortedStudents = data.students.sort((a: any, b: any) => a.name.localeCompare(b.name))
+        setStudents(sortedStudents)
+        setFilteredStudents(sortedStudents)
         setLoading(false)
       } catch (error) {
         toast({
@@ -45,6 +52,44 @@ export default function ViewStudents() {
 
     fetchStudents()
   }, [toast, editingStudent])
+
+
+  useEffect(() => {
+    if (selectedGrade === "all") {
+      setFilteredStudents(students)
+    } else {
+      setFilteredStudents(students.filter(student => student.grade === parseInt(selectedGrade)))
+    }
+  }, [selectedGrade, students])
+
+  const handlePromoteAll = async () => {
+    try {
+      setPromoting(true)
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No token found.")
+
+      await promote()
+      // Refresh student data after promotion
+      const data = await getStudents(token)
+      const sortedStudents = data.students.sort((a: any, b: any) => a.name.localeCompare(b.name))
+      setStudents(sortedStudents)
+      setFilteredStudents(sortedStudents)
+
+      toast({
+        title: "Success",
+        description: "All students promoted successfully.",
+        variant: "default",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to promote students.",
+        variant: "destructive",
+      })
+    } finally {
+      setPromoting(false)
+    }
+  }
 
   const handleDelete = async (id: string) => {
     try {
@@ -112,12 +157,44 @@ export default function ViewStudents() {
 
   return (
     <div className="p-5 mt-10">
-      <div className="flex justify-between">
-      <h1 className="text-3xl font-bold mb-6">Student Roster</h1>
-      <Button className="bg-[#00a58c] hover:bg-[#00a58c]" onClick={()=>navigate('/addstudent')}>Add Students</Button>
-
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">Student Roster</h1>
+        <div className="flex gap-4">
+          <Button 
+            className="bg-[#00a58c] hover:bg-[#00a58c]" 
+            onClick={handlePromoteAll}
+            disabled={promoting}
+          >
+            Promote All Students
+          </Button>
+          <Button 
+            className="bg-[#00a58c] hover:bg-[#00a58c]" 
+            onClick={() => navigate('/addstudent')}
+          >
+            Add Students
+          </Button>
+        </div>
       </div>
-      {students.length === 0 ? (
+
+      <div className="mb-4">
+        <Select
+          value={selectedGrade}
+          onValueChange={setSelectedGrade}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Grade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Grades</SelectItem>
+            {Array.from({ length: 12 }, (_, i) => (
+              <SelectItem key={i + 1} value={(i + 1).toString()}>
+                Grade {i + 1}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {filteredStudents.length === 0 ? (
       <div className="text-center">
         <h2 className="text-xl font-bold">No Students Found</h2>
         <p>Please ensure there are students in the system and try again.</p>
@@ -129,17 +206,17 @@ export default function ViewStudents() {
             <TableHead className="text-gray-700">Name</TableHead>
             <TableHead className="text-gray-700">Email</TableHead>
             <TableHead className="text-gray-700">Parents/Guardians Email</TableHead>
-            {/* <TableHead></TableHead> */}
+            <TableHead className="text-gray-700">Grade</TableHead>
             <TableHead className="text-gray-700">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {students.map((student) => (
+          {filteredStudents.map((student) => (
             <TableRow key={student._id} className="border-b-black">
               <TableCell>{student.name}</TableCell>
               <TableCell>{student.email}</TableCell>
               <TableCell>{student.parentEmail || "N/A"}<br/>{student.standard}</TableCell>
-              {/* <TableCell></TableCell> */}
+              <TableCell>{student.grade || "N/A"}</TableCell>
               <TableCell>
                 <button
                   onClick={() => setEditingStudent(student)}
@@ -195,6 +272,22 @@ export default function ViewStudents() {
                   setEditingStudent({
                     ...editingStudent,
                     email: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 border rounded"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Grade</label>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={editingStudent.grade}
+                onChange={(e) =>
+                  setEditingStudent({
+                    ...editingStudent,
+                    grade: e.target.value,
                   })
                 }
                 className="w-full px-4 py-2 border rounded"

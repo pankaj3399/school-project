@@ -15,3 +15,4 @@ router.put("/updateTeacher/:id",authenticate,authorizeRoles(Role.SchoolAdmin), u
 router.delete("/deleteTeacher/:id",authenticate,authorizeRoles(Role.SchoolAdmin), deleteTeacher)
 
 export default router;
+//test push

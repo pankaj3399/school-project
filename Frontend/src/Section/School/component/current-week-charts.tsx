@@ -3,8 +3,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { getHistoryOfCurrentWeek, getHistoryOfCurrentWeekByStudent } from "@/api";
 import { useNavigate } from 'react-router-dom';
 
-const CurrentWeekCharts = ({studentId}:{
-    studentId: string
+const CurrentWeekCharts = ({studentId, isTeacher}:{
+    studentId: string,
+    isTeacher?:boolean
 }) => {
     const [currentAwardWeekData, setCurrentAwardWeekData] = useState<any[]>([]);
     const [currentDeductWeekData, setCurrentDeductWeekData] = useState<any[]>([]);
@@ -12,7 +13,11 @@ const CurrentWeekCharts = ({studentId}:{
     const navigate = useNavigate()
 
     const navigateToDetails = (formType: string) => {
+      if(!!isTeacher){
+        navigate(`/teachers/points-history?formType=${formType}`)
+      }else{
         navigate(`/school/points-history?formType=${formType}`)
+      }
     }
 
     useEffect(() => {

@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Modal from "./Modal";
 import { useNavigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ViewTeachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -21,6 +28,8 @@ export default function ViewTeachers() {
   const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
+  const [selectedType, setSelectedType] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,20 +112,61 @@ export default function ViewTeachers() {
     }
   };
 
+  const filteredTeachers = teachers.filter((teacher) => {
+    const matchesGrade = selectedGrade === "all" || 
+      (teacher.type === "Lead" && teacher.grade.toString() === selectedGrade);
+    const matchesType = selectedType === "all" || teacher.type === selectedType;
+    return matchesGrade && matchesType;
+  });
+
   if (loading) {
     return <Loading />;
   }
 
   return (
     <div className="p-5 mt-10">
-      <div className="flex justify-between">
-      <h1 className="text-3xl font-bold mb-6">Teacher Roster</h1>
-      <Button className=" bg-[#00a58c] hover:bg-[#00a58c]" onClick={()=>navigate('/addteacher')}>Add Teachers</Button>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">Teacher Roster</h1>
+        <Button className="bg-[#00a58c] hover:bg-[#00a58c]" onClick={() => navigate('/addteacher')}>
+          Add Teachers
+        </Button>
       </div>
-      {teachers.length === 0 ? (
+
+      <div className="flex gap-4 mb-6">
+        <div className="w-48">
+          <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Grade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Grades</SelectItem>
+              {[1, 2, 3, 4, 5, 6].map((grade) => (
+                <SelectItem key={grade} value={grade.toString()}>
+                  Grade {grade}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-48">
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Lead">Lead</SelectItem>
+              <SelectItem value="Special">Special</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {filteredTeachers.length === 0 ? (
         <div className="text-center">
           <h2 className="text-xl font-bold">No Teachers Found</h2>
-          <p>Please ensure there are teachers in the system and try again.</p>
+          <p>No teachers match the selected filters. Try adjusting your filters or ensure there are teachers in the system.</p>
         </div>
       ) : (
         <Table>
@@ -125,15 +175,19 @@ export default function ViewTeachers() {
               <TableHead className="text-gray-700">Name</TableHead>
               <TableHead className="text-gray-700">Subject</TableHead>
               <TableHead className="text-gray-700">Email</TableHead>
+              <TableHead className="text-gray-700">Type</TableHead>
+              <TableHead className="text-gray-700">Grade</TableHead>
               <TableHead className="text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teachers.map((teacher) => (
+            {filteredTeachers.map((teacher) => (
               <TableRow key={teacher._id} className="border-b-black">
                 <TableCell>{teacher.name}</TableCell>
                 <TableCell>{teacher.subject}</TableCell>
                 <TableCell>{teacher.email}</TableCell>
+                <TableCell>{teacher.type}</TableCell>
+                <TableCell>{teacher.type === 'Lead' ? teacher.grade : 'N/A'}</TableCell>
                 <TableCell>
                   <Button
                     onClick={() => setEditingTeacher(teacher)}
@@ -202,6 +256,34 @@ export default function ViewTeachers() {
                 className="w-full px-4 py-2 border rounded"
               />
             </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Type</label>
+              <select
+                value={editingTeacher.type}
+                onChange={(e) =>
+                  setEditingTeacher({ ...editingTeacher, type: e.target.value })
+                }
+                className="w-full px-4 py-2 border rounded"
+              >
+                <option value="Lead">Lead</option>
+                <option value="Special">Special</option>
+              </select>
+            </div>
+            {editingTeacher.type === 'Lead' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium">Grade</label>
+                <input
+                  type="number"
+                  value={editingTeacher.grade}
+                  onChange={(e) =>
+                    setEditingTeacher({ ...editingTeacher, grade: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border rounded"
+                  min={1}
+                  max={6}
+                />
+              </div>
+            )}
             <div className="mb-4 flex items-center">
               <Checkbox
                 checked={editingTeacher.recieveMails}

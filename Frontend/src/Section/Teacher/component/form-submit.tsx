@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { AnswerType, Form, Question } from '@/lib/types'
+import { AnswerType, Question } from '@/lib/types'
 import { getStudents } from '@/api'
 import Modal from '@/Section/School/Modal'
 import { Loader2 } from 'lucide-react'
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 
 
 type FormSubmissionProps = {
-  form: Form
+  form: any
   isSubmitting:boolean
   onSubmit: (answers: AnswerType, submittedFor: string, isSendEmail: {
     studentEmail: boolean;
@@ -35,6 +35,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const [showModal, setShowModal] = useState(false)
   const [filteredStudent, setfilteredStudent] = useState<any[]>([])
   const [isPopOverOpen, setIsPopOverOpen] = useState(false)
+  const [grade, setGrade] = useState("All")
   const [student, setStudent] = useState<any[]>([])
   const [isSendEmail, setIsSendEmail] = useState({
     studentEmail: false,
@@ -57,8 +58,8 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
 
   useEffect(() => {
     const allCompulsoryQuestionsAnswered = form.questions
-      .filter(q => q.isCompulsory)
-      .every(q => {
+      .filter((q:any) => q.isCompulsory)
+      .every((q:any) => {
         const answer = answers[q.id]
         return answer !== undefined && answer.answer !== '' && (Array.isArray(answer.answer) ? answer.answer.length > 0 : true)
       })
@@ -71,11 +72,30 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     const getStudent = async () => {
       const token = localStorage.getItem("token") || ""
       const response = await getStudents(token)
-      setStudent(response.students)
-      setfilteredStudent(response.students)
+      if(form && form.isSpecial){
+        setStudent(response.students.map((s: any) => ({
+          ...s,
+          name:s.name + " - Grade " + s.grade
+        })))
+        setfilteredStudent(response.students.map((s: any) => ({
+          ...s,
+          name:s.name + " - Grade " + s.grade
+        })))
+      }else{
+        setStudent(response.students.filter((s: any) => s.grade === form.grade))
+        setfilteredStudent(response.students.filter((s: any) => s.grade === form.grade))
+      }
     }
     getStudent()
   }, [])
+
+  useEffect(()=>{
+    if(grade == "All"){
+      setfilteredStudent(student.filter((s: any) => s))
+    }else{
+      setfilteredStudent(student.filter((s: any) => s.grade == parseInt(grade)))
+    }
+  },[grade])
 
   useEffect(()=>{
     switch(form.formType){
@@ -210,6 +230,24 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
           </div>
           <ScrollArea className="h-[43vh] pr-4">
             <div className="space-y-6 px-2">
+              {
+                form && form.isSpecial && <div>
+                <p>Grade:</p>
+                <Select onValueChange={(value)=>setGrade(value)} value={grade}>
+                  <SelectTrigger>
+                    <SelectValue defaultValue={grade} placeholder="Select Grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    {[...new Set(student.map((s: any) => s.grade))].map((grade) => (
+                      <SelectItem key={grade} value={grade.toString()}>
+                        Grade {grade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              }
               <div>
                 <p>Student:</p>
                 {Array.isArray(student) && student.length > 0 ? (
@@ -229,7 +267,11 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     <PopoverContent className="w-[320px] p-0 flex flex-col space-y-0">
           <Input onChange={(e)=>{
             const value = e.target.value
-            setfilteredStudent(student.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase())))
+            if(value == ""){
+              setfilteredStudent(student.filter((s: any) => s.grade == parseInt(grade)))
+            }else{
+              setfilteredStudent(filteredStudent.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase())))
+            }
           }} />
           {
             filteredStudent.map((s: any) => (
@@ -242,11 +284,11 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     </PopoverContent>
   </Popover>
 ) : (
-  <div>No students available</div>
+  <div className='font-bold'>No students available for this Grade</div>
 )}
               </div>
               
-              {form.questions.map((question, index) => (
+              {form.questions.map((question:any, index:number) => (
                 <div key={question.id} className="border-b pb-4 ">
                   
                   <h3 className="font-medium mb-2">

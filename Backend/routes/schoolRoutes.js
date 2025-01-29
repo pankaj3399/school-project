@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllSchools, getStudents, getTeachers,getCurrentSchool,updateSchool,deleteSchool } from '../controllers/schoolController.js';
+import { getAllSchools, getStudents, getTeachers,getCurrentSchool,updateSchool,deleteSchool, promote } from '../controllers/schoolController.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/roleMiddleware.js';
 import {Role} from '../enum.js';
@@ -13,13 +13,14 @@ router.get('/teachers',authenticate,authorizeRoles(Role.SchoolAdmin),getTeachers
 router.get('/school',authenticate,authorizeRoles(Role.SchoolAdmin),getCurrentSchool);
 router.put('/updateSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin),upload.single('logo'),updateSchool);
 router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin),deleteSchool);
-router.post('/getYearPointsHistory',authenticate,authorizeRoles(Role.SchoolAdmin),getYearPointsHistory);
-router.post('/getYearPointsHistory/:id',authenticate,authorizeRoles(Role.SchoolAdmin),getYearPointsHistoryByStudent);
-router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin),getWeekPointsHistory);
-router.post('/getCurrentWeekPoints/:id',authenticate,authorizeRoles(Role.SchoolAdmin),getWeekPointsHistoryByStudent);
-router.post('/getHistoryByTime',authenticate,authorizeRoles(Role.SchoolAdmin),getHistoricalPointsData);
-router.post('/getTeacherPoints',authenticate,authorizeRoles(Role.SchoolAdmin),getPointsByTeacher);
-router.post('/getStudentPoints',authenticate,authorizeRoles(Role.SchoolAdmin),getPointsByStudent);
+router.post('/getYearPointsHistory',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getYearPointsHistory);
+router.post('/getYearPointsHistory/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getYearPointsHistoryByStudent);
+router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getWeekPointsHistory);
+router.post('/getCurrentWeekPoints/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getWeekPointsHistoryByStudent);
+router.post('/getHistoryByTime',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getHistoricalPointsData);
+router.post('/getTeacherPoints',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getPointsByTeacher);
+router.post('/getStudentPoints',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getPointsByStudent);
+router.put('/promote',authenticate,authorizeRoles(Role.SchoolAdmin),promote);
 
 
 

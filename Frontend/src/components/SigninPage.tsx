@@ -170,7 +170,7 @@ export default function LoginForm() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SchoolAdmin">Lead Teacher</SelectItem>
+                  <SelectItem value="SchoolAdmin">School Token Manager</SelectItem>
                   <SelectItem value="Teacher">Teacher</SelectItem>
                 </SelectContent>
               </Select>

@@ -5,25 +5,24 @@ import {  Form, FormType, Question } from '@/lib/types'
 import { editForm, getFormById } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
-import { QuestionBuilder } from './component/question-builder'
+import { QuestionBuilder } from '@/Section/School/component/question-builder'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from "@/components/ui/switch"
 
 
 
-export default function EditForm() {
+export default function EditFormTeacher() {
   const params = useParams();
 //   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
   const [form, setForm] = useState<any | null>(null)
     const [formName, setFormName] = useState('')
     const [formType, setFormType] = useState<FormType>('AwardPoints')
+    const [questions, setQuestions] = useState<Question[]>([])
     const [isSpecial, setIsSpecial] = useState(false)
 const [grade, setGrade] = useState<number>(1)
-    const [questions, setQuestions] = useState<Question[]>([])
     const [isSendEmail, setIsSendEmail] = useState({
       studentEmail: false,
       teacherEmail: false,
@@ -63,7 +62,7 @@ const [grade, setGrade] = useState<number>(1)
           description: 'Form Edited Successfully'
         })
         clearForm()
-        navigate('/viewforms')
+        navigate('/teachers/viewforms')
       }
     }
   
@@ -111,11 +110,14 @@ const [grade, setGrade] = useState<number>(1)
   },[form])
 
 
-  const grades = Array.from({length: 12}, (_, i) => i + 1);
+  const grades = Array.from({length: 6}, (_, i) => i + 1);
+  
 
   if (!form) {
     return <div>Loading...</div>
   }
+
+  
 
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
@@ -149,19 +151,12 @@ const [grade, setGrade] = useState<number>(1)
         </Select>
       </div>
       <div className="space-y-4">
-  <div className="flex items-center justify-between">
-    <Label htmlFor="isSpecial">Special Teacher Form</Label>
-    <Switch
-      id="isSpecial"
-      checked={isSpecial}
-      onCheckedChange={setIsSpecial}
-    />
-  </div>
+  
 
   {!isSpecial && (
     <div>
       <Label htmlFor="grade">Grade</Label>
-      <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
+      <Select disabled value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select grade" />
         </SelectTrigger>

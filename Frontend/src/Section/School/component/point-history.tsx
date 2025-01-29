@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { getPointHistory, getStudents } from "@/api"
+import { getCurrentUser, getPointHistory, getStudents } from "@/api"
 import Loading from "../../Loading"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -42,10 +42,22 @@ export default function ViewPointHistoryTeacher() {
             setLoading(false)
             return
           }
-  
-          const data = await getPointHistory(token)
-          setPointHistory(data.pointHistory)
-          setShowPointHistory(data.pointHistory)
+          const teacher = await getCurrentUser();
+if (teacher && teacher.user?.grade) {
+    const data = await getPointHistory(token);
+    const filteredHistory = data.pointHistory?.filter((point: any) => 
+        point.submittedForId && 
+        point.submittedForId.grade && 
+        point.submittedForId.grade === teacher.user.grade
+    );
+    
+    setPointHistory(filteredHistory || []);
+    setShowPointHistory(filteredHistory || []);
+} else {
+    const data = await getPointHistory(token);
+    setPointHistory(data.pointHistory || []);
+    setShowPointHistory(data.pointHistory || []);
+}
           setLoading(false)
         } catch (error) {
           toast({
@@ -53,6 +65,8 @@ export default function ViewPointHistoryTeacher() {
             description: "Failed to fetch point history.",
             variant: "destructive",
           })
+          console.log(error);
+          
           setLoading(false)
         }
       }

@@ -33,7 +33,9 @@ export const addTeacher = async (req, res) => {
         name,
         password,
         email,
-        subject
+        subject,
+        grade,
+        type
     } = req.body
 
     try{
@@ -44,7 +46,9 @@ export const addTeacher = async (req, res) => {
             email,
             password: hashedPassword,
             subject,
-            role: Role.Teacher
+            role: Role.Teacher,
+            grade,
+            type
         })
         await School.findOneAndUpdate({
             createdBy: req.user.id
@@ -66,10 +70,10 @@ export const addStudent = async (req, res) => {
         name,
         password,
         email,
-        standard
+        standard,
+        grade
     } = req.body
 
-    console.log(email);
     try{
         const hashedPassword = await bcrypt.hash(password, 12)
         
@@ -78,7 +82,8 @@ export const addStudent = async (req, res) => {
             password: hashedPassword,
             standard,
             email,
-            role: Role.Student
+            role: Role.Student,
+            grade
         })
         await School.findOneAndUpdate({
             createdBy: req.user.id

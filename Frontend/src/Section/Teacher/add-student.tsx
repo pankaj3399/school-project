@@ -1,16 +1,16 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
-import { addStudent } from "@/api/index"
+import { addStudent, getCurrentUser } from "@/api/index"
 import { Checkbox } from "@/components/ui/checkbox"
 
 import Loading from "../Loading"
 
 
-export default function AddStudent() {
+export default function AddStudentTeacher() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -82,7 +82,7 @@ export default function AddStudent() {
           description:` ${name} has been added.`,
         })
         
-        navigate("/students")
+        navigate("/teachers/students")
       } else {
         toast({
           title: "Error",
@@ -113,6 +113,28 @@ export default function AddStudent() {
       })
     }
   }
+
+  useEffect(()=>{
+    const fetchTeacher = async () => {
+      const res = await getCurrentUser();
+      if(res.error){
+        toast({
+          title: 'Error',
+          description: res.error,
+          variant: 'destructive'
+        })
+    }else{
+      setFormData({
+        ...formData,
+        grade:res.user.grade
+      })
+    }
+  }
+
+    fetchTeacher()
+  },[])
+
+  
 
   if (loading) {
     return <Loading />
@@ -154,6 +176,7 @@ export default function AddStudent() {
             name="grade"
             value={formData.grade}
             onChange={handleChange}
+            disabled
             required
             type="number"
             min={1}

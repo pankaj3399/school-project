@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { addTeacher } from "@/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import Loading from "../Loading";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // import ViewTeachers from "./view-teachers";
 
 export default function AddTeacher() {
@@ -16,13 +17,15 @@ export default function AddTeacher() {
     subject: "",
     email: "",
     checkbox: false,
+    grade: 1,
+    type: "Lead"
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
@@ -30,14 +33,12 @@ export default function AddTeacher() {
     }));
   };
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { name, password, subject, email, checkbox } = formData;
+    const { name, password, subject, email, checkbox, type, grade } = formData;
 
-    if (!name || !password || !subject || !email) {
+    if (!name || !password || !subject || !email || !type || (type === 'Lead' && !grade)) {
       toast({
         title: "Error",
         description: "Please fill all fields.",
@@ -67,6 +68,8 @@ export default function AddTeacher() {
         subject,
         email,
         recieveMails: checkbox,
+        type,
+        grade: type === 'Lead' ? grade : null,
         token,
       };
 
@@ -93,6 +96,8 @@ export default function AddTeacher() {
         subject: "",
         email: "",
         checkbox: false,
+        grade: 1,
+        type: "Special"
       });
     } catch (error) {
       setError("An unexpected error occurred. Please try again.");
@@ -169,6 +174,43 @@ export default function AddTeacher() {
               required
             />
           </div>
+          <div>
+            <Label htmlFor="type">Type</Label>
+            <Select
+              name="type"
+              value={formData.type}
+              required
+              onValueChange={(value)=>{
+                setFormData({
+                  ...formData,
+                  type: value
+                })
+              }}
+            >
+                <SelectTrigger className="w-full">
+                  <SelectValue defaultValue={formData.type} placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Lead">Lead</SelectItem>
+                  <SelectItem value="Special">Special</SelectItem>
+                </SelectContent>
+            </Select>
+          </div>
+          {formData.type === 'Lead' && (
+            <div>
+              <Label htmlFor="grade">Grade</Label>
+              <Input
+                id="grade"
+                name="grade"
+                type="number"
+                value={formData.grade}
+                onChange={handleChange}
+                required
+                min={1}
+                max={6}
+              />
+            </div>
+          )}
           <Button type="submit" className="bg-[#00a58c]">Add Teacher</Button>
         </form>
       </div>

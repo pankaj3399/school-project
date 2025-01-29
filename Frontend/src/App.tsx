@@ -19,12 +19,16 @@ import FormPage from "./Section/Teacher/submit-form";
 import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
 import AdminDashboard from "./Section/School/dashboard";
-import ViewPointHistoryTeacher from "./Section/Teacher/component/point-history-teacher";
 import ForgotPassword from "./components/ForgetPassword";
 import OtpVerificationPage from "./components/OtpVerification";
 import { ResetPassword } from "./components/ResetPassword";
 import FormPageAdmin from "./Section/School/submit-form";
 import DetailedHistory from "./Section/School/detailed-history";
+import ViewFormsTeacher from "./Section/Teacher/view-forms";
+import FormBuilderTeacher from "./Section/Teacher/form-builder";
+import EditFormTeacher from "./Section/Teacher/edit-form";
+import AddStudentTeacher from "./Section/Teacher/add-student";
+import TeacherDashboard from "./Section/Teacher/analytics";
 
 
 // Reusable ProtectedRoute component
@@ -59,9 +63,14 @@ export default function App() {
 
  
           <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
+          <Route path="/teachers/createform" element={<ProtectedRoute><FormBuilderTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/editform/:id" element={<ProtectedRoute><EditFormTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/viewforms" element={<ProtectedRoute><ViewFormsTeacher /></ProtectedRoute>} />
           <Route path="/teachers/managepoints" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} />
+          <Route path="/teachers/addstudent" element={<ProtectedRoute><AddStudentTeacher /></ProtectedRoute>} />
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
-          <Route path="/teachers/history" element={<ProtectedRoute><ViewPointHistoryTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
+          <Route path="/teachers/analytics" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
           {/*Dashboards*/}
@@ -71,6 +80,7 @@ export default function App() {
 
           
           <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
+          <Route path="/teachers/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
 
         </Routes>
       </RootLayout>

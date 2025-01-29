@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
 import Student from "../models/Student.js";
+import Admin from '../models/Admin.js';
 
 // Helper function to get the start of the educational year
 const getEducationalYearStart = () => {
@@ -16,19 +17,27 @@ const getEducationalYearStart = () => {
         : augFirst;
 };
 
+// Helper function to get school ID from user
+const getSchoolIdFromUser = async (userId) => {
+    // Try finding user as admin first
+    const admin = await Admin.findById(userId);
+    if (admin) {
+        return admin.schoolId
+    }
+
+    // If not admin, try finding as teacher
+    const teacher = await Teacher.findById(userId);
+    if (teacher) {
+        return teacher.schoolId;
+    }
+
+    throw new Error('User not authorized');
+};
+
 // 1. Whole Year Points History Controller
 export const getYearPointsHistory = async (req, res) => {
     try {
-        const adminId = req.user.id
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
-        const schoolId = school._id;
-        
+        const schoolId = await getSchoolIdFromUser(req.user.id);
         
         const yearStart = getEducationalYearStart();
         const today = new Date();
@@ -118,18 +127,8 @@ export const getYearPointsHistory = async (req, res) => {
 
 export const getYearPointsHistoryByStudent = async (req, res) => {
     try {
-        const adminId = req.user.id
+        const schoolId = await getSchoolIdFromUser(req.user.id);
         const studentId = req.params.id;
-        
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
-        const schoolId = school._id;
-        
         
         const yearStart = getEducationalYearStart();
         const today = new Date();
@@ -222,15 +221,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
 
 export const getWeekPointsHistory = async (req, res) => {
     try {
-        const adminId = req.user.id
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
-        const schoolId = school._id;
+        const schoolId = await getSchoolIdFromUser(req.user.id);
 
         const { startDate, formType } = req.body;
 
@@ -281,16 +272,8 @@ export const getWeekPointsHistory = async (req, res) => {
 
 export const getWeekPointsHistoryByStudent = async (req, res) => {
     try {
-        const adminId = req.user.id
+        const schoolId = await getSchoolIdFromUser(req.user.id);
         const studentId = req.params.id;
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
-        const schoolId = school._id;
 
         const { startDate, formType } = req.body;
 
@@ -343,15 +326,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
 
 export const getHistoricalPointsData = async (req, res) => {
     try {
-        const adminId = req.user.id
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
-        const schoolId = school._id;
+        const schoolId = await getSchoolIdFromUser(req.user.id);
         const { period, formType } = req.body;
         const today = new Date();
         let startDate;
@@ -438,16 +413,8 @@ export const getHistoricalPointsData = async (req, res) => {
 
 export const getPointsByTeacher = async (req, res) => {
     try {
-        const adminId = req.user.id
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
-        const schoolId = school._id;
-        const teachers = await Teacher.find({ schoolId: school._id });
+        const schoolId = await getSchoolIdFromUser(req.user.id);
+        const teachers = await Teacher.find({ schoolId: schoolId });
         const teacherNames = teachers.map(teacher => teacher.name);
 
         const pointsByTeacher = await PointsHistory.aggregate([
@@ -479,21 +446,12 @@ export const getPointsByTeacher = async (req, res) => {
 
 export const getPointsByStudent = async (req, res) => {
     try {
-        const adminId = req.user.id
-
-        const school = await School.findOne({ createdBy: adminId });
-
-        if(!school) {
-            return res.status(404).json({ message: 'School not found' });
-        }
-
+        const schoolId = await getSchoolIdFromUser(req.user.id);
       
-        const students = await Student.find({ schoolId: school._id });
+        const students = await Student.find({ schoolId: schoolId });
 
         
         const studentNames = students.map(student => student.name);
-
-        const schoolId = school._id;
 
         const pointsByStudent = await PointsHistory.aggregate([
             {

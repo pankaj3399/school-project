@@ -27,7 +27,7 @@ export default function ViewTeacherForms() {
             variant: 'destructive'
           })
         }else{
-          setForms(data.forms.filter((form: Form) => form.formType == 'AwardPoints' || form.formType === 'Feedback'))
+          setForms(data.forms)
         }
       } catch (error) {
         console.error('Error fetching forms:', error)

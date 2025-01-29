@@ -10,9 +10,9 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.Student), (req, res) 
     res.json({ message: `Welcome School Student: ${req.user.id}` });
 });
 
-router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
-router.put("/updateStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin), updateStudent)
-router.delete("/deleteStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin), deleteStudent)
+router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),addStudent)
+router.put("/updateStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher), updateStudent)
+router.delete("/deleteStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher), deleteStudent)
 
 
 

@@ -41,15 +41,23 @@ const teacherSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'School', 
     default: null,
+  },
+  type: {
+    type: String,
+    enum: ['Lead', 'Special'],
+    required: true
+  },
+  grade: {
+    type: Number,
+    min: 1,
+    max: 6,
+    required: function() { return this.type === 'Lead'; }
   }
 });
-
-
 
 teacherSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
-
 
 export default mongoose.model('Teacher', teacherSchema);

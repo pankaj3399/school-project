@@ -1,24 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { QuestionBuilder } from '@/Section/School/component/question-builder'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { createForm } from '@/api'
+import { createForm, getCurrentUser } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Switch } from '@/components/ui/switch'
 
 type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
 
-export default function FormBuilder() {
+export default function FormBuilderTeacher() {
   const [formName, setFormName] = useState('')
   const [formType, setFormType] = useState<FormType>('AwardPoints')
+  const [grade, setGrade] = useState<number>(1)
   const [questions, setQuestions] = useState<Question[]>([])
-  const [isSpecial, setIsSpecial] = useState(false)
-const [grade, setGrade] = useState<number>(1)
   const [isSendEmail, setIsSendEmail] = useState({
     studentEmail: false,
     teacherEmail: false,
@@ -37,16 +35,16 @@ const navigate = useNavigate()
   const handleCreateForm = async () => {
     console.log(JSON.stringify({formName, formType, questions}))
     const response = await createForm(
-      {
-        formName, 
-        formType, 
-        questions, 
-        isSpecial,
-        grade: isSpecial ? null : grade,
-        ...isSendEmail
-      },
-      localStorage.getItem('token')!
-    )
+        {
+          formName, 
+          formType, 
+          questions, 
+          isSpecial:false,
+          grade:grade,
+          ...isSendEmail
+        },
+        localStorage.getItem('token')!
+      )
     if(response.error){
       toast({
         title: 'Error',
@@ -59,7 +57,7 @@ const navigate = useNavigate()
         description: 'Form Created Successfully'
       })
       clearForm()
-      navigate('/viewforms')
+      navigate('/teachers/viewforms')
     }
   }
 
@@ -88,7 +86,22 @@ const navigate = useNavigate()
     }
   }
 
-  const grades = Array.from({length: 12}, (_, i) => i + 1);
+  useEffect(()=>{
+    const fetchTeacher = async () => {
+      const res = await getCurrentUser();
+      if(res.error){
+        toast({
+          title: 'Error',
+          description: res.error,
+          variant: 'destructive'
+        })
+    }else{
+      setGrade(res.user.grade)
+    }
+  }
+
+    fetchTeacher()
+  },[])
 
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
@@ -121,34 +134,8 @@ const navigate = useNavigate()
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-4">
-  <div className="flex items-center justify-between">
-    <Label htmlFor="isSpecial">Special Teacher Form</Label>
-    <Switch
-      id="isSpecial"
-      checked={isSpecial}
-      onCheckedChange={setIsSpecial}
-    />
-  </div>
-
-  {!isSpecial && (
-    <div>
-      <Label htmlFor="grade">Grade</Label>
-      <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select grade" />
-        </SelectTrigger>
-        <SelectContent>
-          {grades.map((g) => (
-            <SelectItem key={g} value={g.toString()}>
-              Grade {g}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  )}
-</div>
+      
+      
       <div className='flex gap-2 text-sm'>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>

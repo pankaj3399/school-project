@@ -1,22 +1,23 @@
-//f
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FormDetails } from '@/Section/School/component/form-details'
 import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon, Edit2Icon, Trash2Icon } from 'lucide-react'
-import {  deleteForm, getForms } from '@/api'
+import { deleteForm, getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Form, Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
 
-
 export default function ViewForms() {
-  const [forms, setForms] = useState<Form[]>([])
+  const [forms, setForms] = useState<any[]>([])
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
+  const [groupedForms, setGroupedForms] = useState<{
+    special: Form[],
+    byGrade: { [key: number]: Form[] }
+  }>({ special: [], byGrade: {} })
 
   useEffect(() => {
-    
     const fetchForms = async () => {
       try {
         const data = await getForms(localStorage.getItem('token')!)
@@ -28,6 +29,7 @@ export default function ViewForms() {
           })
         } else {
           setForms(data.forms)
+          groupForms(data.forms)
         }
       } catch (error) {
         console.error('Error fetching forms:', error)
@@ -36,7 +38,29 @@ export default function ViewForms() {
 
     fetchForms()
   }, [])
-  const navigate = useNavigate();
+
+  const groupForms = (forms: any[]) => {
+    const grouped = forms.reduce((acc, form) => {
+      if (form.isSpecial) {
+        acc.special.push(form)
+      } else {
+        if (!acc.byGrade[form.grade]) {
+          acc.byGrade[form.grade] = []
+        }
+        acc.byGrade[form.grade].push(form)
+      }
+      return acc
+    }, { special: [] as Form[], byGrade: {} as { [key: number]: Form[] } })
+
+    // Sort grades
+    const sortedByGrade = Object.fromEntries(
+      Object.entries(grouped.byGrade).sort(([a], [b]) => Number(a) - Number(b))
+    )
+
+    setGroupedForms({ ...grouped, byGrade: sortedByGrade })
+  }
+
+  const navigate = useNavigate()
 
   const getFormTypeIcon = (formType: string) => {
     switch (formType) {
@@ -53,12 +77,11 @@ export default function ViewForms() {
     }
   }
 
-  const calculateTotalPoints = (questions: Question[]) =>
-  {
-    if(questions.length === 0) return 0
-    let sum = questions.reduce((sum, question) => sum + (question.maxPoints || 0), 0) 
-     questions.forEach(question => {
-      if(question.type == 'select'){
+  const calculateTotalPoints = (questions: Question[]) => {
+    if (questions.length === 0) return 0
+    let sum = questions.reduce((sum, question) => sum + (question.maxPoints || 0), 0)
+    questions.forEach(question => {
+      if (question.type == 'select') {
         question.options?.forEach(option => {
           sum += option.points
         })
@@ -67,98 +90,134 @@ export default function ViewForms() {
     return sum
   }
 
-  const removeFromState = (id:string) => {
+  const removeFromState = (id: string) => {
     setForms(prev => prev.filter(form => form._id != id))
+    // Update grouped forms
+    setGroupedForms(prev => {
+      const newGrouped = { ...prev }
+      // Remove from special forms
+      newGrouped.special = newGrouped.special.filter(form => form._id !== id)
+      // Remove from grade groups
+      Object.keys(newGrouped.byGrade).forEach(grade => {
+        newGrouped.byGrade[parseInt(grade)] = newGrouped.byGrade[parseInt(grade)].filter(form => form._id !== id)
+      })
+      return newGrouped
+    })
   }
 
-  const removeForm  = async (id:string) => {
+  const removeForm = async (id: string) => {
     const removedForm = forms.filter(form => form._id == id)[0]
-    try{
+    try {
       const token = localStorage.getItem('token')
-      if(!token) throw new Error("Unauthorized request")
-      const res = await deleteForm(id,token)
+      if (!token) throw new Error("Unauthorized request")
+      const res = await deleteForm(id, token)
       removeFromState(id)
-      if(res)
+      if (res)
         return toast({
-          title:"Success",
+          title: "Success",
           description: `Successfully Deleted form ${res.formName}`
         })
-    }catch(err){
+    } catch (err) {
       setForms([...forms, removedForm])
-      console.log(err);
-      if(err instanceof AxiosError)
+      console.log(err)
+      if (err instanceof AxiosError)
         toast({
-          title:"Error",
+          title: "Error",
           description: err.message
         })
       else
         toast({
-          title:"Error",
+          title: "Error",
           description: "Something Went Wrong"
         })
+    }
   }
-}
 
+  const FormCard = ({ form }: { form: Form }) => (
+    <Card key={form._id} className="cursor-pointer hover:shadow-lg transition-shadow bg-[#97d8b2] hover:bg-[#97d8b2]">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-2xl font-medium text-black">{form.formName}</CardTitle>
+        <div className='p-1 rounded-md'>{getFormTypeIcon(form.formType)}</div>
+      </CardHeader>
+      <CardContent>
+        <CardDescription className='text-black'>{form.formType}</CardDescription>
+        <div className="flex items-center pt-2 text-xs text-muted-foreground text-black">
+          Total Points: {calculateTotalPoints(form.questions)}
+        </div>
+        <div className="flex items-center pt-4">
+          <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
+          <span className="text-xs text-muted-foreground text-black">
+            {new Date(form.createdAt).toLocaleDateString()}
+          </span>
+        </div>
+        <div className='flex items-center mt-4 gap-2'>
+          <Button
+            className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black hover:text-black"
+            onClick={() => setSelectedForm(form)}
+          >
+            View Details
+          </Button>
+          <Button
+            className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black hover:text-black"
+            onClick={() => navigate(`/schoolAdmin/submitform/${form._id}`)}
+          >
+            Use form
+          </Button>
+          <Button
+            className="bg-[#5c95ff] hover:bg-[#5c95ff]"
+            onClick={() => navigate(`/editform/${form._id}`)}
+          >
+            <Edit2Icon />
+          </Button>
+          <Button
+            className="bg-[#c7b8da] hover:bg-[#c7b8da]"
+            onClick={() => removeForm(form._id)}
+          >
+            <Trash2Icon />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="container mx-auto p-4">
-      <div className='flex justify-between'>
-      <h1 className="text-2xl font-bold mb-6">Forms</h1>
-      <Button className='bg-[#00a58c] hover:bg-[#00a58c]' onClick={()=>navigate('/createform')} >Create Form </Button>
+      <div className='flex justify-between mb-6'>
+        <h1 className="text-2xl font-bold">Forms</h1>
+        <Button 
+          className='bg-[#00a58c] hover:bg-[#00a58c]' 
+          onClick={() => navigate('/createform')}
+        >
+          Create Form
+        </Button>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 ">
-        {forms.map((form) => (
-          <Card key={form._id} className=" cursor-pointer hover:shadow-lg transition-shadow bg-[#97d8b2] hover:bg-[#97d8b2] ">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-2xl font-medium text-black">{form.formName}</CardTitle>
-              <div className='p-1  rounded-md'>{getFormTypeIcon(form.formType)}</div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className='text-black'>{form.formType}</CardDescription>
-              <div className="flex items-center pt-2 text-xs text-muted-foreground text-black">
-                Total Points: {calculateTotalPoints(form.questions)}
-              </div>
-              <div className="flex items-center pt-4">
-                <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
-                <span className="text-xs text-muted-foreground text-black">
-                  {new Date(form.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              <div className='flex items-center mt-4 gap-2'>
-                <Button
-                  className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black  hover:text-black"
-                  onClick={() => setSelectedForm(form)}
-                >
-                  View Details
-                </Button>
-                {
-                  (
-                    <Button
-                  className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black  hover:text-black"
-                  onClick={() => navigate(`/schoolAdmin/submitform/${form._id}`)}
-                >
-                  Use form
-                </Button>
-                  )
-                }
 
-                <Button
-                  className="bg-[#5c95ff] hover:bg-[#5c95ff]"
-                  onClick={() => navigate(`/editform/${form._id}`)}
-                >
-                  <Edit2Icon />
-                </Button>
-                <Button
-                  className="bg-[#c7b8da] hover:bg-[#c7b8da]"
-                  onClick={() => removeForm(form._id)}
-                >
-                  <Trash2Icon />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Special Forms Section */}
+      {groupedForms.special.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Special Forms</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {groupedForms.special.map((form) => (
+              <FormCard key={form._id} form={form} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grade-wise Forms Sections */}
+      {Object.entries(groupedForms.byGrade).map(([grade, gradeForms]) => (
+        gradeForms.length > 0 && (
+          <div key={grade} className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Grade {grade} Forms</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {gradeForms.map((form) => (
+                <FormCard key={form._id} form={form} />
+              ))}
+            </div>
+          </div>
+        )
+      ))}
+
       {selectedForm && (
         <FormDetails form={selectedForm} onClose={() => setSelectedForm(null)} />
       )}
