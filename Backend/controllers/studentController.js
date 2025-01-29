@@ -3,6 +3,7 @@ import Student from "../models/Student.js"
 import bcrypt from "bcryptjs"
 import {Role} from '../enum.js';
 import Admin from "../models/Admin.js";
+import Teacher from "../models/Teacher.js";
 export const addStudent = async (req, res) => {
     const {
         name,
@@ -10,10 +11,18 @@ export const addStudent = async (req, res) => {
         email,
         standard,
         parentEmail,
-        sendNotifications
+        sendNotifications,
+        grade
     } = req.body
 
-    const schoolAdmin = await Admin.findById(req.user.id).select('schoolId');
+    let user;
+
+    if(req.user.role == Role.Teacher){
+        user = await Teacher.findById(req.user.id);
+    }else{
+        user = await Admin.findById(req.user.id)
+    }
+
 
     try{
         const hashedPassword = await bcrypt.hash(password, 12)
@@ -26,10 +35,11 @@ export const addStudent = async (req, res) => {
             role: Role.Student,
             parentEmail,
             sendNotifications,
-            schoolId: schoolAdmin.schoolId
+            schoolId: user.schoolId,
+            grade
         })
         await School.findOneAndUpdate({
-            _id: schoolAdmin.schoolId
+            _id: user.schoolId
         }, {
             $push:{
                 students:student._id
@@ -45,11 +55,11 @@ export const addStudent = async (req, res) => {
 
 export const updateStudent = async (req, res) => {
     const studentId = req.params.id;
-    const { name, email, standard, parentEmail, sendNotifications } = req.body; 
+    const { name, email, standard, parentEmail, sendNotifications, grade } = req.body; 
 
     try{
         const updatedStudent = await Student.findByIdAndUpdate(studentId, {
-            $set: { name, email, standard, parentEmail, sendNotifications }
+            $set: { name, email, standard, parentEmail, sendNotifications, grade }
         }, { new: true });
 
         if(!updatedStudent){
