@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from "@/components/ui/switch"
 
 
 
@@ -17,9 +18,11 @@ export default function EditForm() {
   const params = useParams();
 //   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
-  const [form, setForm] = useState<Form | null>(null)
+  const [form, setForm] = useState<any | null>(null)
     const [formName, setFormName] = useState('')
     const [formType, setFormType] = useState<FormType>('AwardPoints')
+    const [isSpecial, setIsSpecial] = useState(false)
+const [grade, setGrade] = useState<number>(1)
     const [questions, setQuestions] = useState<Question[]>([])
     const [isSendEmail, setIsSendEmail] = useState({
       studentEmail: false,
@@ -36,7 +39,18 @@ export default function EditForm() {
 
   const handleCreateForm = async () => {
       console.log(JSON.stringify({formName, formType, questions}))
-      const response = await editForm(params?.id ?? "",{formName, formType, questions, ...isSendEmail},localStorage.getItem('token')!)
+      const response = await editForm(
+        params?.id ?? "",
+        {
+          formName, 
+          formType, 
+          questions, 
+          isSpecial,
+          grade: isSpecial ? null : grade,
+          ...isSendEmail
+        },
+        localStorage.getItem('token')!
+      )
       if(response.error){
         toast({
           title: 'Error',
@@ -85,6 +99,8 @@ export default function EditForm() {
     setFormName(form.formName)
     setFormType(form.formType as FormType)
     setQuestions(form.questions)
+    setIsSpecial(form.isSpecial || false)
+    setGrade(form.grade || 1)
     setIsSendEmail({
       ...isSendEmail,
       studentEmail: !!form.studentEmail,
@@ -95,7 +111,7 @@ export default function EditForm() {
   },[form])
 
 
-  
+  const grades = Array.from({length: 12}, (_, i) => i + 1);
 
   if (!form) {
     return <div>Loading...</div>
@@ -132,6 +148,34 @@ export default function EditForm() {
           </SelectContent>
         </Select>
       </div>
+      <div className="space-y-4">
+  <div className="flex items-center justify-between">
+    <Label htmlFor="isSpecial">Special Teacher Form</Label>
+    <Switch
+      id="isSpecial"
+      checked={isSpecial}
+      onCheckedChange={setIsSpecial}
+    />
+  </div>
+
+  {!isSpecial && (
+    <div>
+      <Label htmlFor="grade">Grade</Label>
+      <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select grade" />
+        </SelectTrigger>
+        <SelectContent>
+          {grades.map((g) => (
+            <SelectItem key={g} value={g.toString()}>
+              Grade {g}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )}
+</div>
       <div className='flex gap-2 text-sm'>
             <div className="flex items-center space-x-2">
               <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
