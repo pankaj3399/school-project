@@ -27,7 +27,9 @@ export const addTeacher = async (req, res) => {
         password,
         email,
         subject,
-        recieveMails
+        recieveMails,
+        type,
+        grade
     } = req.body
 
     const schoolAdmin = await Admin.findById(req.user.id).select('schoolId');
@@ -43,7 +45,9 @@ export const addTeacher = async (req, res) => {
             subject,
             role: Role.Teacher,
             recieveMails: recieveMails || false,
-            schoolId: schoolAdmin.schoolId
+            schoolId: schoolAdmin.schoolId,
+            type,
+            grade
         })
         await School.findOneAndUpdate({
             _id: schoolAdmin.schoolId
@@ -62,7 +66,7 @@ export const addTeacher = async (req, res) => {
 
 export const updateTeacher = async (req, res) => {
     const teacherId = req.params.id;
-    const { name, email, subject, recieveMails } = req.body;
+    const { name, email, subject, recieveMails, grade, type } = req.body;
 
     try {
         const updatedTeacher = await Teacher.findByIdAndUpdate(
@@ -72,7 +76,9 @@ export const updateTeacher = async (req, res) => {
                     name,
                     email,
                     subject,
-                    recieveMails
+                    recieveMails,
+                    grade,
+                    type
                 }
             },
             { new: true } 
