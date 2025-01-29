@@ -49,7 +49,12 @@ const studentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'School', 
     default: null,
-  }
+  },
+  grade: {
+    type: Number,
+    required: true,
+    min: 1
+  },
 });
 
 studentSchema.pre('save', function (next) {
