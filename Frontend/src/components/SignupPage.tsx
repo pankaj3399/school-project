@@ -80,7 +80,7 @@ export  const SignupForm = ()=> {
         } else {
           login(res.token)
           if (formData.role === 'SchoolAdmin') {
-            navigate("/analytics");
+            navigate('/analytics')
           }
         }
       } catch (error) {
@@ -172,7 +172,7 @@ export  const SignupForm = ()=> {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SchoolAdmin">Lead Teacher</SelectItem>
+                  <SelectItem value="SchoolAdmin">School Token Manager</SelectItem>
 
                 </SelectContent>
               </Select>
