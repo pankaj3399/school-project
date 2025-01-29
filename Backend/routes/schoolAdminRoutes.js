@@ -18,9 +18,9 @@ router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin),upload.si
 router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin),addTeacher)
 router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
 
-router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin),createForm)
-router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin),editForm)
-router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin),deleteForm)
+router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),createForm)
+router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),editForm)
+router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),deleteForm)
 
 router.get('/stats', authenticate, authorizeRoles(Role.SchoolAdmin), getStats);
 router.get('/stats/monthly', authenticate, authorizeRoles(Role.SchoolAdmin), getMonthlyStats);
