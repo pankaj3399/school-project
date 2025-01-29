@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut,X,MenuIcon,ClipboardIcon, Users, School} from 'lucide-react';
+import { LogOut,X,MenuIcon,ClipboardIcon, Users, School, Target} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser } from '@/api';
@@ -21,7 +21,8 @@ export function TeacherSideNav() {
         setNavItems([
           { href: '/teachers/viewforms', label: 'Forms', icon: ClipboardIcon },
           { href: '/teachers/students', label: 'View Students', icon: Users },
-          { href: '/teachers/analytics', label: 'Analytics', icon: School }
+          { href: '/teachers/analytics', label: 'Analytics', icon: School },
+          { href: '/teachers/history', label: 'History', icon: Target }
         ])
       }
     };
