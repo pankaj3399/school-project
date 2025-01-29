@@ -207,7 +207,6 @@ export default function AddTeacher() {
                 onChange={handleChange}
                 required
                 min={1}
-                max={6}
               />
             </div>
           )}
