@@ -83,7 +83,17 @@ const formSchema = new mongoose.Schema({
   parentEmail : {
     type : Boolean,
     default : false
-  }
+  },
+  isSpecial: {
+    type: Boolean,
+    default: false
+  },
+  grade: {
+    type: Number,
+    required: function(){return !this.isSpecial},
+    min: 1,
+    default: 1
+  },
 });
 
 export default mongoose.model("Form", formSchema);
