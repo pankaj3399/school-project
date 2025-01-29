@@ -7,8 +7,6 @@ import PointsHistory from "../models/PointsHistory.js";
 import School from "../models/School.js";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
-import { sendEmail } from "../services/nodemailer.js";
-import { generateCouponImage } from "../utils/generateImage.js";
 import { emailGenerator } from "../utils/emailHelper.js";
 export const createForm = async (req, res) => {
   const {
@@ -19,9 +17,17 @@ export const createForm = async (req, res) => {
     teacherEmail = false,
     schoolAdminEmail = false,
     parentEmail = false,
+    isSpecial,
+    grade
   } = req.body;
   const id = req.user.id;
-  const school = await School.findOne({ createdBy: id });
+  let school;
+  if(req.user.role == Role.Teacher){
+    const user = await Teacher.findById(id)
+    school = await School.findById(user.schoolId)
+  }else{
+    school = await School.findOne({ createdBy: id });
+  }
   try {
     const form = await Form.create({
       schoolId: school._id,
@@ -32,6 +38,8 @@ export const createForm = async (req, res) => {
       teacherEmail,
       schoolAdminEmail,
       parentEmail,
+      grade,
+      isSpecial
     });
     return res.status(200).json({
       message: "Form Created Successfully",
@@ -54,6 +62,8 @@ export const editForm = async (req, res) => {
     teacherEmail = false,
     schoolAdminEmail = false,
     parentEmail = false,
+    grade,
+    isSpecial
   } = req.body;
   try {
     const form = await Form.findByIdAndUpdate(formId, {
@@ -64,6 +74,8 @@ export const editForm = async (req, res) => {
       teacherEmail,
       schoolAdminEmail,
       parentEmail,
+      grade,
+      isSpecial
     });
     return res.status(200).json({
       message: "Form Edited Successfully",
@@ -87,9 +99,6 @@ export const getForms = async (req, res) => {
     case Role.Teacher:
       user = await Teacher.findById(id);
       break;
-    case Role.Student:
-      user = await Student.findById(id);
-      break;
     default:
       return res.status(403).json({ message: "Forbidden" });
   }
@@ -97,7 +106,25 @@ export const getForms = async (req, res) => {
   const schoolId = user.schoolId;
 
   try {
-    const forms = await Form.find({ schoolId });
+    let forms = await Form.find({ schoolId });
+    if(req.user.role == Role.Teacher){
+      if(user.type == "Special"){
+        forms = await Form.find({ 
+          schoolId: user.schoolId,
+          isSpecial: true 
+        });
+      }else{
+        forms = await Form.find({
+          schoolId: user.schoolId,
+          $or: [
+            { isSpecial: true },
+            {grade: user.grade}
+          ]
+        });
+      }
+    }else{
+      forms = await Form.find({ schoolId });
+    }
     return res.status(200).json({
       message: "Forms Fetched Successfully",
       forms: forms,
@@ -270,6 +297,6 @@ export const getPointHistory = async (req, res) => {
     default:
       return res.status(403).json({ message: "Forbidden" });
   }
-  const pointHistory = await PointsHistory.find({ schoolId: user.schoolId });
+  const pointHistory = await PointsHistory.find({ schoolId: user.schoolId }).populate("submittedForId");
   return res.status(200).json({ pointHistory });
 };
