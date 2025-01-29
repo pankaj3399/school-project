@@ -1,15 +1,32 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut,X,MenuIcon,ClipboardIcon} from 'lucide-react';
-import { useState } from 'react';
+import { LogOut,X,MenuIcon,ClipboardIcon, Users, School} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { getCurrentUser } from '@/api';
 
-const navItems = [
-  { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon }
-];
+
 
 export function TeacherSideNav() {
   const navigate = useNavigate();
   const[toogle,Settoogle] = useState(false);
+  const [navItems, setNavItems] = useState<any[]>([
+    { href: '/teachers/managepoints', label: 'Manage Points', icon: ClipboardIcon }
+  ])
+
+  useEffect(() => {
+    // Fetch teacher details
+    const fetchTeacher = async () => {
+      const response = await getCurrentUser();
+      if(response.user.type == "Lead"){
+        setNavItems([
+          { href: '/teachers/viewforms', label: 'Forms', icon: ClipboardIcon },
+          { href: '/teachers/students', label: 'View Students', icon: Users },
+          { href: '/teachers/analytics', label: 'Analytics', icon: School }
+        ])
+      }
+    };
+    fetchTeacher();
+  }, []);
 
   const toogleX = () =>{
     Settoogle(!toogle);
