@@ -280,7 +280,6 @@ export default function ViewTeachers() {
                   }
                   className="w-full px-4 py-2 border rounded"
                   min={1}
-                  max={6}
                 />
               </div>
             )}
