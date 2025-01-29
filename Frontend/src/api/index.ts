@@ -1,4 +1,4 @@
-
+//f
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
@@ -188,8 +188,10 @@ export const getCurrrentSchool = async (token: string) => {
     }
 }
 
-export const getCurrentUser = async (token: string) => {
+export const getCurrentUser = async (token ?: string) => {
+    token?.split("")
     try {
+        const token = getToken()
         const response = await axios.get(`${API_URL}/user`, {
             headers: {
                 token
@@ -536,6 +538,20 @@ export const getRanks = async () => {
             }
         });
         return {teachers: response1.data, students: response2.data};
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const promote = async () => {
+    try {
+        const token = getToken()
+        await axios.put(`${API_URL}/school/promote`,{}, {
+            headers: {
+                token
+            }
+        });
+        return {success:true};
     } catch (error) {
         return {error};
     }
