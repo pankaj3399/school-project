@@ -17,7 +17,8 @@ export default function AddStudent() {
     className: "",
     name : "",
     parentEmail : "",
-    sendNotifications : false
+    sendNotifications : false,
+    grade:1
   })
   const [loading, setLoading] = useState(false)
 
@@ -67,8 +68,8 @@ export default function AddStudent() {
         standard: className || "",
         email : email,
         parentEmail : parentEmail,
-        sendNotifications : sendNotifications
-        
+        sendNotifications : sendNotifications,
+        grade:formData.grade        
       }
 
       console.log("Student Data",studentData)
@@ -97,7 +98,8 @@ export default function AddStudent() {
         className: "",
         email: "",
         parentEmail: "",
-        sendNotifications : false
+        sendNotifications : false,
+        grade:1
       })
 
     } catch (error) {
@@ -143,6 +145,19 @@ export default function AddStudent() {
             value={formData.email}
             onChange={handleChange}
             required
+          />
+        </div>
+        <div>
+          <Label htmlFor="grade">Grade</Label>
+          <Input
+            id="grade"
+            name="grade"
+            value={formData.grade}
+            onChange={handleChange}
+            required
+            type="number"
+            min={1}
+            max={12}
           />
         </div>
         <div>
