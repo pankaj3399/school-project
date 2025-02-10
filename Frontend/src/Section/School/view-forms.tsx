@@ -16,6 +16,16 @@ export default function ViewForms() {
     special: Form[],
     byGrade: { [key: number]: Form[] }
   }>({ special: [], byGrade: {} })
+  const [deleteModal, setDeleteModal] = useState<{ form: Form | null, open: boolean }>({ form: null, open: false })
+
+
+  const openDeleteModal = (form: Form) => {
+    setDeleteModal({ form, open: true })
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ form: null, open: false })
+  }
 
   useEffect(() => {
     const fetchForms = async () => {
@@ -171,7 +181,7 @@ export default function ViewForms() {
           </Button>
           <Button
             className="bg-[#c7b8da] hover:bg-[#c7b8da]"
-            onClick={() => removeForm(form._id)}
+            onClick={() => openDeleteModal(form)}
           >
             <Trash2Icon />
           </Button>
@@ -217,10 +227,45 @@ export default function ViewForms() {
           </div>
         )
       ))}
-
+      {deleteModal.open && deleteModal.form && (
+        <FormDeleteModal form={deleteModal.form} onClose={closeDeleteModal} remove={removeForm} />
+      )}
       {selectedForm && (
         <FormDetails form={selectedForm} onClose={() => setSelectedForm(null)} />
       )}
+    </div>
+  )
+}
+
+
+const FormDeleteModal = ({ form, onClose, remove }: { form: Form, onClose: () => void, remove: (id:string) => Promise<any> }) => {
+
+
+  
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-4 rounded-md w-72">
+        <h2 className="text-xl font-semibold mb-4">Delete Form</h2>
+        <p>Are you sure you want to delete form <span className="font-semibold">{form.formName}</span>?</p>
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="ghost"
+            className="mr-4"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              remove(form._id)
+              onClose()
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

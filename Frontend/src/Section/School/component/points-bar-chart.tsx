@@ -67,10 +67,10 @@ const PointsBarChart = ({
                 <Tooltip />
                 <Bar dataKey="points" fill={barColor} background={{ fill: '#f5f5f5' }}  label={
                 {
-                  position: "insideBottom",
+                  position: "insideTop",
                   fill: "#0f0f0f",
-                  fontSize: 10,
-                  offset: 10,
+                  fontSize: 18,
+                  offset: -16,
                   formatter: (value:any) => value === 0 || data.length > 31 ? '' : value
                 } 
               }  />

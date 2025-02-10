@@ -6,19 +6,25 @@ import { useToast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
 import { addStudent } from "@/api/index"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import Loading from "../Loading"
 
+const STUDENT_GRADES = [
+  'K',
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+  'AN CENTER'
+];
 
 export default function AddStudent() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     className: "",
-    name : "",
-    parentEmail : "",
-    sendNotifications : false,
-    grade:1
+    name: "",
+    parentEmail: "",
+    sendNotifications: false,
+    grade: "K"  // Changed initial value to "K"
   })
   const [loading, setLoading] = useState(false)
 
@@ -36,7 +42,7 @@ export default function AddStudent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const { name, password, className, email, parentEmail, sendNotifications } = formData
+    const { name, password, className, email, parentEmail, sendNotifications, grade } = formData
 
     if (!name || !password  || !parentEmail) {
       toast({
@@ -69,7 +75,7 @@ export default function AddStudent() {
         email : email,
         parentEmail : parentEmail,
         sendNotifications : sendNotifications,
-        grade:formData.grade        
+        grade: grade        
       }
 
       console.log("Student Data",studentData)
@@ -99,7 +105,7 @@ export default function AddStudent() {
         email: "",
         parentEmail: "",
         sendNotifications : false,
-        grade:1
+        grade:"K"
       })
 
     } catch (error) {
@@ -149,16 +155,26 @@ export default function AddStudent() {
         </div>
         <div>
           <Label htmlFor="grade">Grade</Label>
-          <Input
-            id="grade"
-            name="grade"
+          <Select
             value={formData.grade}
-            onChange={handleChange}
-            required
-            type="number"
-            min={1}
-            max={12}
-          />
+            onValueChange={(value) => 
+              setFormData(prev => ({
+                ...prev,
+                grade: value
+              }))
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select grade" />
+            </SelectTrigger>
+            <SelectContent>
+              {STUDENT_GRADES.map((grade) => (
+                <SelectItem key={grade} value={grade}>
+                  {grade}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor="email">Parent/Guardian Email</Label>

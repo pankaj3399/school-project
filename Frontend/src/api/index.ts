@@ -1,4 +1,4 @@
-
+//f
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
@@ -278,7 +278,7 @@ export const submitFormTeacher = async (data:AnswerType, submittedFor:string, is
     teacherEmail: boolean;
     schoolAdminEmail: boolean;
     parentEmail: boolean;
-} , formId:string, token: string) => {
+} , formId:string, token: string, submittedAt: Date) => {
     try {
         const answers:AnswerTypeArray = Object.entries(data).map(([questionId, answer]) => ({
             questionId,
@@ -288,6 +288,7 @@ export const submitFormTeacher = async (data:AnswerType, submittedFor:string, is
         const response = await axios.post(`${API_URL}/form/submitFormTeacher/${formId}`, {
             answers,
             submittedFor,
+            submittedAt,
             ...isSendEmail
         }, {headers: {
             token
@@ -303,7 +304,7 @@ export const submitFormAdmin = async (data:AnswerType, submittedFor:string, isSe
     teacherEmail: boolean;
     schoolAdminEmail: boolean;
     parentEmail: boolean;
-} , formId:string) => {
+} , formId:string, submittedAt:Date) => {
     try {
         const token = getToken()
         const answers:AnswerTypeArray = Object.entries(data).map(([questionId, answer]) => ({
@@ -314,7 +315,8 @@ export const submitFormAdmin = async (data:AnswerType, submittedFor:string, isSe
         const response = await axios.post(`${API_URL}/form/submitFormAdmin/${formId}`, {
             answers,
             submittedFor,
-            ...isSendEmail
+            ...isSendEmail,
+            submittedAt
         }, {headers: {
             token
         }});

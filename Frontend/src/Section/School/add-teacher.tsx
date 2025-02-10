@@ -10,6 +10,30 @@ import Loading from "../Loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // import ViewTeachers from "./view-teachers";
 
+const GRADE_OPTIONS = [
+  'K',
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+  'ADAPTIVE LEARNING ROOM',
+  'ALTERNATIVE LEARNING CENTER',
+  'AN CENTER',
+  'ASD',
+  'BEHAVIORAL ROOM',
+  'GENERAL EDUCATION',
+  'HOMEBOUND ROOM',
+  'HOMEROOM',
+  'LIFE SKILLS CLASSROOM',
+  'PROGRAM #1',
+  'PROGRAM #2',
+  'PROGRAM #3',
+  'RESOURCE ROOM',
+  'SENSORY ROOM',
+  'SPECIAL DAY CLASS',
+  'SPECIALIZED ROOM',
+  'THERAPEUTIC ROOM',
+  'TRANSITION PROGRAM',
+  'OTHER'
+];
+
 export default function AddTeacher() {
   const [formData, setFormData] = useState({
     name: "",
@@ -17,9 +41,10 @@ export default function AddTeacher() {
     subject: "",
     email: "",
     checkbox: false,
-    grade: 1,
+    grade: "K",
     type: "Lead"
   });
+  const [customGrade, setCustomGrade] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -69,7 +94,7 @@ export default function AddTeacher() {
         email,
         recieveMails: checkbox,
         type,
-        grade: type === 'Lead' ? grade : null,
+        grade: type === 'Lead' ? (formData.grade === 'OTHER' ? customGrade : formData.grade) : null,
         token,
       };
 
@@ -96,7 +121,7 @@ export default function AddTeacher() {
         subject: "",
         email: "",
         checkbox: false,
-        grade: 1,
+        grade: "K",
         type: "Special"
       });
     } catch (error) {
@@ -191,24 +216,52 @@ export default function AddTeacher() {
                   <SelectValue defaultValue={formData.type} placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Lead">Lead</SelectItem>
-                  <SelectItem value="Special">Special</SelectItem>
+                  <SelectItem value="Lead">Leader/Lead Teacher</SelectItem>
+                  <SelectItem value="Special">Team Member/ Special Teacher</SelectItem>
                 </SelectContent>
             </Select>
           </div>
           {formData.type === 'Lead' && (
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="grade">Grade</Label>
-              <Input
-                id="grade"
+              <Select
                 name="grade"
-                type="number"
                 value={formData.grade}
-                onChange={handleChange}
                 required
-                min={1}
-                max={6}
-              />
+                onValueChange={(value) => {
+                  setFormData({
+                    ...formData,
+                    grade: value
+                  });
+                  if (value !== 'OTHER') {
+                    setCustomGrade("");
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue defaultValue={formData.grade} placeholder="Select grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRADE_OPTIONS.map((grade) => (
+                    <SelectItem key={grade} value={grade}>
+                      {grade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {formData.grade === 'OTHER' && (
+                <div className="mt-2">
+                  <Label htmlFor="customGrade">Specify Grade/Room</Label>
+                  <Input
+                    id="customGrade"
+                    value={customGrade}
+                    onChange={(e) => setCustomGrade(e.target.value)}
+                    placeholder="Enter custom grade or room"
+                    required
+                  />
+                </div>
+              )}
             </div>
           )}
           <Button type="submit" className="bg-[#00a58c]">Add Teacher</Button>

@@ -32,13 +32,13 @@ export default function FormPage( ) {
     teacherEmail: boolean;
     schoolAdminEmail: boolean;
     parentEmail: boolean;
-}) => {
+}, submittedAt:Date) => {
     setIsSubmitting(true)
     console.log('Form submitted with answers:', answers)
     const token = localStorage.getItem('token')
     
     if(token){
-      const response = await submitFormTeacher(answers, submittedFor, isSendEmail, params?.id || "", token)
+      const response = await submitFormTeacher(answers, submittedFor, isSendEmail, params?.id || "", token, submittedAt)
       if(!response.error){
         toast({ 
           title: 'Form submitted successfully',

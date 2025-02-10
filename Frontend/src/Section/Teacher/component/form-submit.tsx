@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronsUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from '@/authContext'
 
 
 
@@ -25,10 +26,11 @@ type FormSubmissionProps = {
     schoolAdminEmail: boolean;
     parentEmail: boolean;
   
-}) => void
+}, submittedAt:Date) => void
 }
 
 export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionProps) {
+  const {user} = useAuth()
   const [submittedFor, setSubmittedFor] = useState("")
   const [answers, setAnswers] = useState<AnswerType>({})
   const [isFormValid, setIsFormValid] = useState(false)
@@ -46,6 +48,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const [description, setDescription] = useState("")
 
   const [totalPoints, setTotalPoints] = useState(0)
+  const [submittedAt, setSubmittedAt] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(()=>{
     let ansarr = Object.entries(answers).map(([questionId, answer]) => ({
@@ -72,16 +75,29 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     const getStudent = async () => {
       const token = localStorage.getItem("token") || ""
       const response = await getStudents(token)
-      if(form && form.isSpecial){
-        setStudent(response.students.map((s: any) => ({
-          ...s,
-          name:s.name + " - Grade " + s.grade
-        })))
-        setfilteredStudent(response.students.map((s: any) => ({
-          ...s,
-          name:s.name + " - Grade " + s.grade
-        })))
+      if(form ){
+        if(form.isSpecial || user?.type == 'Special'){
+
+          setStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+          setfilteredStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+        }else{
+          setStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+          setfilteredStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+        }
       }else{
+        
         setStudent(response.students.filter((s: any) => s.grade === form.grade))
         setfilteredStudent(response.students.filter((s: any) => s.grade === form.grade))
       }
@@ -93,7 +109,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     if(grade == "All"){
       setfilteredStudent(student.filter((s: any) => s))
     }else{
-      setfilteredStudent(student.filter((s: any) => s.grade == parseInt(grade)))
+      setfilteredStudent(student.filter((s: any) => s.grade == grade))
     }
   },[grade])
 
@@ -101,15 +117,15 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     switch(form.formType){
       case 'AwardPoints':
       case 'DeductPoints':{
-        setDescription(`You will ${form.formType == 'AwardPoints' ? "AWARD":"DEDUCT"} ${Math.abs(totalPoints)} POINTS ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`)
+        setDescription(`You will ${form.formType == 'AwardPoints' ? "AWARD":"DEDUCT"} ${Math.abs(totalPoints)} POINTS ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}.`)
       }
       break;
       case 'Feedback':{
-        setDescription(`You will submit feedback about  ${student.find(item => item._id == submittedFor)?.name || "Unknown"}`)
+        setDescription(`You will submit feedback about  ${student.find(item => item._id == submittedFor)?.name || "Unknown"}.`)
       }
       break;
       default:{
-        setDescription(`You will withdraw ${Math.abs(totalPoints)} POINTS`)
+        setDescription(`You will withdraw ${Math.abs(totalPoints)} POINTS from ${student.find(item => item._id == submittedFor)?.name || "Unknown"}'s Account.`)
       }      
     }
   },[submittedFor, totalPoints])
@@ -122,7 +138,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
 
-    onSubmit(answers, submittedFor, isSendEmail)
+    onSubmit(answers, submittedFor, isSendEmail, new Date(submittedAt))
     setIsSendEmail((prev)=>prev)
     setShowModal(false)
   }
@@ -240,7 +256,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   <SelectContent>
                     <SelectItem value="All">All</SelectItem>
                     {[...new Set(student.map((s: any) => s.grade))].map((grade) => (
-                      <SelectItem key={grade} value={grade.toString()}>
+                      <SelectItem key={grade} value={grade?.toString()}>
                         Grade {grade}
                       </SelectItem>
                     ))}
@@ -248,6 +264,16 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                 </Select>
               </div>
               }
+
+              <div>
+                      <p>Date:</p>
+                      <Input 
+                        type="date" 
+                        required 
+                        value={submittedAt}
+                        onChange={(e) => setSubmittedAt(e.target.value)}
+                      />
+              </div>
               <div>
                 <p>Student:</p>
                 {Array.isArray(student) && student.length > 0 ? (

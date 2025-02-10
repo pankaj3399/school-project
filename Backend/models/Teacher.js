@@ -48,9 +48,7 @@ const teacherSchema = new mongoose.Schema({
     required: true
   },
   grade: {
-    type: Number,
-    min: 1,
-    max: 6,
+    type: String,
     required: function() { return this.type === 'Lead'; }
   }
 });
