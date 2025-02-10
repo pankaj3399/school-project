@@ -78,7 +78,7 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
             checked={question.isCompulsory}
             onCheckedChange={handleCompulsoryChange}
           />
-          <Label htmlFor={`compulsory-${question.id}`}>Compulsory</Label>
+          <Label htmlFor={`compulsory-${question.id}`}>Required</Label>
         </div>
         {(question.type === 'number' || question.type === 'text') && question.pointsType !== 'None' && (
           <>

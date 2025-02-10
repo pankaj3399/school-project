@@ -15,6 +15,17 @@ export default function ViewFormsTeacher() {
   const [forms, setForms] = useState<Form[]>([])
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
 
+  const [deleteModal, setDeleteModal] = useState<{ form: Form | null, open: boolean }>({ form: null, open: false })
+
+  const openDeleteModal = (form: Form) => {
+    setDeleteModal({ form, open: true })
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ form: null, open: false })
+  }
+
+ 
   useEffect(() => {
     
     const fetchForms = async () => {
@@ -67,37 +78,37 @@ export default function ViewFormsTeacher() {
     return sum
   }
 
-  const removeFromState = (id:string) => {
-    setForms(prev => prev.filter(form => form._id != id))
+  const removeFromState = (id: string) => {
+    setForms(prev => prev.filter(form => form._id !== id))
   }
 
-  const removeForm  = async (id:string) => {
-    const removedForm = forms.filter(form => form._id == id)[0]
-    try{
+  const removeForm = async (id: string) => {
+    const removedForm = forms.filter(form => form._id === id)[0]
+    try {
       const token = localStorage.getItem('token')
-      if(!token) throw new Error("Unauthorized request")
-      const res = await deleteForm(id,token)
+      if (!token) throw new Error("Unauthorized request")
+      const res = await deleteForm(id, token)
       removeFromState(id)
-      if(res)
+      if (res)
         return toast({
-          title:"Success",
+          title: "Success",
           description: `Successfully Deleted form ${res.formName}`
         })
-    }catch(err){
+    } catch (err) {
       setForms([...forms, removedForm])
-      console.log(err);
-      if(err instanceof AxiosError)
+      console.log(err)
+      if (err instanceof AxiosError)
         toast({
-          title:"Error",
+          title: "Error",
           description: err.message
         })
       else
         toast({
-          title:"Error",
+          title: "Error",
           description: "Something Went Wrong"
         })
+    }
   }
-}
 
 
   return (
@@ -150,7 +161,7 @@ export default function ViewFormsTeacher() {
                 </Button>
                 <Button
                   className="bg-[#c7b8da] hover:bg-[#c7b8da]"
-                  onClick={() => removeForm(form._id)}
+                  onClick={() => openDeleteModal(form)}
                 >
                   <Trash2Icon />
                 </Button>
@@ -162,6 +173,38 @@ export default function ViewFormsTeacher() {
       {selectedForm && (
         <FormDetails form={selectedForm} onClose={() => setSelectedForm(null)} />
       )}
+      {deleteModal.open && deleteModal.form && (
+        <FormDeleteModal form={deleteModal.form} onClose={closeDeleteModal} remove={removeForm} />
+      )}
+    </div>
+  )
+}
+
+
+const FormDeleteModal = ({ form, onClose, remove }: { form: Form, onClose: () => void, remove: (id:string) => Promise<any> }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-4 rounded-md w-72">
+        <h2 className="text-xl font-semibold mb-4">Delete Form</h2>
+        <p>Are you sure you want to delete form <span className="font-semibold">{form.formName}</span>?</p>
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="ghost"
+            className="mr-4"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              remove(form._id)
+              onClose()
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

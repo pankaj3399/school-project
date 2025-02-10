@@ -146,10 +146,10 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
               fill={barColor}
               label={
                 {
-                  position: "insideBottom",
+                  position: "insideStart",
                   fill: "#0f0f0f",
-                  fontSize: 12,
-                  offset:10
+                  fontSize: 18,
+                  offset:12
                 } 
               }
             />

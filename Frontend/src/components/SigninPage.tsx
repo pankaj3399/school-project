@@ -84,7 +84,7 @@ export default function LoginForm() {
 
         if (formData.role === "SchoolAdmin") {
           navigate("/analytics");
-        } else if (formData.role === "Teacher") {
+        } else if (formData.role === "Teacher" || formData.role === "SpecialTeacher") {
           navigate("/teachers/managepoints");
         } 
       }
@@ -170,8 +170,9 @@ export default function LoginForm() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SchoolAdmin">School Token Manager</SelectItem>
-                  <SelectItem value="Teacher">Teacher</SelectItem>
+                  <SelectItem value="SchoolAdmin">Token Manager</SelectItem>
+                  <SelectItem value="Teacher">Leader/Lead Teacher</SelectItem>
+                  <SelectItem value="SpecialTeacher">Team member/Teacher</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (

@@ -16,10 +16,12 @@ const generateToken = (id, role) => {
 
 export const login = async (req, res) => {
     const { email, password, role,  } = req.body;
+    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
+    
 
     try {
       let user;
-      switch(role){
+      switch(userRole){
         case Role.Teacher:{
             user = await Teacher.findOne({email})
             break;
@@ -42,7 +44,7 @@ export const login = async (req, res) => {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return res.status(401).json({ message: 'Invalid Credentials' });
 
-        const token = generateToken(user._id, role);
+        const token = generateToken(user._id, userRole);
         res.status(200).json({ token, role, userId: user._id });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -219,4 +221,3 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
-

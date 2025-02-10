@@ -124,7 +124,7 @@ if (teacher && teacher.user?.grade) {
     <PopoverContent className="w-[600px] p-0 flex flex-col space-y-0">
           <Input onChange={(e)=>{
             const value = e.target.value
-            setfilteredStudents(students.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase())))
+            setfilteredStudents(students.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase()) || s.grade.toLowerCase().includes(value.toLowerCase())))
           }} className="w-full" />
           {
             filteredStudents.map((s: any) => (
@@ -132,7 +132,7 @@ if (teacher && teacher.user?.grade) {
                 setStudentId(s._id)
                 setStudentName(s.name)
                 setIsPopOverOpen(false)
-              }} key={s._id} className='justify-start' variant={"ghost"}>{s.name}</Button>
+              }} key={s._id} className='justify-start' variant={"ghost"}>{s.name} (Grade {s.grade})</Button>
             ))
           }
     </PopoverContent>

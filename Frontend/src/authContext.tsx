@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { getCurrentUser } from "./api";
 
-interface User {_id: string, email:string, role:string, name:string}
+interface User {_id: string, email:string, role:string, name:string , grade?:string, subject?:string, type?:string}
 
 interface AuthContextType {
   user: User | null;

@@ -111,7 +111,6 @@ export const getForms = async (req, res) => {
       if(user.type == "Special"){
         forms = await Form.find({ 
           schoolId: user.schoolId,
-          isSpecial: true 
         });
       }else{
         forms = await Form.find({
@@ -163,7 +162,7 @@ export const deleteForm = async (req, res) => {
 
 export const submitFormTeacher = async (req, res) => {
   const formId = req.params.formId;
-  const { submittedFor, answers } = req.body;
+  const { submittedFor, answers, submittedAt } = req.body;
   const teacherId = req.user.id;
   const teacher = await Teacher.findById(teacherId);
   const form = await Form.findById(formId);
@@ -176,6 +175,7 @@ export const submitFormTeacher = async (req, res) => {
     const formSubmission = await FormSubmissions.create({
       formId,
       teacherId,
+      submittedAt,
       answers: answers.map(ans => {return {
         ...ans,
         answer: ans.answer || "No Answer"
@@ -198,6 +198,7 @@ export const submitFormTeacher = async (req, res) => {
       submittedForName: submittedForStudent.name,
       points: totalPoints,
       schoolId: teacher.schoolId,
+      submittedAt
     });
 
     if (school && teacher && submittedForStudent) {
@@ -225,7 +226,7 @@ export const submitFormTeacher = async (req, res) => {
 
 export const submitFormAdmin = async (req, res) => {
   const formId = req.params.formId;
-  const { submittedFor, answers } = req.body;
+  const { submittedFor, answers, submittedAt } = req.body;
   const form = await Form.findById(formId);
   const submittedForStudent = await Student.findById(submittedFor);
   const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
@@ -240,6 +241,7 @@ export const submitFormAdmin = async (req, res) => {
         ...ans,
         answer: ans.answer || "No Answer"
       }}),
+      submittedAt
     });
 
     submittedForStudent.$set({
@@ -258,6 +260,7 @@ export const submitFormAdmin = async (req, res) => {
       submittedForName: submittedForStudent.name,
       points: totalPoints,
       schoolId: schoolAdmin.schoolId,
+      submittedAt
     });
 
     if (school && submittedForStudent) {

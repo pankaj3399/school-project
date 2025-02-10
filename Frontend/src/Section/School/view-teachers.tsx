@@ -22,6 +22,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const GRADE_OPTIONS = [
+  'K',
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+  'ADAPTIVE LEARNING ROOM',
+  'ALTERNATIVE LEARNING CENTER',
+  'AN CENTER',
+  'ASD',
+  'BEHAVIORAL ROOM',
+  'GENERAL EDUCATION',
+  'HOMEBOUND ROOM',
+  'HOMEROOM',
+  'LIFE SKILLS CLASSROOM',
+  'PROGRAM #1',
+  'PROGRAM #2',
+  'PROGRAM #3',
+  'RESOURCE ROOM',
+  'SENSORY ROOM',
+  'SPECIAL DAY CLASS',
+  'SPECIALIZED ROOM',
+  'THERAPEUTIC ROOM',
+  'TRANSITION PROGRAM',
+  'OTHER'
+];
+
 export default function ViewTeachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,7 +138,7 @@ export default function ViewTeachers() {
 
   const filteredTeachers = teachers.filter((teacher) => {
     const matchesGrade = selectedGrade === "all" || 
-      (teacher.type === "Lead" && teacher.grade.toString() === selectedGrade);
+      (teacher.type === "Lead" && teacher.grade === selectedGrade);
     const matchesType = selectedType === "all" || teacher.type === selectedType;
     return matchesGrade && matchesType;
   });
@@ -140,9 +164,9 @@ export default function ViewTeachers() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Grades</SelectItem>
-              {[1, 2, 3, 4, 5, 6].map((grade) => (
-                <SelectItem key={grade} value={grade.toString()}>
-                  Grade {grade}
+              {GRADE_OPTIONS.map((grade) => (
+                <SelectItem key={grade} value={grade}>
+                  {grade}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -156,8 +180,8 @@ export default function ViewTeachers() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Lead">Lead</SelectItem>
-              <SelectItem value="Special">Special</SelectItem>
+              <SelectItem value="Lead">Leader/Lead Teacher</SelectItem>
+              <SelectItem value="Special">Team Member/Speacial Teacher</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -186,7 +210,7 @@ export default function ViewTeachers() {
                 <TableCell>{teacher.name}</TableCell>
                 <TableCell>{teacher.subject}</TableCell>
                 <TableCell>{teacher.email}</TableCell>
-                <TableCell>{teacher.type}</TableCell>
+                <TableCell>{teacher.type == "Lead" ? 'Leader/Lead Teacher':'Team Member/Speacial Teacher'}</TableCell>
                 <TableCell>{teacher.type === 'Lead' ? teacher.grade : 'N/A'}</TableCell>
                 <TableCell>
                   <Button
@@ -280,7 +304,6 @@ export default function ViewTeachers() {
                   }
                   className="w-full px-4 py-2 border rounded"
                   min={1}
-                  max={6}
                 />
               </div>
             )}
