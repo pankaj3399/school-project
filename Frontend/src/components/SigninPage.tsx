@@ -84,9 +84,11 @@ export default function LoginForm() {
 
         if (formData.role === "SchoolAdmin") {
           navigate("/analytics");
-        } else if (formData.role === "Teacher" || formData.role === "SpecialTeacher") {
+        } else if (formData.role === "SpecialTeacher") {
           navigate("/teachers/managepoints");
-        } 
+        } else if(formData.role === "Teacher" ){
+          navigate("/teachers/viewforms");
+        }
       }
     } catch (err) {
       console.error("Login error:", err);

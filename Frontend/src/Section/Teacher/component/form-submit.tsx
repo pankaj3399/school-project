@@ -75,16 +75,29 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     const getStudent = async () => {
       const token = localStorage.getItem("token") || ""
       const response = await getStudents(token)
-      if(form && form.isSpecial || user?.type == 'Special'){
-        setStudent(response.students.map((s: any) => ({
-          ...s,
-          name:s.name + " - Grade " + s.grade
-        })))
-        setfilteredStudent(response.students.map((s: any) => ({
-          ...s,
-          name:s.name + " - Grade " + s.grade
-        })))
+      if(form ){
+        if(form.isSpecial || user?.type == 'Special'){
+
+          setStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+          setfilteredStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+        }else{
+          setStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+          setfilteredStudent(response.students.map((s: any) => ({
+            ...s,
+            name:s.name + " - Grade " + s.grade
+          })))
+        }
       }else{
+        
         setStudent(response.students.filter((s: any) => s.grade === form.grade))
         setfilteredStudent(response.students.filter((s: any) => s.grade === form.grade))
       }
@@ -96,7 +109,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     if(grade == "All"){
       setfilteredStudent(student.filter((s: any) => s))
     }else{
-      setfilteredStudent(student.filter((s: any) => s.grade == parseInt(grade)))
+      setfilteredStudent(student.filter((s: any) => s.grade == grade))
     }
   },[grade])
 
