@@ -7,8 +7,17 @@ import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
-
 import AllCharts from "./component/all-charts";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
+const STATE_OPTIONS = [
+  'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC',
+  'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY',
+  'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE',
+  'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK',
+  'OR', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT',
+  'VA', 'VI', 'WA', 'WV', 'WI', 'WY'
+];
 
 export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
@@ -21,7 +30,8 @@ export default function SchoolPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
+  const [state, setState] = useState("AL");
+  const [country, setCountry] = useState("United States");
 
   const [stats, setStats] = useState({
       teachers:0,
@@ -46,10 +56,6 @@ export default function SchoolPage() {
       fetchStats()
     },[])
 
-
-
-
-
   useEffect(() => {
     const fetchSchool = async () => {
       try {
@@ -69,6 +75,9 @@ export default function SchoolPage() {
         if (data.school) {
           setSchoolName(data.school.name);
           setAddress(data.school.address);
+          setDistrict(data.school.district);
+          setState(data.school.state || "AL");
+          setCountry(data.school.country || "United States");
         }
       } catch (error) {
         toast({
@@ -103,7 +112,6 @@ export default function SchoolPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
@@ -122,6 +130,8 @@ export default function SchoolPage() {
         formData.append("name", schoolName);
         formData.append("address", address);
         formData.append("district", district);
+        formData.append("state", state);
+        formData.append("country", country);
         if (logo) {
           formData.append("logo", logo);
         }
@@ -142,7 +152,7 @@ if (!response.error) {
     setLoading(false);
     setSchool(response.data.school);
     setIsEditing(false);
-    navigate("/school");
+    navigate("/analytics");
   } else {
     toast({
       title: "Error",
@@ -153,6 +163,38 @@ if (!response.error) {
     setLoading(false);
   }
   };
+
+  const formFields = (
+    <>
+      <div>
+        <Label htmlFor="state">State</Label>
+        <Select
+          value={state}
+          onValueChange={setState}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select state" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATE_OPTIONS.map((stateOption) => (
+              <SelectItem key={stateOption} value={stateOption}>
+                {stateOption}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="country">Country</Label>
+        <Input
+          id="country"
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          required
+        />
+      </div>
+    </>
+  );
 
   if (loading) return <Loading />;
 
@@ -172,10 +214,17 @@ if (!response.error) {
               <h2 className="text-4xl font-bold">{school.name}</h2>
               <p className="text-xl">{school.createdBy.name?.toUpperCase()} - LEAD TEACHER</p>
               <p className="text-xl">{school.address}</p>
+              <p className="text-xl">{school.state}, {school.country}</p>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
               <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>
                 {isEditing ? "Cancel":"Edit School"}
+              </Button>
+
+              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={()=>
+                navigate("/conclude/year")
+              }>
+               Conclude Year
               </Button>
             </div>
           </div>
@@ -231,6 +280,7 @@ if (!response.error) {
                     <p className="text-red-500 text-sm mt-1">{errors.district}</p>
                   )}
                 </div>
+                {formFields}
                 {isEditing && (
                   <div>
                     <Label htmlFor="logo">Logo</Label>
@@ -298,6 +348,7 @@ if (!response.error) {
                     <p className="text-red-500 text-sm mt-1">{errors.district}</p>
                   )}
                 </div>
+          {formFields}
           {!isEditing && (
             <div>
               <Label htmlFor="logo">Logo</Label>

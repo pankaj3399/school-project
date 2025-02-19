@@ -172,7 +172,7 @@ export  const SignupForm = ()=> {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SchoolAdmin">Token Manager</SelectItem>
+                  <SelectItem value="SchoolAdmin">System Manager</SelectItem>
 
                 </SelectContent>
               </Select>

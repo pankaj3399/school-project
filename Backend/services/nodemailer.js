@@ -48,3 +48,37 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
         return false
     }
 }
+export const sendEmailReport = async (to, subject, text, html, attachment, attachmentName) => {
+    try {
+        let info;
+        if(attachment)
+        info = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to,
+            subject,
+            text,
+            html:html,
+            attachments: [
+                {
+                  filename: attachmentName,
+                  content: attachment,
+                  cid: 'reportPdf', // Content-ID for referencing in the email body
+                },
+              ],
+        });
+        else
+        info = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to,
+            subject,
+            text,
+            html:html,
+        });
+
+        console.log('Email sent successfully', info);
+        return true
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return false
+    }
+}
