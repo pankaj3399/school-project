@@ -1,5 +1,5 @@
 import { FormType } from "../enum.js";
-import { sendEmail } from "../services/nodemailer.js";
+import { sendEmail, sendEmailReport } from "../services/nodemailer.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 
 
@@ -171,4 +171,20 @@ export const emailGenerator = async (form, {
          attachment,
          attachmentName
        );
+}
+
+
+export const reportEmailGenerator = async (attachment, attachmentName, to) => {
+  let subject, body;
+
+  subject = `Yearly Report of ${attachmentName}`
+  body = `Please find the attached report of ${attachmentName}`
+  sendEmailReport(
+    to,
+    subject,
+    body,
+    body,
+    attachment,
+    attachmentName
+  )
 }

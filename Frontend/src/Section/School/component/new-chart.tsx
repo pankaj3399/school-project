@@ -114,8 +114,9 @@ const generateData = async (month: string | null = null, studentId:string | null
     }
 }
 
-const EducationYearChart = ({studentId}:{
-  studentId: string
+const EducationYearChart = ({studentId, slimLines}:{
+  studentId: string,
+  slimLines?: boolean
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -154,8 +155,8 @@ const EducationYearChart = ({studentId}:{
         ))}
       </div>
 
-      <div className="w-full h-[450px] ">
-        <ResponsiveContainer width="100%" height="100%"   >
+      <div id="graph" className="w-full h-[450px] ">
+        <ResponsiveContainer  width="100%" height="100%"   >
           <ComposedChart
             data={chartData}
             margin={{
@@ -194,7 +195,7 @@ const EducationYearChart = ({studentId}:{
               dot={false}
               legendType='none'
               tooltipType='none'
-               strokeWidth={4}
+               strokeWidth={!!slimLines ? 2 : 4}
               className='opacity-40'
               />
             <Line 
@@ -205,7 +206,7 @@ const EducationYearChart = ({studentId}:{
               name="Token Trend" 
               dot={false}
               legendType='none'
-              strokeWidth={4}
+              strokeWidth={!!slimLines ? 2 : 4}
               className='opacity-40'
               />
             <Line 
@@ -216,7 +217,7 @@ const EducationYearChart = ({studentId}:{
               name="Red Trend" 
               dot={false}
               legendType='none'
-               strokeWidth={4}
+               strokeWidth={!!slimLines ? 2 : 4}
               className='opacity-35'
             />
           </ComposedChart>

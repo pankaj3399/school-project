@@ -8,7 +8,9 @@ const SchoolSchema = new mongoose.Schema({
     teachers : [{type : mongoose.Schema.Types.ObjectId , ref : 'Teacher' }],
     students : [{type : mongoose.Schema.Types.ObjectId , ref : 'Student' }],
     createdAt : {type : Date, default : Date.now},
-    createdBy: {type: mongoose.Types.ObjectId, ref: 'User'}
+    createdBy: {type: mongoose.Types.ObjectId, ref: 'User'},
+    state: {type: String, default: ''},
+    country: {type: String, default: ''},
 });
 
 export default mongoose.model('School', SchoolSchema);

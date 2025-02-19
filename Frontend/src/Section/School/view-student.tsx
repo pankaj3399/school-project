@@ -58,7 +58,7 @@ export default function ViewStudents() {
     if (selectedGrade === "all") {
       setFilteredStudents(students)
     } else {
-      setFilteredStudents(students.filter(student => student.grade === parseInt(selectedGrade)))
+      setFilteredStudents(students.filter(student => student.grade === selectedGrade))
     }
   }, [selectedGrade, students])
 
