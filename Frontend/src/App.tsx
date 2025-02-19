@@ -29,6 +29,7 @@ import FormBuilderTeacher from "./Section/Teacher/form-builder";
 import EditFormTeacher from "./Section/Teacher/edit-form";
 import AddStudentTeacher from "./Section/Teacher/add-student";
 import TeacherDashboard from "./Section/Teacher/analytics";
+import Finalize from "./Section/School/finalize";
 
 
 // Reusable ProtectedRoute component
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
+          <Route path="/conclude/year" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />

@@ -65,7 +65,7 @@ export const getCurrentSchool = async (req, res) => {
 };
 
 export const updateSchool = async (req, res) => {
-    const { name, address, district } = req.body;
+    const { name, address, district, state, country } = req.body;
     const logo = req.file;
   
     try {
@@ -76,13 +76,13 @@ export const updateSchool = async (req, res) => {
       if(logoUrl)
        updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address,district, logo: logoUrl },
+        { name, address,district, logo: logoUrl, state, country },
         { new: true }
       ).populate('createdBy');
       else
       updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address,district },
+        { name, address,district, state, country },
         { new: true }
       ).populate('createdBy');
   

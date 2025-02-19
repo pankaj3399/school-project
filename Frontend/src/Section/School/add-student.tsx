@@ -19,7 +19,7 @@ const STUDENT_GRADES = [
 export default function AddStudent() {
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
+    password: "123456",
     className: "",
     name: "",
     parentEmail: "",
@@ -204,17 +204,7 @@ export default function AddStudent() {
           (optional)<br/>
           <Checkbox className="mt-2" checked={formData.sendNotifications} onCheckedChange={(e)=>setFormData({...formData,sendNotifications:e as boolean})}  /><span className="text-sm ml-2 gap-x-1 inline-block  text-semibold ">Send email notification to Parent/Guardian.</span>
         </div>
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        
         
        
         <Button type="submit" className="bg-[#00a58c]">Add Student</Button>

@@ -485,6 +485,22 @@ export const getHistoryOfYearByStudent = async (id:string) => {
     }
 }
 
+export const getReportDataStudent = async (id:string, grade:string) => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/schoolAdmin/stats/reportdata/${id}`,{
+            grade
+        }, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
 export const getHistoryOfCurrentWeek = async (data: any) => {
     try {
         const token = getToken()
@@ -549,6 +565,35 @@ export const promote = async () => {
     try {
         const token = getToken()
         await axios.put(`${API_URL}/school/promote`,{}, {
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const sendReport = async (data: FormData, email: string) => {
+    try {
+        const token = getToken();
+        const response = await axios.post(`${API_URL}/schoolAdmin/sendReport/${email}`, data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                token: token || ""
+            }
+        });
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { error };
+    }
+};
+
+export const resetStudentRoster = async () => {
+    try {
+        const token = getToken()
+        await axios.put(`${API_URL}/schoolAdmin/resetStudentRoster`,{}, {
             headers: {
                 token
             }
