@@ -5,7 +5,7 @@ import express from 'express';
 import {Role} from '../enum.js';
 import { createForm, editForm, deleteForm } from "../controllers/formController.js";
 import upload from "../middlewares/multer.js";
-import { getStudentPointsHistory } from "../controllers/pointhistoryController.js";
+import { getCombinedStudentPointsHistory, getStudentPointsHistory } from "../controllers/pointhistoryController.js";
 
 const router = express.Router();
 
@@ -30,6 +30,7 @@ router.get('/stats/pointsreceived/:studentId', authenticate, authorizeRoles(Role
 router.get('/stats/formsubmitted', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getFormsSubmittedPerMonth);
 router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getFormsSubmittedPerMonthPerTeacher);
 
+router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getCombinedStudentPointsHistory);
 router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getStudentPointsHistory);
 router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
 router.post('/sendreport/:email', upload.single('file'), sendReport);

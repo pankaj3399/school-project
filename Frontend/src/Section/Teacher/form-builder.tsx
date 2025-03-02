@@ -10,7 +10,7 @@ import { Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
 
-type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
+type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
 
 export default function FormBuilderTeacher() {
   const [formName, setFormName] = useState('')
@@ -76,6 +76,7 @@ const navigate = useNavigate()
   const getDefaultPointsType = (formType: FormType) => {
     switch(formType){
       case 'AwardPoints':
+      case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
         return 'Award'
       case 'Feedback':
         return 'None'

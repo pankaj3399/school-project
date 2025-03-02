@@ -18,7 +18,7 @@ export default function FormBuilder() {
   const [formType, setFormType] = useState<FormType>('AwardPoints')
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSpecial, setIsSpecial] = useState(false)
-const [grade, setGrade] = useState<number>(1)
+const [grade, setGrade] = useState<string>("K")
   const [isSendEmail, setIsSendEmail] = useState({
     studentEmail: false,
     teacherEmail: false,
@@ -88,7 +88,30 @@ const navigate = useNavigate()
     }
   }
 
-  const grades = Array.from({length: 12}, (_, i) => i + 1);
+  const grades = [
+    'K',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+    'ADAPTIVE LEARNING ROOM',
+    'ALTERNATIVE LEARNING CENTER',
+    'AN CENTER',
+    'ASD',
+    'BEHAVIORAL ROOM',
+    'GENERAL EDUCATION',
+    'HOMEBOUND ROOM',
+    'HOMEROOM',
+    'LIFE SKILLS CLASSROOM',
+    'PROGRAM #1',
+    'PROGRAM #2',
+    'PROGRAM #3',
+    'RESOURCE ROOM',
+    'SENSORY ROOM',
+    'SPECIAL DAY CLASS',
+    'SPECIALIZED ROOM',
+    'THERAPEUTIC ROOM',
+    'TRANSITION PROGRAM',
+    'OTHER'
+  ];
+
 
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
@@ -118,6 +141,7 @@ const navigate = useNavigate()
             <SelectItem value="Feedback">Feedback</SelectItem>
             <SelectItem value="PointWithdraw">Point Withdraw</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
+            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -134,7 +158,7 @@ const navigate = useNavigate()
   {!isSpecial && (
     <div>
       <Label htmlFor="grade">Grade</Label>
-      <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
+      <Select value={grade.toString()} onValueChange={(value) => setGrade(value)}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select grade" />
         </SelectTrigger>

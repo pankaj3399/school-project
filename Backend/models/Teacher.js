@@ -50,7 +50,15 @@ const teacherSchema = new mongoose.Schema({
   grade: {
     type: String,
     required: function() { return this.type === 'Lead'; }
-  }
+  },
+  isEmailVerified:{
+    type:Boolean,
+    default: false
+  },
+  emailVerificationCode:{
+    type:String,
+    default: null
+  },
 });
 
 teacherSchema.pre('save', function (next) {

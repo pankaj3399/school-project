@@ -612,6 +612,160 @@ export const getHistoricalPointsData = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+export const getHistoricalPointsDataByStudentId = async (req, res) => {
+    try {
+        const schoolId = await getSchoolIdFromUser(req.user.id);
+        const { period, formType, studentId } = req.body;
+        const teacherData = await getGradeFromUser(req.user.id);
+        const today = new Date();
+        let startDate;
+
+        switch(period) {
+            case '1W':
+                startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case '1M':
+                startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case '3M':
+                startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+                break;
+            case '6M':
+                startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
+                break;
+            case '1Y':
+                startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid period specified' });
+        }
+
+        let historicalPoints;
+        let historicalPointsHistory;
+
+        if(teacherData){
+            historicalPoints = await PointsHistory.aggregate([
+                {
+                    $match: {
+                        schoolId: new mongoose.Types.ObjectId(schoolId),
+                        formType: formType,
+                        submittedAt: { 
+                            $gte: startDate, 
+                            $lte: today 
+                        },
+                        submittedForId: new mongoose.Types.ObjectId(studentId)
+                    }
+                },
+                {
+                    $group: {
+                        _id: { 
+                            year: { $year: '$submittedAt' },
+                            month: { $month: '$submittedAt' },
+                            day: { $dayOfMonth: '$submittedAt' }
+                        },
+                        points: { $sum: '$points' }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        day: { 
+                            $dateToString: { 
+                                format: "%Y-%m-%d", 
+                                date: {
+                                    $dateFromParts: {
+                                        year: "$_id.year",
+                                        month: "$_id.month",
+                                        day: "$_id.day"
+                                    }
+                                }
+                            }
+                        },
+                        points: 1
+                    }
+                },
+                { $sort: { day: 1 } }
+            ]);
+             historicalPointsHistory = await PointsHistory.aggregate([
+                {
+                    $match: {
+                        schoolId: new mongoose.Types.ObjectId(schoolId),
+                        formType: formType,
+                        submittedAt: { 
+                            $gte: new Date(startDate.getTime() + 24 * 60 * 60 * 1000), 
+                            $lte: today 
+                        },
+                        submittedForId: new mongoose.Types.ObjectId(studentId)
+                    }
+                }
+            ]);
+        }else{
+            historicalPoints = await PointsHistory.aggregate([
+               {
+                   $match: {
+                       schoolId: new mongoose.Types.ObjectId(schoolId),
+                       formType: formType,
+                       submittedAt: { 
+                           $gte: startDate, 
+                           $lte: today 
+                       },
+                       submittedForId:  new mongoose.Types.ObjectId(studentId)
+                   }
+               },
+               {
+                   $group: {
+                       _id: { 
+                           year: { $year: '$submittedAt' },
+                           month: { $month: '$submittedAt' },
+                           day: { $dayOfMonth: '$submittedAt' }
+                       },
+                       points: { $sum: '$points' }
+                   }
+               },
+               {
+                   $project: {
+                       _id: 0,
+                       day: { 
+                           $dateToString: { 
+                               format: "%Y-%m-%d", 
+                               date: {
+                                   $dateFromParts: {
+                                       year: "$_id.year",
+                                       month: "$_id.month",
+                                       day: "$_id.day"
+                                   }
+                               }
+                           }
+                       },
+                       points: 1
+                   }
+               },
+               { $sort: { day: 1 } }
+           ]);
+            historicalPointsHistory = await PointsHistory.aggregate([
+               {
+                   $match: {
+                       schoolId: new mongoose.Types.ObjectId(schoolId),
+                       formType: formType,
+                       submittedAt: { 
+                           $gte: new Date(startDate.getTime() + 24 * 60 * 60 * 1000), 
+                           $lte: today 
+                       },
+                       submittedForId: new mongoose.Types.ObjectId(studentId)
+                   }
+               }
+           ]);
+
+        }
+
+
+       
+
+        res.status(200).json({ data: historicalPoints, history: historicalPointsHistory, startDate });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const getPointsByTeacher = async (req, res) => {
     try {
@@ -710,6 +864,91 @@ export const getPointsByStudent = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+export const getCombinedStudentPointsHistory = async (req, res) => {
+    try {
+        const schoolId = await getSchoolIdFromUser(req.user.id);
+        const yearStart = getEducationalYearStart();
+        const today = new Date();
+        const { grades } = req.body; // grades is now an array of strings
+
+        // Create result structure to group by grade
+        const result = await Promise.all(grades.map(async (grade) => {
+            // Get students for this grade
+            const students = await Student.find({
+                schoolId: new mongoose.Types.ObjectId(schoolId),
+                grade: grade
+            });
+
+            // Get teachers for this grade
+            const teachers = await Teacher.find({
+                schoolId: schoolId,
+                grade: grade
+            });
+
+            // Get data for all students in this grade
+            const studentsData = await Promise.all(students.map(async (student) => {
+                const pointsHistory = await PointsHistory.find({
+                    schoolId: new mongoose.Types.ObjectId(schoolId),
+                    submittedForId: student._id,
+                    submittedAt: { 
+                        $gte: yearStart, 
+                        $lte: today 
+                    }
+                });
+
+                const feedbackData = await Feedback.find({ 
+                    submittedForId: student._id 
+                });
+
+                const totalPoints = {
+                    eToken: 0,
+                    oopsies: 0,
+                    withdraw: 0
+                };
+
+                pointsHistory.forEach(point => {
+                    if (point.formType === 'AwardPoints' || point.formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)') {
+                        totalPoints.eToken += point.points;
+                    } else if (point.formType === 'DeductPoints') {
+                        totalPoints.oopsies += point.points;
+                    } else if (point.formType === 'PointWithdraw') {
+                        totalPoints.withdraw += point.points;
+                    }
+                });
+
+                return {
+                    student,
+                    history: pointsHistory,
+                    feedback: feedbackData,
+                    totalPoints
+                };
+            }));
+
+            // Return grade-specific data
+            return {
+                grade,
+                students: studentsData,
+                teachers: teachers,
+                totalStudents: students.length
+            };
+        }));
+
+        let finalResult = result;
+
+        if(req.user.role === 'Teacher') {
+            finalResult = result.filter(grade => grade.teachers.some(teacher => teacher._id.equals(req.user.id)));
+        }
+
+        res.status(200).json({ 
+            gradeData: finalResult,
+            totalGrades: grades.length,
+            totalStudents: result.reduce((acc, grade) => acc + grade.totalStudents, 0)
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const getStudentPointsHistory = async (req, res) => {
     try {

@@ -116,8 +116,9 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   useEffect(()=>{
     switch(form.formType){
       case 'AwardPoints':
+      case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
       case 'DeductPoints':{
-        setDescription(`You will ${form.formType == 'AwardPoints' ? "AWARD":"DEDUCT"} ${Math.abs(totalPoints)} POINTS ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}.`)
+        setDescription(`You will ${form.formType == 'AwardPoints' || form.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? "AWARD":"DEDUCT"} ${Math.abs(totalPoints)} POINTS ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}.`)
       }
       break;
       case 'Feedback':{
@@ -147,7 +148,14 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     switch (question.type) {
       case 'text':
         return form.formType != 'Feedback' ? (
-          <Input
+          (<>
+            <div className='space-y-2 my-1 text-xs'>
+              {question.goal && <p className="font-semibold text-gray-900">Goal: {question.goal}</p>}
+              {question.goalSummary && <p className="font-semibold text-gray-900">Goal Summary: {question.goalSummary}</p>}
+              {question.targetedBehaviour && <p className="font-semibold text-gray-900">Targeted Behaviour: {question.targetedBehaviour}</p>}
+              {question.otherGoal && <p className="font-semibold text-gray-900">Other Goal: {question.otherGoal}</p>}
+            </div>
+            <Input
             type="text"
             value={answers[question.id]?.answer as string || ''}
             onChange={(e) => {
@@ -162,7 +170,15 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             }}
             required={question.isCompulsory}
           />
+          </>)
         ) : (
+          <>
+          <div>
+              {question.goal && <p className="text-muted-foreground">Goal: {question.goal}</p>}
+              {question.goalSummary && <p className="text-muted-foreground">Goal Summary: {question.goalSummary}</p>}
+              {question.targetedBehaviour && <p className="text-muted-foreground">Targeted Behaviour: {question.targetedBehaviour}</p>}
+              {question.otherGoal && <p className="text-muted-foreground">Other Goal: {question.otherGoal}</p>}
+            </div>
           <Textarea
             value={answers[question.id]?.answer as string || ''}
             onChange={(e) => {
@@ -177,6 +193,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             }}
             required={question.isCompulsory}
           />
+          </>
         )
       
       case 'number':
@@ -299,6 +316,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               setfilteredStudent(filteredStudent.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase())))
             }
           }} />
+          <div className="flex flex-col h-[200px] overflow-y-auto">
           {
             filteredStudent.map((s: any) => (
               <Button onClick={()=>{ setSubmittedFor(s._id)
@@ -307,6 +325,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               }} key={s._id} className='justify-start' variant={"ghost"}>{s.name}</Button>
             ))
           }
+          </div>
     </PopoverContent>
   </Popover>
 ) : (

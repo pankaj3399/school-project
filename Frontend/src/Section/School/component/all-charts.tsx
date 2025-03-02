@@ -54,7 +54,7 @@ const AllCharts = () => {
               className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer"
             />
           </div>
-          <PopoverContent className="w-[600px] p-0 flex flex-col space-y-0">
+          <PopoverContent className="w-[600px]  p-0 flex flex-col space-y-0">
             <Input
               onChange={(e) => {
                 const value = e.target.value;
@@ -66,6 +66,7 @@ const AllCharts = () => {
               }}
               className="w-full"
             />
+            <div className="flex flex-col h-[400px] overflow-y-auto">
             {filteredStudents.map((s: any) => (
               <Button
                 onClick={() => {
@@ -77,9 +78,10 @@ const AllCharts = () => {
                 className="justify-start"
                 variant={"ghost"}
               >
-                {s.name}
+                {s.name} (Grade {s.grade})
               </Button>
             ))}
+            </div>
           </PopoverContent>
         </Popover>
       ) : (

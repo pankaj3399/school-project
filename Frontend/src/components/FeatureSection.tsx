@@ -3,23 +3,23 @@ import { School, UserCheck, Award, Gift, BarChart, Target } from 'lucide-react'
 
 const features = [
   {
-    title: 'School Management',
-    description: 'School Admins can manage teachers and students.',
+    title: 'System Management',
+    description: 'System manager can set up participants and forms.',
     icon: School,
   },
   {
-    title: 'Point Assignment',
-    description: 'Assign and withdraw points with easy-to-use forms.',
+    title: 'E-Token Assignment',
+    description: 'Easy to create and use E-Token forms.',
     icon: UserCheck,
   },
   {
-    title: 'Teacher Rewards',
-    description: 'Teachers can award points to students for achievements.',
+    title: 'Automatic Analytics',
+    description: 'Automatic raw data collection and interactive analytics.',
     icon: Award,
   },
   {
     title: 'Student Redemption',
-    description: 'Students can redeem points for exciting gifts.',
+    description: 'Students can redeem E-Tokens for Exciting gifts.',
     icon: Gift,
   },
   {

@@ -49,11 +49,61 @@ export const emailGenerator = async (form, {
             break;
         }
         case FormType.Feedback: {
-            const teacherNameArray = teacher.name.split(" ")
-            const teacherLastName = teacherNameArray[teacherNameArray.length - 1]
-            subject = `Feedback issued. ${student.name} received a Feedback today from the teacher ${teacherLastName}.`
-            const feedback = submission.answers.map((item) => `<p>${item.answer}</p>`).join(`<br/>`)
-            body = `<p>On ${new Date().toLocaleDateString()}, the teacher ${teacherLastName} issued the next feedback about ${student.name}: <br/> ${feedback} </p>
+            const teacherNames = teacher.name.split(" ");
+            const teacherFirstName = teacherNames[0];
+            const teacherLastName = teacherNames[teacherNames.length - 1];
+            
+            subject = `Hi, I have a feedback about ${student.name} from ${teacher.subject} class.`;
+            
+            const feedback = submission.answers.map((item) => `<p>${item.answer}</p>`).join(`<br/>`);
+            
+            body = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        .container { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+                        .header { position: relative; margin-bottom: 40px; }
+                        .logo { position: absolute; top: 0; right: 0; max-width: 150px; }
+                        .title { text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; }
+                        .date-line { margin-bottom: 15px; }
+                        .issued-by { margin-bottom: 20px; }
+                        .feedback-content { margin: 30px 0; line-height: 1.6; }
+                        .signature { margin-top: 40px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <img src="${school.logo}" alt="School Logo" class="logo">
+                            <h1 class="title">FEEDBACK NOTE</h1>
+                        </div>
+                        
+                        <div class="date-line">
+                            <strong>Date:</strong> ${new Date().toLocaleDateString('en-US', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                year: 'numeric'
+                            })}
+                        </div>
+                        
+                        <div class="issued-by">
+                            <strong>Issued By:</strong> ${teacherLastName} - ${teacher.subject}
+                        </div>
+                        
+                        <div class="feedback-content">
+                            ${feedback}
+                        </div>
+                        
+                        <div class="signature">
+                            ${teacherFirstName} ${teacherLastName}<br>
+                            ${teacher.subject}<br>
+                            ${school.name}<br>
+                            ${school.district}
+                        </div>
+                    </div>
+                </body>
+                </html>
             `;
             break;
         }

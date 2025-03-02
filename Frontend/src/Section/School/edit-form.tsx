@@ -1,4 +1,3 @@
-//f
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {  Form, FormType, Question } from '@/lib/types'
@@ -12,25 +11,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from "@/components/ui/switch"
 
-
-
 export default function EditForm() {
   const params = useParams();
-//   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
   const [form, setForm] = useState<any | null>(null)
-    const [formName, setFormName] = useState('')
-    const [formType, setFormType] = useState<FormType>('AwardPoints')
-    const [isSpecial, setIsSpecial] = useState(false)
-const [grade, setGrade] = useState<number>(1)
-    const [questions, setQuestions] = useState<Question[]>([])
-    const [isSendEmail, setIsSendEmail] = useState({
-      studentEmail: false,
-      teacherEmail: false,
-      schoolAdminEmail: false,
-      parentEmail: false
-    })
-  
+  const [formName, setFormName] = useState('')
+  const [formType, setFormType] = useState<FormType>('AwardPoints')
+  const [isSpecial, setIsSpecial] = useState(false)
+  const [grade, setGrade] = useState<number>(1)
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [isSendEmail, setIsSendEmail] = useState({
+    studentEmail: false,
+    teacherEmail: false,
+    schoolAdminEmail: false,
+    parentEmail: false
+  })
+
   const clearForm = () => {
     setFormName('')
     setFormType('AwardPoints')
@@ -38,46 +34,46 @@ const [grade, setGrade] = useState<number>(1)
   }
 
   const handleCreateForm = async () => {
-      console.log(JSON.stringify({formName, formType, questions}))
-      const response = await editForm(
-        params?.id ?? "",
-        {
-          formName, 
-          formType, 
-          questions, 
-          isSpecial,
-          grade: isSpecial ? null : grade,
-          ...isSendEmail
-        },
-        localStorage.getItem('token')!
-      )
-      if(response.error){
-        toast({
-          title: 'Error',
-          description: response.error,
-          variant: 'destructive'
-        })   
-      }else{
-        toast({
-          title: 'Success',
-          description: 'Form Edited Successfully'
-        })
-        clearForm()
-        navigate('/viewforms')
-      }
+    console.log(JSON.stringify({formName, formType, questions}))
+    const response = await editForm(
+      params?.id ?? "",
+      {
+        formName, 
+        formType, 
+        questions, 
+        isSpecial,
+        grade: isSpecial ? null : grade,
+        ...isSendEmail
+      },
+      localStorage.getItem('token')!
+    )
+    if(response.error){
+      toast({
+        title: 'Error',
+        description: response.error,
+        variant: 'destructive'
+      })   
+    }else{
+      toast({
+        title: 'Success',
+        description: 'Form Edited Successfully'
+      })
+      clearForm()
+      navigate('/viewforms')
     }
-  
-    const addQuestion = (question: Question) => {
-      setQuestions([...questions, question])
-    }
-  
-    const removeQuestion = (id: string) => {
-      setQuestions(questions.filter(q => q.id !== id))
-    }
-  
-    const updateQuestion = (updatedQuestion: Question) => {
-      setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q))
-    }
+  }
+
+  const addQuestion = (question: Question) => {
+    setQuestions([...questions, question])
+  }
+
+  const removeQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id))
+  }
+
+  const updateQuestion = (updatedQuestion: Question) => {
+    setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q))
+  }
 
   const getForm = async (id: string): Promise<Form | null | OnErrorEventHandlerNonNull> => {
     const token = localStorage.getItem('token')
@@ -110,8 +106,29 @@ const [grade, setGrade] = useState<number>(1)
     })
   },[form])
 
-
-  const grades = Array.from({length: 12}, (_, i) => i + 1);
+  const grades = [
+    'K',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+    'ADAPTIVE LEARNING ROOM',
+    'ALTERNATIVE LEARNING CENTER',
+    'AN CENTER',
+    'ASD',
+    'BEHAVIORAL ROOM',
+    'GENERAL EDUCATION',
+    'HOMEBOUND ROOM',
+    'HOMEROOM',
+    'LIFE SKILLS CLASSROOM',
+    'PROGRAM #1',
+    'PROGRAM #2',
+    'PROGRAM #3',
+    'RESOURCE ROOM',
+    'SENSORY ROOM',
+    'SPECIAL DAY CLASS',
+    'SPECIALIZED ROOM',
+    'THERAPEUTIC ROOM',
+    'TRANSITION PROGRAM',
+    'OTHER'
+  ];
 
   if (!form) {
     return <div>Loading...</div>
@@ -121,15 +138,15 @@ const [grade, setGrade] = useState<number>(1)
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
       <h1 className="text-2xl font-bold">Edit Form <span className='text-gray-400 italic text-sm'>({form.formName})</span></h1>
       <div>
-            <Label htmlFor="formName">Form Name</Label>
-            <Input
-              id="formName"
-              name="formName"
-              value={formName}
-              placeholder='Enter Form Name'
-              onChange={(e)=>setFormName(e.target.value)}
-              required
-            />
+        <Label htmlFor="formName">Form Name</Label>
+        <Input
+          id="formName"
+          name="formName"
+          value={formName}
+          placeholder='Enter Form Name'
+          onChange={(e)=>setFormName(e.target.value)}
+          required
+        />
       </div>
 
       <div>
@@ -145,82 +162,92 @@ const [grade, setGrade] = useState<number>(1)
             <SelectItem value="Feedback">Feedback</SelectItem>
             <SelectItem value="PointWithdraw">Point Withdraw</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
+            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">
+              Award Points with IEP
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-4">
-  <div className="flex items-center justify-between">
-    <Label htmlFor="isSpecial">Special Teacher Form</Label>
-    <Switch
-      id="isSpecial"
-      checked={isSpecial}
-      onCheckedChange={setIsSpecial}
-    />
-  </div>
 
-  {!isSpecial && (
-    <div>
-      <Label htmlFor="grade">Grade</Label>
-      <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select grade" />
-        </SelectTrigger>
-        <SelectContent>
-          {grades.map((g) => (
-            <SelectItem key={g} value={g.toString()}>
-              Grade {g}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  )}
-</div>
-      <div className='flex gap-2 text-sm'>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
-              <p>Notify Student</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, teacherEmail: !prev.teacherEmail}))}/>
-              <p>Notify Teacher</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, schoolAdminEmail: !prev.schoolAdminEmail}))}/>
-              <p>Notify Admin</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
-              <p>Notify Parents/Guardians</p>
-            </div>
-           
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="isSpecial">Special Teacher Form</Label>
+          <Switch
+            id="isSpecial"
+            checked={isSpecial}
+            onCheckedChange={setIsSpecial}
+          />
+        </div>
+
+        {!isSpecial && (
+          <div>
+            <Label htmlFor="grade">Grade</Label>
+            <Select value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select grade" />
+              </SelectTrigger>
+              <SelectContent>
+                {grades.map((g) => (
+                  <SelectItem key={g} value={g.toString()}>
+                    Grade {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        )}
+      </div>
+
+      <div className='flex gap-2 text-sm'>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
+          <p>Notify Student</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, teacherEmail: !prev.teacherEmail}))}/>
+          <p>Notify Teacher</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, schoolAdminEmail: !prev.schoolAdminEmail}))}/>
+          <p>Notify Admin</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
+          <p>Notify Parents/Guardians</p>
+        </div>
+      </div>
+
       <div className="space-y-4">
         {questions.map((question, index) => (
           <>
-          <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
-          <QuestionBuilder
-            formType={formType}
-            key={question.id}
-            question={question}
-            onUpdate={updateQuestion}
-            onRemove={removeQuestion}
+            <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
+            <QuestionBuilder
+              formType={formType}
+              key={question.id}
+              question={question}
+              onUpdate={updateQuestion}
+              onRemove={removeQuestion}
             />
           </>
         ))}
       </div>
+
       <Button
-      variant='outline'
-       onClick={() => addQuestion({
-        id: Date.now().toString(),
-        text: '',
-        type: 'text',
-        isCompulsory: false,
-        maxPoints: 0,
-        pointsType: 'Award'
-      })}>
+        variant='outline'
+        onClick={() => addQuestion({
+          id: Date.now().toString(),
+          text: '',
+          type: 'text',
+          isCompulsory: false,
+          maxPoints: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 1 : 0,
+          pointsType: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award' : 'None',
+          goal: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
+          goalSummary: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
+          targetedBehaviour: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined
+        })}>
         Add Question
       </Button>
+
       <Button className='w-full bg-[#00a58c] hover:bg-[#00a58c]' onClick={handleCreateForm}>Save Form</Button>
     </div>
   )

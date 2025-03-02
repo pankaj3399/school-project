@@ -46,7 +46,8 @@ export const addStudent = async (req, res) => {
             }
         })
         return res.status(200).json({
-            message: "Student Added successfully"
+            message: "Student Added successfully",
+            student
         })
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });

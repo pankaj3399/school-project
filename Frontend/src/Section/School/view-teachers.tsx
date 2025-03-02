@@ -8,7 +8,7 @@ import {
   TableHead,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { getTeachers, deleteTeacher, updateTeacher } from "@/api";
+import { getTeachers, deleteTeacher, updateTeacher, sendVerificationMail } from "@/api";
 import Loading from "../Loading";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,6 +54,7 @@ export default function ViewTeachers() {
   const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
+  const [sendingVerification, setSendingVerification] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,6 +137,41 @@ export default function ViewTeachers() {
     }
   };
 
+  const handleSendVerification = async (email: string, teacherId: string) => {
+    setSendingVerification(true);
+    try {
+      await sendVerificationMail({
+        email,
+        role: "Teacher",
+        url: `${window.location.origin}/verifyemail`,
+        userId: teacherId
+      });
+      
+      toast({
+        title: "Verification Email Sent",
+        description: "A verification email has been sent to the teacher.",
+      });
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send verification email",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  const getVerificationStatus = (teacher: any) => {
+    return (
+      <div className="flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${teacher.isEmailVerified ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+        <span className="text-sm">{teacher.isEmailVerified ? 'Verified' : 'Pending'}</span>
+      </div>
+    );
+  };
+
   const filteredTeachers = teachers.filter((teacher) => {
     const matchesGrade = selectedGrade === "all" || 
       (teacher.type === "Lead" && teacher.grade === selectedGrade);
@@ -199,6 +235,7 @@ export default function ViewTeachers() {
               <TableHead className="text-gray-700">Name</TableHead>
               <TableHead className="text-gray-700">Subject</TableHead>
               <TableHead className="text-gray-700">Email</TableHead>
+              <TableHead className="text-gray-700">Email Status</TableHead>
               <TableHead className="text-gray-700">Type</TableHead>
               <TableHead className="text-gray-700">Grade</TableHead>
               <TableHead className="text-gray-700">Actions</TableHead>
@@ -210,7 +247,8 @@ export default function ViewTeachers() {
                 <TableCell>{teacher.name}</TableCell>
                 <TableCell>{teacher.subject}</TableCell>
                 <TableCell>{teacher.email}</TableCell>
-                <TableCell>{teacher.type == "Lead" ? 'Leader/Lead Teacher':'Team Member/Speacial Teacher'}</TableCell>
+                <TableCell>{getVerificationStatus(teacher)}</TableCell>
+                <TableCell>{teacher.type == "Lead" ? 'Leader/Lead Teacher':'Team Member/Special Teacher'}</TableCell>
                 <TableCell>{teacher.type === 'Lead' ? teacher.grade : 'N/A'}</TableCell>
                 <TableCell>
                   <Button
@@ -271,14 +309,35 @@ export default function ViewTeachers() {
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium">Email</label>
-              <input
-                type="email"
-                value={editingTeacher.email}
-                onChange={(e) =>
-                  setEditingTeacher({ ...editingTeacher, email: e.target.value })
-                }
-                className="w-full px-4 py-2 border rounded"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={editingTeacher.email}
+                  onChange={(e) =>
+                    setEditingTeacher({ ...editingTeacher, email: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border rounded"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={sendingVerification}
+                  onClick={() => handleSendVerification(editingTeacher.email, editingTeacher._id)}
+                  className="whitespace-nowrap"
+                >
+                  {sendingVerification ? "Sending..." : "Verify Email"}
+                </Button>
+              </div>
+              {!editingTeacher.isEmailVerified && (
+                <p className="text-sm text-amber-600 mt-1">
+                  Email not verified
+                </p>
+              )}
+              {editingTeacher.isEmailVerified && (
+                <p className="text-sm text-green-600 mt-1">
+                  Email verified
+                </p>
+              )}
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium">Type</label>

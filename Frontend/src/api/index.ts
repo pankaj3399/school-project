@@ -485,6 +485,22 @@ export const getHistoryOfYearByStudent = async (id:string) => {
     }
 }
 
+export const getReportDataStudentCombined = async (grades:string[]) => {
+    try {
+        const token = getToken()
+        const response = await axios.post(`${API_URL}/schoolAdmin/stats/reportdata`,{
+            grades
+        }, {
+            headers: {
+                token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        return {error};
+    }
+}
+
 export const getReportDataStudent = async (id:string, grade:string) => {
     try {
         const token = getToken()
@@ -531,16 +547,26 @@ export const getHistoryOfCurrentWeekByStudent = async (id:string,data: any) => {
 export const getHistoryByTime = async (data: any) => {
     try {
         const token = getToken()
-        const response = await axios.post(`${API_URL}/school/getHistoryByTime`,data, {
-            headers: {
-                token
-            }
-        });
+        let response;
+        if(data.studentId){
+             response = await axios.post(`${API_URL}/school/getHistoryByTimeById`,data, {
+                headers: {
+                    token
+                }
+            });
+        }else{
+             response = await axios.post(`${API_URL}/school/getHistoryByTime`,data, {
+                headers: {
+                    token
+                }
+            });
+        }
         return response.data;
     } catch (error) {
         return {error};
     }
 }
+
 
 export const getRanks = async () => {
     try {
@@ -589,6 +615,34 @@ export const sendReport = async (data: FormData, email: string) => {
         return { error };
     }
 };
+
+export const sendVerificationMail = async (data:any) => {
+    try {
+        const token = getToken()
+        await axios.post(`${API_URL}/auth/sendVerificationMail`,data,{
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (error) {
+        return {error};
+    }
+}
+
+export const sendConfirmation = async (data:any) => {
+    try {
+        const token = getToken()
+        await axios.post(`${API_URL}/auth/completeVerification`,data,{
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (error) {
+        return {error};
+    }
+}
 
 export const resetStudentRoster = async () => {
     try {

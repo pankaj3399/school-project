@@ -53,11 +53,22 @@ export const getTeachers = async (req, res) => {
 };
 export const getCurrentSchool = async (req, res) => {
     try {
-        const school = await School.findOne({ createdBy: req.user.id }).populate('createdBy');
-        if (!school) {
+       
+
+        let sch;
+        switch(req.user.role) {
+            case Role.Teacher:
+                const teacher = await Teacher.findById(req.user.id);
+                sch = await School.findOne({ _id: teacher.schoolId }).populate('createdBy');
+                break;
+            case Role.SchoolAdmin:
+                sch = await School.findOne({ createdBy: req.user.id }).populate('createdBy');
+        }
+
+        if (!sch) {
             return res.status(404).json({ message: 'School not found' });
         }
-        return res.status(200).json({ school: school });
+        return res.status(200).json({ school: sch });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'An error occurred', error: err.message });

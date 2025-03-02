@@ -6,12 +6,14 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Trash2 } from 'lucide-react'
 import { PointsType, Question } from '@/lib/types'
+import { Textarea } from "@/components/ui/textarea"
+import { GoalTypes } from "@/lib/types"
 
 type QuestionBuilderProps = {
   question: Question
   onUpdate: (question: Question) => void
   onRemove: (id: string) => void
-  formType: 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
+  formType: 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
 }
 
 export function QuestionBuilder({ question, onUpdate, onRemove, formType }: QuestionBuilderProps) {
@@ -52,15 +54,82 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
     }
   }
 
+  // Force Award type and minimum 1 point for IEP forms
+  React.useEffect(() => {
+    if (formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)') {
+      onUpdate({ 
+        ...question, 
+        pointsType: 'Award',
+        maxPoints: question.maxPoints < 1 ? 1 : question.maxPoints 
+      });
+    }
+  }, [formType]);
+
   return (
     <div className="border p-4 rounded-md space-y-4">
-      <Input
-        type="text"
-        value={question.text}
-        onChange={handleTextChange}
-        placeholder="Enter question text"
-        className="w-full"
-      />
+      {formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' && (
+        <div className="space-y-4 border-b pb-4">
+          <div className="space-y-2">
+            <Label>1. GOAL</Label>
+            <Select
+              value={question.goal}
+              onValueChange={(value) => onUpdate({ ...question, goal: value })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select goal type" />
+              </SelectTrigger>
+              <SelectContent>
+                {GoalTypes.map((goalType) => (
+                  <SelectItem key={goalType} value={goalType}>
+                    {goalType}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {question.goal === 'Other' && (
+              <Input
+                placeholder="Specify other goal"
+                value={question.otherGoal || ''}
+                onChange={(e) => onUpdate({ ...question, otherGoal: e.target.value })}
+                className="mt-2"
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>2. BRIEF SUMMARY OF GOAL</Label>
+            <Textarea
+              placeholder="E.g. Jimmy will advocate for himself in 3 out of 5 classes."
+              value={question.goalSummary || ''}
+              onChange={(e) => onUpdate({ ...question, goalSummary: e.target.value })}
+              className="min-h-[80px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>3. OPERATIONAL DEFINITION OF TARGETED BEHAVIOR</Label>
+            <Textarea
+              placeholder='Example: "Advocacy looks like, emailing, or talking to his teacher to address his needs".'
+              value={question.targetedBehaviour || ''}
+              onChange={(e) => onUpdate({ ...question, targetedBehaviour: e.target.value })}
+              className="min-h-[120px]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Question Text */}
+      <div className="space-y-2">
+        <Label>Question Text</Label>
+        <Input
+          type="text"
+          value={question.text}
+          onChange={handleTextChange}
+          placeholder="Enter question text"
+          className="w-full"
+        />
+      </div>
+
       <div className="flex items-center space-x-4">
         <Select onValueChange={handleTypeChange} value={question.type}>
           <SelectTrigger className="w-[180px]">
@@ -72,6 +141,7 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
             <SelectItem value="number">Number</SelectItem>
           </SelectContent>
         </Select>
+
         <div className="flex items-center space-x-2">
           <Switch
             id={`compulsory-${question.id}`}
@@ -80,34 +150,27 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
           />
           <Label htmlFor={`compulsory-${question.id}`}>Required</Label>
         </div>
-        {(question.type === 'number' || question.type === 'text') && question.pointsType !== 'None' && (
-          <>
-           
+
+        {/* Points input - always shown for IEP forms */}
+        {(formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' || 
+          ((question.type === 'number' || question.type === 'text') && question.pointsType !== 'None')) && (
           <div className="flex items-center space-x-2">
-            <Label htmlFor={`points-${question.id}`}>Max Points</Label>
+            <Label htmlFor={`points-${question.id}`}>Points</Label>
             <Input
               type="number"
-              value={question.maxPoints === 0 ? '' : question.maxPoints}
+              value={question.maxPoints}
               onChange={(e) => {
-                if(e.target.value === '') {
-                  onUpdate({ ...question, maxPoints: 0 })
-                  return
-                }
-                if(Number(e.target.value) < 0)  
-                  onUpdate({ ...question, maxPoints: -1*Number(e.target.value) || 0 })
-                else
-                  onUpdate({ ...question, maxPoints: Number(e.target.value) || 0 })
+                const value = Math.max(1, parseInt(e.target.value) || 1);
+                onUpdate({ ...question, maxPoints: value })
               }}
-              placeholder="0"
+              placeholder="1"
               className="w-full"
-              min={0}
+              min={1}
             />
           </div>
-        
-          </>
-
         )}
       </div>
+
       {question.type === 'select' && question.options && (
         <div className="space-y-2">
           {question.options.map((option, index) => (
@@ -138,19 +201,25 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
           </Button>
         </div>
       )}
-      <div className="flex items-center space-x-2">
-        <Label htmlFor={`pointsType-${question.id}`}>Points Type</Label>
-        <Select onValueChange={handlePointsTypeChange} value={question.pointsType}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Points Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {formType == 'AwardPoints' && <SelectItem value="Award">Award</SelectItem>}
-            {(formType=='DeductPoints' || formType=='PointWithdraw') && <SelectItem value="Deduct">Deduct</SelectItem>}
-            <SelectItem value="None">None</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+
+      {/* Points Type - Hidden for IEP forms since it's always Award */}
+      {formType !== 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' && (
+        <div className="flex items-center space-x-2">
+          <Label htmlFor={`pointsType-${question.id}`}>Points Type</Label>
+          <Select onValueChange={handlePointsTypeChange} value={question.pointsType}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Points Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {formType === 'AwardPoints' && <SelectItem value="Award">Award</SelectItem>}
+              {(formType === 'DeductPoints' || formType === 'PointWithdraw') && 
+                <SelectItem value="Deduct">Deduct</SelectItem>}
+              <SelectItem value="None">None</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <Button onClick={() => onRemove(question.id)} variant="destructive">
         Remove Question
       </Button>

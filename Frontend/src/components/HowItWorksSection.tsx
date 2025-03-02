@@ -3,18 +3,18 @@ import { UserPlus, Award, Gift } from 'lucide-react'
 
 const steps = [
   {
-    title: 'School Admin Sign Up',
-    description: 'School Admin signs up and sets up the school.',
+    title: 'System Manager Sign Up',
+    description: 'System Managers set up the classroom/unit. (Rosters and Forms).',
     icon: UserPlus,
   },
   {
-    title: 'Teachers Assign Points',
-    description: 'Teachers assign points to students.',
+    title: 'Teachers/Team members assign E-Tokens',
+    description: 'Teachers/Team members assign E-Tokens to students.',
     icon: Award,
   },
   {
-    title: 'Students Redeem Rewards',
-    description: 'Students redeem points for rewards.',
+    title: 'Students Redeem E-Tokens',
+    description: 'Students purchase highly reinforcing items from the E-Token Store.',
     icon: Gift,
   },
 ]
@@ -43,4 +43,3 @@ export default function HowItWorksSection() {
     </section>
   )
 }
-
