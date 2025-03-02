@@ -102,7 +102,7 @@ const Finalize = () => {
     let yPos = margin
 
     // Add Radu Framework logo on left
-    const raduLogo = '/public/radu-logo.png'
+    const raduLogo = '/radu-logo.png'
     doc.addImage(raduLogo, 'PNG', margin, yPos-15, 40, 60)
 
     // Add School logo on right if exists
