@@ -1,4 +1,4 @@
-export type FormType = 'AwardPoints' | 'DeductPoints' | 'Feedback' | 'PointWithdraw'
+export type FormType = 'AwardPoints' | 'DeductPoints' | 'Feedback' | 'PointWithdraw' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
 export type PointsType = 'Award' | 'Deduct' | 'None'
 export type Question = {
     id: string
@@ -7,7 +7,11 @@ export type Question = {
     isCompulsory: boolean
     options?: {value: string, points: number}[],
     maxPoints: number,
-    pointsType: PointsType
+    pointsType: PointsType,
+    goal?: string;
+    goalSummary?: string;
+    targetedBehaviour?: string;
+    otherGoal?: string;
   }
   
 export type Form = {
@@ -31,3 +35,15 @@ export type AnswerTypeArray = {
   questionId: string,
   answer: string,
 }[]
+
+export const GoalTypes = [
+  'Communication goal',
+  'Math goal',
+  'Reading goal',
+  'Social Emotional goal',
+  'Self determination goal',
+  'Writing goal',
+  'Other'
+] as const;
+
+export type GoalType = typeof GoalTypes[number];

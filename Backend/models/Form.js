@@ -43,6 +43,15 @@ const questionSchema = new mongoose.Schema({
     enum: Object.values(PointsType),
     required: true,
   },
+  goal:{
+    type: String,
+  },
+  goalSummary:{
+    type: String,
+  },
+  targetedBehaviour:{
+    type: String,
+  }
 });
 
 const formSchema = new mongoose.Schema({
@@ -89,10 +98,9 @@ const formSchema = new mongoose.Schema({
     default: false
   },
   grade: {
-    type: Number,
+    type: String,
     required: function(){return !this.isSpecial},
-    min: 1,
-    default: 1
+    default: ""
   },
 });
 

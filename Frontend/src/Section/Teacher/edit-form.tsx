@@ -110,7 +110,29 @@ const [grade, setGrade] = useState<number>(1)
   },[form])
 
 
-  const grades = Array.from({length: 6}, (_, i) => i + 1);
+  const grades = [
+    'K',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+    'ADAPTIVE LEARNING ROOM',
+    'ALTERNATIVE LEARNING CENTER',
+    'AN CENTER',
+    'ASD',
+    'BEHAVIORAL ROOM',
+    'GENERAL EDUCATION',
+    'HOMEBOUND ROOM',
+    'HOMEROOM',
+    'LIFE SKILLS CLASSROOM',
+    'PROGRAM #1',
+    'PROGRAM #2',
+    'PROGRAM #3',
+    'RESOURCE ROOM',
+    'SENSORY ROOM',
+    'SPECIAL DAY CLASS',
+    'SPECIALIZED ROOM',
+    'THERAPEUTIC ROOM',
+    'TRANSITION PROGRAM',
+    'OTHER'
+  ];
   
 
   if (!form) {
@@ -147,6 +169,9 @@ const [grade, setGrade] = useState<number>(1)
             <SelectItem value="Feedback">Feedback</SelectItem>
             <SelectItem value="PointWithdraw">Point Withdraw</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
+            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">
+              Award Points with IEP
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -211,8 +236,11 @@ const [grade, setGrade] = useState<number>(1)
         text: '',
         type: 'text',
         isCompulsory: false,
-        maxPoints: 0,
-        pointsType: 'Award'
+        maxPoints: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 1 : 0,
+        pointsType: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award' : 'None',
+        goal: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
+        goalSummary: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
+        targetedBehaviour: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined
       })}>
         Add Question
       </Button>

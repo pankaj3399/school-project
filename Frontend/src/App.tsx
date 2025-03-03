@@ -30,6 +30,7 @@ import EditFormTeacher from "./Section/Teacher/edit-form";
 import AddStudentTeacher from "./Section/Teacher/add-student";
 import TeacherDashboard from "./Section/Teacher/analytics";
 import Finalize from "./Section/School/finalize";
+import VerifyEmail from "./components/VerifyEmail";
 
 
 // Reusable ProtectedRoute component
@@ -54,7 +55,7 @@ export default function App() {
           <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
-          <Route path="/conclude/year" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
+          <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
           <Route path="/teachers/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
           <Route path="/teachers/analytics" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
+          <Route path="/teachers/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
           {/*Dashboards*/}
@@ -83,6 +85,9 @@ export default function App() {
           
           <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
           <Route path="/teachers/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
+
+          <Route path="/verifyemail" element={<VerifyEmail />}>
+          </Route>
 
         </Routes>
       </RootLayout>

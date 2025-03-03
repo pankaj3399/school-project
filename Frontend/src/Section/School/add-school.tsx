@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
-import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
+import { addSchool, getCurrrentSchool, getStats, resetStudentRoster, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
 import AllCharts from "./component/all-charts";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import Modal from "./Modal";
 
 const STATE_OPTIONS = [
   'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC',
@@ -32,6 +33,8 @@ export default function SchoolPage() {
   const navigate = useNavigate();
   const [state, setState] = useState("AL");
   const [country, setCountry] = useState("United States");
+
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const [stats, setStats] = useState({
       teachers:0,
@@ -164,6 +167,19 @@ if (!response.error) {
   }
   };
 
+  const resetStudent = async ()=>{ 
+    try{
+      await resetStudentRoster()
+      setShowResetModal(false)
+      toast({
+        title: "Success",
+        description: `Student Roster Reset Successfully`,
+      })
+    }catch(e){
+      console.log("Error",e);
+    }
+}
+
   const formFields = (
     <>
       <div>
@@ -221,10 +237,10 @@ if (!response.error) {
                 {isEditing ? "Cancel":"Edit School"}
               </Button>
 
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={()=>
-                navigate("/conclude/year")
+              <Button variant={"outline"} className="bg-red-500 hover:bg-red-700 text-white hover:text-white" onClick={()=>
+                setShowResetModal(true)
               }>
-               Conclude Year
+               Reset Students
               </Button>
             </div>
           </div>
@@ -302,6 +318,18 @@ if (!response.error) {
             </div>
           </div>
         )}
+        <Modal
+        isOpen={showResetModal}
+        description="Are you sure you want to reset the student roster?"
+        title="Add School"
+        onClose={()=>{
+          setShowResetModal(false)
+        }}
+        onConfirm={()=>{
+          resetStudent()
+        }}
+        callToAction="Reset"
+      />
       </div>
     );
   }
@@ -368,6 +396,7 @@ if (!response.error) {
           </Button>
         </form>
       </div>
+      
     </div>
   );
 }

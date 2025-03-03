@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { addTeacher } from "@/api";
+import { addTeacher, sendVerificationMail } from "@/api"; // Add sendVerificationMail import
 import { Checkbox } from "@/components/ui/checkbox";
 import Loading from "../Loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,7 +38,7 @@ export default function AddTeacher() {
   const [formData, setFormData] = useState({
     name: "",
     password: "",
-    subject: "",
+    subject: "", 
     email: "",
     checkbox: false,
     grade: "K",
@@ -101,10 +101,26 @@ export default function AddTeacher() {
       const response = await addTeacher(teacherData, token);
 
       if (!response.error) {
-        toast({
-          title: "Teacher added successfully",
-          description: `${name} has been added.`,
-        });
+        // Send verification email after successful teacher creation
+        try {
+          await sendVerificationMail({
+            email,
+            role: "Teacher",
+            url: `${window.location.origin}/verifyemail`, // Dynamic base URL
+            userId: response.teacher._id // Assuming the response includes the created teacher's ID
+          });
+
+          toast({
+            title: "Teacher added successfully",
+            description: `${name} has been added. A verification email has been sent.`,
+          });
+        } catch (verificationError) {
+          console.error("Verification email error:", verificationError);
+          toast({
+            title: "Warning",
+            description: "Teacher added but verification email failed to send.",
+          });
+        }
 
         navigate("/teacher");
       } else {

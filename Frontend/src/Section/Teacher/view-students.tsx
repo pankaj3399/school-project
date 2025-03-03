@@ -101,14 +101,26 @@ export default function ViewTeacherStudents() {
     return <Loading />
   }
 
-  // if (students.length === 0) {
-  //   return (
-  //     <div className="text-center">
-  //       <h1 className="text-xl font-bold">No students found</h1>
-  //       <p>Please ensure there are students in the system and try again.</p>
-  //     </div>
-  //   )
-  // }
+  const getVerificationStatus = (student: any) => {
+    const parent1Status = student.isParentOneEmailVerified;
+    const parent2Status = student.isParentTwoEmailVerified;
+    const hasParent2 = !!student.standard;
+
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${parent1Status ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+          <span className="text-sm">Email 1: {parent1Status ? 'Verified' : 'Pending'}</span>
+        </div>
+        {hasParent2 && (
+          <div className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${parent2Status ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+            <span className="text-sm">Email 2: {parent2Status ? 'Verified' : 'Pending'}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="p-5 mt-10">
@@ -130,6 +142,7 @@ export default function ViewTeacherStudents() {
             <TableHead className="text-gray-700">Email</TableHead>
             <TableHead className="text-gray-700">Parents/Guardians Email</TableHead>
             <TableHead className="text-gray-700">Grade</TableHead>
+            <TableHead className="text-gray-700">Guardians Email Status</TableHead>
             <TableHead className="text-gray-700">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -138,8 +151,13 @@ export default function ViewTeacherStudents() {
             <TableRow key={student._id} className="border-b-black">
               <TableCell>{student.name}</TableCell>
               <TableCell>{student.email}</TableCell>
-              <TableCell>{student.parentEmail || "N/A"}<br/>{student.standard}</TableCell>
+              <TableCell>
+                {student.parentEmail || "N/A"}
+                {student.standard && <br/>}
+                {student.standard}
+              </TableCell>
               <TableCell>{student.grade || "N/A"}</TableCell>
+              <TableCell>{getVerificationStatus(student)}</TableCell>
               <TableCell>
                 <button
                   onClick={() => setEditingStudent(student)}

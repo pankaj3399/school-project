@@ -58,7 +58,6 @@ const PointsBarChart = ({
     tickLine={false} 
     fontSize={16}
     tickFormatter={(_, i)=>{
-        console.log(ticks[i]);
         
         return ticks[i]
     }}
@@ -69,8 +68,8 @@ const PointsBarChart = ({
                 {
                   position: "insideTop",
                   fill: "#0f0f0f",
-                  fontSize: 18,
-                  offset: -16,
+                  fontSize: 16,
+                  offset: -12,
                   formatter: (value:any) => value === 0 || data.length > 31 ? '' : value
                 } 
               }  />

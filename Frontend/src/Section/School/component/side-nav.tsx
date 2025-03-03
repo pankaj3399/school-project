@@ -1,6 +1,6 @@
 //school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon} from 'lucide-react';
+import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Paperclip} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -13,6 +13,7 @@ const navItems = [
   // { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
   { href: '/history', label: 'Point History', icon: ClipboardIcon },
+  { href: '/print-report', label: 'Print Report', icon: Paperclip },
 ];
 
 export function SideNav() {
@@ -42,8 +43,7 @@ export function SideNav() {
       {/* Mobile Navigation */}
       {isOpen && (
         <div
-          className="fixed inset-0 shadow-lg z-40 md:hidden overflow-y-auto"
-          style={{ height: '100vh' }}
+          className="fixed inset-0 shadow-lg z-40 md:hidden overflow-y-auto bg-[#654f6f] min-h-screen h-full"
         >
           <nav className="w-64">
             <div className="p-4">
@@ -81,7 +81,7 @@ export function SideNav() {
       )}
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg h-screen">
+      <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg min-h-fit h-screen">
         <div className="p-4">
           <img src="/logo3.png" alt="Logo" className="w-56  invert object-cover" />
         </div>
