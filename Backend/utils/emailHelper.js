@@ -2,8 +2,6 @@ import { FormType } from "../enum.js";
 import { sendEmail, sendEmailReport } from "../services/nodemailer.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 
-
-
 export const emailGenerator = async (form, {
     points,
     submission,
@@ -62,10 +60,69 @@ export const emailGenerator = async (form, {
                 <html>
                 <head>
                     <style>
-                        .container { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-                        .header { position: relative; margin-bottom: 40px; }
-                        .logo { position: absolute; top: 0; right: 0; max-width: 150px; }
-                        .title { text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; }
+                        /* Reset and base styles */
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        /* Container styles */
+                        .container {
+                            font-family: Arial, sans-serif;
+                            max-width: 800px;
+                            margin: auto;
+                            padding: 20px;
+                            background-color: #ffffff;
+                        }
+
+                        /* Enhanced header styles */
+                        .header {
+                            position: relative;
+                            margin-bottom: 40px;
+                            padding: 20px 0;
+                            display: flex;
+                            justify-content: space-between;
+                            width: 100%;
+                            align-items: center;
+                            border-bottom: 2px solid #eaeaea;
+                        }
+
+                        /* Logo styles */
+                        .logo-left, .logo-right {
+                            flex: 0 0 auto;
+                            height: 100px;
+                            width: auto;
+                            max-width: 100px;
+                            object-fit: contain;
+                        }
+
+                        /* Title styles */
+                        .title {
+                            flex: 1;
+                            text-align: center;
+                            font-size: 28px;
+                            font-weight: bold;
+                            color: #333333;
+                            margin: 0 100px;
+                            padding: 10px;
+                            border-radius: 4px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                        }
+
+                        /* Responsive design */
+                        @media (max-width: 600px) {
+                            .header {
+                                flex-direction: column;
+                                gap: 15px;
+                            }
+                            .title {
+                                font-size: 24px;
+                                margin: 10px 0;
+                            }
+                            .logo-left, .logo-right {
+                                height: 60px;
+                            }
+                        }
+
+                        /* Rest of your existing styles */
                         .date-line { margin-bottom: 15px; }
                         .issued-by { margin-bottom: 20px; }
                         .feedback-content { margin: 30px 0; line-height: 1.6; }
@@ -75,10 +132,11 @@ export const emailGenerator = async (form, {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="${school.logo}" alt="School Logo" class="logo">
-                            <h1 class="title">FEEDBACK NOTE</h1>
+                            <img src="https://vbf6zy27dq.ufs.sh/f/pcYMv9CYHjNs51BoBIgTOYRoHfL4zlTvXA8niZqxc1rsED3M" alt="Radu Logo" class="logo-left">
+                            <h1 class="title">Feedback Note</h1>
+                            <img src="${school.logo}" alt="School Logo" class="logo-right">
                         </div>
-                        
+
                         <div class="date-line">
                             <strong>Date:</strong> ${new Date().toLocaleDateString('en-US', {
                                 month: '2-digit',
@@ -122,46 +180,6 @@ export const emailGenerator = async (form, {
         }
         case FormType.PointWithdraw: {
             subject = `${Math.abs(points)} points Withdrawn from student ${student.name}.`
-            // body = `
-            // <!DOCTYPE html>
-            // <html>
-            // <head>
-            // <style>
-            //     body { font-family: Arial, sans-serif; text-align: center; line-height: 1.6; margin: 0; padding: 0; }
-            //     .container { margin: auto; padding: 20px; max-width: 600px; border: 1px solid #ccc; border-radius: 10px; background-color: #f9f9f9; }
-            //     .header { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-            //     .sub-header { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-            //     .points { font-size: 36px; font-weight: bold; margin: 20px 0; }
-            //     .footer { font-size: 14px; color: #555; margin-top: 20px; }
-            // </style>
-            // </head>
-            // <body>
-            // <div class="container">
-            //     <div>
-            //     ***********************************************
-            //     </div>
-            //     <div class="header">E-TOKEN EXCHANGE RECEIPT</div>
-            //     <div>
-            //     ***********************************************
-            //     </div>
-            //     <div class="sub-header">${school.district}</div>
-            //     <div>${school.name}</div>
-            //     <div>${school.address}</div>
-            //     <div>SCHOOL STORE</div>
-            //     <div>
-            //     ***********************************************
-            //     </div>
-            //     <div><strong>DATE:</strong> ${new Date().toLocaleDateString()}</div>
-            //     <div><strong>ISSUED TO:</strong> ${student.name}</div>
-            //     <div class="points">${Math.abs(points)}</div><br>Points
-            //     <div>
-            //     ***********************************************
-            //     </div>
-            //     <div class="footer">THANK YOU!<br>Keep on the great job!!!</div>
-            // </div>
-            // </body>
-            // </html>
-            // `;
             body = `${Math.abs(points)} points Withdrawn from student ${student.name}.`
             attachment = await generateRecieptImage(points,student.name,new Date().toLocaleDateString(),school.name,school.address,school.district)
             attachmentName='reciept.png'
@@ -222,7 +240,6 @@ export const emailGenerator = async (form, {
          attachmentName
        );
 }
-
 
 export const reportEmailGenerator = async (attachment, attachmentName, to) => {
   let subject, body;
