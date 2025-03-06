@@ -4,13 +4,17 @@ import { generateCouponImage } from '../utils/generateImage.js';
 
 dotenv.config();
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com", // e.g., "smtp.gmail.com"
-    port: 587, // Standard SMTP port
-    secure: false, // Use TLS (false for STARTTLS, true for SSL)
+    host: "smtp.gmail.com", 
+    port: 587, 
+    secure: false, 
     auth: {
-        user: process.env.EMAIL_USER, // Your email
-        pass: process.env.EMAIL_PASS, // Your email password or app password
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS, 
     },
+    maxFileSize: 25 * 1024 * 1024, 
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 
 
@@ -62,7 +66,7 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
                 {
                   filename: attachmentName,
                   content: attachment,
-                  cid: 'reportPdf', // Content-ID for referencing in the email body
+                  cid: 'reportPdf', 
                 },
               ],
         });
