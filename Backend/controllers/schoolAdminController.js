@@ -461,7 +461,7 @@ export const genreport = async (req, res) => {
             barChartImage
         });
         reportEmailGenerator(gen, `${stdData.studentInfo.name}.pdf`, email);
-        return res.status(200).json({ message: "Student roster reset successfully" });
+        return res.status(200).json({ message: "Student report sent successfully" });
     } catch (error) {
         console.log(error);
         

@@ -99,6 +99,8 @@ const Finalize = () => {
         await generateRewardPDF(selectedStudentsData[i])
         setProgress(((i + 1) / selectedStudentsData.length) * 100)
       }
+      setIsGenerating(false)
+      setProgress(0)
       toast({
         title: "Success",
         description: `Generated ${selectedStudentsData.length} reports successfully`,
