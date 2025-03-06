@@ -35,7 +35,9 @@
     "nodemon": "^3.1.7",
     "pdfkit": "^0.16.0",
     "pdfkit-table": "^0.1.99",
-    "timeout": "^0.2.1"
+    "timeout": "^0.2.1",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.9.5"

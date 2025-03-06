@@ -615,6 +615,20 @@ export const sendReport = async (data: FormData, email: string) => {
         return { error };
     }
 };
+export const sendReportImage = async (data: FormData, email: string) => {
+    try {
+        const token = getToken();
+        const response = await axios.post(`${API_URL}/schoolAdmin/genreport/${email}`, data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                token: token || ""
+            }
+        });
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { error };
+    }
+};
 
 export const sendVerificationMail = async (data:any) => {
     try {

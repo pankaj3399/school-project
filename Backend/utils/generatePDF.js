@@ -1,0 +1,262 @@
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import fetch from 'node-fetch';
+
+const getImageAsBase64 = async (input) => {
+    try {
+        if (Buffer.isBuffer(input)) {
+            return input.toString('base64');
+        }
+        if (typeof input === 'string' && input.startsWith('http')) {
+            const response = await fetch(input);
+            const buffer = await response.buffer();
+            return buffer.toString('base64');
+        }
+        return null;
+    } catch (error) {
+        console.error('Error processing image:', error);
+        return null;
+    }
+};
+
+export const generateStudentPDF = async ({
+    studentData,
+    schoolData,
+    barChartImage,
+    teacherData
+}) => {
+    try {
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 20;
+        let yPos = margin;
+
+        // Fixed Radu Framework logo (make sure this URL is accessible)
+        const raduLogoUrl = 'https://vbf6zy27dq.ufs.sh/f/pcYMv9CYHjNs51BoBIgTOYRoHfL4zlTvXA8niZqxc1rsED3M';
+        try {
+            const raduLogoBase64 = await getImageAsBase64(raduLogoUrl);
+            if (raduLogoBase64) {
+                doc.addImage(`data:image/png;base64,${raduLogoBase64}`, 'PNG', margin, yPos-15, 40, 60);
+            }
+        } catch (error) {
+            console.error('Error loading Radu logo:', error);
+        }
+
+        // Add School logo on right
+        if (schoolData.school.logo) {
+            const logoBase64 = await getImageAsBase64(schoolData.school.logo);
+            if (logoBase64) {
+                doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', pageWidth - margin - 40, yPos, 40, 40);
+            }
+        }
+
+        // Center headings
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        const centerX = pageWidth / 2;
+
+        yPos += 10;
+        ['THE RADU FRAMEWORK', 'E-TOKEN SYSTEM', schoolData.school.name, teacherData.name, `Grade ${studentData.studentInfo.grade}`]
+            .forEach(text => {
+                doc.text(text, centerX, yPos, { align: 'center' });
+                yPos += 8;
+            });
+
+        // Student name and date
+        yPos += 17;
+        doc.setFontSize(24);
+        doc.text(studentData.studentInfo.name.toUpperCase(), centerX, yPos, { align: 'center' });
+        
+        yPos += 10;
+        doc.setFontSize(16);
+        const dateStr = new Date().toLocaleDateString('en-US', { 
+            month: '2-digit', 
+            day: '2-digit', 
+            year: 'numeric' 
+        });
+        doc.text(`As of ${dateStr}`, centerX, yPos, { align: 'center' });
+
+        // Bar chart
+        if (barChartImage) {
+            yPos += 20;
+            const chartBase64 = await getImageAsBase64(barChartImage);
+            if (chartBase64) {
+                doc.addImage(`data:image/png;base64,${chartBase64}`, 'PNG', margin, yPos, 170, 80);
+                yPos += 90;
+            }
+        }
+
+        // Points table
+        doc.autoTable({
+            startY: yPos,
+            head: [['E-Tokens', 'Oopsies', 'Withdrawals', 'Balance', 'Feedback']],
+            body: [[
+                studentData.totalPoints.eToken,
+                Math.abs(studentData.totalPoints.oopsies),
+                Math.abs(studentData.totalPoints.withdraw),
+                studentData.balance || 0,
+                studentData.feedback.length
+            ]],
+            theme: 'grid',
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 0],
+                fontSize: 12,
+                fontStyle: 'bold',
+                cellPadding: 8,
+                halign: 'center',
+                lineWidth: 0.5,
+                lineColor: [0, 0, 0]
+            },
+            bodyStyles: {
+                fontSize: 12,
+                halign: 'center',
+                lineWidth: 0.5,
+                lineColor: [0, 0, 0]
+            },
+            styles: {
+                cellPadding: 6,
+                fontSize: 12,
+                cellWidth: 'auto'
+            },
+            margin: { left: margin }
+        });
+
+        // Add footer to first page
+        addFooter(doc, 1);
+
+        // Second page
+        doc.addPage();
+        yPos = margin;
+
+        // History section
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.text('History', margin, yPos);
+        yPos += 10;
+
+        if (studentData.data.length > 0) {
+            const historyData = studentData.data.map(item => {
+                const date = new Date(item.submittedAt);
+                return [
+                    date.toLocaleDateString(),
+                    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    item.submittedForName,
+                    item.formType,
+                    item.points.toString()
+                ];
+            });
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Date', 'Time', 'Student', 'Action', 'Points']],
+                body: historyData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [240, 240, 240],
+                    textColor: [0, 0, 0],
+                    fontSize: 9,
+                    fontStyle: 'bold',
+                    cellPadding: 4,
+                    halign: 'center',
+                    lineWidth: 0.5,
+                    lineColor: [0, 0, 0]
+                  },
+                  bodyStyles: {
+                    fontSize: 8,
+                    halign: 'center',
+                    lineWidth: 0.5,
+                    lineColor: [0, 0, 0],
+                    cellPadding: 3
+                  },
+                  styles: {
+                    overflow: 'linebreak',
+                    minCellHeight: 6
+                  },
+                  columnStyles: {
+                    0: { cellWidth: 25 },     // Date column
+                    1: { cellWidth: 20 },     // Time column
+                    2: { cellWidth: 35 },     // Student column
+                    3: { cellWidth: 'auto' }, // Action column
+                    4: { cellWidth: 15, halign: 'right' }  // Points column
+                  }
+            });
+        }
+
+        // Feedback section
+        if (studentData.feedback.length > 0) {
+            yPos = (doc).lastAutoTable.finalY + 30;
+            doc.text('Feedback', margin, yPos);
+            yPos += 10;
+
+            const feedbackData = studentData.feedback.map(item => {
+                const date = new Date(item.createdAt);
+                return [
+                    date.toLocaleDateString(),
+                    item.submittedByName,
+                    item.feedback
+                ];
+            });
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Date', 'Teacher', 'Feedback']],
+                body: feedbackData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [240, 240, 240],
+                    textColor: [0, 0, 0],
+                    fontSize: 12,
+                    fontStyle: 'bold',
+                    cellPadding: 8,
+                    halign: 'center',
+                    lineWidth: 0.5,
+                    lineColor: [0, 0, 0]
+                  },
+                  bodyStyles: {
+                    fontSize: 10,
+                    lineWidth: 0.5,
+                    lineColor: [0, 0, 0]
+                  },
+                  styles: {
+                    cellPadding: 6,
+                    fontSize: 10,
+                    overflow: 'linebreak'
+                  },
+                  columnStyles: {
+                    0: { cellWidth: 'auto' },
+                    1: { cellWidth: 'auto' },
+                    2: { cellWidth: 100 }  // Fixed width for feedback column
+                  }
+            });
+        }
+
+        // Add footer to second page
+        addFooter(doc, 2);
+
+        return Buffer.from(doc.output('arraybuffer'));
+    } catch (error) {
+        console.error('PDF Generation Error:', error);
+        throw error;
+    }
+};
+
+// Helper function for footer
+const addFooter = (doc, pageNumber) => {
+    const totalPages = 2;
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    
+    const dateStr = new Date().toLocaleDateString('en-US', { 
+        month: '2-digit', 
+        day: '2-digit', 
+        year: 'numeric' 
+    });
+
+    doc.text(`Page ${pageNumber} of ${totalPages}`, 20, pageHeight - 10);
+    doc.text("THE RADU FRAMEWORK", pageWidth/2, pageHeight - 10, { align: 'center' });
+    doc.text(`Created On ${dateStr}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+};
