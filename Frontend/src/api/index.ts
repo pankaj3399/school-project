@@ -608,6 +608,15 @@ export const sendReport = async (data: FormData, email: string) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 token: token || ""
+            },
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+            timeout: 60000, // 60 second timeout
+            onUploadProgress: (progressEvent) => {
+                const percentCompleted = Math.round(
+                    (progressEvent.loaded * 100) / (progressEvent.total || 0)
+                );
+                console.log(`Upload Progress: ${percentCompleted}%`);
             }
         });
         return { success: true, data: response.data };
