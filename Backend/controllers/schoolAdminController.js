@@ -9,6 +9,7 @@ import Admin from "../models/Admin.js"
 import PointsHistory from "../models/PointsHistory.js"
 import mongoose from "mongoose"
 import { reportEmailGenerator } from "../utils/emailHelper.js"
+import { generateStudentPDF } from "../utils/generatePDF.js"
 
 const getSchoolIdFromUser = async (userId) => {
     // Try finding user as admin first
@@ -436,6 +437,34 @@ export const resetStudentRoster = async (req, res) => {
         })
         return res.status(200).json({ message: "Student roster reset successfully" });
     } catch (error) {
+        return res.status(500).json({ message: "Server Error", error: error.message });
+    }
+}
+
+export const genreport = async (req, res) => {
+    try {
+        const {
+            studentData,
+            schoolData,
+            teacherData
+        } = req.body
+
+        const email = req.params.email;
+        const schData = JSON.parse(schoolData);
+        const stdData = JSON.parse(studentData);
+        const tchData = JSON.parse(teacherData);
+        const barChartImage = req.file.buffer; 
+        const gen = await generateStudentPDF({
+            schoolData: schData,
+            studentData: stdData,
+            teacherData: tchData,
+            barChartImage
+        });
+        reportEmailGenerator(gen, `${stdData.studentInfo.name}.pdf`, email);
+        return res.status(200).json({ message: "Student roster reset successfully" });
+    } catch (error) {
+        console.log(error);
+        
         return res.status(500).json({ message: "Server Error", error: error.message });
     }
 }
