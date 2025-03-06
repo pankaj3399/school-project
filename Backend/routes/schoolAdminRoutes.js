@@ -34,6 +34,6 @@ router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, 
 router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getStudentPointsHistory);
 router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
 router.post('/sendreport/:email', upload.single('file'), sendReport);
-router.post('/genreport', upload.single('file'), genreport);
+router.post('/genreport/:email', upload.single('file'), genreport);
 
 export default router;
