@@ -198,7 +198,14 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
       
       case 'number':
         return (
-          <Input
+          <>
+            <div className='space-y-2 my-1 text-xs'>
+              {question.goal && <p className="font-semibold border p-1 rounded-md text-gray-500">Goal: {question.goal}</p>}
+              {question.goalSummary && <p className="font-semibold border p-1 rounded-md text-gray-500">Goal Summary: {question.goalSummary}</p>}
+              {question.targetedBehaviour && <p className="font-semibold border p-1 rounded-md text-gray-500">Targeted Behaviour: {question.targetedBehaviour}</p>}
+              {question.otherGoal && <p className="font-semibold border p-1 rounded-md text-gray-500">Other Goal: {question.otherGoal}</p>}
+            </div>
+            <Input
             type="number"
             value={answers[question.id]?.answer as string || ''}
             onChange={(e) => {
@@ -213,6 +220,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
             max={ question.maxPoints}
             min={0}
           />
+          </>
         )
       
       case 'select':

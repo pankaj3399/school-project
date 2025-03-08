@@ -26,6 +26,7 @@ type SelectedStudentData = {
     grade: string;
     email?: string;
     parentEmail?: string;
+    standard?: string;
   };
 }[];
 

@@ -200,7 +200,7 @@ export const sendVerifyEmail = async (req, res) => {
         
         // For students, send to parent email(s)
         const emailRecipients = role === Role.Student 
-            ? [user.parentEmail, user.parentEmail2].filter(Boolean)
+            ? [user.parentEmail, user.standard, email].filter(Boolean)
             : [email];
 
         // Send email to all recipients

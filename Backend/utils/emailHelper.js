@@ -241,11 +241,21 @@ export const emailGenerator = async (form, {
        );
 }
 
-export const reportEmailGenerator = async (attachment, attachmentName, to) => {
+export const reportEmailGenerator = async (attachment, attachmentName, to, student) => {
   let subject, body;
-
-  subject = `Yearly Report of ${attachmentName}`
-  body = `Please find the attached report of ${attachmentName}`
+  console.log(student);
+  
+  subject = `Radu Framework Report for ${attachmentName.replace('.pdf', '').replaceAll('_', ' ')}`
+  body = `
+  <p>Attached you will find the report for ${student.studentInfo.name}, ${student.studentInfo.grade} as of ${new Date().toLocaleDateString()}.</p>
+  <p>Contact Info</p>
+  <p>Parent/Guardian Email 1: ${student.studentInfo.parentEmail}</p>
+  ${
+    student.studentInfo.standard
+      ? `<p>Parent/Guardian Email 2: ${student.studentInfo.standard}</p>`
+      : ''
+  }
+  `
   sendEmailReport(
     to,
     subject,

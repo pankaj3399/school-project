@@ -17,6 +17,7 @@ export function TeacherSideNav() {
     // Fetch teacher details
     const fetchTeacher = async () => {
       const response = await getCurrentUser();
+      
       if(response.user.type == "Lead"){
         setNavItems([
           { href: '/teachers/viewforms', label: 'Forms', icon: ClipboardIcon },
