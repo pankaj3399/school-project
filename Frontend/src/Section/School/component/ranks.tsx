@@ -1,4 +1,4 @@
-import { getRanks } from "@/api"
+import { getCurrentUser, getRanks } from "@/api"
 import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -10,9 +10,17 @@ const Ranks = () => {
   useEffect(()=>{
     console.log("Ranks")
     const fetchRanks = async () => {
+        const currUser = await getCurrentUser()
         const res = await getRanks()
-        setTeacherRanks(res.teachers.data)
-        setStudentRanks(res.students.data)
+        console.log("Grade", currUser.user.grade);
+        if(currUser.user.grade){
+            
+            setTeacherRanks(res.teachers.data.filter((t:any) =>(t.grade === currUser.user.grade)||t.grade=="N/A"))
+            setStudentRanks(res.students.data)
+        }else{
+            setTeacherRanks(res.teachers.data)
+            setStudentRanks(res.students.data)
+        }
         console.log(res)
     }
     fetchRanks()

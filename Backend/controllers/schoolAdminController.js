@@ -414,7 +414,7 @@ export const sendReport = async (req, res) => {
         // Now file data is properly available
         const fileData = {
             buffer: file.buffer, // Binary data of the file
-            originalname: file.originalname,
+            originalname: `Etoken Report-${file.originalname}-As_Of_${new Date().toLocaleDateString()}`, // Original name of the file
             mimetype: file.mimetype
         };
 
@@ -460,7 +460,7 @@ export const genreport = async (req, res) => {
             teacherData: tchData,
             barChartImage
         });
-        reportEmailGenerator(gen, `${stdData.studentInfo.name}.pdf`, email);
+        reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${new Date().toLocaleDateString()}.pdf`, email, stdData);
         return res.status(200).json({ message: "Student report sent successfully" });
     } catch (error) {
         console.log(error);

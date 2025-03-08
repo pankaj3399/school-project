@@ -120,7 +120,7 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
 
       {/* Question Text */}
       <div className="space-y-2">
-        <Label>Question Text</Label>
+        <Label>{formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Question Text':'TARGETED BEHAVIOR'}</Label>
         <Input
           type="text"
           value={question.text}

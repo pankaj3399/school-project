@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { getStudents, deleteStudent, updateStudent } from "@/api"
+import { getStudents, deleteStudent, updateStudent, sendVerificationMail } from "@/api"
 import Loading from "../Loading"
 import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "@/Section/School/Modal"
@@ -14,6 +14,8 @@ export default function ViewTeacherStudents() {
   const [editingStudent, setEditingStudent] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
+  const [sendingVerification, setSendingVerification] = useState(false);
+  
   const { toast } = useToast()
 
   useEffect(() => {
@@ -95,6 +97,32 @@ export default function ViewTeacherStudents() {
       })
     }
   }
+
+  const handleSendVerification = async (email: string, studentId: string) => {
+    setSendingVerification(true);
+    try {
+      await sendVerificationMail({
+        email,
+        role: "Student",
+        url: `${window.location.origin}/verifyemail`,
+        userId: studentId
+      });
+      
+      toast({
+        title: "Verification Email Sent",
+        description: "A verification email has been sent to the parent.",
+      });
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send verification email",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingVerification(false);
+    }
+  };
 
   const navigate = useNavigate();
   if (loading) {
@@ -181,8 +209,17 @@ export default function ViewTeacherStudents() {
       </Table>
     )}
       {editingStudent && (
-        <div className="mt-8 p-5 border rounded-xl bg-gray-50">
-          <h2 className="text-2xl font-bold mb-4">Edit Student</h2>
+        <div className="mb-8 p-5 border rounded-xl bg-gray-50">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Edit Student</h2>
+            <Button
+              variant="outline"
+              onClick={() => setEditingStudent(null)}
+              className="text-gray-500"
+            >
+              ✕
+            </Button>
+          </div>
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -199,10 +236,6 @@ export default function ViewTeacherStudents() {
                 }
                 className="w-full px-4 py-2 border rounded"
               />
-            </div>
-            <div className="mb-4">
-              {/* <label className="block text-sm font-medium">Class</label> */}
-             
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium">Email</label>
@@ -225,45 +258,79 @@ export default function ViewTeacherStudents() {
                 min={1}
                 max={12}
                 value={editingStudent.grade}
-                onChange={(e) =>
-                  setEditingStudent({
-                    ...editingStudent,
-                    grade: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border rounded"
+                disabled
+                className="w-full px-4 py-2 border rounded bg-gray-100"
               />
             </div>
             <div className="mb-4 space-y-2">
-              <label className="block text-sm font-medium">Parent/Guardian Email</label>
-              <input
-                type="email"
-                value={editingStudent.parentEmail}
-                onChange={(e) =>
-                  setEditingStudent({
-                    ...editingStudent,
-                    parentEmail: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border rounded"
-              />
-              
-               <input
-                type="text"
-                value={editingStudent.standard}
-                onChange={(e) =>
-                  setEditingStudent({
-                    ...editingStudent,
-                    standard: e.target.value,
-                  })
-                }
-                className=" w-full px-4 py-2 border rounded"
-              />
-            <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e)=>setEditingStudent({...editingStudent,sendNotifications:e as boolean})} className="mt-2" />
-              <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to Parents/Guardians.</span>
-            </div>
+              <label className="block text-sm font-medium">Parent/Guardian Email 1</label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={editingStudent.parentEmail}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      parentEmail: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border rounded"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={sendingVerification}
+                  onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id)}
+                >
+                  {sendingVerification ? "Sending..." : "Verify Email"}
+                </Button>
+              </div>
+              {!editingStudent.isParentOneEmailVerified && (
+                <p className="text-sm text-amber-600">Email not verified</p>
+              )}
+              {editingStudent.isParentOneEmailVerified && (
+                <p className="text-sm text-green-600">Email verified</p>
+              )}
 
-            <div className="flex space-x-4">
+              <label className="block text-sm font-medium mt-4">Parent/Guardian Email 2</label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={editingStudent.standard}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      standard: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border rounded"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={sendingVerification}
+                  onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id)}
+                >
+                  {sendingVerification ? "Sending..." : "Verify Email"}
+                </Button>
+              </div>
+              {!editingStudent.isParentTwoEmailVerified && editingStudent.standard && (
+                <p className="text-sm text-amber-600">Email not verified</p>
+              )}
+              {editingStudent.isParentTwoEmailVerified && (
+                <p className="text-sm text-green-600">Email verified</p>
+              )}
+            </div>
+            <Checkbox 
+              checked={editingStudent.sendNotifications} 
+              onCheckedChange={(e)=>setEditingStudent({...editingStudent,sendNotifications:e as boolean})} 
+              className="mt-2" 
+            />
+            <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">
+              Send email notification to Parents/Guardians.
+            </span>
+
+            <div className="flex space-x-4 mt-4">
               <button
                 type="submit"
                 className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"

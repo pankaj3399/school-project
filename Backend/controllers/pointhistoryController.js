@@ -771,7 +771,7 @@ export const getPointsByTeacher = async (req, res) => {
     try {
         const schoolId = await getSchoolIdFromUser(req.user.id);
         const teachers = await Teacher.find({ schoolId: schoolId });
-        const teacherNames = teachers.map(teacher => teacher.name);
+       
 
         const pointsByTeacher = await PointsHistory.aggregate([
             {
@@ -788,9 +788,15 @@ export const getPointsByTeacher = async (req, res) => {
             }
         ]);
 
-        teacherNames.forEach(teacher => {
-            if(!pointsByTeacher.find(point => point._id === teacher)) {
-                pointsByTeacher.push({ _id: teacher, totalPoints: 0 });
+        teachers.forEach(teacher => {
+            pointsByTeacher.forEach(point => {
+                if(point._id === teacher.name) {
+                    point.grade = teacher.grade ?? "N/A";
+                }
+            })
+            
+            if(!pointsByTeacher.find(point => point._id === teacher.name)) {
+                pointsByTeacher.push({ _id: teacher.name, grade: teacher.grade ?? "N/A", totalPoints: 0 });
             }
         })
 

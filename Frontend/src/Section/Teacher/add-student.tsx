@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
-import { addStudent, getCurrentUser } from "@/api/index"
+import { addStudent, getCurrentUser, sendVerificationMail } from "@/api/index"
 import { Checkbox } from "@/components/ui/checkbox"
 
 import Loading from "../Loading"
@@ -72,15 +72,41 @@ export default function AddStudentTeacher() {
         grade:formData.grade        
       }
 
-      console.log("Student Data",studentData)
 
       const response = await addStudent(studentData,token)
 
       if (!response.error) {
-        toast({
-          title: "Student added successfully",
-          description:` ${name} has been added.`,
-        })
+        // Send verification emails to both parent emails if provided
+        try {
+          // Send to first parent email
+          await sendVerificationMail({
+            email: formData.parentEmail,
+            role: "Student",
+            url: `${window.location.origin}/verifyemail`,
+            userId: response.student._id
+          });
+
+          // Send to second parent email if exists
+          if (formData.className) {
+            await sendVerificationMail({
+              email: formData.className,
+              role: "Student",
+              url: `${window.location.origin}/verifyemail`,
+              userId: response.student._id
+            });
+          }
+
+          toast({
+            title: "Student added successfully",
+            description: `${name} has been added and verification emails have been sent to parents.`,
+          });
+        } catch (verificationError) {
+          console.error("Verification email error:", verificationError);
+          toast({
+            title: "Warning",
+            description: "Student added but verification emails failed to send.",
+          });
+        }
         
         navigate("/teachers/students")
       } else {

@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+const STUDENT_GRADES = [
+  'K',
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+  'AN CENTER'
+];
 
 export default function ViewStudents() {
   const [students, setStudents] = useState<any[]>([])
@@ -240,19 +245,26 @@ export default function ViewStudents() {
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium">Grade</label>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={editingStudent.grade}
-                onChange={(e) =>
+              <Select
+                value={editingStudent.grade.toString()}
+                onValueChange={(value) => 
                   setEditingStudent({
                     ...editingStudent,
-                    grade: e.target.value,
+                    grade: value
                   })
                 }
-                className="w-full px-4 py-2 border rounded"
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STUDENT_GRADES.map((grade) => (
+                    <SelectItem key={grade} value={grade}>
+                      {grade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="mb-4 space-y-2">
               <label className="block text-sm font-medium">Parent/Guardian Email 1</label>

@@ -69,6 +69,9 @@ export const generateStudentPDF = async ({
         
         yPos += 10;
         doc.setFontSize(16);
+        doc.text(`${studentData.studentInfo.email}`, centerX, yPos, { align: 'center' });
+        yPos += 10;
+        doc.setFontSize(16);
         const dateStr = new Date().toLocaleDateString('en-US', { 
             month: '2-digit', 
             day: '2-digit', 

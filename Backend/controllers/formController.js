@@ -9,6 +9,25 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { emailGenerator } from "../utils/emailHelper.js";
 import Feedback from "../models/Feedback.js";
+
+const getGradeFromUser = async (userId) => {
+    // Try finding user as admin first
+    const admin = await Admin.findById(userId);
+    if (admin) {
+        return null;
+    }
+    // If not admin, try finding as teacher
+    const teacher = await Teacher.findById(userId);
+    if (teacher) {
+        const studentIds = await Student.find({ schoolId: teacher.schoolId, grade:teacher.grade }).select('_id');
+        return {
+            grade: teacher.grade,
+            studentIds: studentIds.map(student => student._id)
+        };
+    }
+    throw new Error('User not authorized');
+}
+
 export const createForm = async (req, res) => {
   const {
     formName,
@@ -318,16 +337,21 @@ export const submitFormAdmin = async (req, res) => {
 export const getPointHistory = async (req, res) => {
   const id = req.user.id;
   let user;
+  let pointHistory;
   switch (req.user.role) {
     case Role.SchoolAdmin:
       user = await Admin.findById(id);
+      pointHistory = await PointsHistory.find({ schoolId: user.schoolId }).populate("submittedForId");
       break;
-    case Role.Teacher:
-      user = await Teacher.findById(id);
+      case Role.Teacher:
+        user = await Teacher.findById(id);
+        const grade = await getGradeFromUser(id);
+        pointHistory = await PointsHistory.find({ schoolId: user.schoolId, submittedForId :{
+          $in: grade.studentIds
+        }  }).populate("submittedForId");
       break;
     default:
       return res.status(403).json({ message: "Forbidden" });
   }
-  const pointHistory = await PointsHistory.find({ schoolId: user.schoolId }).populate("submittedForId");
   return res.status(200).json({ pointHistory });
 };

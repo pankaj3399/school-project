@@ -49,6 +49,7 @@ type SelectedStudentData = {
     grade: string;
     email?: string;
     parentEmail?: string;
+    standard?: string;
   };
 }[];
 
@@ -111,7 +112,8 @@ export default function ViewReport({
             name: studentData.student.name,
             grade: studentData.student.grade,
             email: studentData.student.email,
-            parentEmail: studentData.student.parentEmail
+            parentEmail: studentData.student.parentEmail,
+            standard: studentData.student.standard
           }
         }]);
       }
