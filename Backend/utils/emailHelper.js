@@ -27,7 +27,7 @@ export const emailGenerator = async (form, {
             <p>
               ${schoolAdmin.name}<br>
               ${schoolAdmin.email}<br>
-              Affective Needs Special Education Teacher<br>
+              The Radu Framework Manager<br>
               ${school.name}
             </p>
             `;
@@ -51,7 +51,7 @@ export const emailGenerator = async (form, {
             const teacherFirstName = teacherNames[0];
             const teacherLastName = teacherNames[teacherNames.length - 1];
             
-            subject = `Hi, I have a feedback about ${student.name} from ${teacher.subject} class.`;
+            subject = `Hi, I have a feedback about ${student.name} from ${teacher.subject ? `grade ${student.grade}.`: `${teacher.subject} class.`}`;
             
             const feedback = submission.answers.map((item) => `<p>${item.answer}</p>`).join(`<br/>`);
             
@@ -132,7 +132,7 @@ export const emailGenerator = async (form, {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="https://vbf6zy27dq.ufs.sh/f/pcYMv9CYHjNs51BoBIgTOYRoHfL4zlTvXA8niZqxc1rsED3M" alt="Radu Logo" class="logo-left">
+                            <img src="${process.env.LOGO_URL || "https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M"}" alt="Radu Logo" class="logo-left">
                             <h1 class="title">Feedback Note</h1>
                             <img src="${school.logo}" alt="School Logo" class="logo-right">
                         </div>
@@ -146,7 +146,7 @@ export const emailGenerator = async (form, {
                         </div>
                         
                         <div class="issued-by">
-                            <strong>Issued By:</strong> ${teacherLastName} - ${teacher.subject}
+                            <strong>Issued By:</strong> ${teacherLastName} - ${teacher.subject ?? 'The Radu Framework System Manager'}
                         </div>
                         
                         <div class="feedback-content">
@@ -155,7 +155,7 @@ export const emailGenerator = async (form, {
                         
                         <div class="signature">
                             ${teacherFirstName} ${teacherLastName}<br>
-                            ${teacher.subject}<br>
+                            ${teacher.subject ?? 'The Radu Framework System Manager'}<br>
                             ${school.name}<br>
                             ${school.district}
                         </div>

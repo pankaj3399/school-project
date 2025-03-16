@@ -56,6 +56,7 @@ export default function ViewTeachers() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [sendingVerification, setSendingVerification] = useState(false);
   const { toast } = useToast();
+  const [customGrade, setCustomGrade] = useState("");
 
   useEffect(() => {
     const fetchTeachers = async () => {
@@ -348,22 +349,50 @@ export default function ViewTeachers() {
                 }
                 className="w-full px-4 py-2 border rounded"
               >
-                <option value="Lead">Lead</option>
-                <option value="Special">Special</option>
+                <option value="Lead">Leader/Lead Teacher</option>
+                <option value="Special">Team Member/Special Teacher</option>
               </select>
             </div>
             {editingTeacher.type === 'Lead' && (
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
                 <label className="block text-sm font-medium">Grade</label>
-                <input
-                  type="number"
+                <Select
                   value={editingTeacher.grade}
-                  onChange={(e) =>
-                    setEditingTeacher({ ...editingTeacher, grade: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded"
-                  min={1}
-                />
+                  onValueChange={(value) => {
+                    setEditingTeacher({ ...editingTeacher, grade: value });
+                    if (value !== 'OTHER') {
+                      setCustomGrade("");
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADE_OPTIONS.map((grade) => (
+                      <SelectItem key={grade} value={grade}>
+                        {grade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {editingTeacher.grade === 'OTHER' && (
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium">Specify Grade/Room</label>
+                    <input
+                      type="text"
+                      value={customGrade}
+                      onChange={(e) => {
+                        setCustomGrade(e.target.value);
+                        setEditingTeacher({ ...editingTeacher, grade: e.target.value });
+                      }}
+                      className="w-full px-4 py-2 border rounded"
+                      placeholder="Enter custom grade or room"
+                      required
+                    />
+                  </div>
+                )}
               </div>
             )}
             <div className="mb-4 flex items-center">

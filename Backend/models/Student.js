@@ -66,7 +66,15 @@ const studentSchema = new mongoose.Schema({
   emailVerificationCode:{
     type:String,
     default: null
-  }
+  },
+  studentEmailVerificationCode:{
+    type:String,
+    default: null
+  },
+  isStudentEmailVerified:{
+    type:Boolean,
+    default: false
+  },
 });
 
 studentSchema.pre('save', function (next) {

@@ -9,6 +9,7 @@ const SchoolStats = memo(({stats}:{
     points: number;
     oopsie: number;
     feedbacks: number;
+    withdrawals: number;
 }
 }) => {
   
@@ -19,6 +20,7 @@ const SchoolStats = memo(({stats}:{
         <StatCard label={"Awarded Points"} value={stats.points} />
         <StatCard label={"Feedbacks"} value={stats.feedbacks} />
         <StatCard label={"Total Oopsies"} value={stats.oopsie} />
+        <StatCard label={"Withdrawals"} value={stats.withdrawals} />
 
     </div>
   )

@@ -170,7 +170,7 @@ export const verifyOtp = async (req, res) => {
 
 export const sendVerifyEmail = async (req, res) => {
     try {
-        const { email, role, url, userId } = req.body;
+        const { email, role, url, userId, isStudent } = req.body;
         let user = null;
         switch (role) {
             case Role.Teacher: {
@@ -192,15 +192,33 @@ export const sendVerifyEmail = async (req, res) => {
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
         user.emailVerificationCode = otp;
+        if(isStudent){
+            user.studentEmailVerificationCode = otp2;
+        }
         await user.save();
 
         // Wait for the template to be generated
         const emailHTML = await getVerificationEmailTemplate(role, otp, url, email);
+        const emailHTML2 = await getVerificationEmailTemplate(role, otp2, url, email, isStudent);
+
+        if(isStudent){            
+            await sendEmail(
+                email,
+                "Verify Your Email - The Radu Framework",
+                emailHTML2,
+                emailHTML2,
+                null
+            );
+            return res.status(200).json({
+                message: "Verification email sent successfully"
+            });
+        }
         
         // For students, send to parent email(s)
         const emailRecipients = role === Role.Student 
-            ? [user.parentEmail, user.standard, email].filter(Boolean)
+            ? [email]
             : [email];
 
         // Send email to all recipients
@@ -225,7 +243,7 @@ export const sendVerifyEmail = async (req, res) => {
 
 export const completeVerification = async (req, res) => {
     try {
-        const { emailVerificationCode, role, email } = req.body;
+        const { emailVerificationCode, role, email, isStudent } = req.body;
 
         let user = null;
         switch (role) {
@@ -241,16 +259,27 @@ export const completeVerification = async (req, res) => {
             }
             case Role.Student: {
                 // For students, need to handle multiple parent emails
-                const student = await Student.findOne({ emailVerificationCode });
+                let student;
+                if(isStudent){
+                    student = await Student
+                        .findOne({ studentEmailVerificationCode: emailVerificationCode });
+                }else{
+                    await Student.findOne({ emailVerificationCode });
+                }
                 if (student) {
                     // If parent emails exist, verify them
-                    if (student.parentEmail == email) {
+                    if (!isStudent && student.parentEmail == email) {
                         student.isParentOneEmailVerified = true;
                     }
-                    if (student.standard == email) {
+                    if (!isStudent && student.standard == email) {
                         student.isParentTwoEmailVerified = true;
                     }
-                    student.emailVerificationCode = null; // Clear the code
+                    if(!isStudent){
+                        student.emailVerificationCode = null; // Clear the code
+                    }else{
+                        student.isStudentEmailVerified = true;
+                        student.studentEmailVerificationCode = null;
+                    }
                     await student.save();
                     user = student;
                 }

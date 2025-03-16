@@ -119,9 +119,8 @@ export const addStudent = async (req, res) => {
 
 export const getStats = async (req, res) => {
     try {
-        const id = req.user.id; // Get the authenticated user's ID
+        const id = req.user.id;
 
-        // Find the school admin by ID to extract the schoolId
         const schoolAdmin = await Admin.findById(id);
         if (!schoolAdmin) {
             return res.status(404).json({ message: "School admin not found" });
@@ -129,52 +128,68 @@ export const getStats = async (req, res) => {
 
         const schoolId = schoolAdmin.schoolId;
 
-        // Count total teachers and students associated with the schoolId
         const totalTeachers = await Teacher.countDocuments({ schoolId });
         const totalStudents = await Student.countDocuments({ schoolId });
 
-        // Calculate the total points from the PointHistory model
-        const totalPointsData = await PointsHistory.aggregate([
-            { $match: { schoolId } }, // Filter by schoolId
-            { $group: { _id: null, totalPoints: { $sum: "$points" } } } // Sum the points
-        ]);
-
-        const totalPointsAndFeedbackCount = await PointsHistory.aggregate([
+        // Modified aggregation to separate by form types
+        const pointsAggregation = await PointsHistory.aggregate([
             { 
-                $match: { schoolId } // Filter by schoolId 
+                $match: { schoolId } 
             },
             { 
                 $group: { 
-                    _id: null, 
-                    totalNegativePoints: { 
-                        $sum: { $cond: [ { $lt: ["$points", 0] }, "$points", 0 ] } // Sum only negative points 
+                    _id: null,
+                    totalPoints: { $sum: "$points" },
+                    totalWithdrawPoints: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$formType", "PointWithdraw"] },
+                                "$points",
+                                0
+                            ]
+                        }
                     },
-                    feedbackCount: { 
-                        $sum: { $cond: [ { $eq: ["$formType", "Feedback"] }, 1, 0 ] } // Count formType as "Feedback"
+                    totalDeductPoints: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$formType", "DeductPoints"] },
+                                "$points",
+                                0
+                            ]
+                        }
+                    },
+                    feedbackCount: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$formType", "Feedback"] },
+                                1,
+                                0
+                            ]
+                        }
                     }
                 } 
             }
         ]);
-        
 
-        const totalPoints = totalPointsData.length > 0 ? totalPointsData[0].totalPoints : 0;
-        const totalOopsiePoints = totalPointsAndFeedbackCount.length > 0 ? totalPointsAndFeedbackCount[0].totalNegativePoints : 0;
-        const totalFeedbackCount = totalPointsAndFeedbackCount.length > 0 ? totalPointsAndFeedbackCount[0].feedbackCount : 0;
-
+        const stats = pointsAggregation[0] || {
+            totalPoints: 0,
+            totalWithdrawPoints: 0,
+            totalDeductPoints: 0,
+            feedbackCount: 0
+        };
         
         return res.status(200).json({
             totalTeachers,
             totalStudents,
-            totalPoints,
-            totalOopsiePoints,
-            totalFeedbackCount
+            totalPoints: stats.totalPoints,
+            totalWithdrawPoints: stats.totalWithdrawPoints,
+            totalDeductPoints: stats.totalDeductPoints,
+            totalFeedbackCount: stats.feedbackCount
         });
     } catch (error) {
         return res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
-
-
 
 export const getPointsReceivedPerMonth = async (req, res) => {
     try {
