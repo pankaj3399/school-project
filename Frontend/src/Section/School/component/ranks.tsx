@@ -70,7 +70,7 @@ const PointsBarChart = ({
                 layout={'vertical'}  
                 barGap={2}
             >
-                <XAxis type="number"  tickLine={false} domain={[0, 10000]} />
+                <XAxis type="number"  tickLine={false}  />
                 <YAxis dataKey="_id" type="category" orientation='left' fontSize={10}    />
                 <Tooltip />
                 <Bar dataKey="totalPoints" fill={barColor} barSize={30} background={{ fill: '#f5f5f5' }} label={{

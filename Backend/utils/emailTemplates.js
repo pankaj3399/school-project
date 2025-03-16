@@ -2,10 +2,10 @@ import { Role } from '../enum.js';
 import path from 'path';
 import fs from 'fs';  // Use synchronous fs instead of promises
 
-export const getVerificationEmailTemplate = (role, otp, url, email) => {
+export const getVerificationEmailTemplate = (role, otp, url, email, isStudent= false) => {
   const description = role === Role.Teacher
-    ? "Your account has been created by your school administrator in The Radu Framework. Please verify your email address to access your teacher account and start using the E-Token system."
-    : "Your child's account has been created by the school administration in The Radu Framework. Please verify your email address to enable your child's E-Token system account and get updates.";
+    ? "Your account has been created by the system manager in the Radu Framework. Please verify your email address to access your teacher account and start using the E-Token system."
+    : "Your account has been created by the system manager in the Radu Framework. Please verify your email address to enable your child's E-Token system account and get updates.";
 
   // Get base64 encoded logo - using synchronous version to avoid async complexity
   let logoSrc;
@@ -18,7 +18,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email) => {
   } catch (error) {
     console.error('Error loading logo:', error);
     // Fallback to a URL if available - we can add the logo to cloud storage and use the URL here
-    logoSrc = 'https://vbf6zy27dq.ufs.sh/f/pcYMv9CYHjNs51BoBIgTOYRoHfL4zlTvXA8niZqxc1rsED3M';
+    logoSrc = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
   }
 
   return `
@@ -38,7 +38,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email) => {
         <p style="margin-bottom: 25px;">${description}</p>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${url}?otp=${otp}&role=${role}&email=${email}" 
+          <a href="${url}?otp=${otp}&role=${role}&email=${email}&isStudent=${isStudent}" 
              style="background-color: #00a58c; 
                     color: white; 
                     padding: 12px 24px; 

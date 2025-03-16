@@ -14,7 +14,8 @@ export default function VerifyEmail() {
   const [verificationData, setVerificationData] = useState({
     emailVerificationCode: "",
     role: "",
-    email: ""
+    email: "",
+    isStudent: false,
   });
 
   useEffect(() => {
@@ -22,12 +23,14 @@ export default function VerifyEmail() {
     const otp = searchParams.get("otp");
     const role = searchParams.get("role");
     const email = searchParams.get("email");
+    const isStudent = searchParams.get("isStudent");
 
     if (otp && role && email) {
       setVerificationData({
         emailVerificationCode: otp,
         role,
-        email
+        email,
+        isStudent: isStudent === "true"
       });
     }
   }, [searchParams]);

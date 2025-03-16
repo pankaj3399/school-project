@@ -41,7 +41,8 @@ export default function SchoolPage() {
       students:0,
       points:0,
       oopsie: 0,
-      feedbacks: 0
+      feedbacks: 0,
+      withdrawals: 0
     })
   
     useEffect(()=>{
@@ -52,7 +53,8 @@ export default function SchoolPage() {
               teachers: res.totalTeachers,
               students: res.totalStudents,
               points: res.totalPoints,
-              oopsie: res.totalOopsiePoints,
+              oopsie: res.totalDeductPoints,
+              withdrawals: res.totalWithdrawPoints,
               feedbacks: res.totalFeedbackCount
           })
       }

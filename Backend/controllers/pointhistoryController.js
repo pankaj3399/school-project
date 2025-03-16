@@ -329,15 +329,14 @@ export const getWeekPointsHistory = async (req, res) => {
 
         const { startDate, formType } = req.body;
 
-        const start = startDate ? new Date(startDate) : new Date();
+        // Calculate date range for last 7 days
+        const endDate = startDate ? new Date(startDate) : new Date();
+        const startOfRange = new Date(endDate);
+        startOfRange.setDate(endDate.getDate() - 6); // Get 6 days before to include today (total 7 days)
         
-        const weekStart = new Date(start);
-        weekStart.setDate(start.getDate() - start.getDay());
-        
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-
-        
+        // Set start time to beginning of day and end time to end of day
+        startOfRange.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
 
         const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -350,57 +349,90 @@ export const getWeekPointsHistory = async (req, res) => {
                         schoolId: new mongoose.Types.ObjectId(schoolId),
                         formType: formType,
                         submittedAt: { 
-                            $gte: weekStart, 
-                            $lte: weekEnd 
+                            $gte: startOfRange, 
+                            $lte: endDate 
                         },
                         submittedForId: { $in: teacherData.studentIds}
                     }
                 },
                 {
                     $group: {
-                        _id: { $dayOfWeek: '$submittedAt' },
-                        points: { $sum: '$points' }
+                        _id: { 
+                            $dateToString: { 
+                                format: "%Y-%m-%d", 
+                                date: "$submittedAt" 
+                            } 
+                        },
+                        dayOfWeek: { $first: { $dayOfWeek: "$submittedAt" } },
+                        points: { $sum: "$points" }
                     }
                 },
                 {
                     $project: {
                         _id: 0,
-                        day: { $arrayElemAt: [daysOfWeek, { $subtract: ['$_id', 1] }] },
+                        date: "$_id",
+                        day: { $arrayElemAt: [daysOfWeek, { $subtract: ["$dayOfWeek", 1] }] },
                         points: 1
                     }
                 },
-                { $sort: { day: 1 } }
+                { $sort: { date: 1 } }
             ]);
-        }else{
+        } else {
             weekPoints = await PointsHistory.aggregate([
                 {
                     $match: {
                         schoolId: new mongoose.Types.ObjectId(schoolId),
                         formType: formType,
                         submittedAt: { 
-                            $gte: weekStart, 
-                            $lte: weekEnd 
+                            $gte: startOfRange, 
+                            $lte: endDate 
                         }
                     }
                 },
                 {
                     $group: {
-                        _id: { $dayOfWeek: '$submittedAt' },
-                        points: { $sum: '$points' }
+                        _id: { 
+                            $dateToString: { 
+                                format: "%Y-%m-%d", 
+                                date: "$submittedAt" 
+                            } 
+                        },
+                        dayOfWeek: { $first: { $dayOfWeek: "$submittedAt" } },
+                        points: { $sum: "$points" }
                     }
                 },
                 {
                     $project: {
                         _id: 0,
-                        day: { $arrayElemAt: [daysOfWeek, { $subtract: ['$_id', 1] }] },
+                        date: "$_id",
+                        day: { $arrayElemAt: [daysOfWeek, { $subtract: ["$dayOfWeek", 1] }] },
                         points: 1
                     }
                 },
-                { $sort: { day: 1 } }
+                { $sort: { date: 1 } }
             ]);
         }
 
-        res.status(200).json({ data: weekPoints });
+        // Fill in missing days with zero points
+        const fullWeekData = [];
+        for (let i = 0; i < 7; i++) {
+            const currentDate = new Date(startOfRange);
+            currentDate.setDate(startOfRange.getDate() + i);
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const existingData = weekPoints.find(p => p.date === dateStr);
+            
+            if (existingData) {
+                fullWeekData.push(existingData);
+            } else {
+                fullWeekData.push({
+                    date: dateStr,
+                    day: daysOfWeek[currentDate.getDay()],
+                    points: 0
+                });
+            }
+        }
+
+        res.status(200).json({ data: fullWeekData });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
