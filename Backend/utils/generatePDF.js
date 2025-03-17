@@ -32,7 +32,7 @@ export const generateStudentPDF = async ({
         let yPos = margin;
 
         // Fixed Radu Framework logo (make sure this URL is accessible)
-        const raduLogoUrl = 'https://vbf6zy27dq.ufs.sh/f/pcYMv9CYHjNs51BoBIgTOYRoHfL4zlTvXA8niZqxc1rsED3M';
+        const raduLogoUrl = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
         try {
             const raduLogoBase64 = await getImageAsBase64(raduLogoUrl);
             if (raduLogoBase64) {
