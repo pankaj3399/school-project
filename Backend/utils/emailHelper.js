@@ -244,7 +244,6 @@ export const emailGenerator = async (form, {
 
 export const reportEmailGenerator = async (attachment, attachmentName, to, student) => {
   let subject, body;
-  console.log(student);
   
   subject = `Radu Framework Report for ${attachmentName.replace('.pdf', '').replaceAll('_', ' ')}`
   body = `
