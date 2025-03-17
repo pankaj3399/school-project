@@ -17,11 +17,12 @@ export const emailGenerator = async (form, {
     }
 
     switch(form.formType){
+        case FormType['AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)']: 
         case FormType.AwardPoints: {
             subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`
             body = `
             <p>Congratulations <strong>${student.name}</strong>!</p>
-            <p>The <strong>${teacher?.subject || "N/A"}</strong> teacher, <strong>${teacher.name}</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
+            <p>The ${teacher.subject ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`:`<strong>The Radu Framework Manager</strong>`}, <strong>${teacher.name}</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
             <p>Please, check your E-Token's balance and exchange them at the AN Center or school store.</p>
             <p>Keep up the good work!!!</p>
             <p>
