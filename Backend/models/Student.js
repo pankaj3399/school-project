@@ -75,6 +75,9 @@ const studentSchema = new mongoose.Schema({
     type:Boolean,
     default: false
   },
+  pendingEtokens:{
+    type:[String]
+  }
 });
 
 studentSchema.pre('save', function (next) {

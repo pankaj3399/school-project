@@ -458,12 +458,13 @@ export const resetStudentRoster = async (req, res) => {
 
 export const genreport = async (req, res) => {
     try {
+        
         const {
             studentData,
             schoolData,
             teacherData
         } = req.body
-
+        
         const email = req.params.email;
         const schData = JSON.parse(schoolData);
         const stdData = JSON.parse(studentData);
@@ -475,7 +476,18 @@ export const genreport = async (req, res) => {
             teacherData: tchData,
             barChartImage
         });
-        reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${new Date().toLocaleDateString()}.pdf`, email, stdData);
+        const formattedDate = new Date().toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+        }).replaceAll("/", "-");
+        
+        
+        await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, email, stdData);
+        if(req.user.role == 'SchoolAdmin'){
+            await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, schData.school.createdBy.email, stdData);
+        }
+        console.log("sent report");
         return res.status(200).json({ message: "Student report sent successfully" });
     } catch (error) {
         console.log(error);

@@ -118,7 +118,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
       case 'AwardPoints':
       case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
       case 'DeductPoints':{
-        setDescription(`You will ${form.formType == 'AwardPoints' || form.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? "AWARD":"DEDUCT"} ${Math.abs(totalPoints)} POINTS ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}.`)
+        setDescription(`You will ${form.formType == 'AwardPoints' || form.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? "Award":"Deduct"} ${Math.abs(totalPoints)} points ${form.formType == 'AwardPoints' ? "to":"from"} ${student.find(item => item._id == submittedFor)?.name || "Unknown"}.`)
       }
       break;
       case 'Feedback':{

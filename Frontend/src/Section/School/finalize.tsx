@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import EducationYearChart from "./component/new-chart"
 import { useEffect, useState } from "react"
-import { getCurrrentSchool, getStudents, sendReportImage } from "@/api"
+import { getCurrentUser, getCurrrentSchool, getStudents, sendReportImage } from "@/api"
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import * as htmlToImage from 'html-to-image'
@@ -40,7 +40,7 @@ const LoadingModal = ({ isOpen, progress }: { isOpen: boolean, progress: number 
         <h2 className="text-2xl font-bold mb-4 text-center">Generating Reports</h2>
         <Progress value={progress} className="w-full mb-4" />
         <p className="text-center text-gray-600">
-          Reports are in the process of creation. The reports are on their way to your email. They will arrive soon!
+        Thank you for your request. The Reports are being created. They will arrive soon.
           <br />
           Progress: {Math.round(progress)}%
         </p>
@@ -61,9 +61,20 @@ const Finalize = () => {
   const [_, setGeneratedPDFs] = useState<{ fileName: string, pdf: jsPDF, toTeacher: string }[]>([])
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
-
+  const [user, setUser] = useState<any>({})
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
+  useEffect(()=>{
+    const getUserData = async () => {
+      const token = localStorage.getItem("token")
+      const user = await getCurrentUser(token ?? "")
+      console.log(user);
+      
+      setUser(user.user)
+    }
+
+    getUserData()
+  },[])
 
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
@@ -188,7 +199,7 @@ const Finalize = () => {
         onClose={() => setShowModal(false)}
         onConfirm={() => generateAllReports()}
         title="Email Reports"
-        description={`You are about to email ${selectedStudentsData.length} reports to your email. Are you sure you want to proceed?`}
+        description={`You are about to email ${selectedStudentsData.length} reports to ${user.email || "your email"}. Are you sure you want to proceed?`}
         callToAction='Confirm'
       />
 

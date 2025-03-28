@@ -230,7 +230,7 @@ if (!response.error) {
             <div className="text-center">
               <p className="text-xl">{school.district}</p>
               <h2 className="text-4xl font-bold">{school.name}</h2>
-              <p className="text-xl">{school.createdBy.name?.toUpperCase()} - LEAD TEACHER</p>
+              <p className="text-xl">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
               <p className="text-xl">{school.address}</p>
               <p className="text-xl">{school.state}, {school.country}</p>
             </div>
