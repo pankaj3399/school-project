@@ -27,9 +27,16 @@ export const generateStudentPDF = async ({
 }) => {
     try {
         const doc = new jsPDF('p', 'mm', 'a4');
+        const lineSpacing = 1.5; // 1.5 line spacing
+        const baseLineHeight = 12 * 0.3528; // Convert pt to mm (12pt = ~4.23mm)
+        const lineHeight = baseLineHeight * lineSpacing; // Apply line spacing
         const pageWidth = doc.internal.pageSize.width;
         const margin = 20;
         let yPos = margin;
+
+        // Set default font to helvetica instead of arial
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
 
         // Fixed Radu Framework logo (make sure this URL is accessible)
         const raduLogoUrl = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
@@ -50,28 +57,29 @@ export const generateStudentPDF = async ({
             }
         }
 
-        // Center headings
+        // Center headings with helvetica
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
         const centerX = pageWidth / 2;
 
         yPos += 10;
         ['THE RADU FRAMEWORK', 'E-TOKEN SYSTEM', schoolData.school.name, teacherData.name, `Grade ${studentData.studentInfo.grade}`]
             .forEach(text => {
                 doc.text(text, centerX, yPos, { align: 'center' });
-                yPos += 8;
+                yPos += lineHeight;
             });
 
-        // Student name and date
-        yPos += 17;
+        // Student name with larger font but same family
+        yPos += lineHeight;
         doc.setFontSize(24);
+        doc.setFont("helvetica", "bold");
         doc.text(studentData.studentInfo.name.toUpperCase(), centerX, yPos, { align: 'center' });
         
-        yPos += 10;
-        doc.setFontSize(16);
+        yPos += lineHeight;
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
         doc.text(`${studentData.studentInfo.email}`, centerX, yPos, { align: 'center' });
-        yPos += 10;
-        doc.setFontSize(16);
+        
+        yPos += lineHeight;
         const dateStr = new Date().toLocaleDateString('en-US', { 
             month: '2-digit', 
             day: '2-digit', 
@@ -109,13 +117,21 @@ export const generateStudentPDF = async ({
                 cellPadding: 8,
                 halign: 'center',
                 lineWidth: 0.5,
-                lineColor: [0, 0, 0]
+                lineColor: [0, 0, 0],
+                font: 'helvetica'
             },
             bodyStyles: {
                 fontSize: 12,
                 halign: 'center',
                 lineWidth: 0.5,
-                lineColor: [0, 0, 0]
+                lineColor: [0, 0, 0],
+                font: 'helvetica',
+                cellPadding: {
+                    top: 6 * lineSpacing,
+                    bottom: 6 * lineSpacing,
+                    left: 6,
+                    right: 6
+                }
             },
             styles: {
                 cellPadding: 6,
@@ -158,19 +174,26 @@ export const generateStudentPDF = async ({
                 headStyles: {
                     fillColor: [240, 240, 240],
                     textColor: [0, 0, 0],
-                    fontSize: 9,
+                    fontSize: 12,
                     fontStyle: 'bold',
-                    cellPadding: 4,
-                    halign: 'center',
-                    lineWidth: 0.5,
-                    lineColor: [0, 0, 0]
-                  },
-                  bodyStyles: {
-                    fontSize: 8,
+                    cellPadding: 8,
                     halign: 'center',
                     lineWidth: 0.5,
                     lineColor: [0, 0, 0],
-                    cellPadding: 3
+                    font: 'helvetica'
+                  },
+                  bodyStyles: {
+                    fontSize: 12,
+                    halign: 'center',
+                    lineWidth: 0.5,
+                    lineColor: [0, 0, 0],
+                    font: 'helvetica',
+                    cellPadding: {
+                        top: 6 * lineSpacing,
+                        bottom: 6 * lineSpacing,
+                        left: 6,
+                        right: 6
+                    }
                   },
                   styles: {
                     overflow: 'linebreak',
@@ -214,12 +237,21 @@ export const generateStudentPDF = async ({
                     cellPadding: 8,
                     halign: 'center',
                     lineWidth: 0.5,
-                    lineColor: [0, 0, 0]
+                    lineColor: [0, 0, 0],
+                    font: 'helvetica'
                   },
                   bodyStyles: {
-                    fontSize: 10,
+                    fontSize: 12,
+                    halign: 'left',
                     lineWidth: 0.5,
-                    lineColor: [0, 0, 0]
+                    lineColor: [0, 0, 0],
+                    font: 'helvetica',
+                    cellPadding: {
+                        top: 6 * lineSpacing,
+                        bottom: 6 * lineSpacing,
+                        left: 6,
+                        right: 6
+                    }
                   },
                   styles: {
                     cellPadding: 6,

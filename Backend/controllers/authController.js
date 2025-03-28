@@ -7,6 +7,7 @@ import {Role} from '../enum.js';
 import { sendEmail } from "../services/nodemailer.js";
 import Otp from '../models/Otp.js';
 import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
+import { emailGenerator } from '../utils/emailHelper.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -280,6 +281,18 @@ export const completeVerification = async (req, res) => {
                         student.isStudentEmailVerified = true;
                         student.studentEmailVerificationCode = null;
                     }
+
+                    if(student.pendingEtokens && student.pendingEtokens.length > 0){
+                        for (const etoken of student.pendingEtokens) {
+                            const data = JSON.parse(etoken);
+                            if(data.form && data.data){
+                                console.log("Sending pending Emails");
+                                emailGenerator(data.form, data.data)
+                            }
+                        }
+                    }
+
+
                     await student.save();
                     user = student;
                 }

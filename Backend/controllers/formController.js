@@ -9,6 +9,8 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { emailGenerator } from "../utils/emailHelper.js";
 import Feedback from "../models/Feedback.js";
+import { sendEmail } from "../services/nodemailer.js";
+import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
 
 const getGradeFromUser = async (userId) => {
     // Try finding user as admin first
@@ -132,7 +134,7 @@ export const getForms = async (req, res) => {
         forms = await Form.find({ 
           schoolId: user.schoolId,
         });
-        forms = forms.filter(form => form.formType != "PointWithdraw")
+        forms = forms.filter(form => form.formType != "PointWithdraw" && form.formType != "DeductPoints");
       }else{
         forms = await Form.find({
           schoolId: user.schoolId,
@@ -236,14 +238,39 @@ export const submitFormTeacher = async (req, res) => {
     }
 
     if (school && teacher && submittedForStudent) {
-      emailGenerator(form, {
-        points: totalPoints,
-        submission: formSubmission,
-        teacher: teacher,
-        student: submittedForStudent,
-        schoolAdmin: schoolAdmin,
-        school: school
-      })
+      if(submittedForStudent.isStudentEmailVerified){
+        emailGenerator(form, {
+          points: totalPoints,
+          submission: formSubmission,
+          teacher: teacher,
+          student: submittedForStudent,
+          schoolAdmin: schoolAdmin,
+          school: school
+        })
+      }else{
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        submittedForStudent.studentEmailVerificationCode = otp;
+        const data = {
+          points: totalPoints,
+          submission: formSubmission,
+          teacher: teacher,
+          student: submittedForStudent,
+          schoolAdmin: schoolAdmin,
+          school: school
+        }
+        submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
+        await submittedForStudent.save();
+        console.log("Saved");
+        
+        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
+        await sendEmail(
+        submittedForStudent.email,
+        "Verify Your Email - The Radu Framework",
+        emailHTML2,
+        emailHTML2,
+        null
+       );
+      }
     }
 
    
@@ -311,14 +338,39 @@ export const submitFormAdmin = async (req, res) => {
     }
 
     if (school && submittedForStudent) {
-      emailGenerator(form, {
-        points: totalPoints,
-        submission: formSubmission,
-        teacher: schoolAdmin,
-        student: submittedForStudent,
-        schoolAdmin: schoolAdmin,
-        school: school
-      })
+      if(submittedForStudent.isStudentEmailVerified){
+        emailGenerator(form, {
+          points: totalPoints,
+          submission: formSubmission,
+          teacher: schoolAdmin,
+          student: submittedForStudent,
+          schoolAdmin: schoolAdmin,
+          school: school
+        })
+      }else{
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        submittedForStudent.studentEmailVerificationCode = otp;
+        const data = {
+          points: totalPoints,
+          submission: formSubmission,
+          teacher: schoolAdmin,
+          student: submittedForStudent,
+          schoolAdmin: schoolAdmin,
+          school: school
+        }
+        submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
+        await submittedForStudent.save();
+        console.log("Saved");
+        
+        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
+        await sendEmail(
+        submittedForStudent.email,
+        "Verify Your Email - The Radu Framework",
+        emailHTML2,
+        emailHTML2,
+        null
+       );
+      }
     }
 
    

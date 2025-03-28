@@ -187,7 +187,8 @@ export const emailGenerator = async (form, {
             break;
         }
     }
-    if (form.teacherEmail && teacher?.recieveMails)
+    
+    if (form.teacherEmail && teacher?.recieveMails && teacher.isEmailVerified)
         sendEmail(
          teacher.email,
          subject,
@@ -217,7 +218,8 @@ export const emailGenerator = async (form, {
      if (
        form.parentEmail &&
        student.parentEmail &&
-       student.sendNotifications
+       student.sendNotifications &&
+       student.isParentOneEmailVerified
      )
        sendEmail(
          student.parentEmail,
@@ -230,7 +232,8 @@ export const emailGenerator = async (form, {
      if (
        form.parentEmail &&
        student.standard &&
-       student.sendNotifications
+       student.sendNotifications &&
+       student.isParentTwoEmailVerified
      )
        sendEmail(
          student.standard,
@@ -243,25 +246,135 @@ export const emailGenerator = async (form, {
 }
 
 export const reportEmailGenerator = async (attachment, attachmentName, to, student) => {
-  let subject, body;
-  
-  subject = `Radu Framework Report for ${attachmentName.replace('.pdf', '').replaceAll('_', ' ')}`
-  body = `
-  <p>Attached you will find the report for ${student.studentInfo.name}, ${student.studentInfo.grade} as of ${new Date().toLocaleDateString()}.</p>
-  <p>Contact Info</p>
-  <p>Parent/Guardian Email 1: ${student.studentInfo.parentEmail}</p>
-  ${
-    student.studentInfo.standard
-      ? `<p>Parent/Guardian Email 2: ${student.studentInfo.standard}</p>`
-      : ''
+  try {
+    let subject, body;
+    
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    subject = `Radu E-Token Report for ${attachmentName.replace('.pdf', '').replaceAll('_', ' ')}`
+    body = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <style>
+              /* Reset and base styles */
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              
+              /* Container styles */
+              .container {
+                  font-family: Arial, sans-serif;
+                  max-width: 800px;
+                  margin: auto;
+                  padding: 20px;
+                  background-color: #ffffff;
+              }
+
+              /* Enhanced header styles */
+              .header {
+                  position: relative;
+                  margin-bottom: 40px;
+                  padding: 20px 0;
+                  display: flex;
+                  justify-content: space-between;
+                  width: 100%;
+                  align-items: center;
+                  border-bottom: 2px solid #eaeaea;
+              }
+
+              /* Logo styles */
+              .logo-left, .logo-right {
+                  flex: 0 0 auto;
+                  height: 100px;
+                  width: auto;
+                  max-width: 100px;
+                  object-fit: contain;
+              }
+
+              /* Title styles */
+              .title {
+                  flex: 1;
+                  text-align: center;
+                  font-size: 28px;
+                  font-weight: bold;
+                  color: #333333;
+                  margin: 0 100px;
+                  padding: 10px;
+                  border-radius: 4px;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+              }
+
+              /* Responsive design */
+              @media (max-width: 600px) {
+                  .header {
+                      flex-direction: column;
+                      gap: 15px;
+                  }
+                  .title {
+                      font-size: 24px;
+                      margin: 10px 0;
+                  }
+                  .logo-left, .logo-right {
+                      height: 60px;
+                  }
+              }
+
+              /* Content styles */
+              .report-content { margin: 30px 0; line-height: 1.6; }
+              .contact-info { margin-top: 20px; }
+
+              /* Footer styles */
+              .footer {
+                  margin-top: 40px;
+                  padding-top: 20px;
+                  border-top: 1px solid #eaeaea;
+                  text-align: center;
+                  color: #666;
+                  font-size: 14px;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <img src="${process.env.LOGO_URL || "https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M"}" alt="Radu Logo" class="logo-left">
+                  <h1 class="title">E-Token Report</h1>
+                  <div class="logo-right"></div>
+              </div>
+
+              <div class="report-content">
+                <p>Attached you will find the report for ${student.studentInfo.name}, Grade ${student.studentInfo.grade} as of ${new Date().toLocaleDateString()}.</p>
+                <div class="contact-info">
+                  <p>Contact Info</p>
+                  <p>Parent/Guardian Email 1: ${student.studentInfo.parentEmail}</p>
+                  ${
+                    student.studentInfo.standard
+                      ? `<p>Parent/Guardian Email 2: ${student.studentInfo.standard}</p>`
+                      : ''
+                  }
+                </div>
+              </div>
+
+              <div class="footer">
+                  Created by The Radu E-Token © 2025 on ${currentDate}.
+              </div>
+          </div>
+      </body>
+      </html>
+    `
+    sendEmailReport(
+      to,
+      subject,
+      body,
+      body,
+      attachment,
+      attachmentName
+    )
+  } catch(err) {
+    console.error(err)
   }
-  `
-  sendEmailReport(
-    to,
-    subject,
-    body,
-    body,
-    attachment,
-    attachmentName
-  )
 }
