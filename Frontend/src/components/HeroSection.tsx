@@ -1,13 +1,17 @@
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
     <section id="about" className="relative bg-[#eef1f1] text-white mt-40 h-[80vh]">
       <div className="absolute inset-0 z-0 opacity-85 h-full bg-sky-300/40">
-        <img
-          src='/FRAMEWORK.gif'
+        <video
+          src='/FRAMEWORK.mp4'
           className='relative h-full mx-auto object-contain z-10'
+          autoPlay
+          muted
+          loop
+          playsInline
+          controls={false}
         />
       </div>
 
@@ -19,9 +23,12 @@ export default function HeroSection() {
         z-20
       `} >
         <Link to='/signup'>
-          <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white">
+        
+          {/*Hidden this button as it does not match with new video it will look bad.*/}
+
+          {/* <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white">
             Join Now
-          </Button>
+          </Button> */}
         </Link>
       </div>
 

@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const testimonials = [
   {
-    quote: "The RADU Framework has revolutionized our school's reward system. Students are more engaged than ever!",
-    author: "Jane Doe",
+    quote: "Nancy Radu unveiled her innovative virtual token system, a data-driven tool that reveals powerful trends. It’s a testament to her commitment to students' success",
+    author: "Holly D",
     role: "Principal, XYZ School",
   },
   {
