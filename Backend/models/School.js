@@ -11,6 +11,7 @@ const SchoolSchema = new mongoose.Schema({
     createdBy: {type: mongoose.Types.ObjectId, ref: 'User'},
     state: {type: String, default: ''},
     country: {type: String, default: ''},
+    timeZone: {type: String, default: ''},
 });
 
 export default mongoose.model('School', SchoolSchema);

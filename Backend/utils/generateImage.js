@@ -52,7 +52,7 @@ export const generateCouponImage = async (
     ctx.font = 'bold 20px "Courier New Bold"'
     ctx.fillText(`EARNED AT THE ${subject.toUpperCase()} CLASS`, canvas.width / 2, 270);
     ctx.fillText(`ON ${date}`, canvas.width / 2, 290);
-    ctx.fillText(`AWARDED BY TEACHER: ${teacher}`, canvas.width / 2, 310);
+    ctx.fillText(`AWARDED BY: ${teacher}`, canvas.width / 2, 310);
     ctx.fillText(`cc: ${parentEmail}`, canvas.width / 2, 350);
 
     return canvas.toBuffer();
