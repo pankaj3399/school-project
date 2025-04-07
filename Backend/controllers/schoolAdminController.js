@@ -28,7 +28,7 @@ const getSchoolIdFromUser = async (userId) => {
 };
 
 export const addSchool = async (req, res) => {
-    const { name, address, district, state, country } = req.body;
+    const { name, address, district, state, country, timeZone } = req.body;
     const logo = req.file;
     try {
       const existingSchool = await School.findOne({ createdBy: req.user.id });
@@ -36,7 +36,7 @@ export const addSchool = async (req, res) => {
         return res.status(403).json({ message: "School already exists for this admin." });
       }
       const logoUrl = await uploadImageFromDataURI(logo);
-      const newSchool = await School.create({ name, address,district, logo: logoUrl, createdBy: req.user.id, state, country });
+      const newSchool = await School.create({ name, address,district, logo: logoUrl,timeZone, createdBy: req.user.id, state, country });
   
       await User.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
   
@@ -476,7 +476,19 @@ export const genreport = async (req, res) => {
             teacherData: tchData,
             barChartImage
         });
-        const formattedDate = new Date().toLocaleDateString("en-US", {
+
+        // Extract timezone offset from school's timezone (format: "UTC+/-X")
+        const timeZone = schData.school.timeZone || 'UTC+0';
+        const offsetHours = parseInt(timeZone.replace('UTC', '') || '0');
+        
+        // Create date in UTC
+        const utcDate = new Date();
+        
+        // Add timezone offset
+        const localDate = new Date(utcDate.getTime() + (offsetHours * 60 * 60 * 1000));
+        
+        // Format date with timezone-adjusted time
+        const formattedDate = localDate.toLocaleDateString("en-US", {
             month: "2-digit",
             day: "2-digit",
             year: "numeric",

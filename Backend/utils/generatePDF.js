@@ -160,7 +160,7 @@ export const generateStudentPDF = async ({
                 return [
                     date.toLocaleDateString(),
                     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    item.submittedForName,
+                    item.submittedByName,
                     item.formType,
                     item.points.toString()
                 ];
@@ -168,7 +168,7 @@ export const generateStudentPDF = async ({
 
             doc.autoTable({
                 startY: yPos,
-                head: [['Date', 'Time', 'Student', 'Action', 'Points']],
+                head: [['Date', 'Time', 'Teacher', 'Action', 'Points']],
                 body: historyData,
                 theme: 'grid',
                 headStyles: {
@@ -183,7 +183,8 @@ export const generateStudentPDF = async ({
                     font: 'helvetica'
                   },
                   bodyStyles: {
-                    fontSize: 12,
+                    fontSize: 10,
+                    font: 'arial',
                     halign: 'center',
                     lineWidth: 0.5,
                     lineColor: [0, 0, 0],
@@ -201,10 +202,10 @@ export const generateStudentPDF = async ({
                   },
                   columnStyles: {
                     0: { cellWidth: 25 },     // Date column
-                    1: { cellWidth: 20 },     // Time column
+                    1: { cellWidth: 'auto' },     // Time column
                     2: { cellWidth: 35 },     // Student column
-                    3: { cellWidth: 'auto' }, // Action column
-                    4: { cellWidth: 15, halign: 'right' }  // Points column
+                    3: { cellWidth: 'auto'}, // Action column
+                    4: { cellWidth: 'auto'}  // Points column
                   }
             });
         }
