@@ -631,6 +631,7 @@ export const sendReportImage = async (data: FormData, email: string) => {
 };
 
 export const sendVerificationMail = async (data:any) => {
+    
     try {
         const token = getToken()
         await axios.post(`${API_URL}/auth/sendVerificationMail`,data,{
@@ -662,6 +663,44 @@ export const resetStudentRoster = async () => {
     try {
         const token = getToken()
         await axios.put(`${API_URL}/schoolAdmin/resetStudentRoster`,{}, {
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (error) {
+        return {error};
+    }
+}
+
+
+export const teacherRoster = async (data:any) => {
+
+    try {
+        const url = `${window.location.origin}/verifyemail`
+        const token = getToken()
+        await axios.post(`${API_URL}/schoolAdmin/teacher-roster`,{
+            url,
+            teachers: data.teachers
+        }, {
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (error) {
+        return {error};
+    }
+}
+export const studentRoster = async (data:any) => {
+
+    try {
+        const url = `${window.location.origin}/verifyemail`
+        const token = getToken()
+        await axios.post(`${API_URL}/schoolAdmin/student-roster`,{
+            url,
+            students: data.students
+        }, {
             headers: {
                 token
             }

@@ -8,6 +8,7 @@ import { sendEmail } from "../services/nodemailer.js";
 import Otp from '../models/Otp.js';
 import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
 import { emailGenerator } from '../utils/emailHelper.js';
+import { sendOnboardingEmail } from '../services/verificationMail.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -244,7 +245,7 @@ export const sendVerifyEmail = async (req, res) => {
 
 export const completeVerification = async (req, res) => {
     try {
-        const { emailVerificationCode, role, email, isStudent } = req.body;
+        const { emailVerificationCode, role, email, isStudent, toVerify } = req.body;
 
         let user = null;
         switch (role) {
@@ -256,6 +257,7 @@ export const completeVerification = async (req, res) => {
                     user.emailVerificationCode = null; // Clear the code
                     await user.save();
                 }
+                sendOnboardingEmail(user)
                 break;
             }
             case Role.Student: {
@@ -265,18 +267,20 @@ export const completeVerification = async (req, res) => {
                     student = await Student
                         .findOne({ studentEmailVerificationCode: emailVerificationCode });
                 }else{
-                    await Student.findOne({ emailVerificationCode });
+                    student = await Student.findOne({ emailVerificationCode });
                 }
                 if (student) {
                     // If parent emails exist, verify them
-                    if (!isStudent && student.parentEmail == email) {
-                        student.isParentOneEmailVerified = true;
-                    }
-                    if (!isStudent && student.standard == email) {
-                        student.isParentTwoEmailVerified = true;
-                    }
+                    
                     if(!isStudent){
-                        student.emailVerificationCode = null; // Clear the code
+                        console.log(student, email);
+                        
+                        if (student.parentEmail == toVerify) {
+                            student.isParentOneEmailVerified = true;
+                        }
+                        if (student.standard == toVerify) {
+                            student.isParentTwoEmailVerified = true;
+                        }
                     }else{
                         student.isStudentEmailVerified = true;
                         student.studentEmailVerificationCode = null;

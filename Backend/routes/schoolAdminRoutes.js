@@ -1,4 +1,4 @@
-import { addSchool, addStudent, addTeacher, getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetStudentRoster, sendReport, genreport } from "../controllers/schoolAdminController.js";
+import { addSchool, addStudent, addTeacher, getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetStudentRoster, sendReport, genreport, teacherRoster, studentRoster } from "../controllers/schoolAdminController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import express from 'express';
@@ -35,5 +35,7 @@ router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdm
 router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
 router.post('/sendreport/:email', upload.single('file'), sendReport);
 router.post('/genreport/:email', authenticate,upload.single('file'), genreport);
+router.post('/teacher-roster', authenticate,authorizeRoles(Role.SchoolAdmin), teacherRoster);
+router.post('/student-roster', authenticate, studentRoster);
 
 export default router;
