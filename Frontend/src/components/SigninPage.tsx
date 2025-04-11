@@ -45,9 +45,6 @@ export default function LoginForm() {
       case "email":
         error = !/\S+@\S+\.\S+/.test(value) ? "Invalid email format" : "";
         break;
-      case "password":
-        error = value.length < 6 ? "Password must be at least 6 characters" : "";
-        break;
       case "role":
         error = value === "" ? "Role is required" : "";
         break;

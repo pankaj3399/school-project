@@ -16,6 +16,7 @@ export default function VerifyEmail() {
     role: "",
     email: "",
     isStudent: false,
+    toVerify:""
   });
 
   useEffect(() => {
@@ -24,13 +25,15 @@ export default function VerifyEmail() {
     const role = searchParams.get("role");
     const email = searchParams.get("email");
     const isStudent = searchParams.get("isStudent");
+    const toVerify = searchParams.get("toVerify");
 
     if (otp && role && email) {
       setVerificationData({
         emailVerificationCode: otp,
         role,
         email,
-        isStudent: isStudent === "true"
+        isStudent: isStudent === "true",
+        toVerify: toVerify ?? "",
       });
     }
   }, [searchParams]);

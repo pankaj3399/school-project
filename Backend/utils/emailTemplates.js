@@ -2,7 +2,7 @@ import { Role } from '../enum.js';
 import path from 'path';
 import fs from 'fs';  // Use synchronous fs instead of promises
 
-export const getVerificationEmailTemplate = (role, otp, url, email, isStudent= false) => {
+export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = null, isStudent= false) => {
   const description = role === Role.Teacher
     ? "Your account has been created by the system manager in the Radu Framework. Please verify your email address to access your teacher account and start using the E-Token system."
     : "Your account has been created by the system manager in the Radu Framework. Please verify your email address to enable your child's E-Token system account and get updates.";
@@ -38,7 +38,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email, isStudent= f
         <p style="margin-bottom: 25px;">${description}</p>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${url}?otp=${otp}&role=${role}&email=${email}&isStudent=${isStudent}" 
+          <a href="${url}?otp=${otp}&role=${role}&email=${email}&isStudent=${isStudent}&toVerify=${toVerify ?? ""}" 
              style="background-color: #00a58c; 
                     color: white; 
                     padding: 12px 24px; 

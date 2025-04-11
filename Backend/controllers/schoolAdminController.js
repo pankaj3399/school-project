@@ -10,6 +10,7 @@ import PointsHistory from "../models/PointsHistory.js"
 import mongoose from "mongoose"
 import { reportEmailGenerator } from "../utils/emailHelper.js"
 import { generateStudentPDF } from "../utils/generatePDF.js"
+import { sendVerifyEmailRoster } from "../services/verificationMail.js"
 
 const getSchoolIdFromUser = async (userId) => {
     // Try finding user as admin first
@@ -28,7 +29,7 @@ const getSchoolIdFromUser = async (userId) => {
 };
 
 export const addSchool = async (req, res) => {
-    const { name, address, district, state, country, timeZone } = req.body;
+    const { name, address, district, state, country, timeZone, domain } = req.body;
     const logo = req.file;
     try {
       const existingSchool = await School.findOne({ createdBy: req.user.id });
@@ -36,7 +37,7 @@ export const addSchool = async (req, res) => {
         return res.status(403).json({ message: "School already exists for this admin." });
       }
       const logoUrl = await uploadImageFromDataURI(logo);
-      const newSchool = await School.create({ name, address,district, logo: logoUrl,timeZone, createdBy: req.user.id, state, country });
+      const newSchool = await School.create({ name, address,district, logo: logoUrl,timeZone, createdBy: req.user.id, state, country, domain });
   
       await User.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
   
@@ -507,3 +508,139 @@ export const genreport = async (req, res) => {
         return res.status(500).json({ message: "Server Error", error: error.message });
     }
 }
+
+export const teacherRoster = async (req, res) => {
+    try {
+        const { teachers } = req.body
+        const user = req.user;
+        const schoolId = await getSchoolIdFromUser(user.id);
+
+        const school = await School.findById(schoolId);
+        const teacherIds =[...school.teachers]
+        
+        if(!teachers || teachers.length === 0) {
+            return res.status(400).json({ message: "No teachers provided" });
+        }
+
+        teachers.forEach(async (teacher) => {
+            const password = new Date(teacher.dateOfBirth).getFullYear().toString();
+            const hashedPassword = await bcrypt.hash(password, 12);
+            const createdUser = await Teacher.create({
+                ...teacher,
+                schoolId: schoolId,
+                password: hashedPassword,
+                isEmailVerified: false
+            })
+            teacherIds.push(createdUser._id);
+            await sendVerifyEmailRoster(req, res, createdUser, teacher, false);
+        });
+        school.teachers = [...teacherIds]
+        console.log([...teacherIds])
+        school.teachers = [...new Set(teacherIds)];
+        await school.save();
+
+
+        
+
+        return res.status(200).json({ message: "Teacher roster updated successfully" });
+    } catch (error) {
+        console.log(error);
+        
+        return res.status(500).json({ message: "Server Error", error: error.message });
+    }
+}
+export const studentRoster = async (req, res) => {
+    try {
+        const { students, url } = req.body;
+        const user = req.user;
+        const schoolId = await getSchoolIdFromUser(user.id);
+
+        const school = await School.findById(schoolId);
+        const studentIds = [...school.students];
+        
+        if(!students || students.length === 0) {
+            return res.status(400).json({ message: "No students provided" });
+        }
+
+        // Process each student in parallel
+        const createPromises = students.map(async (student) => {
+            try {
+                if(!student.name || !student.email || !student.grade || !student.studentNumber) {
+                    return null; // Skip invalid student data
+                }
+
+                const hashedPassword = await bcrypt.hash("123456", 12);
+                
+                const studentData = {
+                    name: student.name,
+                    email: student.studentNumber+school.domain,
+                    grade: student.grade,
+                    studentNumber: student.studentNumber,
+                    parentEmail: student.guardian1.email,
+                    standard: student.guardian2?.email ?? "",
+                    guardian1: {
+                        name: student.guardian1.name,
+                        email: student.guardian1.email,
+                        phone1: student.guardian1.phone1,
+                        phone2: student.guardian1.phone2 || ''
+                    },
+                    guardian2: student.guardian2 ? {
+                        name: student.guardian2.name,
+                        email: student.guardian2.email,
+                        phone1: student.guardian2.phone1,
+                        phone2: student.guardian2.phone2 || ''
+                    } : null,
+                    schoolId: schoolId,
+                    password: hashedPassword,
+                    role: Role.Student,
+                    isEmailVerified: false,
+                    isParentOneEmailVerified: false,
+                    isParentTwoEmailVerified: false,
+                    sendNotifications: true
+                };
+
+                const createdStudent = await Student.create(studentData);
+
+              
+
+                // Send verification emails
+                if (student.email) {
+                    await sendVerifyEmailRoster(req, res, createdStudent, true);
+                }
+
+                if (student.guardian1?.email) {
+                    await sendVerifyEmailRoster(req, res,createdStudent,
+                    false);
+                }
+
+                
+
+                return createdStudent._id;
+            } catch (error) {
+                console.error(`Error creating student ${student.name}:`, error);
+                return null;
+            }
+        });
+
+        // Wait for all students to be created
+        const newStudentIds = await Promise.all(createPromises);
+        
+        // Filter out any null values (failed creations) and add to school's student list
+        const validStudentIds = newStudentIds.filter(id => id !== null);
+        school.students = [...new Set([...studentIds, ...validStudentIds])];
+        await school.save();
+
+        return res.status(200).json({ 
+            success: true,
+            message: "Student roster updated successfully",
+            studentsAdded: validStudentIds.length
+        });
+    } catch (error) {
+        console.error('Student Roster Error:', error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Server Error", 
+            error: error.message 
+        });
+    }
+};

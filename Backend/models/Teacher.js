@@ -19,6 +19,7 @@ const teacherSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: Object.values(Role),
+    default: Role.Teacher,
     required: true,
   },
   createdAt: {

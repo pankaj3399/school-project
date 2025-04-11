@@ -25,7 +25,6 @@ export default function HeroSection() {
         <Link to='/signup'>
         
           {/*Hidden this button as it does not match with new video it will look bad.*/}
-
           {/* <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white">
             Join Now
           </Button> */}

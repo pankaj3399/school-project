@@ -1,6 +1,25 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
 
+const GaurdianSchema = new mongoose.Schema({
+  name:{
+    type:String,
+    required:true
+  },
+  email:{
+    type:String,
+    default: null,
+  },
+  phone1:{
+    type:String,
+    default:""
+  },
+  phone2:{
+    type:String,
+    default:""
+  },
+})
+
 const studentSchema = new mongoose.Schema({
   email:{
     type:String,
@@ -77,6 +96,14 @@ const studentSchema = new mongoose.Schema({
   },
   pendingEtokens:{
     type:[String]
+  },
+  guardian1:{
+    type: GaurdianSchema,
+    default: null
+  },
+  gaurdian2:{
+    type: GaurdianSchema,
+    default: null
   }
 });
 

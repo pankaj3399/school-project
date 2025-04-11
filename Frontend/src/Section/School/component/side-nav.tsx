@@ -1,6 +1,6 @@
 //school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Paperclip} from 'lucide-react';
+import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Paperclip, CircuitBoard} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -14,6 +14,8 @@ const navItems = [
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
   { href: '/history', label: 'Point History', icon: ClipboardIcon },
   { href: '/print-report', label: 'Print Report', icon: Paperclip },
+  { href: '/setup', label: 'SETUP TEACHERS', icon: CircuitBoard },
+  { href: '/setup-students', label: 'SETUP STUDENTS', icon: CircuitBoard },
 ];
 
 export function SideNav() {
@@ -47,7 +49,7 @@ export function SideNav() {
         >
           <nav className="w-64">
             <div className="p-4">
-              <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
+              <img src="/radu-logo.png" alt="Logo" className="w-14 h-14" />
             </div>
             <ul className="space-y-2 py-4">
               {navItems.map((item) => (
@@ -83,7 +85,7 @@ export function SideNav() {
       {/* Desktop Navigation */}
       <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg min-h-fit h-screen">
         <div className="p-4">
-          <img src="/logo3.png" alt="Logo" className="w-56  invert object-cover" />
+          <img src="/radu-logo-2.png" alt="Logo" className="w-56 h-fit invert object-cover" />
         </div>
         <ul className="space-y-2 py-4">
           {navItems.map((item) => (

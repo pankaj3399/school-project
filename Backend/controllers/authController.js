@@ -8,6 +8,9 @@ import { sendEmail } from "../services/nodemailer.js";
 import Otp from '../models/Otp.js';
 import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
 import { emailGenerator } from '../utils/emailHelper.js';
+import { sendOnboardingEmail } from '../services/verificationMail.js';
+import SupportRequest from '../models/SupportRequest.js';
+import { sendSupportEmail } from '../services/supportRequestEmail.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -244,7 +247,7 @@ export const sendVerifyEmail = async (req, res) => {
 
 export const completeVerification = async (req, res) => {
     try {
-        const { emailVerificationCode, role, email, isStudent } = req.body;
+        const { emailVerificationCode, role, email, isStudent, toVerify } = req.body;
 
         let user = null;
         switch (role) {
@@ -256,6 +259,7 @@ export const completeVerification = async (req, res) => {
                     user.emailVerificationCode = null; // Clear the code
                     await user.save();
                 }
+                sendOnboardingEmail(user)
                 break;
             }
             case Role.Student: {
@@ -265,18 +269,20 @@ export const completeVerification = async (req, res) => {
                     student = await Student
                         .findOne({ studentEmailVerificationCode: emailVerificationCode });
                 }else{
-                    await Student.findOne({ emailVerificationCode });
+                    student = await Student.findOne({ emailVerificationCode });
                 }
                 if (student) {
                     // If parent emails exist, verify them
-                    if (!isStudent && student.parentEmail == email) {
-                        student.isParentOneEmailVerified = true;
-                    }
-                    if (!isStudent && student.standard == email) {
-                        student.isParentTwoEmailVerified = true;
-                    }
+                    
                     if(!isStudent){
-                        student.emailVerificationCode = null; // Clear the code
+                        console.log(student, email);
+                        
+                        if (student.parentEmail == toVerify) {
+                            student.isParentOneEmailVerified = true;
+                        }
+                        if (student.standard == toVerify) {
+                            student.isParentTwoEmailVerified = true;
+                        }
                     }else{
                         student.isStudentEmailVerified = true;
                         student.studentEmailVerificationCode = null;
@@ -378,6 +384,66 @@ export const resetPassword = async (req, res) => {
         res.status(200).json({ message: "Password reset successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+export const createSupportTicket = async (req, res) => {
+    try {
+        const {
+            fullName,
+            position,
+            schoolName,
+            schoolId,
+            subjectGrade,
+            email,
+            phone,
+            issue,
+            contactPreference,
+            state
+        } = req.body;
+
+        // Validate required fields
+        if (!fullName || !schoolId || !email || !issue || !contactPreference || !state) {
+            return res.status(400).json({
+                message: "Missing required fields",
+            });
+        }
+
+        // Create the support request with the ticket number being auto-generated
+        const supportRequest = new SupportRequest({
+            username: fullName,
+            position,
+            schoolName,
+            schoolId,
+            state,
+            email,
+            phone: phone || null,
+            preferredContactMethod: contactPreference,
+            issue,
+            userId: req.user.id, // from auth middleware
+            status: 'Open'
+        });
+
+        const createdTicket = await supportRequest.save();
+
+        // Send email notification about the ticket
+        // Note: Add your email sending logic here
+        sendSupportEmail(createdTicket);
+
+        res.status(201).json({
+            success: true,
+            message: "Support ticket created successfully",
+            ticketNumber: createdTicket.ticketNumber,
+            ticketId: createdTicket._id
+        });
+
+    } catch (error) {
+        console.error('Support Ticket Error:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error", 
+            error: error.message 
+        });
     }
 };
 

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut,X,MenuIcon,ClipboardIcon, Users, School, Target, Paperclip} from 'lucide-react';
+import { LogOut,X,MenuIcon,ClipboardIcon, Users, School, Target, Paperclip, CircuitBoard} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser } from '@/api';
@@ -24,7 +24,8 @@ export function TeacherSideNav() {
           { href: '/teachers/students', label: 'View Students', icon: Users },
           { href: '/teachers/analytics', label: 'Analytics', icon: School },
           { href: '/teachers/history', label: 'History', icon: Target },
-          { href: '/teachers/print-report', label: 'Print Report', icon: Paperclip }
+          { href: '/teachers/print-report', label: 'Print Report', icon: Paperclip },
+          { href: '/teachers/students-setup', label: 'Student Setup', icon: CircuitBoard }
         ])
       }
     };
@@ -82,7 +83,7 @@ export function TeacherSideNav() {
 
 <nav className={ `w-64 bg-[#654f6f] shadow-lg max-md:hidden`}>
       <div className="p-4">
-      <img src="/logo3.png" alt="" className='w-56 invert object-cover' />
+      <img src="/radu-logo-2.png" alt="" className='w-56 invert object-cover' />
       </div>
       <ul className="space-y-2 py-4">
         {navItems.map((item) => (

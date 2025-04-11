@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { model } from 'mongoose';
 
 const SchoolSchema = new mongoose.Schema({
     name : {type:String, required: true},
@@ -12,6 +12,7 @@ const SchoolSchema = new mongoose.Schema({
     state: {type: String, default: ''},
     country: {type: String, default: ''},
     timeZone: {type: String, default: ''},
+    domain: {type: String, default: ''},
 });
 
 export default mongoose.model('School', SchoolSchema);
