@@ -710,3 +710,17 @@ export const studentRoster = async (data:any) => {
         return {error};
     }
 }
+
+export const sendSupportEmail = async (data:any) => {
+    try {
+        const token = getToken()
+        await axios.post(`${API_URL}/auth/support-request`,data, {
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (error) {
+        return {error};
+    }
+}

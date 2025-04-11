@@ -9,6 +9,8 @@ import Otp from '../models/Otp.js';
 import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
 import { emailGenerator } from '../utils/emailHelper.js';
 import { sendOnboardingEmail } from '../services/verificationMail.js';
+import SupportRequest from '../models/SupportRequest.js';
+import { sendSupportEmail } from '../services/supportRequestEmail.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -382,6 +384,66 @@ export const resetPassword = async (req, res) => {
         res.status(200).json({ message: "Password reset successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+export const createSupportTicket = async (req, res) => {
+    try {
+        const {
+            fullName,
+            position,
+            schoolName,
+            schoolId,
+            subjectGrade,
+            email,
+            phone,
+            issue,
+            contactPreference,
+            state
+        } = req.body;
+
+        // Validate required fields
+        if (!fullName || !schoolId || !email || !issue || !contactPreference || !state) {
+            return res.status(400).json({
+                message: "Missing required fields",
+            });
+        }
+
+        // Create the support request with the ticket number being auto-generated
+        const supportRequest = new SupportRequest({
+            username: fullName,
+            position,
+            schoolName,
+            schoolId,
+            state,
+            email,
+            phone: phone || null,
+            preferredContactMethod: contactPreference,
+            issue,
+            userId: req.user.id, // from auth middleware
+            status: 'Open'
+        });
+
+        const createdTicket = await supportRequest.save();
+
+        // Send email notification about the ticket
+        // Note: Add your email sending logic here
+        sendSupportEmail(createdTicket);
+
+        res.status(201).json({
+            success: true,
+            message: "Support ticket created successfully",
+            ticketNumber: createdTicket.ticketNumber,
+            ticketId: createdTicket._id
+        });
+
+    } catch (error) {
+        console.error('Support Ticket Error:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error", 
+            error: error.message 
+        });
     }
 };
 

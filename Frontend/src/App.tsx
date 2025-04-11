@@ -93,6 +93,12 @@ export default function App() {
 
           <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
+          <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
+
+
+          
+
+        
           
 
         </Routes>

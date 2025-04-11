@@ -49,7 +49,7 @@ export function SideNav() {
         >
           <nav className="w-64">
             <div className="p-4">
-              <img src="/hero1.png" alt="Logo" className="w-14 h-14" />
+              <img src="/radu-logo.png" alt="Logo" className="w-14 h-14" />
             </div>
             <ul className="space-y-2 py-4">
               {navItems.map((item) => (
@@ -85,7 +85,7 @@ export function SideNav() {
       {/* Desktop Navigation */}
       <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg min-h-fit h-screen">
         <div className="p-4">
-          <img src="/logo3.png" alt="Logo" className="w-56  invert object-cover" />
+          <img src="/radu-logo-2.png" alt="Logo" className="w-56 h-fit invert object-cover" />
         </div>
         <ul className="space-y-2 py-4">
           {navItems.map((item) => (

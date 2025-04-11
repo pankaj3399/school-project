@@ -29,7 +29,7 @@ const getSchoolIdFromUser = async (userId) => {
 };
 
 export const addSchool = async (req, res) => {
-    const { name, address, district, state, country, timeZone } = req.body;
+    const { name, address, district, state, country, timeZone, domain } = req.body;
     const logo = req.file;
     try {
       const existingSchool = await School.findOne({ createdBy: req.user.id });
@@ -37,7 +37,7 @@ export const addSchool = async (req, res) => {
         return res.status(403).json({ message: "School already exists for this admin." });
       }
       const logoUrl = await uploadImageFromDataURI(logo);
-      const newSchool = await School.create({ name, address,district, logo: logoUrl,timeZone, createdBy: req.user.id, state, country });
+      const newSchool = await School.create({ name, address,district, logo: logoUrl,timeZone, createdBy: req.user.id, state, country, domain });
   
       await User.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
   
@@ -573,7 +573,7 @@ export const studentRoster = async (req, res) => {
                 
                 const studentData = {
                     name: student.name,
-                    email: student.email,
+                    email: student.studentNumber+school.domain,
                     grade: student.grade,
                     studentNumber: student.studentNumber,
                     parentEmail: student.guardian1.email,
