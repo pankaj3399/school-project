@@ -31,6 +31,8 @@ import AddStudentTeacher from "./Section/Teacher/add-student";
 import TeacherDashboard from "./Section/Teacher/analytics";
 import Finalize from "./Section/School/finalize";
 import VerifyEmail from "./components/VerifyEmail";
+import Setup from "./Section/School/setup";
+import SetupStudents from "./Section/School/setup-students";
 
 
 // Reusable ProtectedRoute component
@@ -88,6 +90,16 @@ export default function App() {
 
           <Route path="/verifyemail" element={<VerifyEmail />}>
           </Route>
+
+          <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
+          <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
+          <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
+
+
+          
+
+        
+          
 
         </Routes>
       </RootLayout>

@@ -8,14 +8,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/authContext"
+import SupportPanel from "../support-panel"
+import { useState } from "react"
 
 export function TopNav() {
   const {user} = useAuth();
-
+  const [showSupport, setShowSupport] = useState(false);
 
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
-      <div className="flex items-center justify-end h-16 px-4">
+      <div className="flex items-center justify-end h-16 px-4 space-x-4">
+        <SupportPanel 
+          isOpen={showSupport}
+          onOpenChange={setShowSupport}
+          trigger={
+            <Button variant="ghost" className="text-white hover:text-white hover:bg-[#7a617f]">
+              Support
+            </Button>
+          }
+        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative mr-8 h-8 w-fit rounded-full">
