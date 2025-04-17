@@ -90,9 +90,9 @@ jobs:
           
           # Create env file
           cat > ~/app/.env << 'EOL'
-          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          MONGODB_URI=${{ secrets.MONGO_URI }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUD_NAME }}
           CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
           EMAIL_USER=${{ secrets.EMAIL_USER }}
