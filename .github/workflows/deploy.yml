@@ -74,9 +74,9 @@ jobs:
                 - "5000:5000"
               restart: always
               environment:
-                - MONGODB_URI=${MONGODB_URI}
+                - MONGO_URI=${MONGO_URI}
                 - JWT_SECRET=${JWT_SECRET}
-                - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+                - CLOUDINARY_CLOUD_NAME=${CLOUD_NAME}
                 - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                 - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                 - EMAIL_USER=${EMAIL_USER}
@@ -90,9 +90,9 @@ jobs:
           
           # Create env file
           cat > ~/app/.env << 'EOL'
-          MONGODB_URI=${{ secrets.MONGO_URI }}
+          MONGO_URI=${{ secrets.MONGO_URI }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUD_NAME }}
+          CLOUD_NAME=${{ secrets.CLOUD_NAME }}
           CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
           EMAIL_USER=${{ secrets.EMAIL_USER }}
