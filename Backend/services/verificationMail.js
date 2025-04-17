@@ -89,13 +89,13 @@ export const sendOnboardingEmail = async (user) => {
 
         switch(user.type) {
             case 'Lead':
-                pdf_url = process.env.LEAD_PDF_URL;
-                video_url = process.env.LEAD_VIDEO_URL;
+                pdf_url = process.env.LEAD_PDF_URL ?? "";
+                video_url = process.env.LEAD_VIDEO_URL ?? "";
                 userType = 'Leader/Lead Teacher';
                 break;
             case 'Special':
-                pdf_url = process.env.TEAM_MEMBER_PDF_URL;
-                video_url = process.env.TEAM_MEMBER_VIDEO_URL;
+                pdf_url = process.env.TEAM_MEMBER_PDF_URL ?? "";
+                video_url = process.env.TEAM_MEMBER_VIDEO_URL ?? "";
                 userType = 'Team Member/Special Teacher';
                 break;
             default:
