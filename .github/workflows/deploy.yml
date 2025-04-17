@@ -1,0 +1,50 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [ finalv2 ]  # Change to your main branch name if different
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
+        
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Copy project files to EC2
+      run: |
+        scp -r ./* ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }}:~/app
+        
+    - name: Create env files
+      run: |
+        # Frontend env
+        echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > Frontend/.env
+        
+        # Backend env (add all your environment variables here)
+        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" > Backend/.env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> Backend/.env
+        echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" >> Backend/.env
+        echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> Backend/.env
+        echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> Backend/.env
+        echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> Backend/.env
+        echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> Backend/.env
+        echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> Backend/.env
+        
+        # Copy env files to EC2
+        scp Frontend/.env ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }}:~/app/Frontend/.env
+        scp Backend/.env ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }}:~/app/Backend/.env
+        
+    - name: Deploy application on EC2
+      run: |
+        ssh ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }} "cd ~/app && sudo docker-compose down && sudo docker-compose up -d --build"
