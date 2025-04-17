@@ -1,50 +1,111 @@
-name: Deploy to AWS EC2
+name: Build, Push and Deploy to EC2
 
 on:
   push:
-    branches: [ finalv2 ]  # Change to your main branch name if different
+    branches: [ main, finalv2 ]  # Change to your main branch name if different
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
-        
-    - name: Add server to known hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
-        
-    - name: Copy project files to EC2
-      run: |
-        scp -r ./* ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }}:~/app
-        
-    - name: Create env files
-      run: |
-        # Frontend env
-        echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > Frontend/.env
-        
-        # Backend env (add all your environment variables here)
-        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" > Backend/.env
-        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> Backend/.env
-        echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" >> Backend/.env
-        echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> Backend/.env
-        echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> Backend/.env
-        echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> Backend/.env
-        echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> Backend/.env
-        echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> Backend/.env
-        
-        # Copy env files to EC2
-        scp Frontend/.env ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }}:~/app/Frontend/.env
-        scp Backend/.env ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }}:~/app/Backend/.env
-        
-    - name: Deploy application on EC2
-      run: |
-        ssh ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }} "cd ~/app && sudo docker-compose down && sudo docker-compose up -d --build"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./Frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/school-frontend:latest
+      
+      - name: Build and push Backend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./Backend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/school-backend:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
+      
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to EC2
+        run: |
+          # Create deployment script on EC2
+          ssh ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
+          # Create app directory if it doesn't exist
+          mkdir -p ~/app
+          
+          # Create docker-compose file
+          cat > ~/app/docker-compose.yml << 'EOL'
+          version: '3.8'
+          
+          services:
+            frontend:
+              image: ${{ secrets.DOCKER_USERNAME }}/school-frontend:latest
+              ports:
+                - "80:80"
+              restart: always
+              depends_on:
+                - backend
+            
+            backend:
+              image: ${{ secrets.DOCKER_USERNAME }}/school-backend:latest
+              ports:
+                - "5000:5000"
+              restart: always
+              environment:
+                - MONGODB_URI=${MONGODB_URI}
+                - JWT_SECRET=${JWT_SECRET}
+                - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+                - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+                - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+                - EMAIL_USER=${EMAIL_USER}
+                - EMAIL_PASS=${EMAIL_PASS}
+                - FRONTEND_URL=${FRONTEND_URL}
+          
+          networks:
+            default:
+              name: school-network
+          EOL
+          
+          # Create env file
+          cat > ~/app/.env << 'EOL'
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          EMAIL_USER=${{ secrets.EMAIL_USER }}
+          EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          EOL
+          
+          # Log into Docker Hub
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          
+          # Pull latest images and restart containers
+          cd ~/app
+          docker-compose pull
+          docker-compose down
+          docker-compose up -d
+          EOF
