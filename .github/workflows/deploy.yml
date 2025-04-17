@@ -27,7 +27,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/school-frontend:latest
           build-args: |
-            VITE_API_URL=http://${{ secrets.AWS_EC2_HOST }}/api
+            VITE_API_URL=http://${{ secrets.AWS_EC2_HOST }}
       
       - name: Build and push Backend
         uses: docker/build-push-action@v4
