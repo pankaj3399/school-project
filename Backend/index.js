@@ -89,14 +89,7 @@ connectDB().then(() => {
   console.error('Error connecting to database', error);
 });
 
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET, 
-//     resave: false, 
-//     saveUninitialized: false, 
-//     cookie: { secure: false }, 
-//   })
-// );
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
