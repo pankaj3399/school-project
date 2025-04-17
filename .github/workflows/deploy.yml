@@ -65,6 +65,9 @@ jobs:
               ports:
                 - "80:80"
               restart: always
+              environment:
+                - NODE_ENV=production
+                - VITE_API_URL=http://backend:5000/api
               depends_on:
                 - backend
             
