@@ -68,6 +68,8 @@ jobs:
               environment:
                 - NODE_ENV=production
                 - VITE_API_URL=http://backend:5000/api
+              build-args: |
+                VITE_API_URL=http://${{ secrets.AWS_EC2_HOST }}/api
               depends_on:
                 - backend
             
