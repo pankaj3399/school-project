@@ -1,4 +1,4 @@
-# School Management System Deployment Guide
+# Deployment Guide
 
 This repository contains a MERN stack application with Frontend (React/Vite) and Backend (Node.js/Express) components that are deployed to AWS EC2 using Docker and GitHub Actions.
 
