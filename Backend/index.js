@@ -29,74 +29,22 @@ const app = express();
 const corsOptions = {
   origin: "*", 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-  credentials: true, 
 };
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(bodyParser.json({limit: "50mb"}));
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET, 
-    resave: false, 
-    saveUninitialized: false, 
-    cookie: { secure: false }, 
-  })
-);
 
 
 
 connectDB().then(() => {
   console.log("MongoDB connected");
-
-  
-  // AdminJs.registerAdapter(AdminJSMongoose);
-
-
-  // const adminJs = new AdminJs({
-  //   resources: [
-  //     { resource: User, options: { properties: { password: { isVisible: false } } } },
-  //     { resource: School },
-  //     { resource: Teacher },
-  //     { resource: Student },
-      
-  //   ],
-  //   resave: false, 
-  //   saveUninitialized: false, 
-  //   secret: process.env.SESSION_SECRET,
-  //   rootPath: '/admin',
-  // });
-
-
-  // const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
-  //   adminJs,
-  //   {
-  //     authenticate: async (email, password) => {
-  //       const user = await User.findOne({ email, role: 'Admin' });
-  //       if (user && (await bcrypt.compare(password, user.password))) {
-  //         return { id: user._id, email: user.email, role: user.role };
-  //       }
-  //       return null;
-  //     },
-  //     cookiePassword: process.env.JWT_SECRET,
-  //   }
-  // );
-
-  
-  // app.use(adminJs.options.rootPath, adminRouter);
 }).catch((error) => {
   console.error('Error connecting to database', error);
 });
 
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET, 
-//     resave: false, 
-//     saveUninitialized: false, 
-//     cookie: { secure: false }, 
-//   })
-// );
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

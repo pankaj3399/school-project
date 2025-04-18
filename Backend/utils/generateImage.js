@@ -3,9 +3,9 @@ process.env.FONTCONFIG_PATH = '/dev/null'
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import pkg from 'canvas';
 
-
+const { createCanvas, loadImage, registerFont } = pkg
 
 function loadFontFromURL(url, familyName) {
   registerFont(url, { family: familyName });
