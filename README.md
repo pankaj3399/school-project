@@ -62,12 +62,18 @@ In your GitHub repository, add the following secrets:
 5. `DOCKER_PASSWORD`: Your Docker Hub password
 6. `MONGO_URI`: MongoDB connection string
 7. `JWT_SECRET`: Secret key for JWT authentication
-8. `CLOUD_NAME`: Cloudinary cloud name
-9. `CLOUDINARY_API_KEY`: Cloudinary API key
+8.  `CLOUD_NAME`: Cloudinary cloud name
+9.  `CLOUDINARY_API_KEY`: Cloudinary API key
 10. `CLOUDINARY_API_SECRET`: Cloudinary API secret
 11. `EMAIL_USER`: Email address for sending notifications
 12. `EMAIL_PASS`: Password for the email address
 13. `FRONTEND_URL`: URL of your frontend application (e.g., http://your-ec2-public-dns)
+14. `LOGO_URL`: URL for application logo
+15. `LEAD_PDF_URL`: PDF guide URL for lead teachers
+16. `LEAD_VIDEO_URL`: Tutorial video URL for lead teachers
+17. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
+18. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
+19. `SUPPORT_EMAIL`: Email address for support inquiries
 
 ## Deployment Process
 
