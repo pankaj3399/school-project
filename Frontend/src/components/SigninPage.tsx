@@ -63,6 +63,8 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const res = await signIn(formData);
+      console.log(res);
+      
       if (res.error) {
         toast({
           title: res.error.message,

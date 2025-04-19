@@ -18,7 +18,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = nu
   } catch (error) {
     console.error('Error loading logo:', error);
     // Fallback to a URL if available - we can add the logo to cloud storage and use the URL here
-    logoSrc = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
+    logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
   }
 
   return `

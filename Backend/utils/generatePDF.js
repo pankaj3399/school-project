@@ -19,6 +19,39 @@ const getImageAsBase64 = async (input) => {
     }
 };
 
+// Helper function to format date according to timezone
+const formatDateWithTimezone = (dateString, timezone) => {
+    try {
+        const date = new Date(dateString);
+        
+        // Parse timezone offset from string (e.g., "UTC-5" => -5)
+        let offsetHours = 0;
+        if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
+            offsetHours = parseInt(timezone.replace('UTC', '')) || 0;
+        }
+        
+        // Apply timezone offset
+        const adjustedDate = new Date(date.getTime() + (offsetHours * 60 * 60 * 1000));
+        
+        // Format the date
+        return {
+            date: adjustedDate.toLocaleDateString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric'
+            }),
+            time: adjustedDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            })
+        };
+    } catch (error) {
+        console.error('Error formatting date with timezone:', error);
+        return { date: 'Invalid Date', time: 'Invalid Time' };
+    }
+};
+
 export const generateStudentPDF = async ({
     studentData,
     schoolData,
@@ -39,7 +72,7 @@ export const generateStudentPDF = async ({
         doc.setFontSize(12);
 
         // Fixed Radu Framework logo (make sure this URL is accessible)
-        const raduLogoUrl = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
+        const raduLogoUrl = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
         try {
             const raduLogoBase64 = await getImageAsBase64(raduLogoUrl);
             if (raduLogoBase64) {
@@ -155,11 +188,13 @@ export const generateStudentPDF = async ({
         yPos += 10;
 
         if (studentData.data.length > 0) {
+            const timezone = schoolData.school.timeZone || 'UTC+0';
+            
             const historyData = studentData.data.map(item => {
-                const date = new Date(item.submittedAt);
+                const formattedDate = formatDateWithTimezone(item.submittedAt, timezone);
                 return [
-                    date.toLocaleDateString(),
-                    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    formattedDate.date,
+                    formattedDate.time,
                     item.submittedByName,
                     item.formType,
                     item.points.toString()
@@ -216,10 +251,12 @@ export const generateStudentPDF = async ({
             doc.text('Feedback', margin, yPos);
             yPos += 10;
 
+            const timezone = schoolData.school.timeZone || 'UTC+0';
+            
             const feedbackData = studentData.feedback.map(item => {
-                const date = new Date(item.createdAt);
+                const formattedDate = formatDateWithTimezone(item.createdAt, timezone);
                 return [
-                    date.toLocaleDateString(),
+                    formattedDate.date,
                     item.submittedByName,
                     item.feedback
                 ];

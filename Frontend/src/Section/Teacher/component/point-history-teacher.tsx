@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast"
 import { getPointHistory, getStudents } from "@/api"
 import Loading from "../../Loading"
 import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select } from "@/components/ui/select"
-
+import { useAuth } from "@/authContext"
 
 export default function ViewPointHistoryTeacher() {
   const [pointHistory, setPointHistory] = useState<any[]>([])
@@ -14,7 +14,51 @@ export default function ViewPointHistoryTeacher() {
   const [students, setStudents] = useState<any[]>([])
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
+  const { user } = useAuth();
   
+  // Helper function to format date and time with timezone
+  const formatDateTime = (date: string | number | Date, format: 'date' | 'time') => {
+    try {
+      const dateObj = new Date(date);
+      
+      // Get timezone from user's school or default to local
+      const timezone = user?.schoolId?.timezone;
+      
+      // If timezone exists and starts with UTC, parse it
+      if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
+        // Extract offset hours (e.g., "UTC-5" => -5)
+        const offset = parseInt(timezone.replace('UTC', '')) || 0;
+        
+        const options: Intl.DateTimeFormatOptions = {
+          timeZone: 'UTC', // Start with UTC
+          ...(format === 'date' 
+            ? { year: 'numeric', month: '2-digit', day: '2-digit' } 
+            : { hour: '2-digit', minute: '2-digit', hour12: true })
+        };
+        
+        // Format in UTC
+        const formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
+        
+        // For non-zero offsets, we need to manually adjust the date
+        if (offset !== 0 && format === 'time') {
+          // Create a new date object with the offset applied
+          const adjustedDate = new Date(dateObj.getTime() + (offset * 60 * 60 * 1000));
+          return new Intl.DateTimeFormat('en-US', options).format(adjustedDate);
+        }
+        
+        return formatted;
+      }
+      
+      // Fall back to browser's local timezone
+      return format === 'date' 
+        ? dateObj.toLocaleDateString() 
+        : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return format === 'date' ? 'Invalid Date' : 'Invalid Time';
+    }
+  };
+
       useEffect(()=>{
           const fetchData = async () => {
               const token = localStorage.getItem('token')
@@ -106,15 +150,15 @@ export default function ViewPointHistoryTeacher() {
           </TableRow>
         </TableHeader>
         <TableBody>
-                {showPointHistory.map((history) => (
-                <TableRow key={history._id}>
-                <TableCell>{new Date(history.submittedAt).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(history.submittedAt).toLocaleTimeString([],{hour:"2-digit", minute:"2-digit"})}</TableCell>
-                <TableCell>{history.submittedForName}</TableCell>
-                <TableCell>{history.formType ?? "N/A"}</TableCell>
-                <TableCell>{history.points}</TableCell>
-                </TableRow>
-            )).reverse()}
+          {showPointHistory.map((history) => (
+            <TableRow key={history._id}>
+              <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
+              <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
+              <TableCell>{history.submittedForName}</TableCell>
+              <TableCell>{history.formType ?? "N/A"}</TableCell>
+              <TableCell>{history.points}</TableCell>
+            </TableRow>
+          )).reverse()}
         </TableBody>
       </Table>
 

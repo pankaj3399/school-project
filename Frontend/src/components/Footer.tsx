@@ -46,7 +46,8 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t border-gray-700 text-center text-sm">
           <p>&copy; {new Date().getFullYear()} The RADU Framework &#9415; All rights reserved.</p>
-          <p className="mt-2">Powered by InnoTech Solutions</p>
+          <p className="mt-2">Powered by Innotech Solutions with
+Affective Academy LLC.</p>
         </div>
       </div>
     </footer>

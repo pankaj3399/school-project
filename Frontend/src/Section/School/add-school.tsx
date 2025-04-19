@@ -293,7 +293,7 @@ if (!response.error) {
               <p className="text-xl">{school.state}, {school.country}</p>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>
+              {/* <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>
                 {isEditing ? "Cancel":"Edit School"}
               </Button>
 
@@ -301,7 +301,7 @@ if (!response.error) {
                 setShowResetModal(true)
               }>
                Reset Students
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>

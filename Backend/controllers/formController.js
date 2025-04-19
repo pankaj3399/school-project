@@ -220,8 +220,7 @@ export const submitFormTeacher = async (req, res) => {
       submittedForId: submittedFor,
       submittedForName: submittedForStudent.name,
       points: totalPoints,
-      schoolId: teacher.schoolId,
-      submittedAt
+      schoolId: teacher.schoolId
     });
 
     if(form.formType == "Feedback"){
@@ -320,8 +319,7 @@ export const submitFormAdmin = async (req, res) => {
       submittedForId: submittedFor,
       submittedForName: submittedForStudent.name,
       points: totalPoints,
-      schoolId: schoolAdmin.schoolId,
-      submittedAt
+      schoolId: schoolAdmin.schoolId
     });
 
     if(form.formType == "Feedback"){
