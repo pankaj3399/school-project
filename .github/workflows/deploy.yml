@@ -27,7 +27,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/school-frontend:latest
           build-args: |
-            VITE_API_URL=http://${{ secrets.AWS_EC2_HOST }}/api
+            VITE_API_URL=https://${{ secrets.DOMAIN_NAME }}/api
       
       - name: Build and push Backend
         uses: docker/build-push-action@v4
@@ -56,27 +56,40 @@ jobs:
           ssh ${{ secrets.AWS_EC2_USERNAME }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
           # Create app directory if it doesn't exist
           mkdir -p ~/app
+          mkdir -p ~/app/nginx
+          mkdir -p ~/app/certbot/conf
+          mkdir -p ~/app/certbot/www
           
           # Create docker-compose file
           cat > ~/app/docker-compose.yml << 'EOL'
           version: '3.8'
           
           services:
-            frontend:
-              image: ${{ secrets.DOCKER_USERNAME }}/school-frontend:latest
+            nginx:
+              image: nginx:alpine
               ports:
                 - "80:80"
+                - "443:443"
+              restart: always
+              volumes:
+                - ./nginx:/etc/nginx/conf.d
+                - ./certbot/conf:/etc/letsencrypt
+                - ./certbot/www:/var/www/certbot
+              depends_on:
+                - frontend
+                - backend
+            
+            frontend:
+              image: ${{ secrets.DOCKER_USERNAME }}/school-frontend:latest
               restart: always
               environment:
                 - NODE_ENV=production
-                - VITE_API_URL=http://backend:5000/api
+                - VITE_API_URL=https://${DOMAIN_NAME}/api
               depends_on:
                 - backend
             
             backend:
               image: ${{ secrets.DOCKER_USERNAME }}/school-backend:latest
-              ports:
-                - "5000:5000"
               restart: always
               environment:
                 - MONGO_URI=${MONGO_URI}
@@ -94,6 +107,13 @@ jobs:
                 - TEAM_MEMBER_VIDEO_URL=${TEAM_MEMBER_VIDEO_URL}
                 - SUPPORT_EMAIL=${SUPPORT_EMAIL}
           
+            certbot:
+              image: certbot/certbot
+              volumes:
+                - ./certbot/conf:/etc/letsencrypt
+                - ./certbot/www:/var/www/certbot
+              entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+          
           networks:
             default:
               name: school-network
@@ -108,7 +128,8 @@ jobs:
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
           EMAIL_USER=${{ secrets.EMAIL_USER }}
           EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
+          FRONTEND_URL=https://${{ secrets.DOMAIN_NAME }}
           LOGO_URL=${{ secrets.LOGO_URL }}
           LEAD_PDF_URL=${{ secrets.LEAD_PDF_URL }}
           LEAD_VIDEO_URL=${{ secrets.LEAD_VIDEO_URL }}
@@ -117,12 +138,67 @@ jobs:
           SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
           EOL
           
+          # Create Nginx configuration
+          cat > ~/app/nginx/default.conf << 'EOL'
+          server {
+              listen 80;
+              server_name ${DOMAIN_NAME};
+              
+              location /.well-known/acme-challenge/ {
+                  root /var/www/certbot;
+              }
+              
+              location / {
+                  return 301 https://$host$request_uri;
+              }
+          }
+          
+          server {
+              listen 443 ssl;
+              server_name ${DOMAIN_NAME};
+              
+              ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem;
+              ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem;
+              
+              location / {
+                  proxy_pass http://frontend;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+              
+              location /api/ {
+                  proxy_pass http://backend:5000/api/;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_cache_bypass $http_upgrade;
+              }
+          }
+          EOL
+          
           # Log into Docker Hub
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           
-          # Pull latest images and restart containers
+          # Replace environment variables in configuration files
+          export $(cat ~/app/.env | xargs)
+          envsubst '${DOMAIN_NAME}' < ~/app/nginx/default.conf > ~/app/nginx/default.conf.tmp
+          mv ~/app/nginx/default.conf.tmp ~/app/nginx/default.conf
+          
+          # Start only Nginx for initial certificate
           cd ~/app
-          docker-compose pull
+          docker-compose up -d nginx
+          
+          # Obtain SSL certificate
+          docker run --rm -v "$(pwd)/certbot/conf:/etc/letsencrypt" -v "$(pwd)/certbot/www:/var/www/certbot" \
+            --network school-network certbot/certbot \
+            certonly --webroot --webroot-path=/var/www/certbot \
+            --email ${{ secrets.CERTIFICATION_EMAIL }} --agree-tos --no-eff-email \
+            -d $DOMAIN_NAME
+          
+          # Start all services after certificate is obtained
           docker-compose down
           docker-compose up -d
           EOF
