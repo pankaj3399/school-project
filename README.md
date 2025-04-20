@@ -95,7 +95,7 @@ In your GitHub repository, add the following secrets:
 17. `LEAD_VIDEO_URL`: Tutorial video URL for lead teachers
 18. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
 19. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
-20. `SUPPORT_EMAIL`: Email address for support inquiries
+20. `SUPPORT_EMAIL`: Email address for support inquiries _(Same Email will be used by certbot to send notifications, if any. Example: Certificate expiry and renewal)_
 
 ## Deployment Process
 
