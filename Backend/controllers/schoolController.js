@@ -41,11 +41,12 @@ export const getAllSchools = async (req, res) => {
 
 export const getTeachers = async (req, res) => {
     try {
-        const school = await School.findOne({ createdBy: req.user.id }).populate('teachers');
-        if (!school) {
-            return res.status(404).json({ message: 'School not found' });
+        const school = await School.findOne({ createdBy: req.user.id });
+        const teachers = await Teacher.find({ schoolId: school._id });
+        if (!school || !teachers) {
+            return res.status(404).json({ message: 'School or teachers not found' });
         }
-        return res.status(200).json({ teachers: school.teachers });
+        return res.status(200).json({ teachers: teachers });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'An error occurred', error: err.message });

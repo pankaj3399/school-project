@@ -133,7 +133,7 @@ export const emailGenerator = async (form, {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="${process.env.LOGO_URL || "https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M"}" alt="Radu Logo" class="logo-left">
+                            <img src="${process.env.LOGO_URL || "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"}" alt="Radu Logo" class="logo-left">
                             <h1 class="title">Feedback Note</h1>
                             <img src="${school.logo}" alt="School Logo" class="logo-right">
                         </div>
@@ -341,7 +341,7 @@ export const reportEmailGenerator = async (attachment, attachmentName, to, stude
       <body>
           <div class="container">
               <div class="header">
-                  <img src="${process.env.LOGO_URL || "https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M"}" alt="Radu Logo" class="logo-left">
+                  <img src="${process.env.LOGO_URL || "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"}" alt="Radu Logo" class="logo-left">
                   <h1 class="title">E-Token Report</h1>
                   <div class="logo-right"></div>
               </div>

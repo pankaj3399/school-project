@@ -4,7 +4,7 @@ import { sendEmail } from "./nodemailer.js";
 import path from 'path';
 import fs from 'fs';
 
-export const sendVerifyEmailRoster = async (req, res, user, isStudent= false) => {
+export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass) => {
     try {
         const { url } = req.body;
 
@@ -25,7 +25,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false) =>
         await user.save();
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false);
+        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false, tempPass);
         const emailHTMLP2 = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.standard,false);
         const emailHTML2 = await getVerificationEmailTemplate(user.role, otp2, url, user.email,null, isStudent);
 
@@ -68,7 +68,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false) =>
         for (const recipient of emailRecipients) {
             await sendEmail(
                 recipient,
-                "Verify Your Email - The Radu Framework",
+                "Verify Your Email - The Radu Framework ..",
                 emailHTML,
                 emailHTML,
                 null
@@ -89,13 +89,13 @@ export const sendOnboardingEmail = async (user) => {
 
         switch(user.type) {
             case 'Lead':
-                pdf_url = process.env.LEAD_PDF_URL;
-                video_url = process.env.LEAD_VIDEO_URL;
+                pdf_url = process.env.LEAD_PDF_URL ?? "";
+                video_url = process.env.LEAD_VIDEO_URL ?? "";
                 userType = 'Leader/Lead Teacher';
                 break;
             case 'Special':
-                pdf_url = process.env.TEAM_MEMBER_PDF_URL;
-                video_url = process.env.TEAM_MEMBER_VIDEO_URL;
+                pdf_url = process.env.TEAM_MEMBER_PDF_URL ?? "";
+                video_url = process.env.TEAM_MEMBER_VIDEO_URL ?? "";
                 userType = 'Team Member/Special Teacher';
                 break;
             default:
@@ -110,7 +110,7 @@ export const sendOnboardingEmail = async (user) => {
             logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
             console.error('Error loading logo:', error);
-            logoSrc = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
+            logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
         }
 
         const emailHTML = `

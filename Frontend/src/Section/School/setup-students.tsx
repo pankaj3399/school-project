@@ -33,52 +33,19 @@ interface StudentData {
   } | null;
 }
 
-interface GuardianInfo {
-  name: string;
-  email: string;
-  phone1: string;
-  phone2?: string;
-}
-
-function parseGuardianString(guardianString: string): GuardianInfo {
-  try {
-    // Split at Email: to separate name and contact info
-    const [fullName, remainingInfo] = guardianString.split('Email:');
-    
-    // Extract email (assumes email ends with a space followed by C: or Oth:)
-    const emailMatch = remainingInfo.match(/([^\s]+)(?=\s+[CO])/);
-    const email = emailMatch ? emailMatch[0] : '';
-    
-    // Extract phone numbers
-    const phone1Match = remainingInfo.match(/C:\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4}/);
-    const phone2Match = remainingInfo.match(/Oth:\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4}/);
-    
-    // Clean up phone numbers
-    const phone1 = phone1Match ? phone1Match[0].replace('C:', '').trim() : '';
-    const phone2 = phone2Match ? phone2Match[0].replace('Oth:', '').trim() : '';
-
-    return {
-      name: fullName.trim(),
-      email: email.trim(),
-      phone1,
-      phone2
-    };
-  } catch (error) {
-    console.error('Error parsing guardian string:', error);
-    return {
-      name: '',
-      email: '',
-      phone1: '',
-      phone2: ''
-    };
-  }
-}
+// interface GuardianInfo {
+//   name: string;
+//   email: string;
+//   phone1: string;
+//   phone2?: string;
+// }
 
 export default function SetupStudents() {
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<StudentData[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<StudentData | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,22 +62,38 @@ export default function SetupStudents() {
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         const transformedData: StudentData[] = jsonData.map((row: any) => {
-          const guardian1Info = parseGuardianString(row['Guardian Contact(1)'] || '');
-          const guardian2Info = row['Guardian Contact(2)'] ? 
-            parseGuardianString(row['Guardian Contact(2)']) : null;
+          // Use direct column values instead of parsing from combined fields
+          const guardian1 = {
+            name: row['Guardian 1 Name'] || '',
+            email: row['Guardian 1 Email'] || '',
+            phone1: row['Guardian 1 Phone'] || '',
+            phone2: row['Guardian 1 Phone 2'] || ''
+          };
+
+          // Check if Guardian 2 data exists
+          let guardian2 = null;
+          if (row['Guardian 2 Name'] || row['Guardian 2 Email'] || row['Guardian 2 Phone']) {
+            guardian2 = {
+              name: row['Guardian 2 Name'] || '',
+              email: row['Guardian 2 Email'] || '',
+              phone1: row['Guardian 2 Phone'] || '',
+              phone2: row['Guardian 2 Phone 2'] || ''
+            };
+          }
 
           return {
             firstName: row['First Name'] || '',
             lastName: row['Last Name'] || '',
             grade: row['Grade']?.toString() || '',
             studentNumber: row['Student Number']?.toString() || '',
-            guardian1: guardian1Info,
-            guardian2: guardian2Info
+            guardian1: guardian1,
+            guardian2: guardian2
           };
         });
 
         console.log('Processed Student Data:', transformedData);
         setStudents(transformedData);
+        setValidationErrors([]);
         
         toast({
           title: "Success",
@@ -142,7 +125,35 @@ export default function SetupStudents() {
     setEditForm(null);
   };
 
+  const validateStudentData = (): boolean => {
+    const errors: string[] = [];
+    
+    students.forEach((student, index) => {
+      const identifier = student.studentNumber || `${student.firstName} ${student.lastName}` || `Row ${index + 1}`;
+      
+      // Check Guardian 1 data completeness
+      const g1 = student.guardian1;
+      if (!g1.name || !g1.email || !g1.phone1) {
+        errors.push(`Student ${identifier}: Missing required Guardian 1 information (${!g1.name ? 'name' : ''}${!g1.email ? ', email' : ''}${!g1.phone1 ? ', phone' : ''}).`);
+      } else if (!g1.email.includes('@')) {
+        errors.push(`Student ${identifier}: Guardian 1 email format is invalid.`);
+      }
+    });
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
   const handleSubmitRoster = async () => {
+    if (!validateStudentData()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       const formattedStudents = students.map((student) => ({
@@ -163,6 +174,7 @@ export default function SetupStudents() {
         description: "Student roster submitted successfully",
       });
       setStudents([]);
+      setValidationErrors([]);
     } catch (error) {
       toast({
         title: "Error",
@@ -191,6 +203,17 @@ export default function SetupStudents() {
           Upload Excel file with columns: First Name, Last Name, Grade, Student Number, Guardian 1 Name, Guardian 1 Email, Guardian 1 Phone, Guardian 2 Name, Guardian 2 Email, Guardian 2 Phone
         </p>
       </div>
+
+      {validationErrors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
+          <h3 className="text-lg font-medium mb-2">Please fix the following errors:</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            {validationErrors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {students.length > 0 && (
         <div className="overflow-x-auto">
@@ -262,37 +285,64 @@ export default function SetupStudents() {
                             guardian1: { ...editForm!.guardian1, phone1: e.target.value }
                           })}
                           placeholder="Phone"
+                          className="mb-2"
+                        />
+                        <Input
+                          value={editForm?.guardian1.phone2 || ''}
+                          onChange={(e) => setEditForm({
+                            ...editForm!,
+                            guardian1: { ...editForm!.guardian1, phone2: e.target.value }
+                          })}
+                          placeholder="Phone 2 (optional)"
                         />
                       </TableCell>
                       <TableCell>
                         <Input
-                          value={editForm?.guardian2?.name}
+                          value={editForm?.guardian2?.name || ''}
                           onChange={(e) => setEditForm({
-                              ...editForm!,
-                            /*@ts-ignore*/
-                            guardian2: { ...editForm!.guardian2, name: e.target.value }
-                        })}
-                        className="mb-2"
-                        placeholder="Name"
+                            ...editForm!,
+                            guardian2: { 
+                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '' }), 
+                              name: e.target.value 
+                            }
+                          })}
+                          className="mb-2"
+                          placeholder="Name (optional)"
                         />
                         <Input
-                          value={editForm?.guardian2?.email}
+                          value={editForm?.guardian2?.email || ''}
                           onChange={(e) => setEditForm({
-                              ...editForm!,
-                              /*@ts-ignore*/
-                              guardian2: { ...editForm!.guardian2, email: e.target.value }
-                            })}
-                            className="mb-2"
-                            placeholder="Email"
-                            />
+                            ...editForm!,
+                            guardian2: { 
+                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '' }), 
+                              email: e.target.value 
+                            }
+                          })}
+                          className="mb-2"
+                          placeholder="Email (optional)"
+                        />
                         <Input
-                          value={editForm?.guardian2?.phone1}
+                          value={editForm?.guardian2?.phone1 || ''}
                           onChange={(e) => setEditForm({
-                              ...editForm!,
-                              /*@ts-ignore*/
-                              guardian2: { ...editForm!.guardian2, phone1: e.target.value }
-                            })}
-                            placeholder="Phone"
+                            ...editForm!,
+                            guardian2: { 
+                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '' }), 
+                              phone1: e.target.value 
+                            }
+                          })}
+                          placeholder="Phone (optional)"
+                          className="mb-2"
+                        />
+                        <Input
+                          value={editForm?.guardian2?.phone2 || ''}
+                          onChange={(e) => setEditForm({
+                            ...editForm!,
+                            guardian2: { 
+                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '', phone2: '' }), 
+                              phone2: e.target.value 
+                            }
+                          })}
+                          placeholder="Phone 2 (optional)"
                         />
                       </TableCell>
                       <TableCell>
@@ -307,25 +357,29 @@ export default function SetupStudents() {
                       </TableCell>
                     </>
                   ) : (
-                      <>
+                    <>
                       <TableCell>{`${student.firstName} ${student.lastName}`}</TableCell>
                       <TableCell>{student.grade}</TableCell>
                       <TableCell>{student.studentNumber}</TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <p><>Name:</> {student.guardian1.name}</p>
-                          <p><>Email:</> {student.guardian1.email}</p>
-                          <p><>Phone:</> {student.guardian1.phone1}</p>
-                          <p><>Phone2:</> {student.guardian1.phone2 ?? "N/A"}</p>
+                          <p><span className="font-semibold">Name:</span> {student.guardian1.name}</p>
+                          <p><span className="font-semibold">Email:</span> {student.guardian1.email}</p>
+                          <p><span className="font-semibold">Phone:</span> {student.guardian1.phone1}</p>
+                          {student.guardian1.phone2 && (
+                            <p><span className="font-semibold">Phone 2:</span> {student.guardian1.phone2}</p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
                         {student.guardian2 && (
                           <div className="space-y-1">
-                            <p><>Name:</> {student.guardian2.name}</p>
-                            <p><>Email:</> {student.guardian2.email}</p>
-                            <p><>Phone1:</> {student.guardian2.phone1}</p>
-                            <p><>Phone2:</> {student.guardian2.phone2 ?? "N/A"}</p>
+                            <p><span className="font-semibold">Name:</span> {student.guardian2.name}</p>
+                            <p><span className="font-semibold">Email:</span> {student.guardian2.email}</p>
+                            <p><span className="font-semibold">Phone:</span> {student.guardian2.phone1}</p>
+                            {student.guardian2.phone2 && (
+                              <p><span className="font-semibold">Phone 2:</span> {student.guardian2.phone2}</p>
+                            )}
                           </div>
                         )}
                       </TableCell>
@@ -343,7 +397,6 @@ export default function SetupStudents() {
         </div>
       )}
 
-      {/* Submit button */}
       {students.length > 0 && (
         <div className="mt-6">
           <Button onClick={handleSubmitRoster} className="bg-[#00a58c]">

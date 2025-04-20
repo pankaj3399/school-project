@@ -10,10 +10,19 @@ import {
 import { useAuth } from "@/authContext"
 import SupportPanel from "../support-panel"
 import { useState } from "react"
+import { useNavigate } from 'react-router-dom';
 
 export function TopNav() {
   const {user} = useAuth();
   const [showSupport, setShowSupport] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    // Remove token from localStorage and sessionStorage
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    navigate('/');
+  };
 
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
@@ -43,7 +52,7 @@ export function TopNav() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

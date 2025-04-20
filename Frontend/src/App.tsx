@@ -33,6 +33,8 @@ import Finalize from "./Section/School/finalize";
 import VerifyEmail from "./components/VerifyEmail";
 import Setup from "./Section/School/setup";
 import SetupStudents from "./Section/School/setup-students";
+import SetupPage from "./Section/School/setup-page";
+import FirstLogin from "./components/FirstLogin";
 
 
 // Reusable ProtectedRoute component
@@ -91,16 +93,11 @@ export default function App() {
           <Route path="/verifyemail" element={<VerifyEmail />}>
           </Route>
 
-          <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
+          <Route path="/setup" element={<ProtectedRoute><SetupPage /></ProtectedRoute>} />
+          <Route path="/setup-teachers" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
-
-
-          
-
-        
-          
-
+          <Route path="/firstLogin" element={<ProtectedRoute><FirstLogin /></ProtectedRoute>} />
         </Routes>
       </RootLayout>
     </div>

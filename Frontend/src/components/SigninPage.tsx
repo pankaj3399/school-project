@@ -63,6 +63,8 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const res = await signIn(formData);
+      console.log(res);
+      
       if (res.error) {
         toast({
           title: res.error.message,
@@ -81,6 +83,8 @@ export default function LoginForm() {
 
         if (formData.role === "SchoolAdmin") {
           navigate("/analytics");
+        } else if(res.firstLogin === true) {
+          navigate("/firstLogin");
         } else if (formData.role === "SpecialTeacher") {
           navigate("/teachers/managepoints");
         } else if(formData.role === "Teacher" ){

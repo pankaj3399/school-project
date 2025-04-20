@@ -2,9 +2,9 @@ import { Role } from '../enum.js';
 import path from 'path';
 import fs from 'fs';  // Use synchronous fs instead of promises
 
-export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = null, isStudent= false) => {
+export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = null, isStudent= false, tempPass=null) => {
   const description = role === Role.Teacher
-    ? "Your account has been created by the system manager in the Radu Framework. Please verify your email address to access your teacher account and start using the E-Token system."
+    ? tempPass ? "Your account has been created by the system manager in the Radu Framework. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system manager in the Radu Framework. Please verify your email address to enable your E-Token system account and get updates."
     : "Your account has been created by the system manager in the Radu Framework. Please verify your email address to enable your child's E-Token system account and get updates.";
 
   // Get base64 encoded logo - using synchronous version to avoid async complexity
@@ -18,7 +18,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = nu
   } catch (error) {
     console.error('Error loading logo:', error);
     // Fallback to a URL if available - we can add the logo to cloud storage and use the URL here
-    logoSrc = 'https://d913gn73yx.ufs.sh/f/tYbhM2OqcVubWFWYRwDPC6laGXixIANf8RnFkd2OHKrDTo3M';
+    logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
   }
 
   return `
@@ -36,6 +36,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = nu
       <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
         <h2 style="color: #00a58c; margin-bottom: 20px;">Welcome to The Radu Framework</h2>
         <p style="margin-bottom: 25px;">${description}</p>
+        ${tempPass ? `<p style="margin-bottom: 20px;">Your temporary password is: <strong>${tempPass}</strong></p>` : ""}
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="${url}?otp=${otp}&role=${role}&email=${email}&isStudent=${isStudent}&toVerify=${toVerify ?? ""}" 
