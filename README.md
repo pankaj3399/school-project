@@ -45,6 +45,7 @@ To deploy this application, you need:
    - HTTPS (port 443)
 3. Create and download an SSH key pair
 4. Install Docker and Docker Compose on your EC2 instance:
+5. If you are using Amazon Linux 2
    ```bash
    sudo apt update
    sudo apt install -y docker.io
@@ -52,7 +53,26 @@ To deploy this application, you need:
    sudo chmod +x /usr/local/bin/docker-compose
    sudo usermod -aG docker $USER
    ```
-5. Log out and log back in for group changes to take effect
+   If you are using Amazon Linux 23
+  ```bash
+    # Update package list
+sudo dnf update -y
+
+# Install Docker
+sudo dnf install -y docker
+
+# Start and enable Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Add your user to the docker group (to use Docker without sudo)
+sudo usermod -aG docker $USER
+   ```
+7. Log out and log back in for group changes to take effect
 
 ### 2. Domain Setup
 
