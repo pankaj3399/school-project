@@ -204,8 +204,8 @@ export const sendVerifyEmail = async (req, res) => {
         await user.save();
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(role, otp, url, email);
-        const emailHTML2 = await getVerificationEmailTemplate(role, otp2, url, email, isStudent);
+        const emailHTML = await getVerificationEmailTemplate(role, otp, url, email, email);
+        const emailHTML2 = await getVerificationEmailTemplate(role, otp2, url, email,email, isStudent);
 
         if(isStudent){            
             await sendEmail(
