@@ -19,7 +19,7 @@ const generateToken = (id, role) => {
 
 
 export const login = async (req, res) => {
-    const { email, password, role,  } = req.body;
+    const { email, password, role  } = req.body;
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     
 
@@ -49,6 +49,9 @@ export const login = async (req, res) => {
       if (!isMatch) return res.status(401).json({ message: 'Invalid Credentials' });
 
         const token = generateToken(user._id, userRole);
+        if(userRole == Role.Teacher && user.isFirstLogin){
+            return res.status(200).json({ message: 'First login', firstLogin:true, token, role: userRole, userId: user._id });
+        }
         res.status(200).json({ token, role, userId: user._id });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -448,3 +451,32 @@ export const createSupportTicket = async (req, res) => {
 };
 
 
+export const changePassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id; // Assuming you have the user ID from the auth middleware
+
+    try {
+        const user = await Teacher.findById(userId); // Change this to the appropriate model (Admin, Teacher, Student)
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid Credentials" });
+        }
+        if(!user.isFirstLogin){
+            return res.status(401).json({ message: "You have already reset your password. Try Forgot Password if you can't remember yours." });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        user.password = hashedPassword;
+        user.isFirstLogin = false; // Set this to false if you want to mark the first login as completed
+        await user.save();
+
+        res.status(200).json({ message: "Password changed successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+}

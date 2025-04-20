@@ -83,6 +83,8 @@ export default function LoginForm() {
 
         if (formData.role === "SchoolAdmin") {
           navigate("/analytics");
+        } else if(res.firstLogin === true) {
+          navigate("/firstLogin");
         } else if (formData.role === "SpecialTeacher") {
           navigate("/teachers/managepoints");
         } else if(formData.role === "Teacher" ){

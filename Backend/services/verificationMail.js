@@ -4,7 +4,7 @@ import { sendEmail } from "./nodemailer.js";
 import path from 'path';
 import fs from 'fs';
 
-export const sendVerifyEmailRoster = async (req, res, user, isStudent= false) => {
+export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass) => {
     try {
         const { url } = req.body;
 
@@ -25,7 +25,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false) =>
         await user.save();
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false);
+        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false, tempPass);
         const emailHTMLP2 = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.standard,false);
         const emailHTML2 = await getVerificationEmailTemplate(user.role, otp2, url, user.email,null, isStudent);
 
@@ -68,7 +68,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false) =>
         for (const recipient of emailRecipients) {
             await sendEmail(
                 recipient,
-                "Verify Your Email - The Radu Framework",
+                "Verify Your Email - The Radu Framework ..",
                 emailHTML,
                 emailHTML,
                 null

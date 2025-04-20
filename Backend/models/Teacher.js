@@ -60,6 +60,10 @@ const teacherSchema = new mongoose.Schema({
     type:String,
     default: null
   },
+  isFirstLogin:{
+    type:Boolean,
+    default: true
+  },
 });
 
 teacherSchema.pre('save', function (next) {

@@ -724,3 +724,19 @@ export const sendSupportEmail = async (data:any) => {
         return {error};
     }
 }
+
+export const changePassword = async (data:any) => {
+    try {
+        const token = getToken()
+        await axios.post(`${API_URL}/auth/changePassword`,data, {
+            headers: {
+                token
+            }
+        });
+        return {success:true};
+    } catch (err:any) {
+        return {error:{
+            message: err.data.message
+        }};
+    }
+}

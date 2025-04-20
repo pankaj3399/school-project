@@ -523,7 +523,8 @@ export const teacherRoster = async (req, res) => {
         }
 
         teachers.forEach(async (teacher) => {
-            const password = new Date(teacher.dateOfBirth).getFullYear().toString();
+            //password in the format of YYYY+2 random numbers
+            const password = new Date(teacher.dateOfBirth).getFullYear().toString() + `${Math.floor(10 + Math.random() * 90)}`;
             const hashedPassword = await bcrypt.hash(password, 12);
             const createdUser = await Teacher.create({
                 ...teacher,
@@ -532,7 +533,7 @@ export const teacherRoster = async (req, res) => {
                 isEmailVerified: false
             })
             teacherIds.push(createdUser._id);
-            await sendVerifyEmailRoster(req, res, createdUser, teacher, false);
+            await sendVerifyEmailRoster(req, res, createdUser, false, password);
         });
         school.teachers = [...teacherIds]
         console.log([...teacherIds])
