@@ -14,9 +14,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = nu
     
     const logoBuffer = fs.readFileSync(logoPath);
     logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-    console.log('Loading logo from:', logoSrc);
   } catch (error) {
-    console.error('Error loading logo:', error);
     // Fallback to a URL if available - we can add the logo to cloud storage and use the URL here
     logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
   }

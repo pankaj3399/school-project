@@ -129,6 +129,17 @@ export const getStats = async (req, res) => {
 
         const schoolId = schoolAdmin.schoolId;
 
+        if(schoolId == null) {
+            return res.status(200).json({
+                totalTeachers: 0,
+                totalStudents:0,
+                totalPoints: 0,
+                totalWithdrawPoints: 0,
+                totalDeductPoints: 0,
+                totalFeedbackCount: 0
+            });
+        }
+
         const totalTeachers = await Teacher.countDocuments({ schoolId });
         const totalStudents = await Student.countDocuments({ schoolId });
 
@@ -500,7 +511,6 @@ export const genreport = async (req, res) => {
         if(req.user.role == 'SchoolAdmin'){
             await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, schData.school.createdBy.email, stdData);
         }
-        console.log("sent report");
         return res.status(200).json({ message: "Student report sent successfully" });
     } catch (error) {
         console.log(error);
@@ -536,7 +546,6 @@ export const teacherRoster = async (req, res) => {
             await sendVerifyEmailRoster(req, res, createdUser, false, password);
         });
         school.teachers = [...teacherIds]
-        console.log([...teacherIds])
         school.teachers = [...new Set(teacherIds)];
         await school.save();
 
@@ -570,6 +579,7 @@ export const studentRoster = async (req, res) => {
                     return null; // Skip invalid student data
                 }
 
+                //kept the password as 123456 for now, field might be used in future
                 const hashedPassword = await bcrypt.hash("123456", 12);
                 
                 const studentData = {
@@ -613,9 +623,6 @@ export const studentRoster = async (req, res) => {
                     await sendVerifyEmailRoster(req, res,createdStudent,
                     false);
                 }
-
-                
-
                 return createdStudent._id;
             } catch (error) {
                 console.error(`Error creating student ${student.name}:`, error);

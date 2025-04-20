@@ -69,7 +69,6 @@ export default function ForgotPassword() {
           description: res.error?.response?.data?.message || "Please Try Again!!",
           variant: "destructive",
         });
-        console.log("Login error:", res.error);
         
       } else {
         toast({

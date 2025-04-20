@@ -85,7 +85,6 @@ const FirstLogin = () => {
         newPassword: passwordData.newPassword
       };
       
-      console.log("Submitting data:", submitData);
       
       // Replace this comment with actual API call
       const response = await changePassword(submitData);

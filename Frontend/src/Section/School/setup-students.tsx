@@ -91,7 +91,6 @@ export default function SetupStudents() {
           };
         });
 
-        console.log('Processed Student Data:', transformedData);
         setStudents(transformedData);
         setValidationErrors([]);
         
@@ -123,6 +122,17 @@ export default function SetupStudents() {
     setStudents(newStudents);
     setEditingIndex(null);
     setEditForm(null);
+  };
+
+  // Add delete handler function
+  const handleDelete = (index: number) => {
+    const newStudents = [...students];
+    newStudents.splice(index, 1);
+    setStudents(newStudents);
+    toast({
+      title: "Student Removed",
+      description: "Student has been removed from the roster",
+    });
   };
 
   const validateStudentData = (): boolean => {
@@ -384,9 +394,18 @@ export default function SetupStudents() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button onClick={() => handleEdit(index)} variant="outline">
-                          Edit
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button onClick={() => handleEdit(index)} variant="outline">
+                            Edit
+                          </Button>
+                          <Button 
+                            onClick={() => handleDelete(index)} 
+                            variant="destructive"
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </>
                   )}

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
@@ -14,25 +13,6 @@ export default function HeroSection() {
           controls={false}
         />
       </div>
-
-      <div className={`
-        container bg-transparent mx-auto px-4 
-        flex flex-col items-center text-center 
-        justify-end pb-52 md:justify-end md:pb-0 h-full 
-        relative md:bottom-1/3
-        z-20
-      `} >
-        <Link to='/signup'>
-        
-          {/*Hidden this button as it does not match with new video it will look bad.*/}
-          {/* <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white">
-            Join Now
-          </Button> */}
-        </Link>
-      </div>
-
-
-    
     </section>
   );
 }

@@ -123,6 +123,17 @@ export default function Setup() {
     setEditForm(null);
   };
 
+  // Add delete handler function
+  const handleDelete = (index: number) => {
+    const newTeachers = [...teachers];
+    newTeachers.splice(index, 1);
+    setTeachers(newTeachers);
+    toast({
+      title: "Teacher Removed",
+      description: "Teacher has been removed from the roster",
+    });
+  };
+
   if (loading) return <Loading />;
 
   return (
@@ -211,8 +222,10 @@ export default function Setup() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button onClick={() => handleSaveEdit(index)} className="mr-2">Save</Button>
-                        <Button onClick={() => setEditingIndex(null)} variant="outline">Cancel</Button>
+                        <div className="flex space-x-2">
+                          <Button onClick={() => handleSaveEdit(index)} className="mr-2">Save</Button>
+                          <Button onClick={() => setEditingIndex(null)} variant="outline">Cancel</Button>
+                        </div>
                       </TableCell>
                     </>
                   ) : (
@@ -225,7 +238,16 @@ export default function Setup() {
                       <TableCell>{teacher.type === 'Lead' ? 'Leader/Lead Teacher' : 'Team Member/Teacher'}</TableCell>
                       <TableCell>{teacher.type === 'Lead' ? teacher.grade : 'N/A'}</TableCell>
                       <TableCell>
-                        <Button onClick={() => handleEdit(index)} variant="outline">Edit</Button>
+                        <div className="flex space-x-2">
+                          <Button onClick={() => handleEdit(index)} variant="outline">Edit</Button>
+                          <Button 
+                            onClick={() => handleDelete(index)} 
+                            variant="destructive"
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </>
                   )}

@@ -22,12 +22,10 @@ const OverallStats = () => {
   return (
     <div className='grid grid-cols-2 gap-4 mt-2 '>
         <h4 className='col-span-2 text-3xl font-bold'>Overall</h4>
-        {/* <LineChartCard label={"Total Points Given"} data={pointsGivenPerMonth} /> */}
         <BarChartCard label={"Awarded Points"} data={pointsGivenPerMonth} />
         <BarChartCard label={"Forms submitted"} data={formSubmissions} />
         <BarChartCard label={"Total Oopsie"} data={monthlyStats.map(monthlyStat => monthlyStat.totalNegativePoints)} />
         <BarChartCard label={"Feedbacks"} data={monthlyStats.map(monthlyStat => monthlyStat.feedbackCount)} />
-        {/* <LineChartCard label={"Total Forms submitted"} data={formSubmissions} /> */}
     </div>
   )
 }

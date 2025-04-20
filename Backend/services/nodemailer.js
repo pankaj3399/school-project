@@ -20,8 +20,6 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (to, subject, text, html, attachment) => {
     try {
-        console.log("sending mail to ", to);
-        
         let info;
         if(attachment)
         info = await transporter.sendMail({
@@ -47,7 +45,6 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
             html:html,
         });
 
-        console.log('Email sent successfully', info);
         return true
     } catch (error) {
         console.error('Error sending email:', error);
@@ -81,7 +78,6 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
             html:html,
         });
 
-        console.log('Email sent successfully', info);
         return true
     } catch (error) {
         console.error('Error sending email:', error);

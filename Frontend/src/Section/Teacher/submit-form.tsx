@@ -34,7 +34,6 @@ export default function FormPage( ) {
     parentEmail: boolean;
 }, submittedAt:Date) => {
     setIsSubmitting(true)
-    console.log('Form submitted with answers:', answers)
     const token = localStorage.getItem('token')
     
     if(token){

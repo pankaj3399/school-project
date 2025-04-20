@@ -59,7 +59,6 @@ export default function OtpVerificationPage() {
           description: res.error?.response?.data?.message || "Please Try Again!!",
           variant: "destructive",
         });
-        console.log("Verification error:", res.error);
         
       } else {
         toast({

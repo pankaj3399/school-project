@@ -63,7 +63,6 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const res = await signIn(formData);
-      console.log(res);
       
       if (res.error) {
         toast({
@@ -71,7 +70,6 @@ export default function LoginForm() {
           description: res.error?.response?.data?.message || "Please Try Again!!",
           variant: "destructive",
         });
-        console.log("Login error:", res.error);
         
       } else {
         await login(res.token);

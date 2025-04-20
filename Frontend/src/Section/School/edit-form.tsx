@@ -34,7 +34,6 @@ export default function EditForm() {
   }
 
   const handleCreateForm = async () => {
-    console.log(JSON.stringify({formName, formType, questions}))
     const response = await editForm(
       params?.id ?? "",
       {
