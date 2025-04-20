@@ -229,5 +229,7 @@ jobs:
           
           # Pull latest images and start all containers
           docker-compose pull
+          # Delete dangling images
+          docker rmi $(docker images -f "dangling=true" -q) || true
           docker-compose up -d
           EOF
