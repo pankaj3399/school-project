@@ -177,6 +177,7 @@ jobs:
           docker run --rm -v "$(pwd)/certbot/conf:/etc/letsencrypt" -v "$(pwd)/certbot/www:/var/www/certbot" \
             certbot/certbot certonly --webroot --webroot-path=/var/www/certbot \
             --email ${{ secrets.SUPPORT_EMAIL }} --agree-tos --no-eff-email \
+            --non-interactive --keep-until-expiring \
             -d ${{ secrets.DOMAIN_NAME }}
           
           # Stop the initial nginx
