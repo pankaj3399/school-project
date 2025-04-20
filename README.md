@@ -20,6 +20,8 @@ The application is deployed with the following architecture:
 - **Docker Hub**: Stores the container images
 - **AWS EC2**: Hosts the application
 - **Docker Compose**: Orchestrates the containers on the server
+- **Nginx**: Acts as reverse proxy and handles SSL termination
+- **Let's Encrypt**: Provides SSL certificates
 
 ## Prerequisites
 
@@ -28,8 +30,9 @@ To deploy this application, you need:
 1. GitHub account
 2. Docker Hub account
 3. AWS account with an EC2 instance
-4. MongoDB Atlas account (or other MongoDB provider)
-5. Cloudinary account (for image storage)
+4. Domain name registered with a domain registrar
+5. MongoDB Atlas account (or other MongoDB provider)
+6. Cloudinary account (for image storage)
 
 ## Initial Setup
 
@@ -51,7 +54,25 @@ To deploy this application, you need:
    ```
 5. Log out and log back in for group changes to take effect
 
-### 2. GitHub Repository Secrets
+### 2. Domain Setup
+
+1. Purchase a domain from a domain registrar (e.g., Namecheap, GoDaddy, Route 53)
+2. Set up DNS records to point to your EC2 instance:
+   - Create an A record that points your domain to your EC2 instance's public IP address
+
+   **Example DNS configuration**:
+   ```
+   Type    Host            Value               TTL
+   A       @               EC2-PUBLIC-IP       3600
+   ```
+
+3. Wait for DNS propagation (can take up to 48 hours, but often much faster)
+4. Test that your domain resolves to your EC2 instance:
+   ```bash
+   ping your-domain.com
+   ```
+
+### 3. GitHub Repository Secrets
 
 In your GitHub repository, add the following secrets:
 
@@ -60,20 +81,21 @@ In your GitHub repository, add the following secrets:
 3. `AWS_SSH_KEY`: Private SSH key for your EC2 instance
 4. `DOCKER_USERNAME`: Your Docker Hub username
 5. `DOCKER_PASSWORD`: Your Docker Hub password
-6. `MONGO_URI`: MongoDB connection string
-7. `JWT_SECRET`: Secret key for JWT authentication
-8.  `CLOUD_NAME`: Cloudinary cloud name
-9.  `CLOUDINARY_API_KEY`: Cloudinary API key
-10. `CLOUDINARY_API_SECRET`: Cloudinary API secret
-11. `EMAIL_USER`: Email address for sending notifications
-12. `EMAIL_PASS`: Password for the email address
-13. `FRONTEND_URL`: URL of your frontend application (e.g., http://your-ec2-public-dns)
-14. `LOGO_URL`: URL for application logo
-15. `LEAD_PDF_URL`: PDF guide URL for lead teachers
-16. `LEAD_VIDEO_URL`: Tutorial video URL for lead teachers
-17. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
-18. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
-19. `SUPPORT_EMAIL`: Email address for support inquiries
+6. `DOMAIN_NAME`: Your domain name (e.g., school.example.com)
+7. `MONGO_URI`: MongoDB connection string
+8. `JWT_SECRET`: Secret key for JWT authentication
+9. `CLOUD_NAME`: Cloudinary cloud name
+10. `CLOUDINARY_API_KEY`: Cloudinary API key
+11. `CLOUDINARY_API_SECRET`: Cloudinary API secret
+12. `EMAIL_USER`: Email address for sending notifications
+13. `EMAIL_PASS`: Password for the email address
+14. `FRONTEND_URL`: URL of your frontend application (https://your-domain.com)
+15. `LOGO_URL`: URL for application logo
+16. `LEAD_PDF_URL`: PDF guide URL for lead teachers
+17. `LEAD_VIDEO_URL`: Tutorial video URL for lead teachers
+18. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
+19. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
+20. `SUPPORT_EMAIL`: Email address for support inquiries
 
 ## Deployment Process
 
@@ -84,6 +106,7 @@ Once you've set up all the configuration files and GitHub secrets, the deploymen
    - Build the frontend and backend Docker images
    - Push the images to Docker Hub
    - Deploy the application to your EC2 instance
+   - Set up SSL certificates using Let's Encrypt
 
 ### Docker Hub Repository Setup
 You don't need to manually create repositories in Docker Hub before deploying. When GitHub Actions pushes the Docker images for the first time, repositories named `<your-username>/school-frontend` and `<your-username>/school-backend` will be automatically created in your Docker Hub account.
@@ -102,7 +125,6 @@ To set up the required GitHub secrets for Docker Hub authentication:
 2. Your username is displayed in the top-right corner after logging in
 3. Use this username for the `DOCKER_USERNAME` GitHub secret
 
-
 ##### Docker Hub Access Token (recommended instead of password):
 
 1. Log in to your [Docker Hub](https://hub.docker.com/) account
@@ -116,6 +138,31 @@ To set up the required GitHub secrets for Docker Hub authentication:
 9. Use this token for the `DOCKER_PASSWORD` GitHub secret
 
 _Using an access token instead of your actual Docker Hub password is more secure and allows you to grant specific permissions and revoke access if needed._
+
+## Frontend API URL Configuration
+
+To ensure your frontend correctly communicates with your backend API:
+
+1. Use relative URLs in production and absolute URLs in development:
+   ```javascript
+   const API_URL = import.meta.env.PROD ? "/api" : import.meta.env.VITE_API_URL;
+   ```
+
+2. In development, set your `.env` file with your local backend URL:
+   ```
+   VITE_API_URL=http://localhost:5000/api
+   ```
+
+3. For production, the API URL will be relative to the domain, avoiding cross-origin issues.
+
+## SSL Certificate Setup
+
+The deployment workflow automatically handles SSL certificate generation using Let's Encrypt. The process:
+
+1. Sets up an initial Nginx container to handle the Let's Encrypt verification
+2. Obtains SSL certificates for your domain
+3. Configures Nginx to use these certificates and proxy requests to the appropriate containers
+4. Sets up automatic certificate renewal
 
 ## Troubleshooting
 
@@ -131,9 +178,23 @@ If you encounter issues with API routes not working:
 
 If the frontend cannot connect to the backend:
 
-1. Check that the `VITE_API_URL` environment variable is set correctly
+1. Check that you're using relative URLs in production as described above
 2. Verify that the backend container is running: `docker ps`
 3. Check backend logs for any errors: `docker logs <container_id>`
+
+### SSL Certificate Issues
+
+If you encounter SSL certificate issues:
+
+1. Check that your domain DNS is correctly configured
+2. Verify that ports 80 and 443 are open in your EC2 security group
+3. Check the Let's Encrypt logs: `docker logs <certbot_container_id>`
+4. Manually trigger certificate renewal:
+   ```bash
+   ssh <username>@<ec2-host>
+   cd ~/app
+   docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot --force-renewal -d <your-domain.com>
+   ```
 
 ### Database Connection Issues
 
@@ -173,9 +234,22 @@ cd ~/app
 docker-compose restart
 ```
 
+### Renewing SSL Certificates
+
+SSL certificates are automatically renewed by the certbot container. However, if you need to force renewal:
+
+```bash
+ssh <username>@<ec2-host>
+cd ~/app
+docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot --force-renewal -d <your-domain.com>
+docker-compose restart nginx
+```
+
 ## Security Considerations
 
 1. Keep your GitHub secrets secure
-2. Consider setting up HTTPS with a certificate
+2. Ensure your SSL certificates are always valid
 3. Regularly update your Docker images
 4. Monitor your EC2 instance for security updates
+5. Consider implementing rate limiting in your nginx configuration
+6. Use secure headers in your nginx configuration
