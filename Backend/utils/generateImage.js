@@ -26,10 +26,8 @@ export const generateCouponImage = async (
   try {
     loadFontFromURL(path.join(__dirname, '../fonts/courbd.ttf'),'Courier New Bold')
     const backgroundImage = await loadImage(path.join(__dirname, './school_token.png'));
-    console.log(backgroundImage);
     
     const schoolLogo = await loadImage(schoolLogoURL);
-    console.log(schoolLogo);
     
     const canvas = createCanvas(690, 400)
     const ctx = canvas.getContext('2d')
@@ -41,7 +39,6 @@ export const generateCouponImage = async (
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    console.log(ctx.font);
     
     ctx.fillText(`VALID ONLY AT ${schoolName.toUpperCase()} STORE`, canvas.width / 2, 40);
     ctx.font = 'bold 20px "Courier New Bold"'
@@ -73,7 +70,6 @@ export const generateRecieptImage = async (
   try {
     loadFontFromURL(path.join(__dirname, '../fonts/courbd.ttf'),'Courier New Bold')
     const backgroundImage = await loadImage(path.join(__dirname, './Withdraw_reciept.png'));
-    console.log(backgroundImage);
     
     const canvas = createCanvas(404, 621)
     const ctx = canvas.getContext('2d')
@@ -85,7 +81,6 @@ export const generateRecieptImage = async (
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    console.log(ctx.font);
 
     ctx.font = 'bold 30px "Courier New Bold"'
     ctx.fillText(`THE RADU FRAMEWORK`, canvas.width / 2, 80);

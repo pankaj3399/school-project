@@ -14,7 +14,7 @@ export const getAllSchools = async (req, res) => {
 
   export const getStudents = async (req, res) => {
     try {
-      let students;
+      let students = [];
       if(req.user.role === Role.Teacher) {
         const teacher = await Teacher.findById(req.user.id);
         if(teacher.type === 'Lead') {
@@ -30,6 +30,7 @@ export const getAllSchools = async (req, res) => {
       } else {
         // School admin sees all students
         const school = await School.findOne({ createdBy: req.user.id });
+        if(school)
         students = await Student.find({ schoolId: school._id });
       }
       return res.status(200).json({ students });
@@ -41,11 +42,11 @@ export const getAllSchools = async (req, res) => {
 
 export const getTeachers = async (req, res) => {
     try {
+        let teachers = [];
         const school = await School.findOne({ createdBy: req.user.id });
-        const teachers = await Teacher.find({ schoolId: school._id });
-        if (!school || !teachers) {
-            return res.status(404).json({ message: 'School or teachers not found' });
-        }
+        if(school)
+        teachers = await Teacher.find({ schoolId: school._id });
+        
         return res.status(200).json({ teachers: teachers });
     } catch (err) {
         console.error(err);

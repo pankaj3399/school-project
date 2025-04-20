@@ -37,7 +37,6 @@ const [grade, setGrade] = useState<number>(1)
   }
 
   const handleCreateForm = async () => {
-      console.log(JSON.stringify({formName, formType, questions}))
       const response = await editForm(
         params?.id ?? "",
         {

@@ -2,8 +2,8 @@
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
-const API_URL= import.meta.env.PROD ? "/api" : import.meta.env.VITE_API_URL
-console.log(import.meta.env.PROD, import.meta.env.MODE, API_URL);
+const API_URL= import.meta.env.VITE_API_URL
+
 
 
 const getToken = () => localStorage.getItem('token')

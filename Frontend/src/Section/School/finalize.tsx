@@ -68,7 +68,6 @@ const Finalize = () => {
     const getUserData = async () => {
       const token = localStorage.getItem("token")
       const user = await getCurrentUser(token ?? "")
-      console.log(user);
       
       setUser(user.user)
     }

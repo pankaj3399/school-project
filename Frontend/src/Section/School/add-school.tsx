@@ -78,7 +78,6 @@ export default function SchoolPage() {
     useEffect(()=>{
       const fetchStats = async () => {
           const res = await getStats()
-          console.log(res);
           setStats({
               teachers: res.totalTeachers,
               students: res.totalStudents,
@@ -218,7 +217,11 @@ if (!response.error) {
         description: `Student Roster Reset Successfully`,
       })
     }catch(e){
-      console.log("Error",e);
+      toast({
+        title: "Error",
+        description: "Failed to reset student roster.",
+        variant: "destructive",
+      });
     }
 }
 
@@ -291,17 +294,6 @@ if (!response.error) {
               <p className="text-xl">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
               <p className="text-xl">{school.address}</p>
               <p className="text-xl">{school.state}, {school.country}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* <Button variant={"outline"} className="bg-[#00a58c] hover:bg-[#00a58c] text-white" onClick={() => setIsEditing(!isEditing)}>
-                {isEditing ? "Cancel":"Edit School"}
-              </Button>
-
-              <Button variant={"outline"} className="bg-red-500 hover:bg-red-700 text-white hover:text-white" onClick={()=>
-                setShowResetModal(true)
-              }>
-               Reset Students
-              </Button> */}
             </div>
           </div>
         </div>

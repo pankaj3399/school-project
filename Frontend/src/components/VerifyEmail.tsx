@@ -39,7 +39,6 @@ export default function VerifyEmail() {
   }, [searchParams]);
 
   const handleVerification = async () => {
-    console.log("Verification Data:", verificationData);
     
     setLoading(true);
     try {

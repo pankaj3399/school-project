@@ -1,14 +1,7 @@
-//b
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
-// import AdminJs from 'adminjs';
-// import AdminJSExpress from '@adminjs/express';
-
-// import * as AdminJSMongoose from '@adminjs/mongoose'
-
-import session from 'express-session';
 import bodyParser from 'body-parser'; 
 
 
@@ -38,9 +31,7 @@ app.use(bodyParser.json({limit: "50mb"}));
 
 
 
-connectDB().then(() => {
-  console.log("MongoDB connected");
-}).catch((error) => {
+connectDB().catch((error) => {
   console.error('Error connecting to database', error);
 });
 

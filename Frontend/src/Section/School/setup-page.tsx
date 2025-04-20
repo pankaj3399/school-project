@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
-import { getCurrrentSchool, resetStudentRoster, updateSchool } from "@/api";
+import { addSchool, getCurrrentSchool, resetStudentRoster, updateSchool } from "@/api";
 import Modal from "./Modal";
 import { 
   Select, 
@@ -168,7 +168,7 @@ const SetupPage = () => {
         formData.append("logo", logo);
       }
 
-      const response:any = await updateSchool(formData, school._id, token);
+      const response:any = school ? await updateSchool(formData, school._id, token):await addSchool(formData, token);
 
       if (!response.error) {
         toast({
@@ -198,7 +198,12 @@ const SetupPage = () => {
         description: `Student Roster Reset Successfully`,
       });
     } catch (e) {
-      console.log("Error", e);
+      console.error("Error resetting student roster:", e);
+      toast({
+        title: "Error",
+        description: "Failed to reset student roster.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -388,11 +393,7 @@ const SetupPage = () => {
                 Add teachers to your school through individual entry or bulk import
               </CardDescription>
             </CardHeader>
-            {/* <CardContent>
-              <p className="mb-4">
-                Upload your teacher roster or add teachers individually to get started with the Radu Framework.
-              </p>
-            </CardContent> */}
+           
             <CardFooter className="mt-auto">
               <Button 
                 className="w-full bg-[#00a58c] hover:bg-[#00a58c]/90" 
@@ -414,11 +415,7 @@ const SetupPage = () => {
                 Add students to your school through individual entry or bulk import
               </CardDescription>
             </CardHeader>
-            {/* <CardContent>
-              <p className="mb-4">
-                Upload your student roster or add students individually to set up E-Token accounts for your students.
-              </p>
-            </CardContent> */}
+            
             <CardFooter className="mt-auto">
               <Button 
                 className="w-full bg-[#00a58c] hover:bg-[#00a58c]/90" 

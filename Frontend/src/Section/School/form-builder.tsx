@@ -35,7 +35,6 @@ const clearForm = () => {
 const navigate = useNavigate()
 
   const handleCreateForm = async () => {
-    console.log(JSON.stringify({formName, formType, questions}))
     const response = await createForm(
       {
         formName, 

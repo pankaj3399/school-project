@@ -8,11 +8,9 @@ const Ranks = () => {
     const [studentRanks, setStudentRanks] = useState<any[]>([])
 
   useEffect(()=>{
-    console.log("Ranks")
     const fetchRanks = async () => {
         const currUser = await getCurrentUser()
         const res = await getRanks()
-        console.log("Grade", currUser.user.grade);
         if(currUser.user.grade){
             
             setTeacherRanks(res.teachers.data.filter((t:any) =>(t.grade === currUser.user.grade)||t.grade=="N/A"))
@@ -21,7 +19,6 @@ const Ranks = () => {
             setTeacherRanks(res.teachers.data)
             setStudentRanks(res.students.data)
         }
-        console.log(res)
     }
     fetchRanks()
   },[])

@@ -125,7 +125,6 @@ export default function SetupStudents() {
           };
         });
 
-        console.log('Processed Student Data:', transformedData);
         setStudents(transformedData);
         
         toast({
@@ -147,6 +146,16 @@ export default function SetupStudents() {
   const handleEdit = (index: number) => {
     setEditingIndex(index);
     setEditForm({ ...students[index] });
+  };
+
+  const handleDelete = (index: number) => {
+    const newStudents = [...students];
+    newStudents.splice(index, 1);
+    setStudents(newStudents);
+    toast({
+      title: "Student Removed",
+      description: "Student has been removed from the roster",
+    });
   };
 
   const handleSaveEdit = (index: number) => {
@@ -385,9 +394,18 @@ export default function SetupStudents() {
                         )}
                       </TableCell>
                       <TableCell>
+                      <div className="flex space-x-2">
                         <Button onClick={() => handleEdit(index)} variant="outline">
                           Edit
                         </Button>
+                        <Button 
+                            onClick={() => handleDelete(index)} 
+                            variant="destructive"
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </>
                   )}

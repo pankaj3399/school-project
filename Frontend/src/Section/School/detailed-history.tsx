@@ -66,7 +66,6 @@ const DetailedHistory = () => {
 
                 setData(data);
 
-                console.log("Data: ",data);
                 
             }
             break;
@@ -87,7 +86,6 @@ const DetailedHistory = () => {
 
                 setData(data);
 
-                console.log("Data: ",data);
             }
             break;
             case '3M': {
@@ -107,7 +105,6 @@ const DetailedHistory = () => {
 
                 setData(data);
 
-                console.log("Data: ",data);
             }
             break;
             case '6M': {
@@ -127,7 +124,6 @@ const DetailedHistory = () => {
 
                 setData(data);
 
-                console.log("Data: ",data);
             }
             break;
             case '1Y': {
@@ -152,7 +148,6 @@ const DetailedHistory = () => {
         }
 
         setData(data.map((d:any) => ({...d, points: Math.abs(d.points)})));
-        console.log(period,res.data)
     }
 
     useEffect(()=>{
@@ -169,7 +164,6 @@ const DetailedHistory = () => {
                 studentId: studentId || undefined // Add studentId to filter
             });
 
-            console.log("History Data: ",studentId);
             
             
             setHistoryData(res.history)
@@ -193,7 +187,6 @@ const DetailedHistory = () => {
 
                     setData(data);
 
-                    console.log("Data: ",data);
                     
                 }
                 break;
@@ -214,7 +207,6 @@ const DetailedHistory = () => {
 
                     setData(data);
 
-                    console.log("Data: ",data);
                 }
                 break;
                 case '3M': {
@@ -239,7 +231,6 @@ const DetailedHistory = () => {
                         setData(data);
                     }
 
-                    console.log("Data: ",data);
                 }
                 break;
                 case '6M': {
@@ -259,7 +250,6 @@ const DetailedHistory = () => {
 
                     setData(data);
 
-                    console.log("Data: ",data);
                 }
                 break;
                 case '1Y': {
@@ -284,7 +274,6 @@ const DetailedHistory = () => {
             }
 
             setData(data.map((d:any) => ({...d, points: Math.abs(d.points)})));
-            console.log(period,res.data)
         }
         fetchData();
     },[searchParams, period, studentId])

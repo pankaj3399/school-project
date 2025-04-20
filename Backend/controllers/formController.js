@@ -1,4 +1,3 @@
-//b
 import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import Form from "../models/Form.js";
@@ -259,7 +258,6 @@ export const submitFormTeacher = async (req, res) => {
         }
         submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
         await submittedForStudent.save();
-        console.log("Saved");
         
         const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
         await sendEmail(
@@ -358,7 +356,6 @@ export const submitFormAdmin = async (req, res) => {
         }
         submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
         await submittedForStudent.save();
-        console.log("Saved");
         
         const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
         await sendEmail(
@@ -383,7 +380,6 @@ export const submitFormAdmin = async (req, res) => {
   }
 };
 
-//b
 export const getPointHistory = async (req, res) => {
   const id = req.user.id;
   let user;

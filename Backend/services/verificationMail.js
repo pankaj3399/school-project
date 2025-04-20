@@ -14,9 +14,6 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
-
-        console.log("OTP: for "+user.email+" ", otp);
-        console.log("OTP2: for "+user.email+" ", otp2);
         
         user.emailVerificationCode = otp;
         if(isStudent){
