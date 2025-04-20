@@ -8,6 +8,8 @@ const API_URL = import.meta.env.IS_VERCEL
   ? "/api"
   : import.meta.env.VITE_API_URL;
 console.log(
+  import.meta.env,
+  process?.env || "",
   import.meta.env.IS_VERCEL,
   import.meta.env.PROD,
   import.meta.env.MODE,
