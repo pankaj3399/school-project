@@ -14,7 +14,7 @@ const navItems = [
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
   { href: '/history', label: 'Point History', icon: ClipboardIcon },
   { href: '/print-report', label: 'Print Report', icon: Paperclip },
-  { href: '/setup', label: 'SETUP STUDENTS', icon: SettingsIcon },
+  { href: '/setup', label: 'Customization', icon: SettingsIcon },
 ];
 
 export function SideNav() {

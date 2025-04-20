@@ -388,11 +388,11 @@ const SetupPage = () => {
                 Add teachers to your school through individual entry or bulk import
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            {/* <CardContent>
               <p className="mb-4">
                 Upload your teacher roster or add teachers individually to get started with the Radu Framework.
               </p>
-            </CardContent>
+            </CardContent> */}
             <CardFooter className="mt-auto">
               <Button 
                 className="w-full bg-[#00a58c] hover:bg-[#00a58c]/90" 
@@ -414,11 +414,11 @@ const SetupPage = () => {
                 Add students to your school through individual entry or bulk import
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            {/* <CardContent>
               <p className="mb-4">
                 Upload your student roster or add students individually to set up E-Token accounts for your students.
               </p>
-            </CardContent>
+            </CardContent> */}
             <CardFooter className="mt-auto">
               <Button 
                 className="w-full bg-[#00a58c] hover:bg-[#00a58c]/90" 
