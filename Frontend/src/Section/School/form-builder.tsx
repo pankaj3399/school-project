@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { createForm } from '@/api'
 import { toast } from '@/hooks/use-toast'
-import { Question } from '@/lib/types'
+import { GRADE_OPTIONS, Question } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
@@ -87,29 +87,7 @@ const navigate = useNavigate()
     }
   }
 
-  const grades = [
-    'K',
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
-    'ADAPTIVE LEARNING ROOM',
-    'ALTERNATIVE LEARNING CENTER',
-    'AN CENTER',
-    'ASD',
-    'BEHAVIORAL ROOM',
-    'GENERAL EDUCATION',
-    'HOMEBOUND ROOM',
-    'HOMEROOM',
-    'LIFE SKILLS CLASSROOM',
-    'PROGRAM #1',
-    'PROGRAM #2',
-    'PROGRAM #3',
-    'RESOURCE ROOM',
-    'SENSORY ROOM',
-    'SPECIAL DAY CLASS',
-    'SPECIALIZED ROOM',
-    'THERAPEUTIC ROOM',
-    'TRANSITION PROGRAM',
-    'OTHER'
-  ];
+  const grades = GRADE_OPTIONS
 
 
   return (

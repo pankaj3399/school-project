@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { getReportDataStudentCombined } from '@/api';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { GRADE_OPTIONS } from '@/lib/types';
 
 type ReportData = {
   gradeData: {
@@ -68,29 +69,7 @@ export default function ViewReport({
   const [reportData, setReportData] = useState<ReportData | null>(null);
  
 
-  const grades = [
-    'K',
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
-    'ADAPTIVE LEARNING ROOM',
-    'ALTERNATIVE LEARNING CENTER',
-    'AN CENTER',
-    'ASD',
-    'BEHAVIORAL ROOM',
-    'GENERAL EDUCATION',
-    'HOMEBOUND ROOM',
-    'HOMEROOM',
-    'LIFE SKILLS CLASSROOM',
-    'PROGRAM #1',
-    'PROGRAM #2',
-    'PROGRAM #3',
-    'RESOURCE ROOM',
-    'SENSORY ROOM',
-    'SPECIAL DAY CLASS',
-    'SPECIALIZED ROOM',
-    'THERAPEUTIC ROOM',
-    'TRANSITION PROGRAM',
-    'OTHER'
-  ];
+  const grades = GRADE_OPTIONS
 
   const handleSelectStudent = (studentId: string, studentData: any, gradeInfo:any) => {
     setSelectedStudents(prev => {

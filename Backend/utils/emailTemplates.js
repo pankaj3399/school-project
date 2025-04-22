@@ -4,8 +4,8 @@ import fs from 'fs';  // Use synchronous fs instead of promises
 
 export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = null, isStudent= false, tempPass=null) => {
   const description = role === Role.Teacher
-    ? tempPass ? "Your account has been created by the system manager in the Radu Framework. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system manager in the Radu Framework. Please verify your email address to enable your E-Token system account and get updates."
-    : "Your account has been created by the system manager in the Radu Framework. Please verify your email address to enable your child's E-Token system account and get updates.";
+    ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to enable your E-Token system account and get updates."
+    : "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to enable your child's E-Token system account and get updates.";
 
   // Get base64 encoded logo - using synchronous version to avoid async complexity
   let logoSrc;
@@ -27,12 +27,12 @@ export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = nu
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <img src="${logoSrc}" alt="Radu Framework Logo" style="width: 150px; height: auto;">
+      <div style="text-align: center; margin-bottom: 40px; width: 100%;">
+        <img src="${logoSrc}" alt="RADU Framework Logo" style="width: 250px; height: auto; display: block; margin: 0 auto;">
       </div>
       
       <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-        <h2 style="color: #00a58c; margin-bottom: 20px;">Welcome to The Radu Framework</h2>
+        <h2 style="color: #00a58c; margin-bottom: 20px;">Welcome to The RADU E-Token System</h2>
         <p style="margin-bottom: 25px;">${description}</p>
         ${tempPass ? `<p style="margin-bottom: 20px;">Your temporary password is: <strong>${tempPass}</strong></p>` : ""}
         
@@ -51,7 +51,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email,toVerify = nu
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #666;">
-        <p>This is an automated message from The Radu Framework.<br>
+        <p>This is an automated message from The RADU E-token System.<br>
            If you believe this was sent in error, please contact your school administrator.</p>
       </div>
     </body>

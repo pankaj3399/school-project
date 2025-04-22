@@ -111,11 +111,12 @@ In your GitHub repository, add the following secrets:
 13. `EMAIL_PASS`: Password for the email address
 14. `FRONTEND_URL`: URL of your frontend application (https://your-domain.com)
 15. `LOGO_URL`: URL for application logo
-16. `LEAD_PDF_URL`: PDF guide URL for lead teachers
-17. `LEAD_VIDEO_URL`: Tutorial video URL for lead teachers
-18. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
-19. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
-20. `SUPPORT_EMAIL`: Email address for support inquiries _(Same Email will be used by certbot to send notifications, if any. Example: Certificate expiry and renewal)_
+16. `VERTICAL_LOGO`: URL for application logo (vertical logo)
+17. `LEAD_PDF_URL`: PDF guide URL for lead teachers
+18. `LEAD_VIDEO_URL`: Tutorial video URL for lead teachers
+19. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
+20. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
+21. `SUPPORT_EMAIL`: Email address for support inquiries _(Same Email will be used by certbot to send notifications, if any. Example: Certificate expiry and renewal)_
 
 ## Deployment Process
 

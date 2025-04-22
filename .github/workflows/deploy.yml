@@ -168,6 +168,7 @@ jobs:
                 - TEAM_MEMBER_PDF_URL=${TEAM_MEMBER_PDF_URL}
                 - TEAM_MEMBER_VIDEO_URL=${TEAM_MEMBER_VIDEO_URL}
                 - SUPPORT_EMAIL=${SUPPORT_EMAIL}
+                - VERTICAL_LOGO=${VERTICAL_LOGO}
           EOL
           
           # Add certbot service if using custom domain
@@ -199,6 +200,7 @@ jobs:
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
           EMAIL_USER=${{ secrets.EMAIL_USER }}
           EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+          VERTICAL_LOGO=${{ secrets.VERTICAL_LOGO }}
           EOL
           
           # Set correct FRONTEND_URL in env file
@@ -214,6 +216,7 @@ jobs:
           
           cat >> ~/app/.env << 'EOL'
           LOGO_URL=${{ secrets.LOGO_URL }}
+          VERTICAL_LOGO=${{ secrets.VERTICAL_LOGO }}
           LEAD_PDF_URL=${{ secrets.LEAD_PDF_URL }}
           LEAD_VIDEO_URL=${{ secrets.LEAD_VIDEO_URL }}
           TEAM_MEMBER_PDF_URL=${{ secrets.TEAM_MEMBER_PDF_URL }}

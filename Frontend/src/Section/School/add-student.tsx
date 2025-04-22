@@ -9,12 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import Loading from "../Loading"
+import { GRADE_OPTIONS } from "@/lib/types"
 
-const STUDENT_GRADES = [
-  'K',
-  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
-  'AN CENTER'
-];
+const STUDENT_GRADES = GRADE_OPTIONS;
 
 export default function AddStudent() {
   const [formData, setFormData] = useState({

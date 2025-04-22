@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import { generateCouponImage } from '../utils/generateImage.js';
 
 dotenv.config();
 const transporter = nodemailer.createTransport({
@@ -20,6 +19,18 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (to, subject, text, html, attachment) => {
     try {
+        console.log(`Sending email to ${to} with subject:`);
+        if(!to){
+            console.error('No recipient email address provided.');
+            return false;
+        }
+        //check if the email is valid
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(to)) {
+            console.error('Invalid email address:', to);
+            return false;
+        }        
+        
         let info;
         if(attachment)
         info = await transporter.sendMail({

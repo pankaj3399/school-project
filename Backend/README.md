@@ -75,6 +75,7 @@ SUPPORT_EMAIL=support@example.com
 
 - **Resources**:
   - `LOGO_URL`: URL for application logo
+  - `VERTICAL_LOGO`: vertical logo URL
   - `LEAD_PDF_URL`: PDF guide for lead teachers
   - `LEAD_VIDEO_URL`: Tutorial video for lead teachers
   - `TEAM_MEMBER_PDF_URL`: PDF guide for team members

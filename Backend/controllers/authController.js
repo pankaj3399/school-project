@@ -11,6 +11,7 @@ import { emailGenerator } from "../utils/emailHelper.js";
 import { sendOnboardingEmail } from "../services/verificationMail.js";
 import SupportRequest from "../models/SupportRequest.js";
 import { sendSupportEmail } from "../services/supportRequestEmail.js";
+import School from "../models/School.js";
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -213,7 +214,8 @@ export const sendVerifyEmail = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
-    user.emailVerificationCode = otp;
+    if(!isStudent)
+      user.emailVerificationCode = otp;
     if (isStudent) {
       user.studentEmailVerificationCode = otp2;
     }
@@ -239,7 +241,7 @@ export const sendVerifyEmail = async (req, res) => {
     if (isStudent) {
       await sendEmail(
         email,
-        "Verify Your Email - The Radu Framework",
+        "Verify your email -  The RADU E-TOKEN System",
         emailHTML2,
         emailHTML2,
         null
@@ -256,7 +258,7 @@ export const sendVerifyEmail = async (req, res) => {
     for (const recipient of emailRecipients) {
       await sendEmail(
         recipient,
-        "Verify Your Email - The Radu Framework",
+        "Verify your email -  The RADU E-TOKEN System",
         emailHTML,
         emailHTML,
         null
@@ -459,9 +461,11 @@ export const createSupportTicket = async (req, res) => {
 
     const createdTicket = await supportRequest.save();
 
+    const school = await School.findById(schoolId);
+
     // Send email notification about the ticket
     // Note: Add your email sending logic here
-    sendSupportEmail(createdTicket);
+    sendSupportEmail(createdTicket, school);
 
     res.status(201).json({
       success: true,
