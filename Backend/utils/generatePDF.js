@@ -71,22 +71,22 @@ export const generateStudentPDF = async ({
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
 
-        // Fixed Radu Framework logo (make sure this URL is accessible)
-        const raduLogoUrl = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
+        // Fixed RADU Framework logo (make sure this URL is accessible)
+        const raduLogoUrl = process.env.VERTICAL_LOGO ?? 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
         try {
             const raduLogoBase64 = await getImageAsBase64(raduLogoUrl);
             if (raduLogoBase64) {
-                doc.addImage(`data:image/png;base64,${raduLogoBase64}`, 'PNG', margin, yPos-15, 40, 60);
+                doc.addImage(`data:image/png;base64,${raduLogoBase64}`, 'PNG', margin, yPos-5, 40, 60);
             }
         } catch (error) {
-            console.error('Error loading Radu logo:', error);
+            console.error('Error loading RADU logo:', error);
         }
 
         // Add School logo on right
         if (schoolData.school.logo) {
             const logoBase64 = await getImageAsBase64(schoolData.school.logo);
             if (logoBase64) {
-                doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', pageWidth - margin - 40, yPos, 40, 40);
+                doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', pageWidth - margin - 40, yPos, 40, 50);
             }
         }
 
@@ -95,7 +95,7 @@ export const generateStudentPDF = async ({
         const centerX = pageWidth / 2;
 
         yPos += 10;
-        ['THE RADU FRAMEWORK', 'E-TOKEN SYSTEM', schoolData.school.name, teacherData.name, `Grade ${studentData.studentInfo.grade}`]
+        ['THE RADU E-TOKEN SYSTEM', 'E-TOKEN SYSTEM', schoolData.school.name, teacherData.name, `Grade ${studentData.studentInfo.grade}`]
             .forEach(text => {
                 doc.text(text, centerX, yPos, { align: 'center' });
                 yPos += lineHeight;
@@ -143,7 +143,7 @@ export const generateStudentPDF = async ({
             ]],
             theme: 'grid',
             headStyles: {
-                fillColor: [255, 255, 255],
+                fillColor: [240, 240, 240],
                 textColor: [0, 0, 0],
                 fontSize: 12,
                 fontStyle: 'bold',
@@ -330,6 +330,6 @@ const addFooter = (doc, pageNumber) => {
     });
 
     doc.text(`Page ${pageNumber} of ${totalPages}`, 20, pageHeight - 10);
-    doc.text("THE RADU FRAMEWORK", pageWidth/2, pageHeight - 10, { align: 'center' });
+    doc.text("The RADU E-token System", pageWidth/2, pageHeight - 10, { align: 'center' });
     doc.text(`Created On ${dateStr}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
 };

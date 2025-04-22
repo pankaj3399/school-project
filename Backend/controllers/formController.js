@@ -262,7 +262,7 @@ export const submitFormTeacher = async (req, res) => {
         const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
         await sendEmail(
         submittedForStudent.email,
-        "Verify Your Email - The Radu Framework",
+        "Verify your email -  The RADU E-TOKEN System",
         emailHTML2,
         emailHTML2,
         null
@@ -360,7 +360,7 @@ export const submitFormAdmin = async (req, res) => {
         const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
         await sendEmail(
         submittedForStudent.email,
-        "Verify Your Email - The Radu Framework",
+        "Verify your email -  The RADU E-TOKEN System",
         emailHTML2,
         emailHTML2,
         null

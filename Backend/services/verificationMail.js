@@ -29,7 +29,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
         if(isStudent){            
             await sendEmail(
                 user.email,
-                "Verify Your Email - The Radu Framework",
+                "Verify your email -  The RADU E-TOKEN System",
                 emailHTML2,
                 emailHTML2,
                 null
@@ -44,7 +44,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
         if (user.role === Role.Student ){
             await sendEmail(
                 user.parentEmail,
-                "Verify Your Email - The Radu Framework",
+                "Verify your email -  The RADU E-TOKEN System",
                 emailHTML,
                 emailHTML,
                 null
@@ -52,7 +52,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
             if(user.standard){
                 await sendEmail(
                     user.standard,
-                    "Verify Your Email - The Radu Framework",
+                    "Verify your email -  The RADU E-TOKEN System",
                     emailHTMLP2,
                     emailHTMLP2,
                     null
@@ -65,7 +65,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
         for (const recipient of emailRecipients) {
             await sendEmail(
                 recipient,
-                "Verify Your Email - The Radu Framework ..",
+                "Verify your email -  The RADU E-TOKEN System ..",
                 emailHTML,
                 emailHTML,
                 null
@@ -136,16 +136,16 @@ export const sendOnboardingEmail = async (user) => {
                 </style>
             </head>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="${logoSrc}" alt="Radu Framework Logo" style="width: 150px; height: auto;">
+                <div style="text-align: center; margin-bottom: 40px; width: 100%;">
+                    <img src="${logoSrc}" alt="RADU Framework Logo" style="width: 250px; height: auto; display: block; margin: 0 auto;">
                 </div>
                 
                 <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-                    <h2 style="color: #00a58c; margin-bottom: 20px;">Welcome to The Radu Framework!</h2>
+                    <h2 style="color: #00a58c; margin-bottom: 20px;">Welcome to The RADU E-Token System!</h2>
                     
                     <p style="margin-bottom: 20px;">Dear ${user.name},</p>
                     
-                    <p style="margin-bottom: 20px;">Welcome aboard as a ${userType}! We're excited to have you join The Radu Framework community. To help you get started, we've prepared some essential resources for you.</p>
+                    <p style="margin-bottom: 20px;">Welcome aboard as a ${userType}! We're excited to have you join The RADU E-token System community. To help you get started, we've prepared some essential resources for you.</p>
                     
                     <div class="resource-section">
                         <h3 style="color: #00a58c;">Your Resources</h3>
@@ -178,7 +178,7 @@ export const sendOnboardingEmail = async (user) => {
                 </div>
                 
                 <div style="text-align: center; font-size: 12px; color: #666;">
-                    <p>This is an automated message from The Radu Framework.<br>
+                    <p>This is an automated message from The RADU E-token System.<br>
                        If you have any questions, please contact your school administrator.</p>
                 </div>
             </body>
@@ -187,7 +187,7 @@ export const sendOnboardingEmail = async (user) => {
 
         await sendEmail(
             user.email,
-            "Welcome to The Radu Framework - Getting Started Resources",
+            "Welcome to The RADU E-Token System - Getting Started Resources",
             emailHTML,
             emailHTML,
             null

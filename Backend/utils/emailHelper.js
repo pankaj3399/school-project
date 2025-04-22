@@ -22,13 +22,13 @@ export const emailGenerator = async (form, {
             subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`
             body = `
             <p>Congratulations <strong>${student.name}</strong>!</p>
-            <p>The ${teacher.subject ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`:`<strong>The Radu Framework Manager</strong>`}, <strong>${teacher.name}</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
+            <p>The ${teacher.subject ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`:`<strong>The RADU E-token System</strong>`}, <strong>${teacher.name}</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
             <p>Please, check your E-Token's balance and exchange them at the AN Center or school store.</p>
             <p>Keep up the good work!!!</p>
             <p>
               ${schoolAdmin.name}<br>
               ${schoolAdmin.email}<br>
-              The Radu Framework Manager<br>
+              The RADU E-token System Manager<br>
               ${school.name}
             </p>
             `;
@@ -88,9 +88,9 @@ export const emailGenerator = async (form, {
                         /* Logo styles */
                         .logo-left, .logo-right {
                             flex: 0 0 auto;
-                            height: 100px;
+                            height: 200px;
                             width: auto;
-                            max-width: 100px;
+                            max-width: 250px;
                             object-fit: contain;
                         }
 
@@ -101,7 +101,7 @@ export const emailGenerator = async (form, {
                             font-size: 28px;
                             font-weight: bold;
                             color: #333333;
-                            margin: 0 100px;
+                            margin: 0 20px;
                             padding: 10px;
                             border-radius: 4px;
                             text-transform: uppercase;
@@ -109,7 +109,7 @@ export const emailGenerator = async (form, {
                         }
 
                         /* Responsive design */
-                        @media (max-width: 600px) {
+                        @media (max-width: 768px) {
                             .header {
                                 flex-direction: column;
                                 gap: 15px;
@@ -119,7 +119,8 @@ export const emailGenerator = async (form, {
                                 margin: 10px 0;
                             }
                             .logo-left, .logo-right {
-                                height: 60px;
+                                height: 150px;
+                                max-width: 150px;
                             }
                         }
 
@@ -133,7 +134,7 @@ export const emailGenerator = async (form, {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="${process.env.LOGO_URL || "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"}" alt="Radu Logo" class="logo-left">
+                            <img src="${process.env.LOGO_URL || "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"}" alt="RADU Logo" class="logo-left">
                             <h1 class="title">Feedback Note</h1>
                             <img src="${school.logo}" alt="School Logo" class="logo-right">
                         </div>
@@ -147,7 +148,7 @@ export const emailGenerator = async (form, {
                         </div>
                         
                         <div class="issued-by">
-                            <strong>Issued By:</strong> ${teacherLastName} - ${teacher.subject ?? 'The Radu Framework System Manager'}
+                            <strong>Issued By:</strong> ${teacherLastName} - ${teacher.subject ?? 'The RADU E-token System Manager'}
                         </div>
                         
                         <div class="feedback-content">
@@ -156,7 +157,7 @@ export const emailGenerator = async (form, {
                         
                         <div class="signature">
                             ${teacherFirstName} ${teacherLastName}<br>
-                            ${teacher.subject ?? 'The Radu Framework System Manager'}<br>
+                            ${teacher.subject ?? 'The RADU E-token System Manager'}<br>
                             ${school.name}<br>
                             ${school.district}
                         </div>
@@ -245,7 +246,7 @@ export const emailGenerator = async (form, {
        );
 }
 
-export const reportEmailGenerator = async (attachment, attachmentName, to, student) => {
+export const reportEmailGenerator = async (attachment, attachmentName, to, data) => {
   try {
     let subject, body;
     
@@ -255,7 +256,7 @@ export const reportEmailGenerator = async (attachment, attachmentName, to, stude
       year: 'numeric'
     });
 
-    subject = `Radu E-Token Report for ${attachmentName.replace('.pdf', '').replaceAll('_', ' ')}`
+    subject = `RADU E-Token Report for ${attachmentName.replace('.pdf', '').replaceAll('_', ' ')}`
     body = `
       <!DOCTYPE html>
       <html>
@@ -287,12 +288,12 @@ export const reportEmailGenerator = async (attachment, attachmentName, to, stude
 
               /* Logo styles */
               .logo-left, .logo-right {
-                  flex: 0 0 auto;
-                  height: 100px;
-                  width: auto;
-                  max-width: 100px;
-                  object-fit: contain;
-              }
+                            flex: 0 0 auto;
+                            height: 200px;
+                            width: auto;
+                            max-width: 250px;
+                            object-fit: contain;
+                        }
 
               /* Title styles */
               .title {
@@ -341,26 +342,26 @@ export const reportEmailGenerator = async (attachment, attachmentName, to, stude
       <body>
           <div class="container">
               <div class="header">
-                  <img src="${process.env.LOGO_URL || "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"}" alt="Radu Logo" class="logo-left">
-                  <h1 class="title">E-Token Report</h1>
-                  <div class="logo-right"></div>
-              </div>
+                            <img src="${process.env.LOGO_URL || "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"}" alt="RADU Logo" class="logo-left">
+                            <h1 class="title">E-Token Report</h1>
+                            <img src="${data.schData.school.logo}" alt="School Logo" class="logo-right">
+                        </div>
 
               <div class="report-content">
-                <p>Attached you will find the report for ${student.studentInfo.name}, Grade ${student.studentInfo.grade} as of ${new Date().toLocaleDateString()}.</p>
+                <p>Attached you will find the report for ${data.stdData.studentInfo.name}, Grade ${data.stdData.studentInfo.grade} as of ${new Date().toLocaleDateString()}.</p>
                 <div class="contact-info">
                   <p>Contact Info</p>
-                  <p>Parent/Guardian Email 1: ${student.studentInfo.parentEmail}</p>
+                  <p>Parent/Guardian Email 1: ${data.stdData.studentInfo.parentEmail}</p>
                   ${
-                    student.studentInfo.standard
-                      ? `<p>Parent/Guardian Email 2: ${student.studentInfo.standard}</p>`
+                    data.stdData.studentInfo.standard
+                      ? `<p>Parent/Guardian Email 2: ${data.stdData.studentInfo.standard}</p>`
                       : ''
                   }
                 </div>
               </div>
 
               <div class="footer">
-                  Created by The Radu E-Token © 2025 on ${currentDate}.
+                  Created by The RADU E-Token © 2025 on ${currentDate}.
               </div>
           </div>
       </body>

@@ -237,7 +237,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
             <AlertDialogTitle>Request Submitted Successfully</AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
               <p>Thank you for your request! Our support team is ready to assist you.</p>
-              <p>You will receive a response within 24 hours or less.</p>
+              <p>You will receive a response within 24 hours.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

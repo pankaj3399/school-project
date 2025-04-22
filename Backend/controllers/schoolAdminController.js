@@ -507,9 +507,9 @@ export const genreport = async (req, res) => {
         }).replaceAll("/", "-");
         
         
-        await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, email, stdData);
+        await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, email, {stdData, schData, tchData});
         if(req.user.role == 'SchoolAdmin'){
-            await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, schData.school.createdBy.email, stdData);
+            await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, schData.school.createdBy.email, {stdData, schData, tchData});
         }
         return res.status(200).json({ message: "Student report sent successfully" });
     } catch (error) {

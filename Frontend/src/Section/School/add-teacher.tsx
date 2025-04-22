@@ -10,29 +10,7 @@ import Loading from "../Loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // import ViewTeachers from "./view-teachers";
 
-const GRADE_OPTIONS = [
-  'K',
-  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
-  'ADAPTIVE LEARNING ROOM',
-  'ALTERNATIVE LEARNING CENTER',
-  'AN CENTER',
-  'ASD',
-  'BEHAVIORAL ROOM',
-  'GENERAL EDUCATION',
-  'HOMEBOUND ROOM',
-  'HOMEROOM',
-  'LIFE SKILLS CLASSROOM',
-  'PROGRAM #1',
-  'PROGRAM #2',
-  'PROGRAM #3',
-  'RESOURCE ROOM',
-  'SENSORY ROOM',
-  'SPECIAL DAY CLASS',
-  'SPECIALIZED ROOM',
-  'THERAPEUTIC ROOM',
-  'TRANSITION PROGRAM',
-  'OTHER'
-];
+import { GRADE_OPTIONS } from "@/lib/types";
 
 export default function AddTeacher() {
   const [formData, setFormData] = useState({

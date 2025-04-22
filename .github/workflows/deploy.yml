@@ -214,6 +214,7 @@ jobs:
           
           cat >> ~/app/.env << 'EOL'
           LOGO_URL=${{ secrets.LOGO_URL }}
+          VERTICAL_LOGO=${{ secrets.VERTICAL_LOGO }}
           LEAD_PDF_URL=${{ secrets.LEAD_PDF_URL }}
           LEAD_VIDEO_URL=${{ secrets.LEAD_VIDEO_URL }}
           TEAM_MEMBER_PDF_URL=${{ secrets.TEAM_MEMBER_PDF_URL }}
