@@ -143,11 +143,18 @@ jobs:
               environment:
                 - MONGO_URI=${MONGO_URI}
                 - JWT_SECRET=${JWT_SECRET}
-                - CLOUDINARY_CLOUD_NAME=${CLOUD_NAME}
+                - CLOUD_NAME=${CLOUD_NAME}
                 - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                 - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                 - EMAIL_USER=${EMAIL_USER}
                 - EMAIL_PASS=${EMAIL_PASS}
+                - LOGO_URL=${LOGO_URL}
+                - LEAD_PDF_URL=${LEAD_PDF_URL}
+                - LEAD_VIDEO_URL=${LEAD_VIDEO_URL}
+                - TEAM_MEMBER_PDF_URL=${TEAM_MEMBER_PDF_URL}
+                - TEAM_MEMBER_VIDEO_URL=${TEAM_MEMBER_VIDEO_URL}
+                - SUPPORT_EMAIL=${SUPPORT_EMAIL}
+                - VERTICAL_LOGO=${VERTICAL_LOGO}
           EOL
           
           # Set the correct frontend URL

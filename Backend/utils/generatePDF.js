@@ -60,7 +60,7 @@ export const generateStudentPDF = async ({
 }) => {
     try {
         const doc = new jsPDF('p', 'mm', 'a4');
-        const lineSpacing = 1.5; // 1.5 line spacing
+        const lineSpacing = 1; // 1.5 line spacing
         const baseLineHeight = 12 * 0.3528; // Convert pt to mm (12pt = ~4.23mm)
         const lineHeight = baseLineHeight * lineSpacing; // Apply line spacing
         const pageWidth = doc.internal.pageSize.width;
@@ -236,7 +236,7 @@ export const generateStudentPDF = async ({
                     minCellHeight: 6
                   },
                   columnStyles: {
-                    0: { cellWidth: 25 },     // Date column
+                    0: { cellWidth: 'auto' },     // Date column
                     1: { cellWidth: 'auto' },     // Time column
                     2: { cellWidth: 35 },     // Student column
                     3: { cellWidth: 'auto'}, // Action column
