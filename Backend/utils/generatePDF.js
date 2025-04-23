@@ -236,7 +236,7 @@ export const generateStudentPDF = async ({
                     minCellHeight: 6
                   },
                   columnStyles: {
-                    0: { cellWidth: 25 },     // Date column
+                    0: { cellWidth: 'auto' },     // Date column
                     1: { cellWidth: 'auto' },     // Time column
                     2: { cellWidth: 35 },     // Student column
                     3: { cellWidth: 'auto'}, // Action column
