@@ -83,8 +83,8 @@ export const generateRecieptImage = async (
     ctx.textBaseline = 'middle';
 
     ctx.font = 'bold 30px "Courier New Bold"'
-    ctx.fillText(`THE RADU E-TOKEN SYSTEM`, canvas.width / 2, 80);
-    ctx.fillText(`E-TOKEN`, canvas.width / 2, 110);
+    ctx.fillText(`THE RADU`, canvas.width / 2, 80);
+    ctx.fillText(`E-TOKEN SYSTEM`, canvas.width / 2, 110);
     ctx.fillText(`EXCHANGE RECEIPT`, canvas.width / 2, 140);
     
     ctx.font = 'bold 16px "Courier New Bold"'

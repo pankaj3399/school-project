@@ -237,13 +237,18 @@ export const submitFormTeacher = async (req, res) => {
 
     if (school && teacher && submittedForStudent) {
       if(submittedForStudent.isStudentEmailVerified){
+        const leadTeacher = await Teacher.find({
+          grade: submittedForStudent.grade,
+          schoolId: teacher.schoolId,
+        })
         emailGenerator(form, {
           points: totalPoints,
           submission: formSubmission,
           teacher: teacher,
           student: submittedForStudent,
           schoolAdmin: schoolAdmin,
-          school: school
+          school: school,
+          leadTeacher: leadTeacher[0] ?? null
         })
       }else{
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -335,13 +340,18 @@ export const submitFormAdmin = async (req, res) => {
 
     if (school && submittedForStudent) {
       if(submittedForStudent.isStudentEmailVerified){
+        const leadTeacher = await Teacher.find({
+          grade: submittedForStudent.grade,
+          schoolId: schoolAdmin.schoolId,
+        })
         emailGenerator(form, {
           points: totalPoints,
           submission: formSubmission,
           teacher: schoolAdmin,
           student: submittedForStudent,
           schoolAdmin: schoolAdmin,
-          school: school
+          school: school,
+          leadTeacher: leadTeacher[0] ?? null
         })
       }else{
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -381,23 +391,85 @@ export const submitFormAdmin = async (req, res) => {
 };
 
 export const getPointHistory = async (req, res) => {
-  const id = req.user.id;
-  let user;
-  let pointHistory;
-  switch (req.user.role) {
-    case Role.SchoolAdmin:
-      user = await Admin.findById(id);
-      pointHistory = await PointsHistory.find({ schoolId: user.schoolId }).populate("submittedForId");
-      break;
+  try {
+    const id = req.user.id;
+    let user;
+    
+    // Get pagination parameters from query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Query conditions
+    let query = {};
+    let totalCount;
+    
+    switch (req.user.role) {
+      case Role.SchoolAdmin:
+        user = await Admin.findById(id);
+        query = { schoolId: user.schoolId };
+        
+        // Get total count for pagination
+        totalCount = await PointsHistory.countDocuments(query);
+        
+        // Execute query with pagination
+        const adminPointHistory = await PointsHistory.find(query)
+          .populate("submittedForId")
+          .sort({ submittedAt: -1 })  // Sort by newest first
+          .skip(skip)
+          .limit(limit);
+          
+        return res.status(200).json({
+          pointHistory: adminPointHistory,
+          pagination: {
+            totalItems: totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            itemsPerPage: limit
+          }
+        });
+        
       case Role.Teacher:
         user = await Teacher.findById(id);
         const grade = await getGradeFromUser(id);
-        pointHistory = await PointsHistory.find({ schoolId: user.schoolId, submittedForId :{
-          $in: grade.studentIds
-        }  }).populate("submittedForId");
-      break;
-    default:
-      return res.status(403).json({ message: "Forbidden" });
+        
+        if (!grade || !grade.studentIds) {
+          return res.status(404).json({ message: "No students found for this grade" });
+        }
+        
+        query = { 
+          schoolId: user.schoolId, 
+          submittedForId: { $in: grade.studentIds }
+        };
+        
+        // Get total count for pagination
+        totalCount = await PointsHistory.countDocuments(query);
+        
+        // Execute query with pagination
+        const teacherPointHistory = await PointsHistory.find(query)
+          .populate("submittedForId")
+          .sort({ submittedAt: -1 })  // Sort by newest first
+          .skip(skip)
+          .limit(limit);
+          
+        return res.status(200).json({
+          pointHistory: teacherPointHistory,
+          pagination: {
+            totalItems: totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            itemsPerPage: limit
+          }
+        });
+        
+      default:
+        return res.status(403).json({ message: "Forbidden" });
+    }
+  } catch (error) {
+    console.error("Error getting point history:", error);
+    return res.status(500).json({ 
+      message: "Server Error", 
+      error: error.message 
+    });
   }
-  return res.status(200).json({ pointHistory });
 };

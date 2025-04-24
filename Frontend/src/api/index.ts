@@ -408,9 +408,9 @@ export const submitFormAdmin = async (
   }
 };
 
-export const getPointHistory = async (token: string) => {
+export const getPointHistory = async (token: string, page:number, limit:number = 20) => {
   try {
-    const response = await axios.get(`${API_URL}/form/getPointHistory`, {
+    const response = await axios.get(`${API_URL}/form/getPointHistory?page=${page}&limit=${limit}`, {
       headers: { token },
     });
     return response.data;
