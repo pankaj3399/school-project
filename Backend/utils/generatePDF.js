@@ -59,6 +59,8 @@ export const generateStudentPDF = async ({
     teacherData
 }) => {
     try {
+        console.log(studentData);
+        
         const doc = new jsPDF('p', 'mm', 'a4');
         const lineSpacing = 1; // 1.5 line spacing
         const baseLineHeight = 12 * 0.3528; // Convert pt to mm (12pt = ~4.23mm)
@@ -138,7 +140,7 @@ export const generateStudentPDF = async ({
                 studentData.totalPoints.eToken,
                 Math.abs(studentData.totalPoints.oopsies),
                 Math.abs(studentData.totalPoints.withdraw),
-                studentData.balance || 0,
+                (studentData.totalPoints.eToken - studentData.totalPoints.withdraw - studentData.totalPoints.oopsies) || 0,
                 studentData.feedback.length
             ]],
             theme: 'grid',

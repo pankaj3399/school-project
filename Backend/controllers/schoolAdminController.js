@@ -540,7 +540,8 @@ export const teacherRoster = async (req, res) => {
                 ...teacher,
                 schoolId: schoolId,
                 password: hashedPassword,
-                isEmailVerified: false
+                isEmailVerified: false,
+                firstLogin: true,
             })
             teacherIds.push(createdUser._id);
             await sendVerifyEmailRoster(req, res, createdUser, false, password);
