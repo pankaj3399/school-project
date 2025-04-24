@@ -8,7 +8,8 @@ export const emailGenerator = async (form, {
     teacher,
     student,
     schoolAdmin,
-    school
+    school,
+    leadTeacher = null
 }) => {
     let subject, body, attachment, attachmentName;
 
@@ -52,7 +53,7 @@ export const emailGenerator = async (form, {
             const teacherFirstName = teacherNames[0];
             const teacherLastName = teacherNames[teacherNames.length - 1];
             
-            subject = `Hi, I have a feedback about ${student.name} from ${teacher.subject ? `grade ${student.grade}.`: `${teacher.subject} class.`}`;
+            subject = `Hi, I have a feedback about ${student.name} from ${!teacher.subject ? `grade ${student.grade}.`: `${teacher.subject} class.`}`;
             
             const feedback = submission.answers.map((item) => `<p>${item.answer}</p>`).join(`<br/>`);
             
@@ -165,10 +166,21 @@ export const emailGenerator = async (form, {
                 </body>
                 </html>
             `;
+            if (leadTeacher){
+              sendEmail(
+                leadTeacher.email,
+                subject,
+                body,
+                body,
+                attachment,
+                attachmentName
+              );
+              return;
+            }
             break;
         }
         case FormType.DeductPoints: {
-            subject = `Oopsie Points have been deducted.`
+            subject = `Oopsie Points have been deducted from balance of ${student.name}, grade ${student.grade}.`
             body = `As a result of your infraction and our conversation, these are the points that have been subtracted from your balance.<br/> 
             <b>Oppsie Points deducted = ${points}<b/> <br/>
              <p>
@@ -189,7 +201,7 @@ export const emailGenerator = async (form, {
         }
     }
     
-    if (form.teacherEmail && teacher?.recieveMails && teacher.isEmailVerified)
+    if ((form.teacherEmail || form.type == FormType.DeductPoints ) && teacher?.recieveMails && teacher.isEmailVerified)
         sendEmail(
          teacher.email,
          subject,
@@ -198,7 +210,7 @@ export const emailGenerator = async (form, {
          attachment,
          attachmentName
        );
-     if (form.studentEmail)
+     if ((form.studentEmail || form.type == FormType.DeductPoints ) && form.type != FormType.Feedback)
        sendEmail(
          student.email,
          subject,

@@ -237,13 +237,18 @@ export const submitFormTeacher = async (req, res) => {
 
     if (school && teacher && submittedForStudent) {
       if(submittedForStudent.isStudentEmailVerified){
+        const leadTeacher = await Teacher.find({
+          grade: submittedForStudent.grade,
+          schoolId: teacher.schoolId,
+        })
         emailGenerator(form, {
           points: totalPoints,
           submission: formSubmission,
           teacher: teacher,
           student: submittedForStudent,
           schoolAdmin: schoolAdmin,
-          school: school
+          school: school,
+          leadTeacher: leadTeacher[0] ?? null
         })
       }else{
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -335,13 +340,18 @@ export const submitFormAdmin = async (req, res) => {
 
     if (school && submittedForStudent) {
       if(submittedForStudent.isStudentEmailVerified){
+        const leadTeacher = await Teacher.find({
+          grade: submittedForStudent.grade,
+          schoolId: schoolAdmin.schoolId,
+        })
         emailGenerator(form, {
           points: totalPoints,
           submission: formSubmission,
           teacher: schoolAdmin,
           student: submittedForStudent,
           schoolAdmin: schoolAdmin,
-          school: school
+          school: school,
+          leadTeacher: leadTeacher[0] ?? null
         })
       }else{
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
