@@ -56,6 +56,7 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
             html:html,
         });
 
+        console.log('Email sent:', info);
         return true
     } catch (error) {
         console.error('Error sending email:', error);
@@ -88,7 +89,8 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
             text,
             html:html,
         });
-
+        console.log('Email sent:', info);
+        
         return true
     } catch (error) {
         console.error('Error sending email:', error);
