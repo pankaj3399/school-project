@@ -140,7 +140,7 @@ export default function EditForm() {
             <SelectItem value="PointWithdraw">Point Withdraw</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
             <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">
-              Award Points with IEP
+            Award Points with Individualized Education Plan (IEP)
             </SelectItem>
           </SelectContent>
         </Select>

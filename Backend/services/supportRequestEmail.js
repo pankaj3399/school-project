@@ -255,6 +255,7 @@ export const sendSupportEmail = async (ticket, school) => {
                     
                     /* Ticket number highlight */
                     .ticket-number {
+                        display: block;
                         font-weight: bold;
                         color: #00a58c;
                         font-size: 18px;

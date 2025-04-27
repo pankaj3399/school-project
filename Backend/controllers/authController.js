@@ -221,13 +221,18 @@ export const sendVerifyEmail = async (req, res) => {
     }
     await user.save();
 
+    const school = await School.findById(user.schoolId);
+
     // Wait for the template to be generated
     const emailHTML = await getVerificationEmailTemplate(
       role,
       otp,
       url,
       email,
-      email
+      email,
+      false,
+      null,
+      school?.logo
     );
     const emailHTML2 = await getVerificationEmailTemplate(
       role,
@@ -235,7 +240,9 @@ export const sendVerifyEmail = async (req, res) => {
       url,
       email,
       email,
-      isStudent
+      isStudent,
+      null,
+      school?.logo
     );
 
     if (isStudent) {

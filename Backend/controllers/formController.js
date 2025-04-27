@@ -264,7 +264,7 @@ export const submitFormTeacher = async (req, res) => {
         submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
         await submittedForStudent.save();
         
-        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
+        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo);
         await sendEmail(
         submittedForStudent.email,
         "Verify your email -  The RADU E-TOKEN System",
@@ -367,7 +367,7 @@ export const submitFormAdmin = async (req, res) => {
         submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
         await submittedForStudent.save();
         
-        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true);
+        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo); 
         await sendEmail(
         submittedForStudent.email,
         "Verify your email -  The RADU E-TOKEN System",

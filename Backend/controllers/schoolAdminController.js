@@ -544,7 +544,7 @@ export const teacherRoster = async (req, res) => {
                 firstLogin: true,
             })
             teacherIds.push(createdUser._id);
-            await sendVerifyEmailRoster(req, res, createdUser, false, password);
+            await sendVerifyEmailRoster(req, res, createdUser, false, password, school.logo);
         });
         school.teachers = [...teacherIds]
         school.teachers = [...new Set(teacherIds)];
@@ -617,12 +617,12 @@ export const studentRoster = async (req, res) => {
 
                 // Send verification emails
                 if (student.email) {
-                    await sendVerifyEmailRoster(req, res, createdStudent, true);
+                    await sendVerifyEmailRoster(req, res, createdStudent, true, null, school.logo);
                 }
 
                 if (student.guardian1?.email) {
                     await sendVerifyEmailRoster(req, res,createdStudent,
-                    false);
+                    false,null ,school.logo);
                 }
                 return createdStudent._id;
             } catch (error) {
