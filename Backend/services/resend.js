@@ -1,5 +1,9 @@
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import fetch, { Headers } from 'node-fetch';
+
+// Add this line to make Headers available globally
+global.Headers = Headers;
 
 dotenv.config();
 
