@@ -4,6 +4,7 @@ import fetch, { Headers } from 'node-fetch';
 
 // Add this line to make Headers available globally
 global.Headers = Headers;
+global.fetch = fetch;
 
 dotenv.config();
 
