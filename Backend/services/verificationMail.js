@@ -4,7 +4,7 @@ import { sendEmail } from "./nodemailer.js";
 import path from 'path';
 import fs from 'fs';
 
-export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass) => {
+export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass, schoolLogo=null) => {
     try {
         const { url } = req.body;
 
@@ -22,9 +22,9 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
         await user.save();
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false, tempPass);
-        const emailHTMLP2 = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.standard,false);
-        const emailHTML2 = await getVerificationEmailTemplate(user.role, otp2, url, user.email,null, isStudent);
+        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false, tempPass, schoolLogo);
+        const emailHTMLP2 = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.standard,false,null, schoolLogo);
+        const emailHTML2 = await getVerificationEmailTemplate(user.role, otp2, url, user.email,null, isStudent, null, schoolLogo);
 
         if(isStudent){            
             await sendEmail(
@@ -78,7 +78,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
     }
 };
 
-export const sendOnboardingEmail = async (user) => {
+export const sendOnboardingEmail = async (user, schoolLogo=null) => {
     try {
         let pdf_url = null;
         let video_url = null;
@@ -133,11 +133,64 @@ export const sendOnboardingEmail = async (user) => {
                         border-radius: 8px;
                         margin: 20px 0;
                     }
+                    
+                    /* Logo styles */
+                    .logo-left, .logo-right {
+                        flex: 0 0 auto;
+                        height: 200px;
+                        width: auto;
+                        max-width: 250px;
+                        object-fit: contain;
+                    }
+                    
+                    /* Header styles */
+                    .header {
+                        position: relative;
+                        margin-bottom: 40px;
+                        padding: 20px 0;
+                        display: flex;
+                        justify-content: space-between;
+                        width: 100%;
+                        align-items: center;
+                        border-bottom: 2px solid #eaeaea;
+                    }
+                    
+                    /* Title styles */
+                    .title {
+                        flex: 1;
+                        text-align: center;
+                        font-size: 28px;
+                        font-weight: bold;
+                        color: #333333;
+                        margin: 0 20px;
+                        padding: 10px;
+                        border-radius: 4px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    
+                    /* Responsive design */
+                    @media (max-width: 768px) {
+                        .header {
+                            flex-direction: column;
+                            gap: 15px;
+                        }
+                        .title {
+                            font-size: 24px;
+                            margin: 10px 0;
+                        }
+                        .logo-left, .logo-right {
+                            height: 150px;
+                            max-width: 150px;
+                        }
+                    }
                 </style>
             </head>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 40px; width: 100%;">
-                    <img src="${logoSrc}" alt="RADU Framework Logo" style="width: 250px; height: auto; display: block; margin: 0 auto;">
+                <div class="header">
+                    <img src="${logoSrc}" alt="RADU Framework Logo" class="logo-left">
+                    <h1 class="title">Welcome</h1>
+                    ${schoolLogo ? `<img src="${schoolLogo}" alt="School Logo" class="logo-right">` : '<div class="logo-right"></div>'}
                 </div>
                 
                 <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">

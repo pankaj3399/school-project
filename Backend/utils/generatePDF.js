@@ -148,7 +148,7 @@ export const generateStudentPDF = async ({
                 textColor: [0, 0, 0],
                 fontSize: 12,
                 fontStyle: 'bold',
-                cellPadding: 8,
+                cellPadding: 3,
                 halign: 'center',
                 lineWidth: 0.5,
                 lineColor: [0, 0, 0],
@@ -212,7 +212,7 @@ export const generateStudentPDF = async ({
                     textColor: [0, 0, 0],
                     fontSize: 12,
                     fontStyle: 'bold',
-                    cellPadding: 8,
+                    cellPadding: 4,
                     halign: 'center',
                     lineWidth: 0.5,
                     lineColor: [0, 0, 0],
@@ -226,8 +226,8 @@ export const generateStudentPDF = async ({
                     lineColor: [0, 0, 0],
                     font: 'helvetica',
                     cellPadding: {
-                        top: 6 * lineSpacing,
-                        bottom: 6 * lineSpacing,
+                        top: 3 * lineSpacing,
+                        bottom: 3 * lineSpacing,
                         left: 6,
                         right: 6
                     }
@@ -273,7 +273,7 @@ export const generateStudentPDF = async ({
                     textColor: [0, 0, 0],
                     fontSize: 12,
                     fontStyle: 'bold',
-                    cellPadding: 8,
+                    cellPadding: 4,
                     halign: 'center',
                     lineWidth: 0.5,
                     lineColor: [0, 0, 0],
@@ -286,8 +286,8 @@ export const generateStudentPDF = async ({
                     lineColor: [0, 0, 0],
                     font: 'helvetica',
                     cellPadding: {
-                        top: 6 * lineSpacing,
-                        bottom: 6 * lineSpacing,
+                        top: 3 * lineSpacing,
+                        bottom: 3 * lineSpacing,
                         left: 6,
                         right: 6
                     }
