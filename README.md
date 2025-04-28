@@ -117,7 +117,16 @@ In your GitHub repository, add the following secrets:
 19. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
 20. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
 21. `SUPPORT_EMAIL`: Email address for support inquiries _(Same Email will be used by certbot to send notifications, if any. Example: Certificate expiry and renewal)_
+22. `RESEND_API_KEY`: Your resend API key (re_c5omNWTt...)
+23. `FROM_EMAIL`: The Resend Email. Remember that the domain of this email must be added in resend domains on [Resend](https://resend.com/domains) before using. Value of this variable must be like `'SOME_TITLE <abc@your_domain.com>'`
 
+## Resend Setup
+
+1. Create an account on [Resend](https://resend.com/).
+2. Create and add the `RESEND_API_KEY` to github secrets.
+3. Add your domain in *Domains* section and get it verified by adding the said records to your DNS. `Most likely you'll be asked to add 4 of them (MX,TXT,TXT,TXT)`
+4. After verification add the `FORM_EMAIL` like shown format.
+5. 
 ## Deployment Process
 
 Once you've set up all the configuration files and GitHub secrets, the deployment process is:

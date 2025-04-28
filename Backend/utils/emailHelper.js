@@ -1,5 +1,5 @@
 import { FormType } from "../enum.js";
-import { sendEmail, sendEmailReport } from "../services/nodemailer.js";
+import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 
 export const emailGenerator = async (form, {

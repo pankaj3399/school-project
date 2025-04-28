@@ -1,6 +1,6 @@
 import { Role } from "../enum.js";
 import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
-import { sendEmail } from "./nodemailer.js";
+import { sendEmail } from "./mail.js";
 import path from 'path';
 import fs from 'fs';
 
