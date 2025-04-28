@@ -31,9 +31,8 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
             // For Resend, attachments need to be in a specific format
             attachments = [
                 {
-                    filename: attachmentName,
                     content: attachment.toString('base64'),
-                    content_id: attachmentName === 'coupon.png' ? 'couponImage' : 'attachment',
+                    filename: 'coupon.png',
                 }
             ];
         }
@@ -64,7 +63,7 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
                 {
                     filename: attachmentName,
                     content: attachment.toString('base64'),
-                    content_id: 'reportPdf',
+                    
                 }
             ];
         }
