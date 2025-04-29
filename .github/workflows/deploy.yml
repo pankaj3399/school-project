@@ -148,7 +148,7 @@ jobs:
                 - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                 - EMAIL_USER=${EMAIL_USER}
                 - EMAIL_PASS=${EMAIL_PASS}
-                - RESEND_API_KEY=${RESEND_API_KEY}
+                - SENDGRID_API_KEY=${SENDGRID_API_KEY}
                 - FROM_EMAIL=${FROM_EMAIL}
           EOL
           
@@ -203,7 +203,7 @@ jobs:
           EMAIL_USER=${{ secrets.EMAIL_USER }}
           EMAIL_PASS=${{ secrets.EMAIL_PASS }}
           VERTICAL_LOGO=${{ secrets.VERTICAL_LOGO }}
-          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
           FROM_EMAIL=${{ secrets.FROM_EMAIL }}
           EOL
           

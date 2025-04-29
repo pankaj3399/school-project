@@ -1,7 +1,7 @@
 import {sendEmail as sendEmailNode, sendEmailReport as sendEmailReportNode} from './nodemailer.js';
-import { sendEmail as sendEmailResend, sendEmailReport as sendEmailReportResend } from './resend.js';
+import { sendEmail as sendEmailSendGrid, sendEmailReport as sendEmailReportSendGrid } from './sendgrid.js';
 
 export {
-    sendEmailNode as sendEmail,
-    sendEmailReportNode as sendEmailReport,
+    sendEmailSendGrid as sendEmail,
+    sendEmailReportSendGrid as sendEmailReport,
 }
