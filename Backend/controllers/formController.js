@@ -8,7 +8,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { emailGenerator } from "../utils/emailHelper.js";
 import Feedback from "../models/Feedback.js";
-import { sendEmail } from "../services/nodemailer.js";
+import { sendEmail } from "../services/mail.js";
 import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
 
 const getGradeFromUser = async (userId) => {

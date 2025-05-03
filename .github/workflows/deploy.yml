@@ -148,6 +148,8 @@ jobs:
                 - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                 - EMAIL_USER=${EMAIL_USER}
                 - EMAIL_PASS=${EMAIL_PASS}
+                - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+                - FROM_EMAIL=${FROM_EMAIL}
           EOL
           
           # Set the correct frontend URL
@@ -201,6 +203,8 @@ jobs:
           EMAIL_USER=${{ secrets.EMAIL_USER }}
           EMAIL_PASS=${{ secrets.EMAIL_PASS }}
           VERTICAL_LOGO=${{ secrets.VERTICAL_LOGO }}
+          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+          FROM_EMAIL=${{ secrets.FROM_EMAIL }}
           EOL
           
           # Set correct FRONTEND_URL in env file

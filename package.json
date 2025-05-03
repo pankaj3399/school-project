@@ -6,5 +6,8 @@
     "backend": "",
     "frontend": "npm run start --prefix frontend",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
   }
 }

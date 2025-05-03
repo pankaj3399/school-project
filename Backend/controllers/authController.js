@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { Role } from "../enum.js";
-import { sendEmail } from "../services/nodemailer.js";
+import { sendEmail } from "../services/mail.js";
 import Otp from "../models/Otp.js";
 import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { emailGenerator } from "../utils/emailHelper.js";

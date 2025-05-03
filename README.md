@@ -117,6 +117,16 @@ In your GitHub repository, add the following secrets:
 19. `TEAM_MEMBER_PDF_URL`: PDF guide URL for team members
 20. `TEAM_MEMBER_VIDEO_URL`: Tutorial video URL for team members
 21. `SUPPORT_EMAIL`: Email address for support inquiries _(Same Email will be used by certbot to send notifications, if any. Example: Certificate expiry and renewal)_
+22. `SENDGRID_API_KEY`: Your sendgrid API key (re_c5omNWTt...)
+23. `FROM_EMAIL`: The Sendgrid Email. Remember that the domain of this email must be added in domains on [Sendgrid](https://sendgrid.com/) before using. Value of this variable must be like `'SOME_TITLE <abc@your_domain.com>'`
+
+## Sendgrid Setup
+
+1. Create an account on [Sendgrid](https://sendgrid.com/).
+2. Create and add the `SENDGRID_API_KEY` to github secrets.
+3. Add your domain in *Domains* section and get it verified by adding the said records to your DNS.
+4. You can check your added domains at [https://app.sendgrid.com/settings/sender_auth](https://app.sendgrid.com/settings/sender_auth) once logged in.
+5. After verification add the `FORM_EMAIL` like shown format.
 
 ## Deployment Process
 
