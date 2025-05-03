@@ -138,7 +138,7 @@ const seed = async () => {
     const schoolAdmin = await Admin.create({
       role: Role.SchoolAdmin,
       name: "School Manager",
-      email: "mayankmchandratre@gmail.com",
+      email: "admin@gmail.com",
       password: hashedSchoolAdminPassword,
       approved: true
     });
