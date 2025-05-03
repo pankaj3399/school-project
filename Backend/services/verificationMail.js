@@ -106,7 +106,7 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
             const logoBuffer = fs.readFileSync(logoPath);
             logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
-            console.error('Error loading logo:', error);
+            // console.error('Error loading logo:', error);
             logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
         }
 
