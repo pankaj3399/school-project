@@ -95,7 +95,8 @@ const studentSchema = new mongoose.Schema({
     default: false
   },
   pendingEtokens:{
-    type:[String]
+    type:[String],
+    default: []
   },
   guardian1:{
     type: GaurdianSchema,

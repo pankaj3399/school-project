@@ -10,6 +10,7 @@ import { emailGenerator } from "../utils/emailHelper.js";
 import Feedback from "../models/Feedback.js";
 import { sendEmail } from "../services/mail.js";
 import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
+import PendingTokens from "../models/PendingTokens.js";
 
 const getGradeFromUser = async (userId) => {
     // Try finding user as admin first
@@ -251,19 +252,22 @@ export const submitFormTeacher = async (req, res) => {
           leadTeacher: leadTeacher[0] ?? null
         })
       }else{
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        submittedForStudent.studentEmailVerificationCode = otp;
+        
         const data = {
           points: totalPoints,
-          submission: formSubmission,
-          teacher: teacher,
-          student: submittedForStudent,
-          schoolAdmin: schoolAdmin,
-          school: school
+          submission: {answers: formSubmission.answers},
+          teacher: {subject: teacher.subject, name: teacher.name, email: teacher.email, grade: teacher.grade ?? null}
         }
-        submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
-        await submittedForStudent.save();
         
+        // Store in PendingTokens model instead of student.pendingEtokens
+        let pendingToken = await PendingTokens.findOne({ studentId: submittedForStudent._id });
+        if (!pendingToken) {
+          pendingToken = new PendingTokens({ 
+            studentId: submittedForStudent._id,
+            tokens: []
+          });
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        submittedForStudent.studentEmailVerificationCode = otp;
         const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo);
         await sendEmail(
         submittedForStudent.email,
@@ -272,6 +276,12 @@ export const submitFormTeacher = async (req, res) => {
         emailHTML2,
         null
        );
+        }
+        pendingToken.tokens.push({ form, data });
+        await pendingToken.save();
+        
+        await submittedForStudent.save();
+        
       }
     }
 
@@ -354,20 +364,23 @@ export const submitFormAdmin = async (req, res) => {
           leadTeacher: leadTeacher[0] ?? null
         })
       }else{
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        submittedForStudent.studentEmailVerificationCode = otp;
+       
         const data = {
           points: totalPoints,
-          submission: formSubmission,
-          teacher: schoolAdmin,
-          student: submittedForStudent,
-          schoolAdmin: schoolAdmin,
-          school: school
+          submission: {answers: formSubmission.answers},
+          teacher: {subject: schoolAdmin.subject ?? null, name: schoolAdmin.name, email: schoolAdmin.email, grade: schoolAdmin.grade ?? null}
         }
-        submittedForStudent.pendingEtokens.push(JSON.stringify({form, data}));
-        await submittedForStudent.save();
         
-        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo); 
+        // Store in PendingTokens model instead of student.pendingEtokens
+        let pendingToken = await PendingTokens.findOne({ studentId: submittedForStudent._id });
+        if (!pendingToken) {
+          pendingToken = new PendingTokens({ 
+            studentId: submittedForStudent._id,
+            tokens: []
+          });
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          submittedForStudent.studentEmailVerificationCode = otp;
+          const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo); 
         await sendEmail(
         submittedForStudent.email,
         "Verify your email -  The RADU E-TOKEN System",
@@ -375,6 +388,13 @@ export const submitFormAdmin = async (req, res) => {
         emailHTML2,
         null
        );
+        }
+        pendingToken.tokens.push({ form, data });
+        await pendingToken.save();
+        
+        await submittedForStudent.save();
+        
+        
       }
     }
 

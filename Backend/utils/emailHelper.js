@@ -201,6 +201,7 @@ export const emailGenerator = async (form, {
         }
     }
     
+    
     if ((form.teacherEmail || form.type == FormType.DeductPoints ) && teacher?.recieveMails && teacher.isEmailVerified)
         sendEmail(
          teacher.email,

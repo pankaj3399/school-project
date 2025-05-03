@@ -12,6 +12,7 @@ import { sendOnboardingEmail } from "../services/verificationMail.js";
 import SupportRequest from "../models/SupportRequest.js";
 import { sendSupportEmail } from "../services/supportRequestEmail.js";
 import School from "../models/School.js";
+import PendingTokens from "../models/PendingTokens.js";
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -324,13 +325,25 @@ export const completeVerification = async (req, res) => {
             student.studentEmailVerificationCode = null;
           }
 
-          if (student.pendingEtokens && student.pendingEtokens.length > 0) {
-            for (const etoken of student.pendingEtokens) {
-              const data = JSON.parse(etoken);
-              if (data.form && data.data) {
-                emailGenerator(data.form, data.data);
+          // Use the PendingTokens collection instead of student.pendingEtokens
+          const pendingTokens = await PendingTokens.findOne({ studentId: student._id });
+          
+          if (pendingTokens && pendingTokens.tokens && pendingTokens.tokens.length > 0) {
+            const school = await School.findById(student.schoolId).populate("createdBy", "name email");
+            
+            for (const tokenData of pendingTokens.tokens) {
+              if (tokenData.form && tokenData.data) {
+                emailGenerator(tokenData.form, {
+                  ...tokenData.data,
+                  student,
+                  school,
+                  schoolAdmin: school.createdBy
+                });
               }
             }
+            
+            // Clear the tokens after processing
+            await PendingTokens.findByIdAndUpdate(pendingTokens._id, { tokens: [] });
           }
 
           await student.save();
