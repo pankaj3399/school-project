@@ -13,7 +13,7 @@ export const sendSupportEmail = async (ticket, school) => {
             const logoBuffer = fs.readFileSync(logoPath);
             logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
         } catch (error) {
-            console.error('Error loading logo:', error);
+            // console.error('Error loading logo:', error);
             logoSrc = process.env.LOGO_URL ?? 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
         }
 

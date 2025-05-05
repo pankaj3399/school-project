@@ -43,7 +43,7 @@ export default function FormPage( ) {
           title: 'Form submitted successfully',
           description: 'Form submitted successfully',
         })
-        navigate('/teachers/managepoints')
+        navigate(-1)
       }else{
         toast({
           title: 'Error submitting form',
