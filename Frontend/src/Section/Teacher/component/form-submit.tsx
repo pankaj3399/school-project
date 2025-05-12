@@ -156,8 +156,10 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               {question.otherGoal && <p className="font-semibold text-gray-900">Other Goal: {question.otherGoal}</p>}
             </div>
             <Input
-            type="text"
+            type= {form.formType == 'Feedback' ? 'text' : 'number'}
             value={answers[question.id]?.answer as string || ''}
+            max={question.maxPoints}
+            min={0}
             onChange={(e) => {
               const points =  isNaN(Number(e.target.value)) ? 0: Number(e.target.value)              
               if(points > question.maxPoints){

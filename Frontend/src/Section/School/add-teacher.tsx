@@ -158,7 +158,7 @@ export default function AddTeacher() {
                 onCheckedChange={(e)=>setFormData((prevState)=>({...prevState,checkbox:e as boolean}))}
               />
               <span className="text-sm ml-2 text-semibold">
-                Do you want to receive Emails
+                Receive Emails
               </span>
             </div>
           </div>

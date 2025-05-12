@@ -7,7 +7,7 @@
     "dev": "nodemon index.js",
     "start": "node index.js",
     "seed": "node seed.js",
-    "build": " npm run start"
+    "build": "npm run start"
   },
   "keywords": [],
   "author": "",

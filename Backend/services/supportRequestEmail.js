@@ -189,7 +189,9 @@ export const sendSupportEmail = async (ticket, school) => {
             emailSubject,
             emailBody,
             emailBody,
-            null
+            null,
+            "ticket.png",
+            ticket.email
         );
 
         // Send confirmation to teacher

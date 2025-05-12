@@ -129,9 +129,9 @@ export default function ForgotPassword() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SchoolAdmin">School Administration</SelectItem>
-                  <SelectItem value="Teacher">Teacher</SelectItem>
-                  <SelectItem value="Student">Student</SelectItem>
+                   <SelectItem value="SchoolAdmin">System Manager</SelectItem>
+                  <SelectItem value="Teacher">Leader/Lead Teacher</SelectItem>
+                  <SelectItem value="SpecialTeacher">Team member/Teacher</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (

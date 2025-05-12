@@ -30,6 +30,52 @@ const clearForm = () => {
   setQuestions([])
 }
 
+useEffect(()=>{
+  switch(formType){
+    case 'AwardPoints':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: true,
+        schoolAdminEmail: false,
+        parentEmail: false
+      })
+      break
+    case 'DeductPoints':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: false,
+        schoolAdminEmail: false,
+        parentEmail: true
+      })
+      break
+    case 'PointWithdraw':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: true,
+        schoolAdminEmail: false,
+        parentEmail: false
+      })
+      break
+    case 'Feedback':
+      setIsSendEmail({
+        studentEmail: false,
+        teacherEmail: true,
+        schoolAdminEmail: true,
+        parentEmail: false
+      })
+      break
+    case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: true,
+        schoolAdminEmail: false,
+        parentEmail: false
+      })
+      break
+
+  }
+},[formType])
+
 const navigate = useNavigate()
 
   const handleCreateForm = async () => {

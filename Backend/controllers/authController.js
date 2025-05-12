@@ -41,6 +41,14 @@ export const login = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (role === Role.Teacher && user.type == "Special") {
+        return res
+          .status(404)
+          .json({
+            message: "User Not Found",
+          });
+    }
+
     if (role === Role.Admin && !user.approved)
       return res.status(401).json({ message: "User not approved" });
 
