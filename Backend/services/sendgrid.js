@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 
-export const sendEmail = async (to, subject, text, html, attachment, attachmentName = 'coupon.png') => {
+export const sendEmail = async (to, subject, text, html, attachment, attachmentName = 'coupon.png',replyTo=null) => {
     try {
         console.log(`Sending email to ${to} with subject:`, subject);
         if (!to) {
@@ -41,11 +41,11 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
             subject,
             text,
             html,
-            attachments
+            attachments,
+            replyTo: replyTo ? replyTo : process.env.FROM_EMAIL || 'noreply@raduframework.com'
         };
 
         const data = await sendgrid.send(msg);
-        console.log('Email sent with SendGrid:', data);
         return true;
     } catch (error) {
         console.error('Error sending email with SendGrid:', error.response ? error.response.body : error);

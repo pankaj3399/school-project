@@ -197,7 +197,7 @@ export const generateStudentPDF = async ({
                     formattedDate.date,
                     formattedDate.time,
                     item.submittedByName,
-                    item.formType,
+                    item.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award Points with Individualized Education Plan IEP' : item.formType,
                     item.points.toString()
                 ];
             });
@@ -226,10 +226,10 @@ export const generateStudentPDF = async ({
                     lineColor: [0, 0, 0],
                     font: 'helvetica',
                     cellPadding: {
-                        top: 3 * lineSpacing,
-                        bottom: 3 * lineSpacing,
-                        left: 6,
-                        right: 6
+                        top: 1.5 * lineSpacing,
+                        bottom: 1.5 * lineSpacing,
+                        left: 3,
+                        right: 3
                     }
                   },
                   styles: {
@@ -237,11 +237,11 @@ export const generateStudentPDF = async ({
                     minCellHeight: 6
                   },
                   columnStyles: {
-                    0: { cellWidth: 'auto' },     // Date column
-                    1: { cellWidth: 'auto' },     // Time column
+                    0: { cellWidth: 25 },     // Date column
+                    1: { cellWidth: 25 },     // Time column
                     2: { cellWidth: 35 },     // Student column
                     3: { cellWidth: 'auto'}, // Action column
-                    4: { cellWidth: 'auto'}  // Points column
+                    4: { cellWidth: 22}  // Points column
                   }
             });
         }

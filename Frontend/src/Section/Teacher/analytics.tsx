@@ -42,7 +42,7 @@ const AllCharts = () => {
                 className="w-full justify-between"
               >
                 {studentName
-                  ? students.find((s: any) => s._id === studentId)?.name
+                  ? `${students.find((s: any) => s._id === studentId)?.name} (Grade ${students.find((s: any) => s._id === studentId)?.grade})`
                   : "Select student..."}
               </Button>
             </PopoverTrigger>
@@ -77,7 +77,7 @@ const AllCharts = () => {
                 className="justify-start"
                 variant={"ghost"}
               >
-                {s.name}
+                {`${s.name} (Grade ${s.grade})`}
               </Button>
             ))}
           </PopoverContent>

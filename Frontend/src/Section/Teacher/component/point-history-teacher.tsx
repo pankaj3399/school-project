@@ -141,6 +141,12 @@ export default function ViewPointHistoryTeacher() {
     fetchPointHistoryData(1);
   };
 
+   const formatFormType = (formType: string) => {
+    if(formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
+      return "Award Points with Individualized Education Plan (IEP)";
+    }
+  }
+
   if (loading) {
     return <Loading />
   }
@@ -221,7 +227,7 @@ export default function ViewPointHistoryTeacher() {
                   <TableCell className="font-medium">{history.submittedForName}</TableCell>
                   <TableCell>
                     <span className="px-2 py-1 rounded-full text-gray-800 text-sm">
-                      {history.formType ?? "N/A"}
+                      {formatFormType(history.formType) ?? "N/A"}
                     </span>
                   </TableCell>
                   <TableCell className={history.points >= 0 ? "text-gray-800 font-medium" : "text-gray-800 font-medium"}>

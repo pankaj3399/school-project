@@ -62,6 +62,12 @@ export default function ViewPointHistoryByData({data}:{
     setLoading(false)
   }, [toast, data])
 
+   const formatFormType = (formType: string) => {
+    if(formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
+      return "Award Points with Individualized Education Plan (IEP)";
+    }
+  }
+
   if (loading) {
     return <Loading />
   }
@@ -94,7 +100,7 @@ export default function ViewPointHistoryByData({data}:{
               <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
               <TableCell>{history.submittedForName}</TableCell>
               <TableCell>{history.submittedByName}</TableCell>
-              <TableCell>{history.formType ?? "N/A"}</TableCell>
+              <TableCell>{formatFormType(history.formType) ?? "N/A"}</TableCell>
               <TableCell>{history.points}</TableCell>
             </TableRow>
           )).reverse()}

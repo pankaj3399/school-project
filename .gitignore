@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+seed.js
 seed2.js
 school_key.pem

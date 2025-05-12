@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { QuestionBuilder } from '@/Section/School/component/question-builder'
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 
-type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints'
+type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
 
 export default function FormBuilder() {
   const [formName, setFormName] = useState('')
@@ -31,6 +31,52 @@ const clearForm = () => {
   setFormType('AwardPoints')
   setQuestions([])
 }
+
+useEffect(()=>{
+  switch(formType){
+    case 'AwardPoints':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: true,
+        schoolAdminEmail: false,
+        parentEmail: false
+      })
+      break
+    case 'DeductPoints':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: false,
+        schoolAdminEmail: false,
+        parentEmail: true
+      })
+      break
+    case 'PointWithdraw':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: true,
+        schoolAdminEmail: false,
+        parentEmail: false
+      })
+      break
+    case 'Feedback':
+      setIsSendEmail({
+        studentEmail: false,
+        teacherEmail: true,
+        schoolAdminEmail: true,
+        parentEmail: false
+      })
+      break
+    case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
+      setIsSendEmail({
+        studentEmail: true,
+        teacherEmail: true,
+        schoolAdminEmail: false,
+        parentEmail: false
+      })
+      break
+
+  }
+},[formType])
 
 const navigate = useNavigate()
 
@@ -77,6 +123,7 @@ const navigate = useNavigate()
   const getDefaultPointsType = (formType: FormType) => {
     switch(formType){
       case 'AwardPoints':
+      case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
         return 'Award'
       case 'Feedback':
         return 'None'
@@ -84,6 +131,7 @@ const navigate = useNavigate()
         return 'Deduct'
       case 'DeductPoints':
         return 'Deduct'
+      
     }
   }
 
