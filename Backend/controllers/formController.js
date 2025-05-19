@@ -220,7 +220,8 @@ export const submitFormTeacher = async (req, res) => {
       submittedForId: submittedFor,
       submittedForName: submittedForStudent.name,
       points: totalPoints,
-      schoolId: teacher.schoolId
+      schoolId: teacher.schoolId,
+      submittedAt,
     });
 
     if(form.formType == "Feedback"){
@@ -232,7 +233,8 @@ export const submitFormTeacher = async (req, res) => {
         submittedForId: submittedFor,
         submittedForName: submittedForStudent.name,
         submittedBySubject: teacher.subject,
-        feedback
+        feedback,
+        createdAt: submittedAt  
       });
     }
 
@@ -332,7 +334,8 @@ export const submitFormAdmin = async (req, res) => {
       submittedForId: submittedFor,
       submittedForName: submittedForStudent.name,
       points: totalPoints,
-      schoolId: schoolAdmin.schoolId
+      schoolId: schoolAdmin.schoolId,
+      submittedAt
     });
 
     if(form.formType == "Feedback"){
@@ -344,7 +347,8 @@ export const submitFormAdmin = async (req, res) => {
         submittedForId: submittedFor,
         submittedForName: submittedForStudent.name,
         submittedBySubject: "System Manager",
-        feedback
+        feedback,
+        createdAt: submittedAt
       });
     }
 

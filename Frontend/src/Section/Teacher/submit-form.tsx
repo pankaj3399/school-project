@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { AnswerType, Form } from '@/lib/types'
 import { getFormById, submitFormTeacher } from '@/api'
 import { toast } from '@/hooks/use-toast'
+import { useAuth } from '@/authContext'
 
 
 
@@ -12,6 +13,7 @@ export default function FormPage( ) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
   const [form, setForm] = useState<Form | null>(null)
+  const { user} = useAuth()
 
   const getForm = async (id: string): Promise<Form | null | OnErrorEventHandlerNonNull> => {
     const token = localStorage.getItem('token')
@@ -59,7 +61,11 @@ export default function FormPage( ) {
     }
     await new Promise(resolve => setTimeout(resolve, 1000))
     setIsSubmitting(false)
-    navigate('/teachers/managepoints')
+    if(user?.type == "Lead"){
+      navigate('/teachers/viewforms')
+    }else{
+      navigate('/teachers/managepoints')
+    }
   }
 
   if (!form) {
