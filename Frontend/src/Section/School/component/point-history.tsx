@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { useAuth } from "@/authContext"
+// import { useAuth } from "@/authContext"
 
 // Define pagination interface
 interface PaginationData {
@@ -27,7 +27,7 @@ export default function ViewPointHistoryTeacher() {
   const [isPopOverOpen, setIsPopOverOpen] = useState(false)
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
-  const {user} = useAuth();
+  // const {user} = useAuth();
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationData>({
@@ -115,32 +115,32 @@ export default function ViewPointHistoryTeacher() {
       const dateObj = new Date(date);
       
       // Get timezone from user's school or default to local
-      const timezone = user?.schoolId?.timeZone;
+      // const timezone = user?.schoolId?.timeZone;
       
-      // If timezone exists and starts with UTC, parse it
-      if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
-        // Extract offset hours (e.g., "UTC-5" => -5)
-        const offset = parseInt(timezone.replace('UTC', '')) || 0;
+      // // If timezone exists and starts with UTC, parse it
+      // if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
+      //   // Extract offset hours (e.g., "UTC-5" => -5)
+      //   const offset = parseInt(timezone.replace('UTC', '')) || 0;
         
-        const options: Intl.DateTimeFormatOptions = {
-          timeZone: 'UTC', // Start with UTC
-          ...(format === 'date' 
-            ? { year: 'numeric', month: '2-digit', day: '2-digit' } 
-            : { hour: '2-digit', minute: '2-digit', hour12: true })
-        };
+      //   const options: Intl.DateTimeFormatOptions = {
+      //     timeZone: 'UTC', // Start with UTC
+      //     ...(format === 'date' 
+      //       ? { year: 'numeric', month: '2-digit', day: '2-digit' } 
+      //       : { hour: '2-digit', minute: '2-digit', hour12: true })
+      //   };
         
-        // Format in UTC
-        const formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
+      //   // Format in UTC
+      //   const formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
         
-        // For non-zero offsets, we need to manually adjust the date
-        if (offset !== 0 && format === 'time') {
-          // Create a new date object with the offset applied
-          const adjustedDate = new Date(dateObj.getTime() + (offset * 60 * 60 * 1000));
-          return new Intl.DateTimeFormat('en-US', options).format(adjustedDate);
-        }
+      //   // For non-zero offsets, we need to manually adjust the date
+      //   if (offset !== 0 && format === 'time') {
+      //     // Create a new date object with the offset applied
+      //     const adjustedDate = new Date(dateObj.getTime() + (offset * 60 * 60 * 1000));
+      //     return new Intl.DateTimeFormat('en-US', options).format(adjustedDate);
+      //   }
         
-        return formatted;
-      }
+      //   return formatted;
+      // }
       
       // Fall back to browser's local timezone
       return format === 'date' 
@@ -239,7 +239,7 @@ export default function ViewPointHistoryTeacher() {
           </TableHeader>
           <TableBody>
             {showPointHistory.length > 0 ? (
-              showPointHistory.map((history) => (
+              showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
                 <TableRow key={history._id}>
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>

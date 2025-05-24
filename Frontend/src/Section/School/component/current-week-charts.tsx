@@ -40,9 +40,9 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
 
             // Fetch data for each point type
             try {
-                let awardRes = {data: []};
-                let deductRes = {data: []};
-                let withdrawRes = {data: []};
+                let awardRes = {data: [], startDate: "", endDate: ""};
+                let deductRes = {data: [], startDate: "", endDate: ""};
+                let withdrawRes = {data: [], startDate: "", endDate: ""};
                 if(studentId === ""){
                     [awardRes, deductRes, withdrawRes] = await Promise.all([
                         getHistoryOfCurrentWeek({formType: 'AwardPoints'}),
@@ -59,10 +59,12 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 
 
                 // Process Award Points
-                if(awardRes.data.length > 0)
+                if(awardRes.data.length > 0){
+                    //@ts-ignore
+                    
                     awardRes.data.forEach((dayData:any) => {
                         const dayIndex = days.indexOf(dayData.day);
-                        if (dayIndex !== -1) {
+                        if (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) { // Exclude Sunday
                             awardWeekData[dayIndex] = {
                                 day: dayData.day,
                                 points: awardWeekData[dayIndex].points + Number(dayData.points)
@@ -70,11 +72,13 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                         }
                     });
 
+                }
+
                 // Process Deduct Points
                 if(deductRes.data.length > 0)
                     deductRes.data.forEach((dayData:any) => {
                         const dayIndex = days.indexOf(dayData.day);
-                        if (dayIndex !== -1) {
+                        if (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) {
                             deductWeekData[dayIndex] = {
                                 day: dayData.day,
                                 points: deductWeekData[dayIndex].points + Number(dayData.points)
@@ -86,7 +90,7 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 if(withdrawRes.data.length > 0)
                     withdrawRes.data.forEach((dayData:any) => {
                         const dayIndex = days.indexOf(dayData.day);
-                        if (dayIndex !== -1) {
+                        if (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) {
                             withdrawWeekData[dayIndex] = {
                                 day: dayData.day,
                                 points: withdrawWeekData[dayIndex].points + Number(dayData.points)
