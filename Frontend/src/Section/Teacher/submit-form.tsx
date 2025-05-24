@@ -5,6 +5,7 @@ import { AnswerType, Form } from '@/lib/types'
 import { getFormById, submitFormTeacher } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { useAuth } from '@/authContext'
+import { getLocalDateInTimezone } from '@/lib/dateFormatter'
 
 
 
@@ -39,6 +40,9 @@ export default function FormPage( ) {
     const token = localStorage.getItem('token')
     
     if(token){
+      if(user?.schoolId){
+              submittedAt = getLocalDateInTimezone(user.schoolId.timeZone, submittedAt)!
+          }
       const response = await submitFormTeacher(answers, submittedFor, isSendEmail, params?.id || "", token, submittedAt)
       if(!response.error){
         toast({ 

@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { AnswerType, Form } from '@/lib/types'
 import { getFormById, submitFormAdmin } from '@/api'
 import { toast } from '@/hooks/use-toast'
+import { useAuth } from '@/authContext'
+import { getLocalDateInTimezone } from '@/lib/dateFormatter'
 
 
 
@@ -12,6 +14,7 @@ export default function FormPageAdmin( ) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
   const [form, setForm] = useState<Form | null>(null)
+  const {user} = useAuth();
 
   const getForm = async (id: string): Promise<Form | null | OnErrorEventHandlerNonNull> => {
     const token = localStorage.getItem('token')
@@ -37,6 +40,10 @@ export default function FormPageAdmin( ) {
     const token = localStorage.getItem('token')
     
     if(token){
+     
+      if(user?.schoolId){
+        submittedAt = getLocalDateInTimezone(user.schoolId.timeZone, submittedAt)!
+      }
       const response = await submitFormAdmin(answers, submittedFor, isSendEmail, params?.id || "", submittedAt)
       if(!response.error){
         toast({ 

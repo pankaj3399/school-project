@@ -1,5 +1,5 @@
 import { getHistoryByTime, getStudents } from "@/api";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom"
 import PointsBarChart from "./component/points-bar-chart";
 import ViewPointHistoryByData from "./component/point-history-data";
@@ -16,8 +16,70 @@ const periods = [
     {label: '1Y', value: '1 YEAR'},
 ]
 
+// Helper function to format data by period
+const formatDataByPeriod = (responseData: any, period: string, timezone: string, hasStudentFilter: boolean) => {
+    const periodDays: Record<string, number> = {
+        '1W': 7,
+        '1M': 30,
+        '3M': 90,
+        '6M': 180,
+        '1Y': 365
+    };
+    if(hasStudentFilter) console.log("Filtering data for student:", responseData);
+    
+    const days = periodDays[period];
+    if (!days) {
+        console.error('Invalid period:', period);
+        return [];
+    }
+
+    // Parse timezone offset
+    const offsetMatch = timezone.match(/UTC([+-]?\d+)/);
+    const offsetHours = offsetMatch ? parseInt(offsetMatch[1], 10) : 0;
+
+    // Get current date in target timezone
+    const now = new Date();
+    const targetDate = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000));
+
+    // Generate date range
+    const data = Array.from({length: days}, (_, dayIndex) => {
+        const date = new Date(targetDate);
+        date.setDate(date.getDate() - (days - 1 - dayIndex));
+        return {
+            day: date.toISOString().split('T')[0],
+            points: 0
+        };
+    });
+
+    // Merge actual data points
+    responseData.forEach((dayData: any) => {
+        const dayIndex = data.findIndex((day: any) => day.day === dayData.day);
+        if (dayIndex !== -1) {
+            data[dayIndex].points += Number(dayData.points);
+        }
+    });
+
+   
+
+    return data;
+};
+
+// Helper function to get form metadata
+const getFormMetadata = (formType: string | null) => {
+    switch(formType) {
+        case 'AwardPoints': 
+            return {title: 'Tokens', barColor: '#4CAF50', icon: '/etoken.svg'};
+        case 'DeductPoints': 
+            return {title: 'Oopsies', barColor: '#F44336', icon: "/oopsie.svg"};
+        case 'PointWithdraw': 
+            return {title: 'Withdrawals', barColor: '#3d59f5', icon: "/Withdraw.svg"};
+        default: 
+            return {title: 'Points', barColor: '#4CAF50', icon: '/etoken.svg'};
+    }
+};
+
 const DetailedHistory = () => {
-    const [searchParams, _] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const [period, setPeriod] = useState<string>('1W');
     const [data, setData] = useState<any[]>([]);
     const [historyData, setHistoryData] = useState<any[]>([]);
@@ -27,347 +89,198 @@ const DetailedHistory = () => {
     const [isPopOverOpen, setIsPopOverOpen] = useState(false);
     const [studentId, setStudentId] = useState<string>("");
     const [studentName, setStudentName] = useState<string>("");
+    const [loading, setLoading] = useState(false);
 
+    // Fetch students on component mount
     useEffect(() => {
         const fetchStudents = async () => {
-            const token = localStorage.getItem('token');
-            const resTeacher = await getStudents(token ?? "");
-            setStudents(resTeacher.students);
-            setFilteredStudents(resTeacher.students);
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                
+                const resTeacher = await getStudents(token);
+                setStudents(resTeacher.students || []);
+                setFilteredStudents(resTeacher.students || []);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+                setStudents([]);
+                setFilteredStudents([]);
+            }
         };
         fetchStudents();
     }, []);
 
-    const fetchData = async () => {
-        const res = await getHistoryByTime({
-            formType: searchParams.get('formType'),
-            period: period,
-            studentId: studentId || undefined // Add studentId to filter
-        });
-        
-        setHistoryData(res.history)
-        let data:any[] = [];
-        switch(period){
-            case '1W': {
-                data = Array.from({length: 7}, (_, dayIndex) => ({
-                    day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                    points: 0,
-                })).reverse();
-                
-                res.data.forEach((dayData:any) => {
-                    const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                    if (dayIndex !== -1) {
-                        data[dayIndex] = {
-                            ...data[dayIndex],
-                            points: data[dayIndex].points + Number(dayData.points)
-                        };
-                    }
-                })
+    // Set metadata based on form type
+    useEffect(() => {
+        const formType = searchParams.get('formType');
+        setMetadata(getFormMetadata(formType));
+    }, [searchParams]);
 
-                setData(data);
-
-                
-            }
-            break;
-            case '1M': {
-                data = Array.from({length: 30}, (_, dayIndex) => ({
-                    day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                    points: 0,
-                })).reverse();
-                res.data.forEach((dayData:any) => {
-                    const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                    if (dayIndex !== -1) {
-                        data[dayIndex] = {
-                            ...data[dayIndex],
-                            points: data[dayIndex].points + Number(dayData.points)
-                        };
-                    }
-                })
-
-                setData(data);
-
-            }
-            break;
-            case '3M': {
-                data = Array.from({length: 90}, (_, dayIndex) => ({
-                    day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                    points: 0,
-                })).reverse();
-                res.data.forEach((dayData:any) => {
-                    const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                    if (dayIndex !== -1) {
-                        data[dayIndex] = {
-                            ...data[dayIndex],
-                            points: data[dayIndex].points + Number(dayData.points)
-                        };
-                    }
-                })
-
-                setData(data);
-
-            }
-            break;
-            case '6M': {
-                data = Array.from({length: 180}, (_, dayIndex) => ({
-                    day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                    points: 0,
-                })).reverse();
-                res.data.forEach((dayData:any) => {
-                    const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                    if (dayIndex !== -1) {
-                        data[dayIndex] = {
-                            ...data[dayIndex],
-                            points: data[dayIndex].points + Number(dayData.points)
-                        };
-                    }
-                })
-
-                setData(data);
-
-            }
-            break;
-            case '1Y': {
-                data = Array.from({length: 365}, (_, dayIndex) => ({
-                    day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                    points: 0,
-                })).reverse();
-                res.data.forEach((dayData:any) => {
-                    const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                    if (dayIndex !== -1) {
-                        data[dayIndex] = {
-                            ...data[dayIndex],
-                            points: data[dayIndex].points + Number(dayData.points)
-                        };
-                    }
-                })
-
-                setData(data);
-
-            }
-            break;
-        }
-
-        setData(data.map((d:any) => ({...d, points: Math.abs(d.points)})));
-    }
-
-    useEffect(()=>{
-        switch(searchParams.get('formType')){
-            case 'AwardPoints': setMetadata({title: 'Tokens', barColor: '#4CAF50', icon: '/etoken.svg'}); break;
-            case 'DeductPoints': setMetadata({title: 'Oopsies', barColor: '#F44336', icon:"/oopsie.svg"}); break;
-            case 'PointWithdraw': setMetadata({title: 'Withdrawals', barColor: '#3d59f5', icon:"/Withdraw.svg"}); break;
-        }
-
-        const fetchData = async () => {
+    // Fetch data function
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const formType = searchParams.get('formType');
+            
             const res = await getHistoryByTime({
-                formType: searchParams.get('formType'),
-                period: period,
-                studentId: studentId || undefined // Add studentId to filter
+                formType,
+                period,
+                studentId: studentId || undefined
             });
 
-            
-            
-            setHistoryData(res.history)
-            let data:any[] = [];
-            switch(period){
-                case '1W': {
-                    data = Array.from({length: 7}, (_, dayIndex) => ({
-                        day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                        points: 0,
-                    })).reverse();
-                    
-                    res.data.forEach((dayData:any) => {
-                        const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                        if (dayIndex !== -1) {
-                            data[dayIndex] = {
-                                ...data[dayIndex],
-                                points: data[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    })
-
-                    setData(data);
-
-                    
-                }
-                break;
-                case '1M': {
-                    data = Array.from({length: 30}, (_, dayIndex) => ({
-                        day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                        points: 0,
-                    })).reverse();
-                    res.data.forEach((dayData:any) => {
-                        const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                        if (dayIndex !== -1) {
-                            data[dayIndex] = {
-                                ...data[dayIndex],
-                                points: data[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    })
-
-                    setData(data);
-
-                }
-                break;
-                case '3M': {
-                    data = Array.from({length: 90}, (_, dayIndex) => ({
-                        day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                        points: 0,
-                    })).reverse();
-                    res.data.forEach((dayData:any) => {
-                        const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                        if (dayIndex !== -1) {
-                            data[dayIndex] = {
-                                ...data[dayIndex],
-                                points: data[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    })
-
-                    if(studentId){
-                        let filteredData = data.filter((d:any) => d.points !== 0);
-                        setData(filteredData);
-                    }else{
-                        setData(data);
-                    }
-
-                }
-                break;
-                case '6M': {
-                    data = Array.from({length: 180}, (_, dayIndex) => ({
-                        day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                        points: 0,
-                    })).reverse();
-                    res.data.forEach((dayData:any) => {
-                        const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                        if (dayIndex !== -1) {
-                            data[dayIndex] = {
-                                ...data[dayIndex],
-                                points: data[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    })
-
-                    setData(data);
-
-                }
-                break;
-                case '1Y': {
-                    data = Array.from({length: 365}, (_, dayIndex) => ({
-                        day: new Date(new Date().setDate(new Date().getDate() - dayIndex)).toISOString().split('T')[0],
-                        points: 0,
-                    })).reverse();
-                    res.data.forEach((dayData:any) => {
-                        const dayIndex = data.findIndex((day:any) => day.day === dayData.day);
-                        if (dayIndex !== -1) {
-                            data[dayIndex] = {
-                                ...data[dayIndex],
-                                points: data[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    })
-
-                    setData(data);
-
-                }
-                break;
+            if (!res) {
+                setData([]);
+                setHistoryData([]);
+                return;
             }
 
-            setData(data.map((d:any) => ({...d, points: Math.abs(d.points)})));
+            setHistoryData(res.history || []);
+
+            // Format data using the helper function
+            const formattedData = formatDataByPeriod(
+                res.data || [], 
+                period, 
+                res.timeZone || 'UTC+0', 
+                Boolean(studentId)
+            );
+
+            // Apply absolute values to points
+            const finalData = formattedData.map((d: any) => ({
+                ...d, 
+                points: Math.abs(d.points)
+            }));
+
+            setData(finalData);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            setData([]);
+            setHistoryData([]);
+        } finally {
+            setLoading(false);
         }
+    }, [searchParams, period, studentId]);
+
+    // Fetch data when dependencies change
+    useEffect(() => {
         fetchData();
-    },[searchParams, period, studentId])
+    }, [fetchData]);
 
-  return (
-    <div>
-        <div className="flex flex-col gap-4 mb-4">
-            {/* Student Filter */}
-            {Array.isArray(students) && students.length > 0 ? (
-                <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
-                    <div className="flex items-center space-x-2">
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between"
-                            >
-                                {studentName
-                                    ? students.find((s: any) => s._id === studentId)?.name
-                                    : "Select student..."}
-                            </Button>
-                        </PopoverTrigger>
-                        {studentName && (
-                            <X
-                                onClick={() => {
-                                    setStudentId("");
-                                    setStudentName("");
-                                    setFilteredStudents(students);
-                                    fetchData();
-                                }}
-                                className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer"
+    // Handle student selection
+    const handleStudentSelect = (student: any) => {
+        setStudentId(student._id);
+        setStudentName(student.name);
+        setIsPopOverOpen(false);
+    };
+
+    // Handle student clear
+    const handleStudentClear = () => {
+        setStudentId("");
+        setStudentName("");
+        setFilteredStudents(students);
+    };
+
+    // Handle student search
+    const handleStudentSearch = (searchValue: string) => {
+        if (searchValue === "") {
+            setFilteredStudents(students);
+        } else {
+            setFilteredStudents(
+                students.filter((s: any) =>
+                    s.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
+                    s.grade?.toLowerCase().includes(searchValue.toLowerCase())
+                )
+            );
+        }
+    };
+
+    return (
+        <div>
+            <div className="flex flex-col gap-4 mb-4">
+                {/* Student Filter */}
+                {Array.isArray(students) && students.length > 0 ? (
+                    <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
+                        <div className="flex items-center space-x-2">
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className="w-full justify-between"
+                                    disabled={loading}
+                                >
+                                    {studentName || "Select student..."}
+                                </Button>
+                            </PopoverTrigger>
+                            {studentName && (
+                                <X
+                                    onClick={handleStudentClear}
+                                    className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer hover:opacity-100"
+                                />
+                            )}
+                        </div>
+                        <PopoverContent className="w-[600px] p-0 flex flex-col space-y-0">
+                            <Input
+                                onChange={(e) => handleStudentSearch(e.target.value)}
+                                className="w-full"
+                                placeholder="Search students..."
                             />
-                        )}
-                    </div>
-                    <PopoverContent className="w-[600px] p-0 flex flex-col space-y-0">
-                        <Input
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if(value === "") {
-                                    setFilteredStudents(students);
-                                }else{
-                                    setFilteredStudents(
-                                        students.filter((s: any) =>
-                                            s.name.toLowerCase().includes(value.toLowerCase()) ||
-                                            s.grade.toLowerCase().includes(value.toLowerCase())
-                                        )
-                                    );
-                                }
-                            }}
-                            className="w-full"
-                            placeholder="Search students..."
-                        />
-                        {filteredStudents.map((s: any) => (
-                            <Button
-                                onClick={() => {
-                                    setStudentId(s._id);
-                                    setStudentName(s.name);
-                                    setIsPopOverOpen(false);
-                                }}
-                                key={s._id}
-                                className="justify-start"
-                                variant="ghost"
-                            >
-                                {s.name} (Grade {s.grade})
-                            </Button>
-                        ))}
-                    </PopoverContent>
-                </Popover>
-            ) : (
-                <div>No students available</div>
-            )}
+                            <div className="max-h-60 overflow-y-auto">
+                                {filteredStudents.map((s: any) => (
+                                    <Button
+                                        onClick={() => handleStudentSelect(s)}
+                                        key={s._id}
+                                        className="justify-start w-full"
+                                        variant="ghost"
+                                    >
+                                        {s.name} {s.grade && `(Grade ${s.grade})`}
+                                    </Button>
+                                ))}
+                                {filteredStudents.length === 0 && (
+                                    <div className="p-4 text-center text-gray-500">
+                                        No students found
+                                    </div>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                ) : (
+                    <div className="text-gray-500">No students available</div>
+                )}
 
-            {/* Period Selector */}
-            <div className='flex space-x-4'>
-                {periods.map((p, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setPeriod(p.label)}
-                        className={`flex-1 px-4 py-4 text-xl ${period === p.label ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'} rounded-md`}
-                    >
-                        {p.value}
-                    </button>
-                ))}
+                {/* Period Selector */}
+                <div className='flex space-x-4'>
+                    {periods.map((p, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setPeriod(p.label)}
+                            disabled={loading}
+                            className={`flex-1 px-4 py-4 text-xl transition-colors ${
+                                period === p.label 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                            } rounded-md disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                            {p.value}
+                        </button>
+                    ))}
+                </div>
             </div>
-        </div>
 
-        <PointsBarChart {...metadata} layout="horizontal" data={data} />
-        {historyData.length > 0 ? (
-            <ViewPointHistoryByData data={historyData} />
-        ) : (
-            <h1>No History Found</h1>
-        )}
-    </div>
-  )
+            {loading ? (
+                <div className="flex justify-center items-center py-8">
+                    <div className="text-gray-500">Loading...</div>
+                </div>
+            ) : (
+                <>
+                    <PointsBarChart {...metadata} layout="horizontal" data={data} />
+                    {historyData.length > 0 ? (
+                        <ViewPointHistoryByData data={historyData} />
+                    ) : (
+                        <h1 className="text-center py-8 text-gray-500">No History Found</h1>
+                    )}
+                </>
+            )}
+        </div>
+    )
 }
 
 export default DetailedHistory

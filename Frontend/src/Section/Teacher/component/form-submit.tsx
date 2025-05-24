@@ -48,7 +48,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const [description, setDescription] = useState("")
 
   const [totalPoints, setTotalPoints] = useState(0)
-  const [submittedAt, setSubmittedAt] = useState(new Date().toISOString().split('T')[0]);
+  const [submittedAt, setSubmittedAt] = useState(new Date());
 
   useEffect(()=>{
     let ansarr = Object.entries(answers).map(([questionId, answer]) => ({
@@ -139,7 +139,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
 
-    onSubmit(answers, submittedFor, isSendEmail, new Date(submittedAt))
+    onSubmit(answers, submittedFor, isSendEmail, submittedAt)
     setIsSendEmail((prev)=>prev)
     setShowModal(false)
   }
@@ -297,8 +297,15 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                       <Input 
                         type="date" 
                         required 
-                        value={submittedAt}
-                        onChange={(e) => setSubmittedAt(e.target.value)}
+                        value={submittedAt.toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          const d = e.target.valueAsDate;
+                          
+                          if(d){
+                            d.setHours(12, 0, 0, 0); // Set time to midnight
+                            setSubmittedAt(d)
+                          }
+                        }}
                       />
               </div>
               <div>

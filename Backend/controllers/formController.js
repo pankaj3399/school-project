@@ -416,11 +416,7 @@ export const submitFormAdmin = async (req, res) => {
 
 export const getPointHistory = async (req, res) => {
   try {
-    console.log("Request received:", { 
-      query: req.query,
-      userExists: !!req.user,
-      userRole: req.user?.role 
-    });
+  
     const id = req.user.id;
     let user;
     
@@ -438,12 +434,10 @@ export const getPointHistory = async (req, res) => {
         user = await Admin.findById(id);
         query = { schoolId: user.schoolId };
 
-        console.log("Admin Query:", query);
         
         // Get total count for pagination
         totalCount = await PointsHistory.countDocuments(query);
 
-        console.log("Total Count:", totalCount);
         
         // Execute query with pagination
         const adminPointHistory = await PointsHistory.find(query)
@@ -451,15 +445,7 @@ export const getPointHistory = async (req, res) => {
           .sort({ submittedAt: -1 })  // Sort by newest first
           .skip(skip)
           .limit(limit);
-          console.log("Admin History:", {
-            pointHistory: adminPointHistory,
-            pagination: {
-              totalItems: totalCount,
-              totalPages: Math.ceil(totalCount / limit),
-              currentPage: page,
-              itemsPerPage: limit
-            }
-          });
+        
           
         return res.status(200).json({
           pointHistory: adminPointHistory,

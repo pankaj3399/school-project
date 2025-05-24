@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast"
 import { getPointHistory, getStudents } from "@/api"
 import Loading from "../../Loading"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuth } from "@/authContext"
+// import { useAuth } from "@/authContext"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -25,7 +25,7 @@ export default function ViewPointHistoryTeacher() {
   const [students, setStudents] = useState<any[]>([])
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
-  const { user } = useAuth();
+  // const { user } = useAuth();
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationData>({
@@ -40,33 +40,33 @@ export default function ViewPointHistoryTeacher() {
     try {
       const dateObj = new Date(date);
       
-      // Get timezone from user's school or default to local
-      const timezone = user?.schoolId?.timezone;
+      // // Get timezone from user's school or default to local
+      // const timezone = user?.schoolId?.timezone;
       
-      // If timezone exists and starts with UTC, parse it
-      if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
-        // Extract offset hours (e.g., "UTC-5" => -5)
-        const offset = parseInt(timezone.replace('UTC', '')) || 0;
+      // // If timezone exists and starts with UTC, parse it
+      // if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
+      //   // Extract offset hours (e.g., "UTC-5" => -5)
+      //   const offset = parseInt(timezone.replace('UTC', '')) || 0;
         
-        const options: Intl.DateTimeFormatOptions = {
-          timeZone: 'UTC', // Start with UTC
-          ...(format === 'date' 
-            ? { year: 'numeric', month: '2-digit', day: '2-digit' } 
-            : { hour: '2-digit', minute: '2-digit', hour12: true })
-        };
+      //   const options: Intl.DateTimeFormatOptions = {
+      //     timeZone: 'UTC', // Start with UTC
+      //     ...(format === 'date' 
+      //       ? { year: 'numeric', month: '2-digit', day: '2-digit' } 
+      //       : { hour: '2-digit', minute: '2-digit', hour12: true })
+      //   };
         
-        // Format in UTC
-        const formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
+      //   // Format in UTC
+      //   const formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
         
-        // For non-zero offsets, we need to manually adjust the date
-        if (offset !== 0 && format === 'time') {
-          // Create a new date object with the offset applied
-          const adjustedDate = new Date(dateObj.getTime() + (offset * 60 * 60 * 1000));
-          return new Intl.DateTimeFormat('en-US', options).format(adjustedDate);
-        }
+      //   // For non-zero offsets, we need to manually adjust the date
+      //   if (offset !== 0 && format === 'time') {
+      //     // Create a new date object with the offset applied
+      //     const adjustedDate = new Date(dateObj.getTime() + (offset * 60 * 60 * 1000));
+      //     return new Intl.DateTimeFormat('en-US', options).format(adjustedDate);
+      //   }
         
-        return formatted;
-      }
+      //   return formatted;
+      // }
       
       // Fall back to browser's local timezone
       return format === 'date' 
@@ -144,6 +144,8 @@ export default function ViewPointHistoryTeacher() {
    const formatFormType = (formType: string) => {
     if(formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
       return "Award Points with Individualized Education Plan (IEP)";
+    }else{
+      return formType;
     }
   }
 
@@ -220,7 +222,7 @@ export default function ViewPointHistoryTeacher() {
           </TableHeader>
           <TableBody>
             {showPointHistory.length > 0 ? (
-              showPointHistory.map((history) => (
+              showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
                 <TableRow key={history._id} className="hover:bg-gray-50">
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>

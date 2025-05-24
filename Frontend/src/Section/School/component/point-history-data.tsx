@@ -65,6 +65,8 @@ export default function ViewPointHistoryByData({data}:{
    const formatFormType = (formType: string) => {
     if(formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
       return "Award Points with Individualized Education Plan (IEP)";
+    }else{
+       return formType
     }
   }
 
@@ -94,7 +96,7 @@ export default function ViewPointHistoryByData({data}:{
           </TableRow>
         </TableHeader>
         <TableBody>
-          {showPointHistory.map((history) => (
+          {showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
             <TableRow key={history._id}>
               <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
               <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
