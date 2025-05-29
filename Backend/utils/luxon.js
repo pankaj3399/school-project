@@ -40,7 +40,10 @@ export class LuxonTimezoneManager {
 
   // Convert old UTC offset format to proper timezone
   getTimezoneFromOffset(utcOffset) {
-    return this.timezoneMap.get(utcOffset) || 'UTC';
+    if( utcOffset.startsWith('UTC')) {
+      return this.timezoneMap.get(utcOffset) || 'UTC'; // Already in proper format
+    }
+    return  utcOffset;
   }
 
   // Get current time in school's timezone
@@ -90,6 +93,8 @@ export class LuxonTimezoneManager {
       // Try to create from the input as-is
       dateTime = DateTime.fromJSDate(new Date(date));
     }
+    console.log('Formatting date:', date, 'in timezone:', properTimezone, 'dateTime:', dateTime.toString());
+    
     
     // Check if the DateTime is valid
     if (!dateTime.isValid) {
@@ -104,6 +109,7 @@ export class LuxonTimezoneManager {
       console.warn('Invalid timezone conversion:', properTimezone, schoolTime.invalidReason);
       return 'Invalid DateTime';
     }
+    console.log('Converted to school time:', schoolTime.toString());    
     
     return schoolTime.toFormat(format);
   }
