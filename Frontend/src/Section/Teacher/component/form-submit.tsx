@@ -7,15 +7,11 @@ import { getStudents } from '@/api'
 import Modal from '@/Section/School/Modal'
 import { Loader2 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
-
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronsUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@/authContext'
-
-
-
-
+import { timezoneManager } from '@/lib/luxon'
 
 type FormSubmissionProps = {
   form: any
@@ -48,7 +44,14 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const [description, setDescription] = useState("")
 
   const [totalPoints, setTotalPoints] = useState(0)
-  const [submittedAt, setSubmittedAt] = useState(new Date());
+  const [submittedAt, setSubmittedAt] = useState(() => {
+    // Initialize with current date in school's timezone
+    if (user?.schoolId?.timeZone) {
+      const schoolCurrentTime = timezoneManager.getSchoolCurrentTime(user.schoolId.timeZone);
+      return schoolCurrentTime.toJSDate();
+    }
+    return new Date();
+  });
 
   useEffect(()=>{
     let ansarr = Object.entries(answers).map(([questionId, answer]) => ({
@@ -293,20 +296,41 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               }
 
               <div>
-                      <p>Date:</p>
-                      <Input 
-                        type="date" 
-                        required 
-                        value={submittedAt.toISOString().split('T')[0]}
-                        onChange={(e) => {
-                          const d = e.target.valueAsDate;
-                          
-                          if(d){
-                            d.setHours(12, 0, 0, 0); // Set time to midnight
-                            setSubmittedAt(d)
-                          }
-                        }}
-                      />
+                <p>Date:</p>
+                <Input 
+                  type="date" 
+                  required 
+                  value={
+                    user?.schoolId?.timeZone 
+                      ? timezoneManager.formatForInput(submittedAt, user.schoolId.timeZone)
+                      : submittedAt.toISOString().split('T')[0]
+                  }
+                  onChange={(e) => {
+                    const selectedDate = e.target.valueAsDate;
+                    
+                    if(selectedDate && user?.schoolId?.timeZone){
+                      // Create a date in the school's timezone at noon
+                      const schoolDateTime = timezoneManager.createSchoolDateTime(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth() + 1,
+                        selectedDate.getDate(),
+                        12, // Set to noon in school timezone
+                        0,
+                        user.schoolId.timeZone
+                      );
+                      setSubmittedAt(schoolDateTime.toJSDate());
+                    } else if(selectedDate) {
+                      selectedDate.setHours(12, 0, 0, 0);
+                      setSubmittedAt(selectedDate);
+                    }
+                  }}
+                />
+                {user?.schoolId?.timeZone && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Time zone: {user.schoolId.timeZone} 
+                    ({timezoneManager.formatForSchool(submittedAt, user.schoolId.timeZone, 'ZZZZ')})
+                  </p>
+                )}
               </div>
               <div>
                 <p>Student:</p>

@@ -41,11 +41,11 @@ const PointsBarChart = ({
             {title}
         </h2>
         
-        <ResponsiveContainer className={"col-span-8"} width="100%" height="100%">
+        <ResponsiveContainer className={"col-span-8 "} width="100%" height="100%">
             <BarChart
                 data={showData}
                 margin={{
-                    top: 5,
+                    top: 10,
                     right: 30,
                     left: 20,
                     bottom: 5,

@@ -23,6 +23,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Users, GraduationCap, School } from "lucide-react";
+import { TIMEZONE_OPTIONS } from "@/lib/luxon";
 
 const STATE_OPTIONS = [
   'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC',
@@ -33,33 +34,7 @@ const STATE_OPTIONS = [
   'VA', 'VI', 'WA', 'WV', 'WI', 'WY'
 ];
 
-const TIMEZONE_OPTIONS = [
-  { value: 'UTC-12', label: 'UTC-12' },
-  { value: 'UTC-11', label: 'UTC-11' },
-  { value: 'UTC-10', label: 'UTC-10 (Hawaii)' },
-  { value: 'UTC-9', label: 'UTC-9 (Alaska)' },
-  { value: 'UTC-8', label: 'UTC-8 (Pacific Time)' },
-  { value: 'UTC-7', label: 'UTC-7 (Mountain Time)' },
-  { value: 'UTC-6', label: 'UTC-6 (Central Time)' },
-  { value: 'UTC-5', label: 'UTC-5 (Eastern Time)' },
-  { value: 'UTC-4', label: 'UTC-4' },
-  { value: 'UTC-3', label: 'UTC-3' },
-  { value: 'UTC-2', label: 'UTC-2' },
-  { value: 'UTC-1', label: 'UTC-1' },
-  { value: 'UTC+0', label: 'UTC+0' },
-  { value: 'UTC+1', label: 'UTC+1' },
-  { value: 'UTC+2', label: 'UTC+2' },
-  { value: 'UTC+3', label: 'UTC+3' },
-  { value: 'UTC+4', label: 'UTC+4' },
-  { value: 'UTC+5', label: 'UTC+5' },
-  { value: 'UTC+6', label: 'UTC+6' },
-  { value: 'UTC+7', label: 'UTC+7' },
-  { value: 'UTC+8', label: 'UTC+8' },
-  { value: 'UTC+9', label: 'UTC+9' },
-  { value: 'UTC+10', label: 'UTC+10' },
-  { value: 'UTC+11', label: 'UTC+11' },
-  { value: 'UTC+12', label: 'UTC+12' }
-];
+
 
 const SetupPage = () => {
   const [schoolName, setSchoolName] = useState("");
@@ -74,7 +49,7 @@ const SetupPage = () => {
   const navigate = useNavigate();
   const [state, setState] = useState("AL");
   const [country, setCountry] = useState("United States");
-  const [timezone, setTimezone] = useState("UTC-5");
+  const [timezone, setTimezone] = useState(TIMEZONE_OPTIONS[0].value);
   const [domain, setDomain] = useState("");
   const [showResetModal, setShowResetModal] = useState(false);
 

@@ -4,10 +4,11 @@ import { useToast } from "@/hooks/use-toast"
 import { getPointHistory, getStudents } from "@/api"
 import Loading from "../../Loading"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-// import { useAuth } from "@/authContext"
+import { useAuth } from "@/authContext"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { timezoneManager } from "@/lib/luxon"
 
 // Define pagination interface
 interface PaginationData {
@@ -25,7 +26,7 @@ export default function ViewPointHistoryTeacher() {
   const [students, setStudents] = useState<any[]>([])
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
-  // const { user } = useAuth();
+  const { user } = useAuth();
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationData>({
@@ -38,37 +39,17 @@ export default function ViewPointHistoryTeacher() {
   // Helper function to format date and time with timezone
   const formatDateTime = (date: string | number | Date, format: 'date' | 'time') => {
     try {
-      const dateObj = new Date(date);
-      
-      // // Get timezone from user's school or default to local
-      // const timezone = user?.schoolId?.timezone;
-      
-      // // If timezone exists and starts with UTC, parse it
-      // if (timezone && typeof timezone === 'string' && timezone.startsWith('UTC')) {
-      //   // Extract offset hours (e.g., "UTC-5" => -5)
-      //   const offset = parseInt(timezone.replace('UTC', '')) || 0;
-        
-      //   const options: Intl.DateTimeFormatOptions = {
-      //     timeZone: 'UTC', // Start with UTC
-      //     ...(format === 'date' 
-      //       ? { year: 'numeric', month: '2-digit', day: '2-digit' } 
-      //       : { hour: '2-digit', minute: '2-digit', hour12: true })
-      //   };
-        
-      //   // Format in UTC
-      //   const formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
-        
-      //   // For non-zero offsets, we need to manually adjust the date
-      //   if (offset !== 0 && format === 'time') {
-      //     // Create a new date object with the offset applied
-      //     const adjustedDate = new Date(dateObj.getTime() + (offset * 60 * 60 * 1000));
-      //     return new Intl.DateTimeFormat('en-US', options).format(adjustedDate);
-      //   }
-        
-      //   return formatted;
-      // }
+      // Use the school's timezone if available
+      if (user?.schoolId?.timeZone) {
+        if (format === 'date') {
+          return timezoneManager.formatForSchool(date as string | Date, user.schoolId.timeZone, 'MM/dd/yyyy');
+        } else {
+          return timezoneManager.formatForSchool(date as string | Date, user.schoolId.timeZone, 'h:mm a');
+        }
+      }
       
       // Fall back to browser's local timezone
+      const dateObj = new Date(date);
       return format === 'date' 
         ? dateObj.toLocaleDateString() 
         : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

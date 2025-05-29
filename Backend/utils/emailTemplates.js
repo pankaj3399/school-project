@@ -1,8 +1,9 @@
 import { Role } from '../enum.js';
 import path from 'path';
-import fs from 'fs';  // Use synchronous fs instead of promises
+import fs from 'fs';
+import { timezoneManager } from './luxon.js';
 
-export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null) => {
+export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null, schoolTimezone = 'UTC+0') => {
   
   const description = role === Role.Teacher
     ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to enable your E-Token system account and get updates."
@@ -19,6 +20,9 @@ export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = n
     // Fallback to a URL if available - we can add the logo to cloud storage and use the URL here
     logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
   }
+
+  // Format current date in school timezone
+  const currentDate = timezoneManager.formatForSchool(new Date(), schoolTimezone, 'MMMM dd, yyyy');
 
   return `
     <!DOCTYPE html>
@@ -103,6 +107,10 @@ export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = n
             Verify Email Address
           </a>
         </div>
+        
+        <p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">
+          Email sent on ${currentDate}
+        </p>
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #666;">

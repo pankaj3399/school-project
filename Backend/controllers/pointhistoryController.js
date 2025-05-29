@@ -6,16 +6,71 @@ import Student from "../models/Student.js";
 import Admin from "../models/Admin.js";
 import FormSubmissions from "../models/FormSubmissions.js";
 import Feedback from "../models/Feedback.js";
-import { getLocalDateInTimezone } from "../utils/dateFormatter.js";
+import { LuxonTimezoneManager } from "../utils/luxon.js";
+
+// Create timezone manager instance
+const timezoneManager = new LuxonTimezoneManager();
+// Helper function to get school timezone with fallback
+const getSchoolTimezone = async (schoolId) => {
+  try {
+    const school = await School.findById(schoolId);
+    if (school?.timeZone && timezoneManager.isValidTimezone(school.timeZone)) {
+      return school.timeZone;
+    }
+    // Fallback to UTC if invalid or missing timezone
+    return 'UTC';
+  } catch (error) {
+    console.warn('Failed to get school timezone, using UTC:', error.message);
+    return 'UTC';
+  }
+};
+
+// Helper function to convert UTC date to school timezone
+const convertToSchoolTime = (utcDate, schoolTimezone) => {
+  try {
+    return timezoneManager.convertToSchoolTime(utcDate, schoolTimezone);
+  } catch (error) {
+    console.warn('Failed to convert to school time, using UTC:', error.message);
+    return timezoneManager.convertToSchoolTime(utcDate, 'UTC');
+  }
+};
+
+// Helper function to get current time in school timezone
+const getSchoolCurrentTime = (schoolTimezone) => {
+  try {
+    return timezoneManager.getSchoolCurrentTime(schoolTimezone);
+  } catch (error) {
+    console.warn('Failed to get school current time, using UTC:', error.message);
+    return timezoneManager.getSchoolCurrentTime('UTC');
+  }
+};
+
+// Helper function to get school day bounds in UTC
+const getSchoolDayBoundsUTC = (date, schoolTimezone) => {
+  try {
+    return timezoneManager.getSchoolDayBounds(date, schoolTimezone);
+  } catch (error) {
+    console.warn('Failed to get school day bounds, using UTC:', error.message);
+    return timezoneManager.getSchoolDayBounds(date, 'UTC');
+  }
+};
 
 // Helper function to get the start of the educational year
-const getEducationalYearStart = () => {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const augFirst = new Date(currentYear, 7, 1); // August is 7 in zero-indexed months
-
-  // If current date is before AUg 1, use previous year's start
-  return currentDate < augFirst ? new Date(currentYear - 1, 9, 1) : augFirst;
+const getEducationalYearStart = async (schoolId) => {
+  const schoolTimezone = await getSchoolTimezone(schoolId);
+  const currentTime = getSchoolCurrentTime(schoolTimezone);
+  const currentYear = currentTime.year;
+  
+  // Create August 1st in school timezone
+  const augFirst = timezoneManager.createSchoolDateTime(currentYear, 8, 1, 0, 0, schoolTimezone);
+  
+  // If current date is before Aug 1, use previous year's start
+  const yearStart = currentTime < augFirst ? 
+    timezoneManager.createSchoolDateTime(currentYear - 1, 8, 1, 0, 0, schoolTimezone) : 
+    augFirst;
+    
+  // Convert to UTC for database queries
+  return timezoneManager.convertSchoolTimeToUTC(yearStart, schoolTimezone).toJSDate();
 };
 
 // Helper function to get school ID from user
@@ -62,7 +117,7 @@ export const getYearPointsHistory = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const teacherData = await getGradeFromUser(req.user.id);
 
-    const yearStart = getEducationalYearStart();
+    const yearStart = await getEducationalYearStart();
     const today = new Date();
 
     let pointsHistory;
@@ -322,7 +377,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const studentId = req.params.id;
 
-    const yearStart = getEducationalYearStart();
+    const yearStart = await getEducationalYearStart();
     const today = new Date();
 
     const pointsHistory = await PointsHistory.aggregate([
@@ -445,22 +500,31 @@ export const getWeekPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const teacherData = await getGradeFromUser(req.user.id);
-    const school = await School.findById(schoolId);
+    const schoolTimezone = await getSchoolTimezone(schoolId);
 
     const { startDate, formType } = req.body;
 
-    // Calculate date range for last 7 days
-    const endDate = startDate ? getLocalDateInTimezone(school.timeZone,new Date(startDate)) : getLocalDateInTimezone(school.timeZone,new Date());
+    // Calculate date range for last 7 days in school timezone
+    let endDate;
+    if (startDate) {
+      // Parse the provided date in school timezone
+      endDate = convertToSchoolTime(new Date(startDate), schoolTimezone);
+    } else {
+      // Use current date in school timezone
+      endDate = getSchoolCurrentTime(schoolTimezone);
+    }
     
-    const startOfRange = new Date(endDate);
-    endDate.setDate(endDate.getDate() + 1); // Include today in the range
-    startOfRange.setDate(endDate.getDate() - 6); // Get 6 days before to include today (total 7 days)
+    // Calculate start of range (6 days before end date)
+    //we need start date to be the start of current week only
 
-    // Set start time to beginning of day and end time to end of day
-    startOfRange.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
+    let startOfRange = endDate.startOf('week');
+    startOfRange = startOfRange.minus({day: 1}) // Start from Monday
+    
+    // Get UTC bounds for database queries
+    const startBounds = getSchoolDayBoundsUTC(startOfRange.toJSDate(), schoolTimezone);
+    const endBounds = getSchoolDayBoundsUTC(endDate.toJSDate(), schoolTimezone);
 
-    console.log(`Fetching week points history from ${startOfRange.getUTCDate()} to ${endDate.getUTCDate()}`);
+    console.log(`Fetching week points history from ${startBounds.start} to ${endBounds.end} (School TZ: ${schoolTimezone})`);
     
 
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -469,67 +533,93 @@ export const getWeekPointsHistory = async (req, res) => {
 
     if (teacherData) {
       weekPoints = await PointsHistory.aggregate([
-    {
-        $match: {
+        {
+          $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             // Conditionally include 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
             formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+              : formType,
             submittedAt: {
-                $gte: startOfRange,
-                $lte: endDate,
+              $gte: startBounds.start,
+              $lte: endBounds.end,
             },
             submittedForId: { $in: teacherData.studentIds },
+          },
         },
-    },
-    {
-        $group: {
-            _id: {
-                $dateToString: {
-                    format: "%Y-%m-%d",
-                    date: "$submittedAt",
-                },
+        {
+          $addFields: {
+            // Convert UTC submittedAt to school timezone for grouping
+            schoolDate: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
             },
-            dayOfWeek: { $first: { $dayOfWeek: "$submittedAt" } },
-            points: { $sum: "$points" },
+            schoolDayOfWeek: {
+              $dayOfWeek: {
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
         },
-    },
-    {
-        $project: {
+        {
+          $group: {
+            _id: "$schoolDate",
+            dayOfWeek: { $first: "$schoolDayOfWeek" },
+            points: { $sum: "$points" },
+          },
+        },
+        {
+          $project: {
             _id: 0,
             date: "$_id",
             day: {
-                $arrayElemAt: [daysOfWeek, { $subtract: ["$dayOfWeek", 1] }],
+              $arrayElemAt: [daysOfWeek, { $subtract: ["$dayOfWeek", 1] }],
             },
             points: 1,
+          },
         },
-    },
-    { $sort: { date: 1 } },
-]);
+        { $sort: { date: 1 } },
+      ]);
     } else {
       weekPoints = await PointsHistory.aggregate([
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+              : formType,
             submittedAt: {
-              $gte: startOfRange,
-              $lte: endDate,
+              $gte: startBounds.start,
+              $lte: endBounds.end,
             },
           },
         },
         {
-          $group: {
-            _id: {
+          $addFields: {
+            // Convert UTC submittedAt to school timezone for grouping
+            schoolDate: {
               $dateToString: {
                 format: "%Y-%m-%d",
                 date: "$submittedAt",
-              },
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
             },
-            dayOfWeek: { $first: { $dayOfWeek: "$submittedAt" } },
+            schoolDayOfWeek: {
+              $dayOfWeek: {
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: "$schoolDate",
+            dayOfWeek: { $first: "$schoolDayOfWeek" },
             points: { $sum: "$points" },
           },
         },
@@ -550,9 +640,8 @@ export const getWeekPointsHistory = async (req, res) => {
     // Fill in missing days with zero points
     const fullWeekData = [];
     for (let i = 0; i < 7; i++) {
-      const currentDate = new Date(startOfRange);
-      currentDate.setDate(startOfRange.getDate() + i);
-      const dateStr = currentDate.toISOString().split("T")[0];
+      const currentDate = startOfRange.plus({ days: i });
+      const dateStr = currentDate.toFormat('yyyy-MM-dd');
       const existingData = weekPoints.find((p) => p.date === dateStr);
 
       if (existingData) {
@@ -560,14 +649,19 @@ export const getWeekPointsHistory = async (req, res) => {
       } else {
         fullWeekData.push({
           date: dateStr,
-          day: daysOfWeek[currentDate.getDay()],
+          day: daysOfWeek[currentDate.weekday % 7],
           points: 0,
         });
       }
     }
  
 
-    res.status(200).json({ data: fullWeekData, startDate: startOfRange, endDate: endDate });
+    res.status(200).json({ 
+      data: fullWeekData, 
+      startDate: startBounds.start, 
+      endDate: endBounds.end,
+      timezone: schoolTimezone
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -576,18 +670,25 @@ export const getWeekPointsHistory = async (req, res) => {
 export const getWeekPointsHistoryByStudent = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
-    const school = await School.findById(schoolId);
+    const schoolTimezone = await getSchoolTimezone(schoolId);
     const studentId = req.params.id;
 
     const { startDate, formType } = req.body;
 
-    const start = startDate ? getLocalDateInTimezone(school.timeZone,new Date(startDate)) : getLocalDateInTimezone(school.timeZone,new Date());
+    let start;
+    if (startDate) {
+      start = convertToSchoolTime(new Date(startDate), schoolTimezone);
+    } else {
+      start = getSchoolCurrentTime(schoolTimezone);
+    }
 
-    const weekStart = new Date(start);
-    weekStart.setDate(start.getDate() - start.getDay());
+    // Get start of week in school timezone
+    const weekStart = start.startOf('week');
+    const weekEnd = start.endOf('week');
 
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    // Convert to UTC for database queries
+    const weekStartUTC = timezoneManager.convertSchoolTimeToUTC(weekStart, schoolTimezone).toJSDate();
+    const weekEndUTC = timezoneManager.convertSchoolTimeToUTC(weekEnd, schoolTimezone).toJSDate();
 
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -596,18 +697,28 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
         $match: {
           schoolId: new mongoose.Types.ObjectId(schoolId),
           formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+            ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            : formType,
           submittedForId: new mongoose.Types.ObjectId(studentId),
           submittedAt: {
-            $gte: weekStart,
-            $lte: weekEnd,
+            $gte: weekStartUTC,
+            $lte: weekEndUTC,
           },
         },
       },
       {
+        $addFields: {
+          schoolDayOfWeek: {
+            $dayOfWeek: {
+              date: "$submittedAt",
+              timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+            }
+          }
+        }
+      },
+      {
         $group: {
-          _id: { $dayOfWeek: "$submittedAt" },
+          _id: "$schoolDayOfWeek",
           points: { $sum: "$points" },
         },
       },
@@ -621,7 +732,12 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
       { $sort: { day: 1 } },
     ]);
 
-    res.status(200).json({ data: weekPoints, startDate: weekStart, endDate:weekEnd });
+    res.status(200).json({ 
+      data: weekPoints, 
+      startDate: weekStartUTC, 
+      endDate: weekEndUTC,
+      timezone: schoolTimezone
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -632,92 +748,91 @@ export const getHistoricalPointsData = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const { period, formType } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
-    const school = await School.findById(schoolId);
-    const today = getLocalDateInTimezone(school.timeZone, new Date());
-    today.setHours(23, 59, 50, 59); // Set to start of the day
+    const schoolTimezone = await getSchoolTimezone(schoolId);
+    
+    // Get current time in school timezone
+    const today = getSchoolCurrentTime(schoolTimezone);
     let startDate;
 
     switch (period) {
       case "1W":
-        startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ weeks: 1 });
         break;
       case "1M":
-        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ months: 1 });
         break;
       case "3M":
-        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ months: 3 });
         break;
       case "6M":
-        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ months: 6 });
         break;
       case "1Y":
-        startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ years: 1 });
         break;
       default:
         return res.status(400).json({ message: "Invalid period specified" });
     }
 
-    startDate.setHours(0, 0, 0, 0); // Set to start of the day
+    // Convert to UTC for database queries
+    const startDateUTC = timezoneManager.convertSchoolTimeToUTC(startDate.startOf('day'), schoolTimezone).toJSDate();
+    const todayUTC = timezoneManager.convertSchoolTimeToUTC(today.endOf('day'), schoolTimezone).toJSDate();
 
     let historicalPoints;
     let historicalPointsHistory;
 
     if (teacherData) {
-
       historicalPoints = await PointsHistory.aggregate([
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+              : formType,
             submittedAt: {
-              $gte: startDate,
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
             submittedForId: { $in: teacherData.studentIds },
           },
         },
         {
+          $addFields: {
+            schoolDate: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
+        },
+        {
           $group: {
-            _id: {
-              year: { $year: "$submittedAt" },
-              month: { $month: "$submittedAt" },
-              day: { $dayOfMonth: "$submittedAt" },
-            },
+            _id: "$schoolDate",
             points: { $sum: "$points" },
           },
         },
         {
           $project: {
             _id: 0,
-            day: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-                date: {
-                  $dateFromParts: {
-                    year: "$_id.year",
-                    month: "$_id.month",
-                    day: "$_id.day",
-                  },
-                },
-              },
-            },
+            day: "$_id",
             points: 1,
           },
         },
         { $sort: { day: 1 } },
       ]);
+
       historicalPointsHistory = await PointsHistory.aggregate([
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+              : formType,
             submittedAt: {
-              $gte: new Date(startDate.getTime() + 24 * 60 * 60 * 1000),
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
             submittedForId: { $in: teacherData.studentIds },
           },
@@ -729,69 +844,64 @@ export const getHistoricalPointsData = async (req, res) => {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+              : formType,
             submittedAt: {
-              $gte: startDate,
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
           },
         },
         {
+          $addFields: {
+            schoolDate: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
+        },
+        {
           $group: {
-            _id: {
-              year: { $year: "$submittedAt" },
-              month: { $month: "$submittedAt" },
-              day: { $dayOfMonth: "$submittedAt" },
-            },
+            _id: "$schoolDate",
             points: { $sum: "$points" },
           },
         },
         {
           $project: {
             _id: 0,
-            day: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-                date: {
-                  $dateFromParts: {
-                    year: "$_id.year",
-                    month: "$_id.month",
-                    day: "$_id.day",
-                  },
-                },
-              },
-            },
+            day: "$_id",
             points: 1,
           },
         },
         { $sort: { day: 1 } },
       ]);
+
       historicalPointsHistory = await PointsHistory.aggregate([
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-                : formType,
+              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+              : formType,
             submittedAt: {
-              $gte: new Date(startDate.getTime() + 24 * 60 * 60 * 1000),
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
           },
         },
       ]);
     }
 
-    res
-      .status(200)
-      .json({
-        data: historicalPoints,
-        history: historicalPointsHistory,
-        startDate,
-        endDate: today,
-        timeZone: school.timeZone,
-      });
+    res.status(200).json({
+      data: historicalPoints,
+      history: historicalPointsHistory,
+      startDate: startDateUTC,
+      endDate: todayUTC,
+      timeZone: schoolTimezone,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -801,7 +911,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const { period, formType, studentId } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
-    const school = await School.findById(schoolId);
+    const schoolTimezone = await getSchoolTimezone(schoolId);
     const today = getLocalDateInTimezone(school.timeZone, new Date());
     let startDate;
 
@@ -1067,7 +1177,7 @@ export const getPointsByStudent = async (req, res) => {
 export const getCombinedStudentPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
-    const yearStart = getEducationalYearStart();
+    const yearStart = await getEducationalYearStart();
     const today = new Date();
     const { grades } = req.body; // grades is now an array of strings
 
@@ -1166,7 +1276,7 @@ export const getStudentPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const studentId = req.params.id;
-    const yearStart = getEducationalYearStart();
+    const yearStart = await getEducationalYearStart();
     const today = new Date();
     const { grade } = req.body;
 

@@ -220,7 +220,7 @@ export default function ViewReport({
 
       
 
-      {reportData?.gradeData.map((gradeInfo) => (
+      {reportData?.gradeData && reportData?.gradeData.length > 0 && reportData?.gradeData.map((gradeInfo) => (
         gradeInfo.teachers.length > 0 ? (
           <div key={gradeInfo.grade} className="bg-white rounded-lg shadow-md p-6 space-y-4">
             {/* Teacher Info Header */}
