@@ -208,7 +208,7 @@ const SetupPage = () => {
           <SelectContent>
             {TIMEZONE_OPTIONS.map((tz) => (
               <SelectItem key={tz.value} value={tz.value}>
-                {tz.label}
+                {tz.value + " : " + tz.label + "."}
               </SelectItem>
             ))}
           </SelectContent>
