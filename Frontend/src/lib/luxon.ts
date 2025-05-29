@@ -53,7 +53,11 @@ export class LuxonTimezoneManager {
 
   // Convert old UTC offset format to proper timezone
   getTimezoneFromOffset(utcOffset: string): string {
-    return this.timezoneMap.get(utcOffset) || 'UTC';
+    console.log(`Converting UTC offset: ${utcOffset}`);
+    if( utcOffset.startsWith('UTC')) {
+      return this.timezoneMap.get(utcOffset) || 'UTC'; // Already in proper format
+    }
+    return  utcOffset;
   }
 
   // Get current time in school's timezone
@@ -98,6 +102,7 @@ export class LuxonTimezoneManager {
   // Format date for display in school's timezone
   formatForSchool(date: Date | string | DateTime, schoolTimezone: string, format: string = 'yyyy-MM-dd HH:mm:ss'): string {
     const schoolTime = this.convertToSchoolTime(date, schoolTimezone);
+        
     return schoolTime.toFormat(format);
   }
 

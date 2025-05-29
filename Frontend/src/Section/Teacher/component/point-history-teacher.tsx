@@ -40,8 +40,10 @@ export default function ViewPointHistoryTeacher() {
   const formatDateTime = (date: string | number | Date, format: 'date' | 'time') => {
     try {
       // Use the school's timezone if available
+      console.log("Formatting date in school's timezone:", user);
       if (user?.schoolId?.timeZone) {
         if (format === 'date') {
+          
           return timezoneManager.formatForSchool(date as string | Date, user.schoolId.timeZone, 'MM/dd/yyyy');
         } else {
           return timezoneManager.formatForSchool(date as string | Date, user.schoolId.timeZone, 'h:mm a');
