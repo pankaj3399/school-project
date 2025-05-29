@@ -3,14 +3,14 @@ import { Button } from '@/components/ui/button'
 
 export default function Header() {
   return (
-<header className="fixed top-0 left-0 right-0 z-50 bg-[#fafafa] shadow-md h-fit">
-<div className="container mx-auto px-4 py-4 flex items-center justify-between">
+<header className="fixed w-[100vw] top-0 left-0 right-0 z-50 bg-[#fafafa] shadow-md h-fit">
+<div className="w-full  py-4 flex items-center justify-between px-10">
         <Link to="/" className="flex items-center space-x-2">
           <img src="/radu-logo-2.png" alt="" className='h-32 ' />
         </Link>
          
-          {location.pathname === '/' ? ( <div className='flex gap-x-96 items-center '>
-            <nav className="hidden lg:flex space-x-4">
+          {location.pathname === '/' ? ( <div className='flex w-full justify-between items-center '>
+            <nav className="hidden lg:flex space-x-4 w-full justify-center ">
           <a href="/" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
             HOME
           </a>

@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import fetch from 'node-fetch';
+import { timezoneManager } from "./luxon.js";
 
 const getImageAsBase64 = async (input) => {
     try {
@@ -114,12 +115,10 @@ export const generateStudentPDF = async ({
         doc.text(`${studentData.studentInfo.email}`, centerX, yPos, { align: 'center' });
         
         yPos += lineHeight;
-        const dateStr = new Date().toLocaleDateString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: 'numeric' 
-        });
-        doc.text(`As of ${dateStr}`, centerX, yPos, { align: 'center' });
+        // Use school timezone for current date display
+        const schoolTimezone = schoolData.school.timeZone || 'UTC+0';
+        const currentDateInSchoolTZ = timezoneManager.formatForSchool(new Date(), schoolTimezone, 'MM/dd/yyyy');
+        doc.text(`As of ${currentDateInSchoolTZ}`, centerX, yPos, { align: 'center' });
 
         // Bar chart
         if (barChartImage) {
@@ -189,17 +188,43 @@ export const generateStudentPDF = async ({
         yPos += 10;
 
         if (studentData.data.length > 0) {
-            const timezone = schoolData.school.timeZone || 'UTC+0';
+            const schoolTimezone = schoolData.school.timeZone || 'UTC+0';
             
-            const historyData = studentData.data.map(item => {
-                const formattedDate = formatDateWithTimezone(item.submittedAt, timezone);
+            const historyData = studentData.data.sort((a,b)=>{
+                // Sort by submittedAt in descending order
+                try{
+                    return -1*(new Date(b.submittedAt) - new Date(a.submittedAt));
+                }catch(e){
+                    return 0;
+                }
+            }).map(item => {
+                // Use Luxon timezone manager for proper date formatting
+                // Ensure we're working with a proper Date object
+                const submittedDate = new Date(item.submittedAt);
+                
+                // Add validation for the date
+                if (isNaN(submittedDate.getTime())) {
+                    console.warn('Invalid date in history item:', item.submittedAt);
+                    return [
+                        'Invalid Date',
+                        'Invalid Time',
+                        item.submittedByName,
+                        item.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award Points with Individualized Education Plan IEP' : item.formType,
+                        item.points.toString()
+                    ];
+                }
+                
+                const formattedDate = timezoneManager.formatForSchool(submittedDate, schoolTimezone, 'MM/dd/yyyy'); 
+                const formattedTime = timezoneManager.formatForSchool(submittedDate, schoolTimezone, 'h:mm a');
+                console.log(`Formatted date:${item.submittedAt} to ${formattedDate} with ${schoolTimezone}, Formatted time: ${formattedTime}`);
+                
                 return [
-                    formattedDate.date,
-                    formattedDate.time,
+                    formattedDate,
+                    formattedTime,
                     item.submittedByName,
                     item.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award Points with Individualized Education Plan IEP' : item.formType,
                     item.points.toString()
-                ];
+                ]
             });
 
             doc.autoTable({
@@ -255,7 +280,19 @@ export const generateStudentPDF = async ({
             const timezone = schoolData.school.timeZone || 'UTC+0';
             
             const feedbackData = studentData.feedback.map(item => {
-                const formattedDate = formatDateWithTimezone(item.createdAt, timezone);
+                // Use Luxon timezone manager for proper date formatting
+                const itemDate = new Date(item.createdAt);
+                if (isNaN(itemDate.getTime())) {
+                    console.warn('Invalid date in feedback item:', item.createdAt);
+                    return [
+                        'Invalid Date',
+                        'Invalid Time',
+                        item.submittedByName,
+                        item.feedback
+                    ];
+                }
+
+                const formattedDate = formatDateWithTimezone(itemDate, timezone);
                 return [
                     formattedDate.date,
                     item.submittedByName,

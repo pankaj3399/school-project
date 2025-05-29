@@ -41,12 +41,12 @@ export const generateCouponImage = async (
     ctx.textBaseline = 'middle';
     
     ctx.fillText(`VALID ONLY AT ${schoolName.toUpperCase()} STORE`, canvas.width / 2, 40);
-    ctx.font = 'bold 20px "Courier New Bold"'
-    ctx.fillText(`Awarded to: ${student.toUpperCase()}`, canvas.width / 2, 150);
     ctx.font = 'bold 45px "Courier New Bold"'
     ctx.fillText(`${noOfTokens} E-TOKENS`, canvas.width / 2, 180);
-    ctx.drawImage(schoolLogo, canvas.width/2 - 30, 200, 60, 60);
-    ctx.font = 'bold 20px "Courier New Bold"'
+    ctx.font = 'bold 16px "Courier New Bold"'
+    ctx.fillText(`Awarded to: ${student.toUpperCase()}`, canvas.width / 2, 225);
+    ctx.drawImage(schoolLogo, canvas.width - 160, canvas.height/2 - 30, 70, 70);
+    ctx.font = 'bold 16px "Courier New Bold"'
     ctx.fillText(`EARNED AT THE ${subject.toUpperCase()} CLASS`, canvas.width / 2, 270);
     ctx.fillText(`ON ${date}`, canvas.width / 2, 290);
     ctx.fillText(`AWARDED BY: ${teacher}`, canvas.width / 2, 310);

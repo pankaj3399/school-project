@@ -5,7 +5,7 @@ import { AnswerType, Form } from '@/lib/types'
 import { getFormById, submitFormTeacher } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { useAuth } from '@/authContext'
-import { getLocalDateInTimezone } from '@/lib/dateFormatter'
+import { timezoneManager } from '@/lib/luxon'
 
 
 
@@ -40,10 +40,14 @@ export default function FormPage( ) {
     const token = localStorage.getItem('token')
     
     if(token){
-      if(user?.schoolId){
-              submittedAt = getLocalDateInTimezone(user.schoolId.timeZone, submittedAt)!
-          }
-      const response = await submitFormTeacher(answers, submittedFor, isSendEmail, params?.id || "", token, submittedAt)
+      // Convert the submission date to UTC for database storage
+      let convertedSubmittedAt = submittedAt;
+      if(user?.schoolId?.timeZone){
+        const utcDateTime = timezoneManager.convertSchoolTimeToUTC(submittedAt, user.schoolId.timeZone);
+        convertedSubmittedAt = utcDateTime.toJSDate();
+      }
+      
+      const response = await submitFormTeacher(answers, submittedFor, isSendEmail, params?.id || "", token, convertedSubmittedAt)
       if(!response.error){
         toast({ 
           title: 'Form submitted successfully',

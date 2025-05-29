@@ -1,12 +1,14 @@
 import { FormType } from "../enum.js";
 import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
+import { timezoneManager } from "./luxon.js";
 
 export const emailGenerator = async (
   form,
   {
     points,
     submission,
+    submittedAt,
     teacher,
     student,
     schoolAdmin,
@@ -19,6 +21,17 @@ export const emailGenerator = async (
   if (!student && !teacher && !schoolAdmin) {
     return { subject, body, attachment, attachmentName };
   }
+
+  // Get school timezone for consistent date formatting
+  const schoolTimezone = school.timeZone || "UTC+0";
+  const currentDateFormatted = timezoneManager.formatForSchool(
+    new Date(submittedAt || Date.now()),
+    schoolTimezone,
+    "MM/dd/yyyy",
+  );
+  console.log(submittedAt, currentDateFormatted);
+  
+  
 
   switch (form.formType) {
     case FormType["AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)"]:
@@ -47,7 +60,7 @@ export const emailGenerator = async (
         student.name,
         teacher.name,
         teacher?.subject || "N/A",
-        new Date().toDateString(),
+        currentDateFormatted, // Use school timezone formatted date
         school.logo,
         school.name,
         teacher.email,
@@ -161,14 +174,7 @@ export const emailGenerator = async (
                         </div>
 
                         <div class="date-line">
-                            <strong>Date:</strong> ${new Date().toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "2-digit",
-                                day: "2-digit",
-                                year: "numeric",
-                              },
-                            )}
+                            <strong>Date:</strong> ${currentDateFormatted}
                         </div>
                         
                         <div class="issued-by">
@@ -303,14 +309,7 @@ export const emailGenerator = async (
                         </div>
 
                         <div class="date-line">
-                            <strong>Date:</strong> ${new Date().toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "2-digit",
-                                day: "2-digit",
-                                year: "numeric",
-                              },
-                            )}
+                            <strong>Date:</strong> ${currentDateFormatted}
                         </div>
                         
                         <div class="message-content">
@@ -352,7 +351,7 @@ export const emailGenerator = async (
       attachment = await generateRecieptImage(
         points,
         student.name,
-        new Date().toLocaleDateString(),
+        currentDateFormatted, // Use school timezone formatted date
         school.name,
         school.address,
         school.district,
@@ -425,11 +424,18 @@ export const reportEmailGenerator = async (
   try {
     let subject, body;
 
-    const currentDate = new Date().toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    // Use school timezone for report date
+    const schoolTimezone = data.schData.school.timeZone || "UTC+0";
+    const currentDate = timezoneManager.formatForSchool(
+      new Date(),
+      schoolTimezone,
+      "MM/dd/yyyy",
+    );
+    const reportDate = timezoneManager.formatForSchool(
+      new Date(),
+      schoolTimezone,
+      "MM/dd/yyyy",
+    );
 
     subject = `RADU E-Token Report for ${attachmentName
       .replace(".pdf", "")
@@ -519,22 +525,22 @@ export const reportEmailGenerator = async (
       <body>
           <div class="container">
               <div class="header">
-                            <img src="${
-                              process.env.LOGO_URL ||
-                              "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
-                            }" alt="RADU Logo" class="logo-left">
-                            <h1 class="title">E-Token Report</h1>
-                            <img src="${
-                              data.schData.school.logo
-                            }" alt="School Logo" class="logo-right">
-                        </div>
+                  <img src="${
+                    process.env.LOGO_URL ||
+                    "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
+                  }" alt="RADU Logo" class="logo-left">
+                  <h1 class="title">E-Token Report</h1>
+                  <img src="${
+                    data.schData.school.logo
+                  }" alt="School Logo" class="logo-right">
+              </div>
 
               <div class="report-content">
                 <p>Attached you will find the report for ${
                   data.stdData.studentInfo.name
                 }, Grade ${
       data.stdData.studentInfo.grade
-    } as of ${new Date().toLocaleDateString()}.</p>
+    } as of ${reportDate}.</p>
                 <div class="contact-info">
                   <p>Contact Info</p>
                   <p>Parent/Guardian Email 1: ${

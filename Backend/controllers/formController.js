@@ -251,6 +251,7 @@ export const submitFormTeacher = async (req, res) => {
           student: submittedForStudent,
           schoolAdmin: schoolAdmin,
           school: school,
+          submittedAt: submittedAt,
           leadTeacher: leadTeacher[0] ?? null
         })
       }else{
@@ -363,6 +364,7 @@ export const submitFormAdmin = async (req, res) => {
           submission: formSubmission,
           teacher: schoolAdmin,
           student: submittedForStudent,
+          submittedAt: submittedAt,
           schoolAdmin: schoolAdmin,
           school: school,
           leadTeacher: leadTeacher[0] ?? null

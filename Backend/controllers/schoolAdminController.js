@@ -11,6 +11,7 @@ import mongoose from "mongoose"
 import { reportEmailGenerator } from "../utils/emailHelper.js"
 import { generateStudentPDF } from "../utils/generatePDF.js"
 import { sendVerifyEmailRoster } from "../services/verificationMail.js"
+import { timezoneManager } from "../utils/luxon.js"
 
 const getSchoolIdFromUser = async (userId) => {
     // Try finding user as admin first
@@ -500,11 +501,7 @@ export const genreport = async (req, res) => {
         const localDate = new Date(utcDate.getTime() + (offsetHours * 60 * 60 * 1000));
         
         // Format date with timezone-adjusted time
-        const formattedDate = localDate.toLocaleDateString("en-US", {
-            month: "2-digit",
-            day: "2-digit",
-            year: "numeric",
-        }).replaceAll("/", "-");
+        const formattedDate = timezoneManager.formatForSchool(new Date(), timeZone, 'MMMM dd, yyyy');
         
         
         await reportEmailGenerator(gen, `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`, email, {stdData, schData, tchData});
