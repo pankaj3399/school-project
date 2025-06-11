@@ -22,7 +22,7 @@ type FormSubmissionProps = {
     schoolAdminEmail: boolean;
     parentEmail: boolean;
   
-}, submittedAt:Date) => void
+}, submittedAt:Date, isManuallySet: boolean) => void
 }
 
 export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionProps) {
@@ -52,6 +52,8 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     }
     return new Date();
   });
+
+  const [isManuallySet, setIsManuallySet] = useState(false)
 
   useEffect(()=>{
     let ansarr = Object.entries(answers).map(([questionId, answer]) => ({
@@ -142,7 +144,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
 
-    onSubmit(answers, submittedFor, isSendEmail, submittedAt)
+    onSubmit(answers, submittedFor, isSendEmail, submittedAt, isManuallySet)
     setIsSendEmail((prev)=>prev)
     setShowModal(false)
   }
@@ -306,20 +308,10 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                       : submittedAt.toISOString().split('T')[0]
                   }
                   onChange={(e) => {
-                    const selectedDate = e.target.valueAsDate;
-                    
-                    if(selectedDate && user?.schoolId?.timeZone){
-                      // Create a date in the school's timezone at noon
-                      const schoolDateTime = timezoneManager.createSchoolDateTime(
-                        selectedDate.getFullYear(),
-                        selectedDate.getMonth() + 1,
-                        selectedDate.getDate(),
-                        12, // Set to noon in school timezone
-                        0,
-                        user.schoolId.timeZone
-                      );
-                      setSubmittedAt(schoolDateTime.toJSDate());
-                    } else if(selectedDate) {
+                   const selectedDate = e.target.valueAsDate;
+                            
+                   if(selectedDate) {
+                      setIsManuallySet(true)
                       selectedDate.setHours(12, 0, 0, 0);
                       setSubmittedAt(selectedDate);
                     }

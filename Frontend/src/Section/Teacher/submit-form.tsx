@@ -35,14 +35,14 @@ export default function FormPage( ) {
     teacherEmail: boolean;
     schoolAdminEmail: boolean;
     parentEmail: boolean;
-}, submittedAt:Date) => {
+}, submittedAt:Date, isManuallySet:boolean = false) => {
     setIsSubmitting(true)
     const token = localStorage.getItem('token')
     
     if(token){
       // Convert the submission date to UTC for database storage
       let convertedSubmittedAt = submittedAt;
-      if(user?.schoolId?.timeZone){
+      if(!isManuallySet && user?.schoolId?.timeZone){
         const utcDateTime = timezoneManager.convertSchoolTimeToUTC(submittedAt, user.schoolId.timeZone);
         convertedSubmittedAt = utcDateTime.toJSDate();
       }
