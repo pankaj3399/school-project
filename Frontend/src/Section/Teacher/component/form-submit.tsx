@@ -303,17 +303,32 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   type="date" 
                   required 
                   value={
-                    user?.schoolId?.timeZone 
-                      ? timezoneManager.formatForInput(submittedAt, user.schoolId.timeZone)
-                      : submittedAt.toISOString().split('T')[0]
+                    submittedAt.toISOString().split('T')[0]
                   }
                   onChange={(e) => {
                    const selectedDate = e.target.valueAsDate;
                             
                    if(selectedDate) {
                       setIsManuallySet(true)
-                      selectedDate.setHours(12, 0, 0, 0);
-                      setSubmittedAt(selectedDate);
+                      if(user?.schoolId?.timeZone) {
+                        const timezone = user.schoolId.timeZone;
+                        console.log(`Converting date ${selectedDate.toISOString()} to school's timezone: ${timezone}`);
+                        const [year, month, day] = selectedDate.toISOString().split('T')[0].split('-').map(Number);
+                        console.log(`Extracted date components - Year: ${year}, Month: ${month}, Day: ${day}`);
+                        
+                        const noonInUserTimezone = timezoneManager.createSchoolDateTime(
+                                                                      year, 
+                                                                      month, 
+                                                                      day, 
+                                                                      12, // 12 PM (noon)
+                                                                      0,  // 0 minutes
+                                                                      timezone
+                                                                    );
+                        console.log(`Converted date in user's timezone: ${noonInUserTimezone.toJSDate()}`);
+                        setSubmittedAt(noonInUserTimezone.toJSDate());
+                      }else{
+                        selectedDate.setHours(12, 0, 0, 0);
+                      }
                     }
                   }}
                 />
