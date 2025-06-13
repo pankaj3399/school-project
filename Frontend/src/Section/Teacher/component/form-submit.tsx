@@ -22,7 +22,7 @@ type FormSubmissionProps = {
     schoolAdminEmail: boolean;
     parentEmail: boolean;
   
-}, submittedAt:Date) => void
+}, submittedAt:Date, isManuallySet: boolean) => void
 }
 
 export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionProps) {
@@ -52,6 +52,8 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
     }
     return new Date();
   });
+
+  const [isManuallySet, setIsManuallySet] = useState(false)
 
   useEffect(()=>{
     let ansarr = Object.entries(answers).map(([questionId, answer]) => ({
@@ -142,7 +144,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
 
-    onSubmit(answers, submittedFor, isSendEmail, submittedAt)
+    onSubmit(answers, submittedFor, isSendEmail, submittedAt, isManuallySet)
     setIsSendEmail((prev)=>prev)
     setShowModal(false)
   }
@@ -301,27 +303,32 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   type="date" 
                   required 
                   value={
-                    user?.schoolId?.timeZone 
-                      ? timezoneManager.formatForInput(submittedAt, user.schoolId.timeZone)
-                      : submittedAt.toISOString().split('T')[0]
+                    submittedAt.toISOString().split('T')[0]
                   }
                   onChange={(e) => {
-                    const selectedDate = e.target.valueAsDate;
-                    
-                    if(selectedDate && user?.schoolId?.timeZone){
-                      // Create a date in the school's timezone at noon
-                      const schoolDateTime = timezoneManager.createSchoolDateTime(
-                        selectedDate.getFullYear(),
-                        selectedDate.getMonth() + 1,
-                        selectedDate.getDate(),
-                        12, // Set to noon in school timezone
-                        0,
-                        user.schoolId.timeZone
-                      );
-                      setSubmittedAt(schoolDateTime.toJSDate());
-                    } else if(selectedDate) {
-                      selectedDate.setHours(12, 0, 0, 0);
-                      setSubmittedAt(selectedDate);
+                   const selectedDate = e.target.valueAsDate;
+                            
+                   if(selectedDate) {
+                      setIsManuallySet(true)
+                      if(user?.schoolId?.timeZone) {
+                        const timezone = user.schoolId.timeZone;
+                        console.log(`Converting date ${selectedDate.toISOString()} to school's timezone: ${timezone}`);
+                        const [year, month, day] = selectedDate.toISOString().split('T')[0].split('-').map(Number);
+                        console.log(`Extracted date components - Year: ${year}, Month: ${month}, Day: ${day}`);
+                        
+                        const noonInUserTimezone = timezoneManager.createSchoolDateTime(
+                                                                      year, 
+                                                                      month, 
+                                                                      day, 
+                                                                      12, // 12 PM (noon)
+                                                                      0,  // 0 minutes
+                                                                      timezone
+                                                                    );
+                        console.log(`Converted date in user's timezone: ${noonInUserTimezone.toJSDate()}`);
+                        setSubmittedAt(noonInUserTimezone.toJSDate());
+                      }else{
+                        selectedDate.setHours(12, 0, 0, 0);
+                      }
                     }
                   }}
                 />
