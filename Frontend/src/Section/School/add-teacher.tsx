@@ -4,19 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { addTeacher, sendVerificationMail } from "@/api"; // Add sendVerificationMail import
+import { addTeacher, sendVerificationMail } from "@/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import Loading from "../Loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import ViewTeachers from "./view-teachers";
-
 import { GRADE_OPTIONS } from "@/lib/types";
 
 export default function AddTeacher() {
   const [formData, setFormData] = useState({
-    name: "",
-    password: "",
-    subject: "", 
     email: "",
     checkbox: false,
     grade: "K",
@@ -38,10 +33,8 @@ export default function AddTeacher() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const { name, password, subject, email, checkbox, type, grade } = formData;
-
-    if (!name || !password || !subject || !email || !type || (type === 'Lead' && !grade)) {
+    const { email, checkbox, type, grade } = formData;
+    if (!email || !type || (type === 'Lead' && !grade)) {
       toast({
         title: "Error",
         description: "Please fill all fields.",
@@ -49,12 +42,9 @@ export default function AddTeacher() {
       });
       return;
     }
-
     try {
       setLoading(true);
-
       const token = localStorage.getItem("token");
-
       if (!token) {
         toast({
           title: "Error",
@@ -64,42 +54,33 @@ export default function AddTeacher() {
         setLoading(false);
         return;
       }
-
       const teacherData = {
-        name,
-        password,
-        subject,
         email,
         recieveMails: checkbox,
         type,
         grade: type === 'Lead' ? (formData.grade === 'OTHER' ? customGrade : formData.grade) : null,
         token,
       };
-
       const response = await addTeacher(teacherData, token);
-
       if (!response.error) {
-        // Send verification email after successful teacher creation
         try {
           await sendVerificationMail({
             email,
             role: "Teacher",
-            url: `${window.location.origin}/verifyemail`, // Dynamic base URL
+            url: `${window.location.origin}/teacher/complete-registration`, // New registration page
             userId: response.teacher._id // Assuming the response includes the created teacher's ID
           });
-
           toast({
-            title: "Teacher added successfully",
-            description: `${name} has been added. A verification email has been sent.`,
+            title: "Teacher invite sent",
+            description: `${email} has been invited. A registration email has been sent.`,
           });
         } catch (verificationError) {
           console.error("Verification email error:", verificationError);
           toast({
             title: "Warning",
-            description: "Teacher added but verification email failed to send.",
+            description: "Teacher added but registration email failed to send.",
           });
         }
-
         navigate("/teacher");
       } else {
         toast({
@@ -108,11 +89,7 @@ export default function AddTeacher() {
           variant: "destructive",
         });
       }
-
       setFormData({
-        name: "",
-        password: "",
-        subject: "",
         email: "",
         checkbox: false,
         grade: "K",
@@ -133,11 +110,9 @@ export default function AddTeacher() {
   if (loading) {
     return <Loading />;
   }
-
   if (error) {
     alert("An unexpected error occurred. Please try again. " + error);
   }
-
   return (
     <div className="grid place-items-center w-full h-full mt-20">
       <div className="bg-white shadow-xl p-4 w-72  sm:w-72 md:w-72 lg:w-96 rounded-lg">
@@ -161,37 +136,6 @@ export default function AddTeacher() {
                 Receive Emails
               </span>
             </div>
-          </div>
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              required
-            />
           </div>
           <div>
             <Label htmlFor="type">Type</Label>
@@ -243,7 +187,6 @@ export default function AddTeacher() {
                   ))}
                 </SelectContent>
               </Select>
-              
               {formData.grade === 'OTHER' && (
                 <div className="mt-2">
                   <Label htmlFor="customGrade">Specify Grade/Room</Label>

@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs"
 import Teacher from "../models/Teacher.js"
 import {Role} from '../enum.js';
 import Admin from '../models/Admin.js';
+import { sendTeacherRegistrationMail } from '../services/verificationMail.js';
+
 export const awardPoints = async (req, res) => {
     const { studentId, points } = req.body;
     const teacherId = req.user.id;
@@ -23,31 +25,27 @@ export const awardPoints = async (req, res) => {
 
 export const addTeacher = async (req, res) => {
     const {
-        name,
-        password,
         email,
-        subject,
         recieveMails,
         type,
         grade
     } = req.body
 
     const schoolAdmin = await Admin.findById(req.user.id).select('schoolId');
-   
 
     try{
-        const hashedPassword = await bcrypt.hash(password, 12)
-        
+        // Generate a registration token
+        const registrationToken = Math.random().toString(36).substr(2) + Date.now().toString(36);
         const teacher = await Teacher.create({
-            name,
             email,
-            password: hashedPassword,
-            subject,
-            role: Role.Teacher,
             recieveMails: recieveMails || false,
+            role: Role.Teacher,
             schoolId: schoolAdmin.schoolId,
             type,
-            grade
+            grade,
+            registrationToken,
+            isEmailVerified: false,
+            isFirstLogin: false
         })
         await School.findOneAndUpdate({
             _id: schoolAdmin.schoolId
@@ -56,9 +54,16 @@ export const addTeacher = async (req, res) => {
                 teachers:teacher._id
             }
         })
+        // Send registration email
+        await sendTeacherRegistrationMail({
+          email,
+          url: process.env.TEACHER_REGISTRATION_URL || 'http://localhost:5173/teacher/complete-registration',
+          registrationToken
+        });
         return res.status(200).json({
-            message: "Teacher Added successfully",
-            teacher
+            message: "Teacher invite created successfully",
+            teacher,
+            registrationToken
         })
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });
@@ -120,3 +125,28 @@ export const deleteTeacher = async (req, res) => {
         return res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
+
+export const completeTeacherRegistration = async (req, res) => {
+    const { token, name, password, subject } = req.body;
+    if (!token || !name || !password || !subject) {
+        return res.status(400).json({ message: 'All fields are required.' });
+    }
+    try {
+        const teacher = await Teacher.findOne({ registrationToken: token });
+        if (!teacher) {
+            return res.status(400).json({ message: 'Invalid or expired registration token.' });
+        }
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 12);
+        teacher.name = name;
+        teacher.password = hashedPassword;
+        teacher.subject = subject;
+        teacher.registrationToken = null;
+        teacher.isEmailVerified = true;
+        teacher.isFirstLogin = true;
+        await teacher.save();
+        return res.status(200).json({ message: 'Registration completed successfully.' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+}

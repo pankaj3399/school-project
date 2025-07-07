@@ -4,7 +4,7 @@ import {Role} from '../enum.js';
 const teacherSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   email:{
@@ -14,7 +14,7 @@ const teacherSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
   },
   role: {
     type: String,
@@ -32,7 +32,8 @@ const teacherSchema = new mongoose.Schema({
   },
   subject:{
     type:String,
-    default: null
+    default: null,
+    required: false
   },
   recieveMails:{
     type:Boolean,
@@ -64,6 +65,10 @@ const teacherSchema = new mongoose.Schema({
     type:Boolean,
     default: false
   },
+  registrationToken: {
+    type: String,
+    default: null
+  }
 });
 
 teacherSchema.pre('save', function (next) {

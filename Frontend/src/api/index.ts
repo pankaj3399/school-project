@@ -30,7 +30,9 @@ export const signUp = async (data: {
   }
 };
 
-export const signIn = async (data: { email: string; password: string }) => {
+// Updated API functions
+
+export const signIn = async (data: { email: string; password: string; role: string; otp?: string }) => {
   try {
     const response = await axios.post(`${API_URL}/auth/login`, data);
     return response.data;
@@ -38,6 +40,25 @@ export const signIn = async (data: { email: string; password: string }) => {
     return { error };
   }
 };
+
+export const requestLoginOtp = async ({ email, role, password }: { email: string; role: string; password: string }) => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/request-login-otp`, { email, role, password });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const verifyLoginOtp = async ({ otp, email, role }: { otp: string; email: string; role: string }) => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/verify-login-otp`, { otp, email, role });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 export const addStudent = async (
   data: {
     email: string;
@@ -124,10 +145,9 @@ export const addSchool = async (data: FormData, token: string) => {
 export const addTeacher = async (
   data: {
     email: string;
-    password: string;
-    name: string;
-    subject: string;
     recieveMails: boolean;
+    type: string;
+    grade: string | null;
   },
   token: string,
 ) => {
@@ -911,3 +931,13 @@ export const changePassword = async (data: any) => {
     };
   }
 };
+
+
+export async function completeTeacherRegistration({ token, name, password, subject }: { token: string, name: string, password: string, subject: string }) {
+  const response = await fetch(`${API_URL}/teacher/complete-registration`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, name, password, subject })
+  });
+  return response.json();
+}
