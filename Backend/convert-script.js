@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
-const SOURCE_URI = 'mongodb+srv://aditya:aditya@cluster0.5dp0p33.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-const DEST_URI = 'mongodb+srv://aditya:aditya@cluster0.njhzzox.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const SOURCE_URI = 'MONGO_SOURCE_URI';
+const DEST_URI = 'MONGO_DESTINATION_URI';
 
 async function cloneDatabase() {
   let sourceConn, destConn;
