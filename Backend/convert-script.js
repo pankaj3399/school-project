@@ -21,7 +21,6 @@ async function cloneDatabase() {
       const dbName = dbInfo.name;
       if (["admin", "local", "config"].includes(dbName)) continue;
       if (dbName !== destConn.name) {
-        // Drop other non-system databases
         const tempConn = await mongoose.createConnection(DEST_URI.replace(destConn.name, dbName)).asPromise();
         await tempConn.dropDatabase();
         await tempConn.close();

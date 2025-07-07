@@ -53,7 +53,7 @@ export default function LoginForm() {
   } | null>(null);
 
   // BYPASS OTP MODE
-  const bypass = false; // Set to false to disable bypass
+  const bypass = false; 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -165,7 +165,6 @@ export default function LoginForm() {
     if (bypass) {
       if (!loginContext) return;
       if (otp === "123456") {
-        // Simulate login by calling signIn with the real credentials and dummy OTP
         try {
           const res = await signIn({
             email: loginContext.email,

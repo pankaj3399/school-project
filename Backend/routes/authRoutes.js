@@ -11,11 +11,8 @@ router.post('/sendVerificationMail', sendVerifyEmail);
 router.post('/completeVerification', completeVerification);
 router.post('/resetpassword', resetPassword);
 router.post('/changePassword', authenticate, changePassword);
-
 router.post('/support-request',authenticate, createSupportTicket);
-
 router.post('/verify-login-otp', verifyLoginOtp);
-
 router.post('/request-login-otp', requestLoginOtp);
 
 export default router;
