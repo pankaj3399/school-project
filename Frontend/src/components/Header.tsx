@@ -20,8 +20,8 @@ export default function Header() {
           <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
             FEATURES
           </a>
-          <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
-            PRICING
+          <a href="#videos" className="text-gray-600 hover:text-blue-600 transition-colors font-semibold text-lg">
+            VIDEOS
           </a>
         </nav>
         <div className="flex items-center space-x-2">

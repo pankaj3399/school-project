@@ -3,6 +3,7 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "./mail.js";
 import path from 'path';
 import fs from 'fs';
+import nodemailer from 'nodemailer';
 
 export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass, schoolLogo=null) => {
     try {
@@ -252,3 +253,22 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
         throw new Error(err.message);
     }
 }
+
+export const sendTeacherRegistrationMail = async ({ email, url, registrationToken }) => {
+  const registrationLink = `${url}?token=${registrationToken}`;
+  const transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Complete Your Teacher Registration',
+    html: `<p>You have been invited to join as a teacher. Please complete your registration by clicking the link below:</p>
+           <a href="${registrationLink}">${registrationLink}</a>`
+  };
+  await transporter.sendMail(mailOptions);
+};
