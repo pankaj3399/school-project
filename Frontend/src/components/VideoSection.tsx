@@ -1,4 +1,3 @@
-
 export default function VideoSection() {
   return (
     <section id='videos' className="py-20 bg-white">
@@ -9,32 +8,30 @@ export default function VideoSection() {
           <div className="bg-gray-50 rounded-lg shadow-lg flex flex-col items-center p-6">
             <h3 className="text-xl font-semibold mb-4 text-center">Meet Nancy Radu</h3>
             <div className="w-full aspect-video rounded-lg overflow-hidden mb-4">
-              <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/a14XM-NDKow?si=EDDb-Lg17F7CaHaP"
+              <video
+                src="/Meet_Nancy_Radu.mp4"
+                controls
+                controlsList="nodownload"
+                className="w-full h-full object-cover rounded-lg"
                 title="Meet Nancy Radu"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="w-full h-full"
-              ></iframe>
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
           {/* Video 2 */}
           <div className="bg-gray-50 rounded-lg shadow-lg flex flex-col items-center p-6">
             <h3 className="text-xl font-semibold mb-4 text-center">The Radu E-Token</h3>
             <div className="w-full aspect-video rounded-lg overflow-hidden mb-4">
-              <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/zoY2iwvKTJw?si=VjVV-pbKYEniW57C"
+              <video
+                src="/The_Radu_E-Token.mp4"
+                controls
+                controlsList="nodownload"
+                className="w-full h-full object-cover rounded-lg"
                 title="The Radu E-Token"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="w-full h-full"
-              ></iframe>
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
