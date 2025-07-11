@@ -52,9 +52,6 @@ export default function LoginForm() {
     password: string;
   } | null>(null);
 
-  // BYPASS OTP MODE
-  const bypass = false; 
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -95,23 +92,6 @@ export default function LoginForm() {
 
     setLoading(true);
     setOtpError("");
-
-    if (bypass) {
-      // In bypass mode, skip credential validation and go directly to OTP step
-      setOtpStep(true);
-      setLoginContext({
-        email: formData.email,
-        role: formData.role,
-        password: formData.password,
-      });
-      toast({
-        title: "OTP Sent (Bypassed)",
-        description: "Bypass mode: Enter 123456 as OTP to login.",
-        variant: "default",
-      });
-      setLoading(false);
-      return;
-    }
 
     try {
       // First, validate credentials and request OTP
@@ -161,52 +141,6 @@ export default function LoginForm() {
     e.preventDefault();
     setOtpLoading(true);
     setOtpError("");
-
-    if (bypass) {
-      if (!loginContext) return;
-      if (otp === "123456") {
-        try {
-          const res = await signIn({
-            email: loginContext.email,
-            password: loginContext.password,
-            role: loginContext.role,
-            otp: "123456",
-          });
-          if (res.error) {
-            setOtpError(
-              res.error?.response?.data?.message || "Invalid credentials"
-            );
-            toast({
-              title: "Login Error",
-              description:
-                res.error?.response?.data?.message || "Invalid credentials",
-              variant: "destructive",
-            });
-          } else {
-            await login(res.token);
-            toast({
-              title: "Login Successful (Bypassed)",
-              description: "Redirecting to your dashboard...",
-              variant: "default",
-            });
-            navigateBasedOnRole(loginContext.role);
-          }
-        } catch (err) {
-          setOtpError("An error occurred. Please try again.");
-          toast({
-            title: "Login Error",
-            description: "An error occurred. Please try again.",
-            variant: "destructive",
-          });
-        } finally {
-          setOtpLoading(false);
-        }
-      } else {
-        setOtpError("Invalid OTP. Use 123456 in bypass mode.");
-        setOtpLoading(false);
-      }
-      return;
-    }
 
     try {
       if (!loginContext) return;

@@ -41,15 +41,19 @@ export const requestLoginOtp = async (req, res) => {
       }
     }
     
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     
-    // Validate role-specific conditions
-    if (role === Role.Teacher && user.type == "Special") {
+    if (
+      (user.type === "Special" && role !== "SpecialTeacher") ||
+      (user.type === "Lead" && role !== "Teacher")
+    ) {
       return res.status(404).json({ message: "User Not Found" });
     }
     
+    console.log(user)
     if (role === Role.Admin && !user.approved) {
       return res.status(401).json({ message: "User not approved" });
     }
@@ -57,6 +61,7 @@ export const requestLoginOtp = async (req, res) => {
     // Validate password before sending OTP
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("invalid")
       return res.status(401).json({ message: "Invalid Credentials" });
     }
     
@@ -74,6 +79,7 @@ export const requestLoginOtp = async (req, res) => {
       credentialsValid: true 
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
@@ -103,7 +109,11 @@ export const login = async (req, res) => {
       return res.status(404).json({ message: "User Not found" });
     }
     
-    if (role === Role.Teacher && user.type == "Special") {
+    // Enforce correct role/type mapping for teachers
+    if (
+      (user.type === "Teacher" && role !== "SpecialTeacher") ||
+      (user.type === "Lead" && role !== "Teacher")
+    ) {
       return res.status(404).json({ message: "User Not Found" });
     }
     
@@ -119,26 +129,6 @@ export const login = async (req, res) => {
     // If no OTP provided, request OTP (this maintains backward compatibility)
     if (!otp) {
       return res.status(400).json({ message: "OTP is required" });
-    }
-    
-    // BYPASS: allow OTP '123456' to always succeed
-    if (otp === '123456') {
-      const token = generateToken(user._id, userRole);
-      if (userRole == Role.Teacher && user.isFirstLogin) {
-        return res.status(200).json({
-          message: "First login",
-          firstLogin: true,
-          token,
-          role: userRole,
-          userId: user._id,
-        });
-      }
-      return res.status(200).json({
-        message: "Login successful",
-        token,
-        role: userRole,
-        userId: user._id,
-      });
     }
     
     // Verify OTP
@@ -269,9 +259,10 @@ export const signup = async (req, res) => {
 export const sendOtp = async (req, res) => {
   try {
     const { email, role } = req.body;
+    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     console.log(email,role)
     let user = null;
-    switch (role) {
+    switch (userRole) {
       case Role.Teacher: {
         user = await Teacher.findOne({ email });
         break;
@@ -315,9 +306,9 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { otp, email, role } = req.body;
-
+    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user;
-    switch (role) {
+    switch (userRole) {
       case Role.Teacher: {
         user = await Teacher.findOne({ email });
         break;
@@ -363,8 +354,9 @@ export const verifyOtp = async (req, res) => {
 export const sendVerifyEmail = async (req, res) => {
   try {
     const { email, role, url, userId, isStudent } = req.body;
+    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user = null;
-    switch (role) {
+    switch (userRole) {
       case Role.Teacher: {
         user = await Teacher.findById(userId);
         break;
@@ -456,9 +448,10 @@ export const completeVerification = async (req, res) => {
   try {
     const { emailVerificationCode, role, email, isStudent, toVerify } =
       req.body;
+      let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
 
     let user = null;
-    switch (role) {
+    switch (userRole) {
       case Role.Teacher: {
         // Find teacher with matching verification code
         user = await Teacher.findOne({ emailVerificationCode });
@@ -554,10 +547,11 @@ export const completeVerification = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { otpId, email, role, password } = req.body;
+    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
 
     // Find the user based on email and role
     let user;
-    switch (role) {
+    switch (userRole) {
       case Role.Teacher: {
         user = await Teacher.findOne({ email });
         break;
