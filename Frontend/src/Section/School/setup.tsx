@@ -15,13 +15,14 @@ import Loading from "../Loading";
 import { teacherRoster } from "@/api";
 
 interface TeacherData {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
+  // firstName: string;
+  // lastName: string;
+  // dateOfBirth: string;
   email: string;
-  subject: string;
+  // subject: string;
   type: "Lead" | "Special";
   grade?: string;
+  recieveMails?: boolean; // Added to support Excel upload and UI
 }
 
 export default function Setup() {
@@ -47,18 +48,19 @@ export default function Setup() {
         // Validate and transform the data
         const transformedData: TeacherData[] = jsonData.map((row: any) => {
           // Convert Excel date number to actual date
-          let dob = row['Date of Birth'];
-          if (typeof dob === 'number') {
-            // Convert Excel date number to JavaScript date
-            dob = new Date((dob - 25569) * 86400 * 1000).toISOString().split('T')[0];
-          }
+          // let dob = row['Date of Birth'];
+          // if (typeof dob === 'number') {
+          //   // Convert Excel date number to JavaScript date
+          //   dob = new Date((dob - 25569) * 86400 * 1000).toISOString().split('T')[0];
+          // }
 
           return {
-            firstName: row['First Name'] || '',
-            lastName: row['Last Name'] || '',
-            dateOfBirth: dob || '',
+            // firstName: row['First Name'] || '',
+            // lastName: row['Last Name'] || '',
+            // dateOfBirth: dob || '',
             email: row['Email'] || '',
-            subject: row['Subject'] || '',
+            recieveMails: row['Receive Mails'] === true || row['Receive Mails'] === 'true',
+            // subject: row['Subject'] || '',
             type: row['Type of Teacher'] === 'Lead Teacher' ? 'Lead' : 'Special',
             grade: row['Grade'] || ''
           }
@@ -85,11 +87,12 @@ export default function Setup() {
     try {
       let formattedTeachers = teachers.map((teacher) => ({
         ...teacher,
-        dateOfBirth: new Date(teacher.dateOfBirth).toISOString(),
-        name: `${teacher.firstName} ${teacher.lastName}`,
-        firstName: undefined,
-        lastName: undefined,
+        // dateOfBirth: new Date(teacher.dateOfBirth).toISOString(),
+        // name: `${teacher.firstName} ${teacher.lastName}`,
+        // firstName: undefined,
+        // lastName: undefined,
       }))
+      console.log(formattedTeachers)
       const response = await teacherRoster({teachers: formattedTeachers});
       if (!response.success) throw new Error('Failed to submit roster');
 
@@ -99,6 +102,7 @@ export default function Setup() {
       });
       setTeachers([]);
     } catch (error) {
+      console.log(error)
       toast({
         title: "Error",
         description: "Failed to submit teacher roster",
@@ -148,7 +152,7 @@ export default function Setup() {
           className="mb-4"
         />
         <p className="text-sm text-gray-500 mb-2">
-          Upload Excel file with columns: First Name, Last Name, Date of Birth, Email, Subject, Type of Teacher
+          Upload Excel file with columns: Email, Receive Mails (true/false), Type of Teacher (Lead Teacher / Special Teacher), Grade (if type is Lead)
         </p>
       </div>
 
@@ -157,11 +161,12 @@ export default function Setup() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>First Name</TableHead>
-                <TableHead>Last Name</TableHead>
-                <TableHead>Date of Birth</TableHead>
+                {/* <TableHead>First Name</TableHead> */}
+                {/* <TableHead>Last Name</TableHead> */}
+                {/* <TableHead>Date of Birth</TableHead> */}
                 <TableHead>Email</TableHead>
-                <TableHead>Subject</TableHead>
+                <TableHead>Receive Mails</TableHead>
+                {/* <TableHead>Subject</TableHead> */}
                 <TableHead>Type</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Actions</TableHead>
@@ -172,7 +177,7 @@ export default function Setup() {
                 <TableRow key={index}>
                   {editingIndex === index ? (
                     <>
-                      <TableCell>
+                      {/* <TableCell>
                         <Input
                           value={editForm?.firstName}
                           onChange={(e) => setEditForm({ ...editForm!, firstName: e.target.value })}
@@ -183,14 +188,14 @@ export default function Setup() {
                           value={editForm?.lastName}
                           onChange={(e) => setEditForm({ ...editForm!, lastName: e.target.value })}
                         />
-                      </TableCell>
-                      <TableCell>
+                      </TableCell> */}
+                      {/* <TableCell>
                         <Input
                           type="date"
                           value={editForm?.dateOfBirth}
                           onChange={(e) => setEditForm({ ...editForm!, dateOfBirth: e.target.value })}
                         />
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <Input
                           value={editForm?.email}
@@ -198,11 +203,21 @@ export default function Setup() {
                         />
                       </TableCell>
                       <TableCell>
+                        <select
+                          value={editForm?.recieveMails ? 'true' : 'false'}
+                          onChange={(e) => setEditForm({ ...editForm!, recieveMails: e.target.value === 'true' })}
+                          className="w-full p-2 border rounded"
+                        >
+                          <option value="true">True</option>
+                          <option value="false">False</option>
+                        </select>
+                      </TableCell>
+                      {/* <TableCell>
                         <Input
                           value={editForm?.subject}
                           onChange={(e) => setEditForm({ ...editForm!, subject: e.target.value })}
                         />
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <select
                           value={editForm?.type}
@@ -230,11 +245,12 @@ export default function Setup() {
                     </>
                   ) : (
                     <>
-                      <TableCell>{teacher.firstName}</TableCell>
-                      <TableCell>{teacher.lastName}</TableCell>
-                      <TableCell>{new Date(teacher.dateOfBirth).toLocaleDateString()}</TableCell>
+                      {/* <TableCell>{teacher.firstName}</TableCell> */}
+                      {/* <TableCell>{teacher.lastName}</TableCell> */}
+                      {/* <TableCell>{new Date(teacher.dateOfBirth).toLocaleDateString()}</TableCell> */}
                       <TableCell>{teacher.email}</TableCell>
-                      <TableCell>{teacher.subject}</TableCell>
+                      <TableCell>{teacher.recieveMails ? 'True' : 'False'}</TableCell>
+                      {/* <TableCell>{teacher.subject}</TableCell> */}
                       <TableCell>{teacher.type === 'Lead' ? 'Leader/Lead Teacher' : 'Team Member/Teacher'}</TableCell>
                       <TableCell>{teacher.type === 'Lead' ? teacher.grade : 'N/A'}</TableCell>
                       <TableCell>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { addTeacher, sendVerificationMail } from "@/api";
+import { addTeacher } from "@/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import Loading from "../Loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,12 +64,12 @@ export default function AddTeacher() {
       const response = await addTeacher(teacherData, token);
       if (!response.error) {
         try {
-          await sendVerificationMail({
-            email,
-            role: "Teacher",
-            url: `${window.location.origin}/teacher/complete-registration`, // New registration page
-            userId: response.teacher._id // Assuming the response includes the created teacher's ID
-          });
+          // await sendVerificationMail({
+          //   email,
+          //   role: "Teacher",
+          //   url: `${window.location.origin}/teacher/complete-registration`, // New registration page
+          //   userId: response.teacher._id // Assuming the response includes the created teacher's ID
+          // });
           toast({
             title: "Teacher invite sent",
             description: `${email} has been invited. A registration email has been sent.`,

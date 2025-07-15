@@ -151,23 +151,60 @@ export function QuestionBuilder({ question, onUpdate, onRemove, formType }: Ques
           <Label htmlFor={`compulsory-${question.id}`}>Required</Label>
         </div>
 
-        {/* Points input - always shown for IEP forms */}
-        {(formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' || 
-          ((question.type === 'number' || question.type === 'text') && question.pointsType !== 'None')) && (
-          <div className="flex items-center space-x-2">
-            <Label htmlFor={`points-${question.id}`}>Points</Label>
-            <Input
-              type="number"
-              value={question.maxPoints}
-              onChange={(e) => {
-                const value = Math.max(1, parseInt(e.target.value) || 1);
-                onUpdate({ ...question, maxPoints: value })
-              }}
-              placeholder="1"
-              className="w-full"
-              min={1}
-            />
-          </div>
+        {/* Points Type Dropdown and Points Input */}
+        {formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? (
+          <>
+            <div className="flex items-center space-x-2">
+              <Label>Points Type</Label>
+              <Input value="Award" disabled className="w-[120px]" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor={`points-${question.id}`}>Points</Label>
+              <Input
+                type="number"
+                value={question.maxPoints}
+                onChange={(e) => {
+                  const value = Math.max(1, parseInt(e.target.value) || 1);
+                  onUpdate({ ...question, maxPoints: value })
+                }}
+                placeholder="1"
+                className="w-full"
+                min={1}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center space-x-2">
+              <Label>Points Type</Label>
+              <Select value={question.pointsType} onValueChange={handlePointsTypeChange}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Points Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Award">Award</SelectItem>
+                  <SelectItem value="Deduct">Deduct</SelectItem>
+                  <SelectItem value="None">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(question.type === 'number' || question.type === 'text') && question.pointsType !== 'None' && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor={`points-${question.id}`}>Points</Label>
+                <Input
+                  type="number"
+                  value={question.maxPoints}
+                  onChange={(e) => {
+                    const value = Math.max(1, parseInt(e.target.value) || 1);
+                    onUpdate({ ...question, maxPoints: value })
+                  }}
+                  placeholder="1"
+                  className="w-full"
+                  min={1}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
