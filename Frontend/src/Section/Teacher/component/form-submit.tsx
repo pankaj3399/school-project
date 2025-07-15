@@ -144,7 +144,16 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
 
-    onSubmit(answers, submittedFor, isSendEmail, submittedAt, isManuallySet)
+    if (form.formType === 'Feedback') {
+      const feedbackQuestion = form.questions && form.questions.length > 0 ? form.questions[0] : null;
+      const feedbackText = feedbackQuestion ? (answers[feedbackQuestion.id]?.answer || "") : "";
+      const answerArray = feedbackQuestion
+        ? [{ answer: feedbackText, points: 0, questionId: feedbackQuestion.id }]
+        : [];
+      onSubmit({ feedback: feedbackText, answers: answerArray } as any, submittedFor, isSendEmail, submittedAt, isManuallySet);
+    } else {
+      onSubmit(answers, submittedFor, isSendEmail, submittedAt, isManuallySet);
+    }
     setIsSendEmail((prev)=>prev)
     setShowModal(false)
   }

@@ -101,19 +101,12 @@ export default function ViewForms() {
   }
 
   const removeFromState = (id: string) => {
-    setForms(prev => prev.filter(form => form._id != id))
-    // Update grouped forms
-    setGroupedForms(prev => {
-      const newGrouped = { ...prev }
-      // Remove from special forms
-      newGrouped.special = newGrouped.special.filter(form => form._id !== id)
-      // Remove from grade groups
-      Object.keys(newGrouped.byGrade).forEach(grade => {
-        newGrouped.byGrade[parseInt(grade)] = newGrouped.byGrade[parseInt(grade)].filter(form => form._id !== id)
-      })
-      return newGrouped
-    })
-  }
+    setForms(prev => {
+      const updated = prev.filter(form => form._id !== id);
+      groupForms(updated); // Re-group forms after deletion
+      return updated;
+    });
+  };
 
   const removeForm = async (id: string) => {
     const removedForm = forms.filter(form => form._id == id)[0]
@@ -216,7 +209,7 @@ export default function ViewForms() {
 
       {/* Grade-wise Forms Sections */}
       {Object.entries(groupedForms.byGrade).map(([grade, gradeForms]) => (
-        gradeForms.length > 0 && (
+        Array.isArray(gradeForms) && gradeForms.length > 0 && (
           <div key={grade} className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Grade {grade} Forms</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

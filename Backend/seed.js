@@ -223,9 +223,7 @@ const seed = async () => {
         recieveMails: Math.random() > 0.5 // 50% chance to receive emails
       });
       teachers.push(teacher);
-      
-      // Add teacher to school's teachers array
-      school.teachers.push(teacher._id);
+      // Removed: school.teachers.push(teacher._id);
     }
     console.log("Created 25 teachers");
 
@@ -278,7 +276,7 @@ const seed = async () => {
           email: studentEmail,
           password: studentPassword,
           role: Role.Student,
-          standard: secondGuardianEmail, // Standard field holds the second guardian email
+          standard: secondGuardianEmail, 
           points,
           parentEmail,
           sendNotifications: true,
@@ -293,13 +291,17 @@ const seed = async () => {
         });
         
         students.push(student);
-        // Add student to school's students array
-        school.students.push(student._id);
+        // Removed: school.students.push(student._id);
       }
     }
     console.log(`Created ${students.length} students`);
     
-    await school.save(); // Save school with teacher and student references
+    // Instead of school.save(), update teachers and students in one atomic update
+    await School.updateOne(
+      { _id: school._id },
+      { $addToSet: { teachers: { $each: teachers.map(t => t._id) }, students: { $each: students.map(s => s._id) } } }
+    );
+    // Removed: await school.save();
 
     // Create forms for the school - use proper FormType enum values
     const formTypes = Object.values(FormType); // Use enum values directly: "AwardPoints", "GiveBonus", etc.

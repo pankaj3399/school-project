@@ -79,13 +79,37 @@ useEffect(()=>{
 const navigate = useNavigate()
 
   const handleCreateForm = async () => {
+    // Validation
+    if (!formName.trim()) {
+      toast({ title: 'Error', description: 'Form name is required', variant: 'destructive' });
+      return;
+    }
+    if (questions.length === 0) {
+      toast({ title: 'Error', description: 'At least one question is required', variant: 'destructive' });
+      return;
+    }
+    // Ensure IEP questions have required fields, and remove for others
+    const processedQuestions = questions.map(q => {
+      if (formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)') {
+        return {
+          ...q,
+          goal: q.goal || '',
+          goalSummary: q.goalSummary || '',
+          targetedBehaviour: q.targetedBehaviour || '',
+        };
+      } else {
+        // Remove IEP-only fields for other forms
+        const { goal, goalSummary, targetedBehaviour, ...rest } = q;
+        return rest;
+      }
+    });
     const response = await createForm(
         {
           formName, 
           formType, 
-          questions, 
+          questions: processedQuestions, 
           isSpecial:false,
-          grade:grade,
+          grade: grade?.toString?.() || '',
           ...isSendEmail
         },
         localStorage.getItem('token')!
@@ -107,7 +131,12 @@ const navigate = useNavigate()
   }
 
   const addQuestion = (question: Question) => {
-    setQuestions([...questions, question])
+    // Ensure only valid type/pointsType values are used
+    const validTypes = ['text', 'select', 'number'];
+    const validPointsTypes = ['Award', 'Deduct', 'None'];
+    const type = validTypes.includes(question.type) ? question.type : 'text';
+    const pointsType = validPointsTypes.includes(question.pointsType) ? question.pointsType : 'None';
+    setQuestions([...questions, { ...question, type, pointsType }]);
   }
 
   const removeQuestion = (id: string) => {

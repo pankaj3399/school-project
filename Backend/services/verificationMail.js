@@ -256,6 +256,35 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
 
 export const sendTeacherRegistrationMail = async ({ email, url, registrationToken }) => {
   const registrationLink = `${url}?token=${registrationToken}`;
+
+  let emailHTML = getVerificationEmailTemplate(
+    'Teacher', // role
+    '',        // otp (not needed)
+    registrationLink, // url (will be replaced in button)
+    email,     // email
+    null,      // toVerify
+    false,     // isStudent
+    null,      // tempPass
+    null,      // schoolLogo
+    'UTC+0'    // schoolTimezone
+  );
+
+  emailHTML = emailHTML.replace('Email Verification', 'Teacher Registration');
+  emailHTML = emailHTML.replace(
+    /<a href="[^"]+"([^>]*)>\s*Verify Email Address\s*<\/a>/,
+    `<a href="${registrationLink}"$1>Complete Registration</a>`
+  );
+
+  emailHTML = emailHTML.replace(
+    /<p style="margin-bottom: 25px;">([\s\S]*?)<\/p>/,
+    '<p style="margin-bottom: 25px;">You have been invited to join as a teacher. Please complete your registration by clicking the button below:</p>'
+  );
+
+  emailHTML = emailHTML.replace(
+    /(<\/div>\s*<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">[\s\S]*?<\/p>)/,
+    `$1\n<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">If the button above does not work, copy and paste this link into your browser:<br><a href="${registrationLink}" style="color: #00a58c; word-break: break-all;">${registrationLink}</a></p>`
+  );
+
   const transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
     auth: {
@@ -267,8 +296,7 @@ export const sendTeacherRegistrationMail = async ({ email, url, registrationToke
     from: process.env.EMAIL_USER,
     to: email,
     subject: 'Complete Your Teacher Registration',
-    html: `<p>You have been invited to join as a teacher. Please complete your registration by clicking the link below:</p>
-           <a href="${registrationLink}">${registrationLink}</a>`
+    html: emailHTML
   };
   await transporter.sendMail(mailOptions);
 };
