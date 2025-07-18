@@ -7,7 +7,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "seed": "node seed.js",
     "build": "npm run start"
   },
   "keywords": [],
@@ -46,5 +45,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.9.5"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }

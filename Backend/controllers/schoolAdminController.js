@@ -587,7 +587,6 @@ export const teacherRoster = async (req, res) => {
           });
 
           teacherIds.push(createdTeacher._id);
-
           await sendTeacherRegistrationMail({
             email: createdTeacher.email,
             url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,

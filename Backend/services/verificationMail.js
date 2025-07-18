@@ -256,7 +256,6 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
 
 export const sendTeacherRegistrationMail = async ({ email, url, registrationToken }) => {
   const registrationLink = `${url}?token=${registrationToken}`;
-
   let emailHTML = getVerificationEmailTemplate(
     'Teacher', // role
     '',        // otp (not needed)

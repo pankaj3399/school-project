@@ -7,12 +7,12 @@ const API_URL = import.meta.env.VITE_VERCEL
   : import.meta.env.PROD
   ? "/api"
   : import.meta.env.VITE_API_URL;
-console.log(
-  import.meta.env,
-  import.meta.env.PROD,
-  import.meta.env.MODE,
-  API_URL,
-);
+// console.log(
+//   import.meta.env,
+//   import.meta.env.PROD,
+//   import.meta.env.MODE,
+//   API_URL,
+// );
 
 const getToken = () => localStorage.getItem("token");
 

@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
-seed.js
+./Backend/seed.js
+./Backend/convert-script.js
 seed2.js
 school_key.pem
