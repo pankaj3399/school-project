@@ -839,6 +839,42 @@ export const sendConfirmation = async (data: any) => {
   }
 };
 
+export const sendResetOtp = async () => {
+  try {
+    const token = getToken();
+    const response = await axios.post(
+      `${API_URL}/schoolAdmin/sendResetOtp`,
+      {},
+      {
+        headers: {
+          token,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const verifyResetOtp = async (otp: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.post(
+      `${API_URL}/schoolAdmin/verifyResetOtp`,
+      { otp },
+      {
+        headers: {
+          token,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 export const resetStudentRoster = async () => {
   try {
     const token = getToken();

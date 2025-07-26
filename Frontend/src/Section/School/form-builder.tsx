@@ -133,12 +133,10 @@ const navigate = useNavigate()
   }
 
   const addQuestion = (question: Question) => {
-    // Ensure only valid type/pointsType values are used
+    // Ensure only valid type values are used
     const validTypes = ['text', 'select', 'number'];
-    const validPointsTypes = ['Award', 'Deduct', 'None'];
     const type = validTypes.includes(question.type) ? question.type : 'text';
-    const pointsType = validPointsTypes.includes(question.pointsType) ? question.pointsType : 'None';
-    setQuestions([...questions, { ...question, type, pointsType }]);
+    setQuestions([...questions, { ...question, type }]);
   }
 
   const removeQuestion = (id: string) => {
@@ -147,21 +145,6 @@ const navigate = useNavigate()
 
   const updateQuestion = (updatedQuestion: Question) => {
     setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q))
-  }
-
-  const getDefaultPointsType = (formType: FormType) => {
-    switch(formType){
-      case 'AwardPoints':
-      case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
-        return 'Award'
-      case 'Feedback':
-        return 'None'
-      case 'PointWithdraw':
-        return 'Deduct'
-      case 'DeductPoints':
-        return 'Deduct'
-      
-    }
   }
 
   const grades = GRADE_OPTIONS
@@ -193,7 +176,7 @@ const navigate = useNavigate()
           <SelectContent>
             <SelectItem value="AwardPoints">Award Points</SelectItem>
             <SelectItem value="Feedback">Feedback</SelectItem>
-            <SelectItem value="PointWithdraw">Point Withdraw</SelectItem>
+            <SelectItem value="PointWithdraw">Withdraw Points</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
             <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">Award Points with Individualized Education Plan (IEP)</SelectItem>
           </SelectContent>
@@ -267,8 +250,7 @@ const navigate = useNavigate()
         text: '',
         type: 'text',
         isCompulsory: false,
-        maxPoints: 0,
-        pointsType: getDefaultPointsType(formType)
+        maxPoints: 0
       })}>
         Add Question
       </Button>

@@ -13,6 +13,8 @@ import * as XLSX from 'xlsx';
 import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { studentRoster } from "@/api";
+import { Download } from "lucide-react";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 interface StudentData {
   firstName: string;
@@ -47,6 +49,69 @@ export default function SetupStudents() {
   const [editForm, setEditForm] = useState<StudentData | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const downloadTemplate = () => {
+    // Create sample data for the template
+    const templateData = [
+      {
+        'First Name': 'John',
+        'Last Name': 'Doe',
+        'Grade': '5th Grade',
+        'Student Number': '2024001',
+        'Guardian 1 Name': 'Jane Doe',
+        'Guardian 1 Email': 'jane.doe@email.com',
+        'Guardian 1 Phone': '+1234567890',
+        'Guardian 1 Phone 2': '+1234567891',
+        'Guardian 2 Name': 'Mike Doe',
+        'Guardian 2 Email': 'mike.doe@email.com',
+        'Guardian 2 Phone': '+1234567892',
+        'Guardian 2 Phone 2': '+1234567893'
+      },
+      {
+        'First Name': 'Sarah',
+        'Last Name': 'Smith',
+        'Grade': '3rd Grade',
+        'Student Number': '2024002',
+        'Guardian 1 Name': 'Mary Smith',
+        'Guardian 1 Email': 'mary.smith@email.com',
+        'Guardian 1 Phone': '+1234567894',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': '',
+        'Guardian 2 Email': '',
+        'Guardian 2 Phone': '',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Alex',
+        'Last Name': 'Johnson',
+        'Grade': '7th Grade',
+        'Student Number': '2024003',
+        'Guardian 1 Name': 'Robert Johnson',
+        'Guardian 1 Email': 'robert.johnson@email.com',
+        'Guardian 1 Phone': '+1234567895',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': 'Lisa Johnson',
+        'Guardian 2 Email': 'lisa.johnson@email.com',
+        'Guardian 2 Phone': '+1234567896',
+        'Guardian 2 Phone 2': ''
+      }
+    ];
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Student Roster Template');
+
+    // Generate and download the file
+    XLSX.writeFile(workbook, 'student-roster-template.xlsx');
+
+    toast({
+      title: "Template Downloaded",
+      description: "Student roster template has been downloaded successfully",
+    });
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -203,15 +268,41 @@ export default function SetupStudents() {
       <h1 className="text-3xl font-bold mb-6">Student Roster Setup</h1>
       
       <div className="mb-6">
-        <Input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleFileUpload}
-          className="mb-4"
-        />
-        <p className="text-sm text-gray-500 mb-2">
-          Upload Excel file with columns: First Name, Last Name, Grade, Student Number, Guardian 1 Name, Guardian 1 Email, Guardian 1 Phone, Guardian 2 Name, Guardian 2 Email, Guardian 2 Phone
-        </p>
+        <div className="flex items-center gap-4 mb-4">
+          <Input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="flex-1"
+          />
+          <Button 
+            onClick={downloadTemplate} 
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download Template
+          </Button>
+        </div>
+        <Accordion type="single" collapsible defaultValue="instructions">
+          <AccordionItem value="instructions">
+            <AccordionTrigger className="text-lg font-semibold text-black bg-white border-b">Student Roster Instructions</AccordionTrigger>
+            <AccordionContent className="bg-white text-black border rounded-b p-4">
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Column headers must match exactly: <b>First Name</b>, <b>Last Name</b>, <b>Grade</b>, <b>Student Number</b>, <b>Guardian 1 Name</b>, <b>Guardian 1 Email</b>, <b>Guardian 1 Phone</b>, <b>Guardian 1 Phone 2</b>, <b>Guardian 2 Name</b>, <b>Guardian 2 Email</b>, <b>Guardian 2 Phone</b>, <b>Guardian 2 Phone 2</b></li>
+                <li><b>First Name</b> and <b>Last Name</b>: Student's names (required)</li>
+                <li><b>Grade</b>: Student's grade level (required)</li>
+                <li><b>Student Number</b>: Unique student identifier (required)</li>
+                <li><b>Guardian 1 Name, Email, Phone</b>: Required for all students</li>
+                <li><b>Guardian 1 Phone 2</b>: Optional</li>
+                <li><b>Guardian 2 Name, Email, Phone, Phone 2</b>: Optional, leave empty if not applicable</li>
+                <li>Email addresses must be in valid format (e.g., user@domain.com)</li>
+                <li>Phone numbers can include country codes and formatting</li>
+                <li>You can edit any imported data before submitting</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       {validationErrors.length > 0 && (

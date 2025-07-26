@@ -1,5 +1,4 @@
 export type FormType = 'AwardPoints' | 'DeductPoints' | 'Feedback' | 'PointWithdraw' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
-export type PointsType = 'Award' | 'Deduct' | 'None'
 export type Question = {
     id: string
     text: string
@@ -7,7 +6,6 @@ export type Question = {
     isCompulsory: boolean
     options?: {value: string, points: number}[],
     maxPoints: number,
-    pointsType: PointsType,
     goal?: string;
     goalSummary?: string;
     targetedBehaviour?: string;
