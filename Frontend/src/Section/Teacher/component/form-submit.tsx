@@ -182,7 +182,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                 e.target.setCustomValidity('')
               }
               e.target.reportValidity()
-              handleInputChange(question.id, {answer: e.target.value, points: question.pointsType === 'Deduct' ? points*-1:points})
+              handleInputChange(question.id, {answer: e.target.value, points: (form.formType === 'DeductPoints' || form.formType === 'PointWithdraw') ? points*-1:points})
             }}
             required={question.isCompulsory}
           />
@@ -229,7 +229,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               if(isNaN(Number(e.target.value))){
                 handleInputChange(question.id, {answer: e.target.value, points: 0})
               }else{
-                handleInputChange(question.id, {answer: e.target.value, points: question.pointsType === 'Deduct' ? Number(e.target.value)*-1:Number(e.target.value)})
+                handleInputChange(question.id, {answer: e.target.value, points: (form.formType === 'DeductPoints' || form.formType === 'PointWithdraw') ? Number(e.target.value)*-1:Number(e.target.value)})
               }
             }}
             required={question.isCompulsory}
@@ -249,7 +249,7 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
               const points = selectedOption ? selectedOption.points : 0;
               handleInputChange(question.id, {
                 answer: value,
-                points: question.pointsType === 'Deduct' ? points*-1:points
+                points: (form.formType === 'DeductPoints' || form.formType === 'PointWithdraw') ? points*-1:points
               });
             }}
             required={question.isCompulsory}
@@ -395,10 +395,10 @@ export function FormSubmission({ form, onSubmit, isSubmitting }: FormSubmissionP
                   
                   <h3 className="font-medium mb-2">
                     {index + 1}. {question.text} {
-                      question.type === 'select' || question.pointsType === 'None' ? <span className="text-muted-foreground"></span> : <span className="text-muted-foreground">(Upto {question.maxPoints} Points)</span>
+                      question.type === 'select' || form.formType === 'Feedback' ? <span className="text-muted-foreground"></span> : <span className="text-muted-foreground">(Up to {question.maxPoints} Points)</span>
                     }
                     {
-                      question.pointsType === 'Award' ? <span className="text-green-500 ml-1">Award</span> : question.pointsType === 'Deduct' ? <span className="text-red-500 ml-1">Deduct</span> : ''
+                      (form.formType === 'AwardPoints' || form.formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)') ? <span className="text-green-500 ml-1">Award</span> : (form.formType === 'DeductPoints' || form.formType === 'PointWithdraw') ? <span className="text-red-500 ml-1">Deduct</span> : ''
                     }
                     {question.isCompulsory && <span className="text-red-500 ml-1">*</span>}
                   </h3>

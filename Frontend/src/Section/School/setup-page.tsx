@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
-import { addSchool, getCurrrentSchool, resetStudentRoster, updateSchool } from "@/api";
-import Modal from "./Modal";
+import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
+import OtpVerificationModal from "./OtpVerificationModal";
 import { 
   Select, 
   SelectTrigger, 
@@ -51,7 +51,7 @@ const SetupPage = () => {
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState(TIMEZONE_OPTIONS[0].value);
   const [domain, setDomain] = useState("");
-  const [showResetModal, setShowResetModal] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -164,22 +164,11 @@ const SetupPage = () => {
     }
   };
 
-  const resetStudent = async () => {
-    try {
-      await resetStudentRoster();
-      setShowResetModal(false);
-      toast({
-        title: "Success",
-        description: `Student Roster Reset Successfully`,
-      });
-    } catch (e) {
-      console.error("Error resetting student roster:", e);
-      toast({
-        title: "Error",
-        description: "Failed to reset student roster.",
-        variant: "destructive",
-      });
-    }
+  const handleResetSuccess = () => {
+    toast({
+      title: "Success",
+      description: `Student Roster Reset Successfully`,
+    });
   };
 
   const formFields = (
@@ -420,7 +409,7 @@ const SetupPage = () => {
             <CardFooter className="mt-auto">
               <Button 
                 className="w-full bg-red-500 hover:bg-red-700 text-white hover:text-white" 
-                onClick={() => setShowResetModal(true)}
+                onClick={() => setShowOtpModal(true)}
               >
                 Reset Students
               </Button>
@@ -429,17 +418,10 @@ const SetupPage = () => {
         </div>
       </div>
 
-      <Modal
-        isOpen={showResetModal}
-        description="Are you sure you want to reset the student roster? This will permanently delete all students and their point history data."
-        title="Reset Student Roster"
-        onClose={() => {
-          setShowResetModal(false);
-        }}
-        onConfirm={() => {
-          resetStudent();
-        }}
-        callToAction="Reset"
+      <OtpVerificationModal
+        isOpen={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        onSuccess={handleResetSuccess}
       />
     </div>
   );

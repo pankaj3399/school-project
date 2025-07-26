@@ -5,11 +5,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
-import { addSchool, getCurrrentSchool, getStats, resetStudentRoster, updateSchool } from "@/api";
+import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
 import AllCharts from "./component/all-charts";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import Modal from "./Modal";
 import { TIMEZONE_OPTIONS } from "@/lib/luxon";
 
 const STATE_OPTIONS = [
@@ -38,8 +37,6 @@ export default function SchoolPage() {
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState("UTC-5"); // Default to Eastern Time
   const [domain, setDomain] = useState("");
-
-  const [showResetModal, setShowResetModal] = useState(false);
 
   const [stats, setStats] = useState({
       teachers:0,
@@ -183,22 +180,7 @@ if (!response.error) {
   }
   };
 
-  const resetStudent = async ()=>{ 
-    try{
-      await resetStudentRoster()
-      setShowResetModal(false)
-      toast({
-        title: "Success",
-        description: `Student Roster Reset Successfully`,
-      })
-    }catch(e){
-      toast({
-        title: "Error",
-        description: "Failed to reset student roster.",
-        variant: "destructive",
-      });
-    }
-}
+
 
   const formFields = (
     <>
@@ -358,18 +340,7 @@ if (!response.error) {
             </div>
           </div>
         )}
-        <Modal
-        isOpen={showResetModal}
-        description="Are you sure you want to reset the student roster?"
-        title="Add School"
-        onClose={()=>{
-          setShowResetModal(false)
-        }}
-        onConfirm={()=>{
-          resetStudent()
-        }}
-        callToAction="Reset"
-      />
+
       </div>
     );
   }

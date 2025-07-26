@@ -137,7 +137,7 @@ export default function EditForm() {
           <SelectContent>
             <SelectItem value="AwardPoints">Award Points</SelectItem>
             <SelectItem value="Feedback">Feedback</SelectItem>
-            <SelectItem value="PointWithdraw">Point Withdraw</SelectItem>
+            <SelectItem value="PointWithdraw">Withdraw Points</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
             <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">
             Award Points with Individualized Education Plan (IEP)
@@ -217,7 +217,6 @@ export default function EditForm() {
           type: 'text',
           isCompulsory: false,
           maxPoints: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 1 : 0,
-          pointsType: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award' : 'None',
           goal: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
           goalSummary: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
           targetedBehaviour: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined

@@ -13,6 +13,8 @@ import * as XLSX from 'xlsx';
 import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { teacherRoster } from "@/api";
+import { Download } from "lucide-react";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 interface TeacherData {
   // firstName: string;
@@ -31,6 +33,45 @@ export default function Setup() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<TeacherData | null>(null);
   const { toast } = useToast();
+
+  const downloadTemplate = () => {
+    // Create sample data for the template
+    const templateData = [
+      {
+        'Email': 'john.doe@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': '5th Grade'
+      },
+      {
+        'Email': 'jane.smith@school.com',
+        'Receive Mails': false,
+        'Type of Teacher': 'Special Teacher',
+        'Grade': ''
+      },
+      {
+        'Email': 'mike.johnson@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': '3rd Grade'
+      }
+    ];
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Teacher Roster Template');
+
+    // Generate and download the file
+    XLSX.writeFile(workbook, 'teacher-roster-template.xlsx');
+
+    toast({
+      title: "Template Downloaded",
+      description: "Teacher roster template has been downloaded successfully",
+    });
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,15 +186,40 @@ export default function Setup() {
       <h1 className="text-3xl font-bold mb-6">Teacher Roster Setup</h1>
       
       <div className="mb-6">
-        <Input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleFileUpload}
-          className="mb-4"
-        />
-        <p className="text-sm text-gray-500 mb-2">
-          Upload Excel file with columns: Email, Receive Mails (true/false), Type of Teacher (Lead Teacher / Special Teacher), Grade (if type is Lead)
-        </p>
+        <div className="flex items-center gap-4 mb-4">
+          <Input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="flex-1"
+          />
+          <Button 
+            onClick={downloadTemplate} 
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download Template
+          </Button>
+        </div>
+        <Accordion type="single" collapsible defaultValue="instructions">
+          <AccordionItem value="instructions">
+            <AccordionTrigger className="text-lg font-semibold text-black bg-white border-b">Teacher Roster Instructions</AccordionTrigger>
+            <AccordionContent className="bg-white text-black border rounded-b p-4">
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Column headers must match exactly: <b>Email</b>, <b>Receive Mails</b>, <b>Type of Teacher</b>, <b>Grade</b></li>
+                <li><b>Email:</b> Teacher's email address (required)</li>
+                <li><b>Receive Mails:</b> Enter <code>true</code> or <code>false</code> (without quotes) to enable/disable email notifications</li>
+                <li><b>Type of Teacher:</b> Enter <code>Lead Teacher</code> or <code>Special Teacher</code> (exact text required)</li>
+                <li><b>Grade:</b> Required for Lead Teachers (e.g., "5th Grade", "3rd Grade"), leave empty for Special Teachers</li>
+                <li>You can edit any imported data before submitting</li>
+                <li>For <b>Receive Mails</b> field: use <code>true</code> or <code>false</code> (boolean values)</li>
+                <li>For <b>Type of Teacher</b> field: use <code>Lead Teacher</code> or <code>Special Teacher</code> (exact text)</li>
+                <li>Grade field is optional for Special Teachers but required for Lead Teachers</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       {teachers.length > 0 && (

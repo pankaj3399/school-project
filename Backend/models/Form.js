@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { QuestionType, FormType, PointsType } from "../enum.js";
+import { QuestionType, FormType } from "../enum.js";
 
 const optionSchema = new mongoose.Schema({
   value: {
@@ -36,11 +36,6 @@ const questionSchema = new mongoose.Schema({
   },
   maxPoints: {
     type: Number,
-    required: true,
-  },
-  pointsType: {
-    type: String,
-    enum: Object.values(PointsType),
     required: true,
   },
   goal:{

@@ -92,7 +92,7 @@ export const generateRecieptImage = async (
     ctx.fillText(`${schoolName.toUpperCase()}`, canvas.width / 2, 220);
     ctx.fillText(`${schoolAddress.toUpperCase()}`, canvas.width / 2, 240);
     ctx.fillText(`DATE: ${date}`, canvas.width /2, 310);
-    ctx.fillText(`ISUUED TO: ${student.toUpperCase()}`, canvas.width /2, 330);
+    ctx.fillText(`ISSUED TO: ${student.toUpperCase()}`, canvas.width /2, 330);
     ctx.font = 'bold 100px "Courier New Bold"'
     ctx.fillText(`${Math.abs(noOfTokens)}`, canvas.width / 2, 420);
     return canvas.toBuffer();

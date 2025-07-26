@@ -8,7 +8,7 @@
 // import Form from "./models/Form.js";
 // import FormSubmissions from "./models/FormSubmissions.js";
 // import PointsHistory from "./models/PointsHistory.js";
-// import { Role, FormType, QuestionType, PointsType } from "./enum.js";
+// import { Role, FormType, QuestionType } from "./enum.js";
 
 // dotenv.config();
 
@@ -315,7 +315,7 @@
 //       // Grade is required when isSpecial is false
 //       const grade = isSpecial ? null : teacherGrades[Math.floor(Math.random() * teacherGrades.length)];
       
-//       // Create questions for form - use proper QuestionType and PointsType enums
+//       // Create questions for form - use proper QuestionType enum
 //       const questions = [];
 //       const numQuestions = Math.floor(Math.random() * 3) + 1; // 1-3 questions
       
@@ -323,15 +323,12 @@
 //       // For Feedback forms, use text type questions
 //       // For other forms, use select or number type questions
 //       for (let j = 0; j < numQuestions; j++) {
-//         const pointsType = formType === "DeductPoints" ? PointsType.Deduct : PointsType.Award;
-//         const maxPoints = pointsType === PointsType.Deduct ? 
-//           -1 * (Math.floor(Math.random() * 50) + 10) : 
-//           Math.floor(Math.random() * 100) + 20;
+//         const maxPoints = Math.floor(Math.random() * 100) + 20;
           
 //         // Choose question type based on form type
 //         let questionType;
-//         if (formType === "Feedback") {
-//           questionType = QuestionType.Text; // Text for Feedback forms
+//         if (formType === "DeductPoints") {
+//           questionType = QuestionType.Number; // Number for DeductPoints forms
 //         } else {
 //           // For other forms, use select or number
 //           questionType = Math.random() > 0.5 ? QuestionType.Select : QuestionType.Number;
@@ -344,7 +341,6 @@
 //           type: questionType,
 //           isCompulsory: true,
 //           maxPoints,
-//           pointsType,
 //           options: []
 //         };
         
@@ -352,9 +348,7 @@
 //         if (questionType === QuestionType.Select) {
 //           const numOptions = Math.floor(Math.random() * 3) + 2; // 2-4 options
 //           for (let k = 0; k < numOptions; k++) {
-//             const optionPoints = pointsType === PointsType.Deduct ?
-//               -1 * (Math.floor(Math.random() * Math.abs(maxPoints/2)) + 1) :
-//               Math.floor(Math.random() * (maxPoints/2)) + 1;
+//             const optionPoints = Math.floor(Math.random() * (maxPoints/2)) + 1;
               
 //             question.options.push({
 //               value: `Option ${k + 1}`,
@@ -415,14 +409,15 @@
 //         let points = 0;
         
 //         // Generate appropriate answers based on question type and form type
-//         if (form.formType === "Feedback" && question.type === "text") {
-//           // For Feedback forms with text questions, generate text answers
-//           answer = `Detailed feedback answer for question ${j + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.`;
+//         if (form.formType === "DeductPoints" && question.type === "number") {
+//           // For DeductPoints forms with number questions, generate numeric answers
+//           const numericValue = Math.floor(Math.random() * 10) + 1;
+//           answer = numericValue.toString();
 //           points = Math.min(
 //             Math.floor(Math.random() * Math.abs(question.maxPoints) + 1),
 //             Math.abs(question.maxPoints)
 //           );
-//           if (question.pointsType === PointsType.Deduct) points = -points;
+//           if (question.maxPoints < 0) points = -points; // Handle negative points
           
 //         } else if (question.type === "select") {
 //           // For select questions, choose one option
@@ -439,7 +434,7 @@
 //             Math.floor(Math.random() * Math.abs(question.maxPoints) + 1),
 //             Math.abs(question.maxPoints)
 //           );
-//           if (question.pointsType === PointsType.Deduct) points = -points;
+//           if (question.maxPoints < 0) points = -points; // Handle negative points
 //         }
         
 //         answers.push({

@@ -13,6 +13,8 @@ import { generateStudentPDF } from "../utils/generatePDF.js";
 import { sendVerifyEmailRoster } from "../services/verificationMail.js";
 import { timezoneManager } from "../utils/luxon.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
+import Otp from "../models/Otp.js";
+import { sendEmail } from "../services/sendgrid.js";
 
 const getSchoolIdFromUser = async (userId) => {
   // Try finding user as admin first
@@ -444,16 +446,14 @@ export const getMonthlyStats = async (req, res) => {
 export const sendReport = async (req, res) => {
   try {
     const { email } = req.params;
-    // The file should be available in req.files or req.file depending on your middleware
     const file = req.file;
 
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Now file data is properly available
     const fileData = {
-      buffer: file.buffer, // Binary data of the file
+      buffer: file.buffer,
       originalname: `Etoken Report-${file.originalname}-As_Of_${new Date().toLocaleDateString()}`, // Original name of the file
       mimetype: file.mimetype,
     };
@@ -462,6 +462,74 @@ export const sendReport = async (req, res) => {
     return res.status(200).json({ message: "Report sent successfully" });
   } catch (error) {
     console.error("Error in sendReport:", error);
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
+  }
+};
+
+export const sendResetOtp = async (req, res) => {
+  try {
+    const user = await Admin.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const newOtp = new Otp({
+      userId: user._id,
+      otp: otp,
+    });
+    await newOtp.save();
+
+    const body = `<p>Use this code to confirm student data reset.  This action will permanently delete all students and their point history data from your school <b>${otp}</b> <br/> <i>The code will expire in 30 min</i></p>`;
+    await sendEmail(user.email, "STUDENT DATA RESET OTP", body, body, null);
+
+    return res.status(200).json({
+      message: "OTP sent successfully",
+      otpId: newOtp._id,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
+  }
+};
+
+export const verifyResetOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    const user = await Admin.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const storedOtp = await Otp.findOne({ otp, userId: user._id });
+    if (!storedOtp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (storedOtp.expiresAt < new Date()) {
+      await Otp.deleteOne({ _id: storedOtp._id }); // Cleanup expired OTP
+      return res.status(400).json({ message: "OTP has expired" });
+    }
+
+    await Otp.deleteOne({ _id: storedOtp._id });
+
+    const schoolId = await getSchoolIdFromUser(req.user.id);
+    await PointsHistory.deleteMany({
+      schoolId,
+    });
+    await Student.deleteMany({
+      schoolId,
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Student roster reset successfully" });
+  } catch (error) {
     return res
       .status(500)
       .json({ message: "Server Error", error: error.message });
@@ -503,19 +571,15 @@ export const genreport = async (req, res) => {
       barChartImage,
     });
 
-    // Extract timezone offset from school's timezone (format: "UTC+/-X")
     const timeZone = schData.school.timeZone || "UTC+0";
     const offsetHours = parseInt(timeZone.replace("UTC", "") || "0");
 
-    // Create date in UTC
     const utcDate = new Date();
 
-    // Add timezone offset
     const localDate = new Date(
       utcDate.getTime() + offsetHours * 60 * 60 * 1000
     );
 
-    // Format date with timezone-adjusted time
     const formattedDate = timezoneManager.formatForSchool(
       new Date(),
       timeZone,

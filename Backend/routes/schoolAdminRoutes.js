@@ -1,4 +1,4 @@
-import { addSchool, addStudent,  getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetStudentRoster, sendReport, genreport, teacherRoster, studentRoster } from "../controllers/schoolAdminController.js";
+import { addSchool, addStudent,  getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetStudentRoster, sendReport, genreport, teacherRoster, studentRoster, sendResetOtp, verifyResetOtp } from "../controllers/schoolAdminController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import express from 'express';
@@ -34,6 +34,10 @@ router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.
 router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getCombinedStudentPointsHistory);
 router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getStudentPointsHistory);
 router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
+
+// OTP routes for reset confirmation
+router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), sendResetOtp);
+router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), verifyResetOtp);
 router.post('/sendreport/:email', upload.single('file'), sendReport);
 router.post('/genreport/:email', authenticate,upload.single('file'), genreport);
 router.post('/teacher-roster', authenticate,authorizeRoles(Role.SchoolAdmin), teacherRoster);
