@@ -44,13 +44,24 @@ export const createForm = async (req, res) => {
   } = req.body;
   const id = req.user.id;
   let school;
-  if(req.user.role == Role.Teacher){
-    const user = await Teacher.findById(id)
-    school = await School.findById(user.schoolId)
-  }else{
-    school = await School.findOne({ createdBy: id });
-  }
+  
   try {
+    if(req.user.role == Role.Teacher){
+      const user = await Teacher.findById(id)
+      if (!user) {
+        return res.status(404).json({ message: "Teacher not found" });
+      }
+      school = await School.findById(user.schoolId)
+      if (!school) {
+        return res.status(404).json({ message: "School not found for teacher" });
+      }
+    }else{
+      school = await School.findOne({ createdBy: id });
+      if (!school) {
+        return res.status(404).json({ message: "School not found for admin" });
+      }
+    }
+    
     const form = await Form.create({
       schoolId: school._id,
       formName,

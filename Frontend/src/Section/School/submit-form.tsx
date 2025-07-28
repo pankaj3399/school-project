@@ -55,9 +55,13 @@ export default function FormPageAdmin( ) {
         })
         navigate('/viewforms')
       }else{
+        // Extract error message from the error object
+        const errorMessage = response.error?.response?.data?.message || 
+                            response.error?.message || 
+                            'An error occurred while submitting the form';
         toast({
           title: 'Error submitting form',
-          description: response.error,
+          description: errorMessage,
           variant: 'destructive',
         })
       }

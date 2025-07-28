@@ -15,6 +15,8 @@ import Loading from "../Loading";
 import { teacherRoster } from "@/api";
 import { Download } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { GRADE_OPTIONS } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TeacherData {
   // firstName: string;
@@ -32,16 +34,17 @@ export default function Setup() {
   const [teachers, setTeachers] = useState<TeacherData[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<TeacherData | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
 
   const downloadTemplate = () => {
-    // Create sample data for the template
+    // Create sample data for the template using valid GRADE_OPTIONS
     const templateData = [
       {
         'Email': 'john.doe@school.com',
         'Receive Mails': true,
         'Type of Teacher': 'Lead Teacher',
-        'Grade': '5th Grade'
+        'Grade': '5'
       },
       {
         'Email': 'jane.smith@school.com',
@@ -53,7 +56,79 @@ export default function Setup() {
         'Email': 'mike.johnson@school.com',
         'Receive Mails': true,
         'Type of Teacher': 'Lead Teacher',
-        'Grade': '3rd Grade'
+        'Grade': 'Case Manager #1'
+      },
+      {
+        'Email': 'sarah.wilson@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'Program #3'
+      },
+      {
+        'Email': 'david.brown@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'AN Center #2'
+      },
+      {
+        'Email': 'emma.davis@school.com',
+        'Receive Mails': false,
+        'Type of Teacher': 'Special Teacher',
+        'Grade': ''
+      },
+      {
+        'Email': 'alex.garcia@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'K'
+      },
+      {
+        'Email': 'lisa.rodriguez@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': '12'
+      },
+      {
+        'Email': 'robert.lee@school.com',
+        'Receive Mails': false,
+        'Type of Teacher': 'Special Teacher',
+        'Grade': ''
+      },
+      {
+        'Email': 'maria.gonzalez@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'Case Manager #15'
+      },
+      {
+        'Email': 'james.taylor@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'Program #10'
+      },
+      {
+        'Email': 'sophia.anderson@school.com',
+        'Receive Mails': false,
+        'Type of Teacher': 'Special Teacher',
+        'Grade': ''
+      },
+      {
+        'Email': 'william.thomas@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'ASD #4'
+      },
+      {
+        'Email': 'olivia.martinez@school.com',
+        'Receive Mails': true,
+        'Type of Teacher': 'Lead Teacher',
+        'Grade': 'SSN #1'
+      },
+      {
+        'Email': 'daniel.hernandez@school.com',
+        'Receive Mails': false,
+        'Type of Teacher': 'Special Teacher',
+        'Grade': ''
       }
     ];
 
@@ -108,6 +183,7 @@ export default function Setup() {
         });
 
         setTeachers(transformedData);
+        setValidationErrors([]);
         toast({
           title: "Success",
           description: `Loaded ${transformedData.length} teachers from file`,
@@ -123,7 +199,53 @@ export default function Setup() {
     reader.readAsBinaryString(file);
   };
 
+  const validateTeacherData = (): boolean => {
+    const errors: string[] = [];
+    
+    teachers.forEach((teacher, index) => {
+      const identifier = teacher.email || `Row ${index + 1}`;
+      
+      // Check required email field
+      if (!teacher.email || teacher.email.trim() === '') {
+        errors.push(`Teacher ${identifier}: Email is required.`);
+      } else if (!teacher.email.includes('@')) {
+        errors.push(`Teacher ${identifier}: Email format is invalid.`);
+      }
+      
+      // Check teacher type
+      if (!teacher.type || (teacher.type !== 'Lead' && teacher.type !== 'Special')) {
+        errors.push(`Teacher ${identifier}: Type of Teacher must be either 'Lead Teacher' or 'Special Teacher'.`);
+      }
+      
+      // Check grade requirement for Lead Teachers
+      if (teacher.type === 'Lead') {
+        if (!teacher.grade || teacher.grade.trim() === '') {
+          errors.push(`Teacher ${identifier}: Grade is required for Lead Teachers.`);
+        } else if (!GRADE_OPTIONS.includes(teacher.grade)) {
+          errors.push(`Teacher ${identifier}: Grade must be one of the valid options (e.g., 'K', '1', '2', 'Case Manager #1', 'Program #1', etc.).`);
+        }
+      }
+      
+      // Check receiveMails field
+      if (teacher.recieveMails === undefined || teacher.recieveMails === null) {
+        errors.push(`Teacher ${identifier}: Receive Mails field must be set to true or false.`);
+      }
+    });
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
   const handleSubmitRoster = async () => {
+    if (!validateTeacherData()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       let formattedTeachers = teachers.map((teacher) => ({
@@ -142,6 +264,7 @@ export default function Setup() {
         description: "Teacher roster submitted successfully",
       });
       setTeachers([]);
+      setValidationErrors([]);
     } catch (error) {
       console.log(error)
       toast({
@@ -206,21 +329,61 @@ export default function Setup() {
           <AccordionItem value="instructions">
             <AccordionTrigger className="text-lg font-semibold text-black bg-white border-b">Teacher Roster Instructions</AccordionTrigger>
             <AccordionContent className="bg-white text-black border rounded-b p-4">
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Column headers must match exactly: <b>Email</b>, <b>Receive Mails</b>, <b>Type of Teacher</b>, <b>Grade</b></li>
-                <li><b>Email:</b> Teacher's email address (required)</li>
-                <li><b>Receive Mails:</b> Enter <code>true</code> or <code>false</code> (without quotes) to enable/disable email notifications</li>
-                <li><b>Type of Teacher:</b> Enter <code>Lead Teacher</code> or <code>Special Teacher</code> (exact text required)</li>
-                <li><b>Grade:</b> Required for Lead Teachers (e.g., "5th Grade", "3rd Grade"), leave empty for Special Teachers</li>
-                <li>You can edit any imported data before submitting</li>
-                <li>For <b>Receive Mails</b> field: use <code>true</code> or <code>false</code> (boolean values)</li>
-                <li>For <b>Type of Teacher</b> field: use <code>Lead Teacher</code> or <code>Special Teacher</code> (exact text)</li>
-                <li>Grade field is optional for Special Teachers but required for Lead Teachers</li>
-              </ul>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Required Column Headers (exact match):</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li><b>Email</b> - Teacher's email address</li>
+                    <li><b>Receive Mails</b> - Email notification preference</li>
+                    <li><b>Type of Teacher</b> - Teacher role classification</li>
+                    <li><b>Grade</b> - Grade level assignment</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Field Requirements:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li><b>Email:</b> Required, must be valid format (e.g., teacher@school.com)</li>
+                    <li><b>Receive Mails:</b> Required, use <code>true</code> or <code>false</code> (no quotes)</li>
+                    <li><b>Type of Teacher:</b> Required, use <code>Lead Teacher</code> or <code>Special Teacher</code> (exact text)</li>
+                    <li><b>Grade:</b> Required for Lead Teachers only, must be one of: Regular grades (K-12), Case Managers (#1-#20), Programs (#1-#20), or Centers (AN/ASD/SSN #1-#5)</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Valid Grade Examples:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Regular grades: <code>K</code>, <code>1</code>, <code>5</code>, <code>12</code></li>
+                    <li>Case Managers: <code>Case Manager #1</code>, <code>Case Manager #15</code></li>
+                    <li>Programs: <code>Program #1</code>, <code>Program #10</code></li>
+                    <li>Centers: <code>AN Center #1</code>, <code>ASD #3</code>, <code>SSN #5</code></li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Important Notes:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>All data can be edited after import before submission</li>
+                    <li>Validation errors will be shown if required fields are missing or invalid</li>
+                    <li>Download the template for proper formatting examples</li>
+                  </ul>
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
       </div>
+
+      {validationErrors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
+          <h3 className="text-lg font-medium mb-2">Please fix the following errors:</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            {validationErrors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {teachers.length > 0 && (
         <>
@@ -296,10 +459,21 @@ export default function Setup() {
                       </TableCell>
                       <TableCell>
                         {editForm?.type === 'Lead' && (
-                          <Input
-                            value={editForm?.grade}
-                            onChange={(e) => setEditForm({ ...editForm!, grade: e.target.value })}
-                          />
+                          <Select
+                            value={editForm?.grade || ''}
+                            onValueChange={(value) => setEditForm({ ...editForm!, grade: value })}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select grade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {GRADE_OPTIONS.map((grade) => (
+                                <SelectItem key={grade} value={grade}>
+                                  {grade}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         )}
                       </TableCell>
                       <TableCell>

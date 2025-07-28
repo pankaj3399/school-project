@@ -15,6 +15,8 @@ import Loading from "../Loading";
 import { studentRoster } from "@/api";
 import { Download } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { GRADE_OPTIONS } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StudentData {
   firstName: string;
@@ -51,12 +53,12 @@ export default function SetupStudents() {
   const { toast } = useToast();
 
   const downloadTemplate = () => {
-    // Create sample data for the template
+    // Create sample data for the template using valid GRADE_OPTIONS
     const templateData = [
       {
         'First Name': 'John',
         'Last Name': 'Doe',
-        'Grade': '5th Grade',
+        'Grade': '5',
         'Student Number': '2024001',
         'Guardian 1 Name': 'Jane Doe',
         'Guardian 1 Email': 'jane.doe@email.com',
@@ -70,7 +72,7 @@ export default function SetupStudents() {
       {
         'First Name': 'Sarah',
         'Last Name': 'Smith',
-        'Grade': '3rd Grade',
+        'Grade': '3',
         'Student Number': '2024002',
         'Guardian 1 Name': 'Mary Smith',
         'Guardian 1 Email': 'mary.smith@email.com',
@@ -84,7 +86,7 @@ export default function SetupStudents() {
       {
         'First Name': 'Alex',
         'Last Name': 'Johnson',
-        'Grade': '7th Grade',
+        'Grade': 'Case Manager #1',
         'Student Number': '2024003',
         'Guardian 1 Name': 'Robert Johnson',
         'Guardian 1 Email': 'robert.johnson@email.com',
@@ -94,6 +96,132 @@ export default function SetupStudents() {
         'Guardian 2 Email': 'lisa.johnson@email.com',
         'Guardian 2 Phone': '+1234567896',
         'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Emily',
+        'Last Name': 'Davis',
+        'Grade': 'K',
+        'Student Number': '2024004',
+        'Guardian 1 Name': 'Jennifer Davis',
+        'Guardian 1 Email': 'jennifer.davis@email.com',
+        'Guardian 1 Phone': '+1234567897',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': 'Christopher Davis',
+        'Guardian 2 Email': 'chris.davis@email.com',
+        'Guardian 2 Phone': '+1234567898',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Michael',
+        'Last Name': 'Wilson',
+        'Grade': '12',
+        'Student Number': '2024005',
+        'Guardian 1 Name': 'Patricia Wilson',
+        'Guardian 1 Email': 'patricia.wilson@email.com',
+        'Guardian 1 Phone': '+1234567899',
+        'Guardian 1 Phone 2': '+1234567900',
+        'Guardian 2 Name': '',
+        'Guardian 2 Email': '',
+        'Guardian 2 Phone': '',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Sofia',
+        'Last Name': 'Garcia',
+        'Grade': 'Program #5',
+        'Student Number': '2024006',
+        'Guardian 1 Name': 'Carlos Garcia',
+        'Guardian 1 Email': 'carlos.garcia@email.com',
+        'Guardian 1 Phone': '+1234567901',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': 'Isabella Garcia',
+        'Guardian 2 Email': 'isabella.garcia@email.com',
+        'Guardian 2 Phone': '+1234567902',
+        'Guardian 2 Phone 2': '+1234567903'
+      },
+      {
+        'First Name': 'Ethan',
+        'Last Name': 'Brown',
+        'Grade': '8',
+        'Student Number': '2024007',
+        'Guardian 1 Name': 'Amanda Brown',
+        'Guardian 1 Email': 'amanda.brown@email.com',
+        'Guardian 1 Phone': '+1234567904',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': '',
+        'Guardian 2 Email': '',
+        'Guardian 2 Phone': '',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Ava',
+        'Last Name': 'Miller',
+        'Grade': 'AN Center #3',
+        'Student Number': '2024008',
+        'Guardian 1 Name': 'David Miller',
+        'Guardian 1 Email': 'david.miller@email.com',
+        'Guardian 1 Phone': '+1234567905',
+        'Guardian 1 Phone 2': '+1234567906',
+        'Guardian 2 Name': 'Rachel Miller',
+        'Guardian 2 Email': 'rachel.miller@email.com',
+        'Guardian 2 Phone': '+1234567907',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Lucas',
+        'Last Name': 'Taylor',
+        'Grade': '1',
+        'Student Number': '2024009',
+        'Guardian 1 Name': 'Jessica Taylor',
+        'Guardian 1 Email': 'jessica.taylor@email.com',
+        'Guardian 1 Phone': '+1234567908',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': 'Kevin Taylor',
+        'Guardian 2 Email': 'kevin.taylor@email.com',
+        'Guardian 2 Phone': '+1234567909',
+        'Guardian 2 Phone 2': '+1234567910'
+      },
+      {
+        'First Name': 'Mia',
+        'Last Name': 'Anderson',
+        'Grade': 'SSN #2',
+        'Student Number': '2024010',
+        'Guardian 1 Name': 'Thomas Anderson',
+        'Guardian 1 Email': 'thomas.anderson@email.com',
+        'Guardian 1 Phone': '+1234567911',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': '',
+        'Guardian 2 Email': '',
+        'Guardian 2 Phone': '',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Noah',
+        'Last Name': 'Martinez',
+        'Grade': 'Case Manager #10',
+        'Student Number': '2024011',
+        'Guardian 1 Name': 'Maria Martinez',
+        'Guardian 1 Email': 'maria.martinez@email.com',
+        'Guardian 1 Phone': '+1234567912',
+        'Guardian 1 Phone 2': '+1234567913',
+        'Guardian 2 Name': 'Jose Martinez',
+        'Guardian 2 Email': 'jose.martinez@email.com',
+        'Guardian 2 Phone': '+1234567914',
+        'Guardian 2 Phone 2': ''
+      },
+      {
+        'First Name': 'Isabella',
+        'Last Name': 'Thompson',
+        'Grade': 'ASD #1',
+        'Student Number': '2024012',
+        'Guardian 1 Name': 'Richard Thompson',
+        'Guardian 1 Email': 'richard.thompson@email.com',
+        'Guardian 1 Phone': '+1234567915',
+        'Guardian 1 Phone 2': '',
+        'Guardian 2 Name': 'Susan Thompson',
+        'Guardian 2 Email': 'susan.thompson@email.com',
+        'Guardian 2 Phone': '+1234567916',
+        'Guardian 2 Phone 2': '+1234567917'
       }
     ];
 
@@ -206,6 +334,21 @@ export default function SetupStudents() {
     students.forEach((student, index) => {
       const identifier = student.studentNumber || `${student.firstName} ${student.lastName}` || `Row ${index + 1}`;
       
+      // Check required student fields
+      if (!student.firstName || !student.lastName) {
+        errors.push(`Student ${identifier}: First Name and Last Name are required.`);
+      }
+      
+      if (!student.grade || student.grade.trim() === '') {
+        errors.push(`Student ${identifier}: Grade is required.`);
+      } else if (!GRADE_OPTIONS.includes(student.grade)) {
+        errors.push(`Student ${identifier}: Grade must be one of the valid options (e.g., 'K', '1', '2', 'Case Manager #1', 'Program #1', etc.).`);
+      }
+      
+      if (!student.studentNumber || student.studentNumber.trim() === '') {
+        errors.push(`Student ${identifier}: Student Number is required.`);
+      }
+      
       // Check Guardian 1 data completeness
       const g1 = student.guardian1;
       if (!g1.name || !g1.email || !g1.phone1) {
@@ -288,18 +431,58 @@ export default function SetupStudents() {
           <AccordionItem value="instructions">
             <AccordionTrigger className="text-lg font-semibold text-black bg-white border-b">Student Roster Instructions</AccordionTrigger>
             <AccordionContent className="bg-white text-black border rounded-b p-4">
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Column headers must match exactly: <b>First Name</b>, <b>Last Name</b>, <b>Grade</b>, <b>Student Number</b>, <b>Guardian 1 Name</b>, <b>Guardian 1 Email</b>, <b>Guardian 1 Phone</b>, <b>Guardian 1 Phone 2</b>, <b>Guardian 2 Name</b>, <b>Guardian 2 Email</b>, <b>Guardian 2 Phone</b>, <b>Guardian 2 Phone 2</b></li>
-                <li><b>First Name</b> and <b>Last Name</b>: Student's names (required)</li>
-                <li><b>Grade</b>: Student's grade level (required)</li>
-                <li><b>Student Number</b>: Unique student identifier (required)</li>
-                <li><b>Guardian 1 Name, Email, Phone</b>: Required for all students</li>
-                <li><b>Guardian 1 Phone 2</b>: Optional</li>
-                <li><b>Guardian 2 Name, Email, Phone, Phone 2</b>: Optional, leave empty if not applicable</li>
-                <li>Email addresses must be in valid format (e.g., user@domain.com)</li>
-                <li>Phone numbers can include country codes and formatting</li>
-                <li>You can edit any imported data before submitting</li>
-              </ul>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Required Column Headers (exact match):</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li><b>First Name</b> - Student's first name</li>
+                    <li><b>Last Name</b> - Student's last name</li>
+                    <li><b>Grade</b> - Student's grade level</li>
+                    <li><b>Student Number</b> - Unique student identifier</li>
+                    <li><b>Guardian 1 Name</b> - Primary guardian's name</li>
+                    <li><b>Guardian 1 Email</b> - Primary guardian's email</li>
+                    <li><b>Guardian 1 Phone</b> - Primary guardian's phone</li>
+                    <li><b>Guardian 1 Phone 2</b> - Primary guardian's secondary phone (optional)</li>
+                    <li><b>Guardian 2 Name</b> - Secondary guardian's name (optional)</li>
+                    <li><b>Guardian 2 Email</b> - Secondary guardian's email (optional)</li>
+                    <li><b>Guardian 2 Phone</b> - Secondary guardian's phone (optional)</li>
+                    <li><b>Guardian 2 Phone 2</b> - Secondary guardian's secondary phone (optional)</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Field Requirements:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li><b>First Name & Last Name:</b> Required for all students</li>
+                    <li><b>Grade:</b> Required, must be one of: Regular grades (K-12), Case Managers (#1-#20), Programs (#1-#20), or Centers (AN/ASD/SSN #1-#5)</li>
+                    <li><b>Student Number:</b> Required, unique identifier</li>
+                    <li><b>Guardian 1 Name, Email, Phone:</b> Required for all students</li>
+                    <li><b>Guardian 1 Phone 2:</b> Optional</li>
+                    <li><b>Guardian 2 fields:</b> All optional, leave empty if not applicable</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Valid Grade Examples:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Regular grades: <code>K</code>, <code>1</code>, <code>5</code>, <code>12</code></li>
+                    <li>Case Managers: <code>Case Manager #1</code>, <code>Case Manager #15</code></li>
+                    <li>Programs: <code>Program #1</code>, <code>Program #10</code></li>
+                    <li>Centers: <code>AN Center #1</code>, <code>ASD #3</code>, <code>SSN #5</code></li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Important Notes:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Email addresses must be in valid format (e.g., user@domain.com)</li>
+                    <li>Phone numbers can include country codes and formatting</li>
+                    <li>All data can be edited after import before submission</li>
+                    <li>Validation errors will be shown if required fields are missing or invalid</li>
+                    <li>Download the template for proper formatting examples</li>
+                  </ul>
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -349,10 +532,21 @@ export default function SetupStudents() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Input
-                          value={editForm?.grade}
-                          onChange={(e) => setEditForm({ ...editForm!, grade: e.target.value })}
-                        />
+                        <Select
+                          value={editForm?.grade || ''}
+                          onValueChange={(value) => setEditForm({ ...editForm!, grade: value })}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select grade" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GRADE_OPTIONS.map((grade) => (
+                              <SelectItem key={grade} value={grade}>
+                                {grade}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Input
