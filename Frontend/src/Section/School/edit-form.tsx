@@ -47,9 +47,13 @@ export default function EditForm() {
       localStorage.getItem('token')!
     )
     if(response.error){
+      // Extract error message from the error object
+      const errorMessage = response.error?.response?.data?.message || 
+                          response.error?.message || 
+                          'An error occurred while editing the form';
       toast({
         title: 'Error',
-        description: response.error,
+        description: errorMessage,
         variant: 'destructive'
       })   
     }else{

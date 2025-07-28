@@ -105,21 +105,35 @@ const navigate = useNavigate()
         return rest;
       }
     });
+    // Ensure grade is provided when isSpecial is false
+    if (!isSpecial && !grade) {
+      toast({ 
+        title: 'Error', 
+        description: 'Grade is required for non-special forms', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     const response = await createForm(
       {
         formName, 
         formType, 
         questions: processedQuestions, 
         isSpecial,
-        grade: isSpecial ? '' : grade,
+        grade: isSpecial ? null : grade,
         ...isSendEmail
       },
       localStorage.getItem('token')!
     )
     if(response.error){
+      // Extract error message from the error object
+      const errorMessage = response.error?.response?.data?.message || 
+                          response.error?.message || 
+                          'An error occurred while creating the form';
       toast({
         title: 'Error',
-        description: response.error,
+        description: errorMessage,
         variant: 'destructive'
       })   
     }else{

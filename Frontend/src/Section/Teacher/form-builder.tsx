@@ -103,21 +103,35 @@ const navigate = useNavigate()
         return rest;
       }
     });
+    // Ensure grade is provided for teacher forms
+    if (!grade) {
+      toast({ 
+        title: 'Error', 
+        description: 'Grade is required for teacher forms', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     const response = await createForm(
         {
           formName, 
           formType, 
           questions: processedQuestions, 
           isSpecial:false,
-          grade: grade?.toString?.() || '',
+          grade: grade?.toString?.() || null,
           ...isSendEmail
         },
         localStorage.getItem('token')!
       )
     if(response.error){
+      // Extract error message from the error object
+      const errorMessage = response.error?.response?.data?.message || 
+                          response.error?.message || 
+                          'An error occurred while creating the form';
       toast({
         title: 'Error',
-        description: response.error,
+        description: errorMessage,
         variant: 'destructive'
       })   
     }else{

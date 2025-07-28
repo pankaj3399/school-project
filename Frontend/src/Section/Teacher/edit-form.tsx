@@ -49,13 +49,17 @@ const [grade, setGrade] = useState<number>(1)
         },
         localStorage.getItem('token')!
       )
-      if(response.error){
-        toast({
-          title: 'Error',
-          description: response.error,
-          variant: 'destructive'
-        })   
-      }else{
+          if(response.error){
+      // Extract error message from the error object
+      const errorMessage = response.error?.response?.data?.message || 
+                          response.error?.message || 
+                          'An error occurred while editing the form';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      })   
+    }else{
         toast({
           title: 'Success',
           description: 'Form Edited Successfully'
