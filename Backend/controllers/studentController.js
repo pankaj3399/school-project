@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import {Role} from '../enum.js';
 import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
+import { checkStudentVerification } from "../utils/studentVerification.js";
 export const addStudent = async (req, res) => {
     const {
         name,
@@ -56,33 +57,40 @@ export const addStudent = async (req, res) => {
 
 export const updateStudent = async (req, res) => {
     const studentId = req.params.id;
-    const { name, email, standard, parentEmail, sendNotifications, grade } = req.body; 
+    const { name, email, standard, parentEmail, sendNotifications, grade } = req.body;
 
     try{
+        // Check if student is verified before allowing updates
+        const verificationCheck = await checkStudentVerification(studentId);
+        if (!verificationCheck.verified) {
+            return res.status(403).json({ 
+                message: verificationCheck.error 
+            });
+        }
+
         const updatedStudent = await Student.findByIdAndUpdate(studentId, {
             $set: { name, email, standard, parentEmail, sendNotifications, grade }
         }, { new: true });
-
-        if(!updatedStudent){
-            return res.status(404).json({ message: 'Student not found' });
-        }
 
         return res.status(200).json({ message: 'Student updated successfully', student: updatedStudent });
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });
     }
-
 }
 
 export const deleteStudent = async (req, res) => {
     const studentId = req.params.id;
 
     try{
-        const deletedStudent = await Student.findByIdAndDelete(studentId);
-
-        if(!deletedStudent){
-            return res.status(404).json({ message: 'Student not found' });
+        // Check if student is verified before allowing deletion
+        const verificationCheck = await checkStudentVerification(studentId);
+        if (!verificationCheck.verified) {
+            return res.status(403).json({ 
+                message: verificationCheck.error 
+            });
         }
+
+        const deletedStudent = await Student.findByIdAndDelete(studentId);
 
         await School.updateMany(
             { students: studentId },

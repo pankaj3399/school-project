@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
-import OtpVerificationModal from "./OtpVerificationModal";
+import PasswordConfirmationModal from "./PasswordConfirmationModal";
 import { 
   Select, 
   SelectTrigger, 
@@ -51,7 +51,7 @@ const SetupPage = () => {
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState(TIMEZONE_OPTIONS[0].value);
   const [domain, setDomain] = useState("");
-  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -409,7 +409,7 @@ const SetupPage = () => {
             <CardFooter className="mt-auto">
               <Button 
                 className="w-full bg-red-500 hover:bg-red-700 text-white hover:text-white" 
-                onClick={() => setShowOtpModal(true)}
+                onClick={() => setShowPasswordModal(true)}
               >
                 Reset Students
               </Button>
@@ -418,9 +418,9 @@ const SetupPage = () => {
         </div>
       </div>
 
-      <OtpVerificationModal
-        isOpen={showOtpModal}
-        onClose={() => setShowOtpModal(false)}
+      <PasswordConfirmationModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
         onSuccess={handleResetSuccess}
       />
     </div>

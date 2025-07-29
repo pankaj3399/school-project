@@ -254,7 +254,7 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
     }
 }
 
-export const sendTeacherRegistrationMail = async ({ email, url, registrationToken }) => {
+export const sendTeacherRegistrationMail = async ({ email, url, registrationToken, schoolLogo = null }) => {
   const registrationLink = `${url}?token=${registrationToken}`;
   let emailHTML = getVerificationEmailTemplate(
     'Teacher', // role
@@ -264,7 +264,7 @@ export const sendTeacherRegistrationMail = async ({ email, url, registrationToke
     null,      // toVerify
     false,     // isStudent
     null,      // tempPass
-    null,      // schoolLogo
+    schoolLogo, // schoolLogo - now using the passed parameter
     'UTC+0'    // schoolTimezone
   );
 

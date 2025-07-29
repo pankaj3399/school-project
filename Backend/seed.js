@@ -365,9 +365,9 @@
 //         formType,
 //         questions,
 //         schoolId: school._id,
-//         studentEmail: Math.random() > 0.5,
+//         studentEmail: formType === "Feedback" ? true : Math.random() > 0.5,
 //         teacherEmail: Math.random() > 0.5,
-//         schoolAdminEmail: Math.random() > 0.7,
+//         schoolAdminEmail: formType === "Feedback" ? true : Math.random() > 0.7,
 //         parentEmail: Math.random() > 0.6,
 //         isSpecial,
 //         grade: isSpecial ? "" : grade // Empty string when special, otherwise grade value

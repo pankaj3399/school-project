@@ -14,7 +14,7 @@ export const emailGenerator = async (
     schoolAdmin,
     school,
     leadTeacher = null,
-  },
+  }
 ) => {
   let subject, body, attachment, attachmentName;
 
@@ -27,11 +27,9 @@ export const emailGenerator = async (
   const currentDateFormatted = timezoneManager.formatForSchool(
     new Date(submittedAt || Date.now()),
     schoolTimezone,
-    "MM/dd/yyyy",
+    "MM/dd/yyyy"
   );
   console.log(submittedAt, currentDateFormatted);
-  
-  
 
   switch (form.formType) {
     case FormType["AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)"]:
@@ -44,8 +42,8 @@ export const emailGenerator = async (
                 ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`
                 : `<strong>The RADU E-token System</strong>`
             }, <strong>${
-        teacher.name
-      }</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
+              teacher.name
+            }</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
             <p>Please, check your E-Token's balance and exchange them at the AN Center or school store.</p>
             <p>Keep up the good work!!!</p>
             <p>
@@ -60,11 +58,11 @@ export const emailGenerator = async (
         student.name,
         teacher.name,
         teacher?.subject || "N/A",
-        currentDateFormatted, // Use school timezone formatted date
+        currentDateFormatted,
         school.logo,
         school.name,
         teacher.email,
-        student.parentEmail,
+        student.parentEmail
       );
       attachmentName = "coupon.png";
 
@@ -178,12 +176,17 @@ export const emailGenerator = async (
                         </div>
                         
                         <div class="issued-by">
-                            <strong>Issued By:</strong> ${teacherLastName} - ${
-        teacher.subject ?? "The RADU E-token System Manager"
-      }
+                            <strong>From:</strong> ${teacherLastName} - ${
+                              teacher.subject ??
+                              "The RADU E-token System Manager"
+                            }
                         </div>
                         
                         <div class="feedback-content">
+                            <p>Hello <strong>${student.name}</strong>,</p>
+                            <br/>
+                            <p>Here is feedback about your progress:</p>
+                            <br/>
                             ${feedback}
                         </div>
                         
@@ -200,16 +203,22 @@ export const emailGenerator = async (
                 </body>
                 </html>
             `;
+
+      // Send to lead teacher if available (existing logic)
       if (leadTeacher) {
+        const leadTeacherSubject = `Hi, I have a feedback about ${student.name} from ${
+          !teacher.subject
+            ? `grade ${student.grade}.`
+            : `${teacher.subject} class.`
+        }`;
         sendEmail(
           leadTeacher.email,
-          subject,
+          leadTeacherSubject,
           body,
           body,
           attachment,
-          attachmentName,
+          attachmentName
         );
-        return;
       }
       break;
     }
@@ -318,10 +327,10 @@ export const emailGenerator = async (
                             <p>As a result of your infraction and our conversation, these are the points that have been subtracted from your balance.</p>
                             <br/>
                             <p><strong>Oopsie Points deducted = ${Math.abs(
-                              points,
+                              points
                             )} Points</strong>, now your balance is = <strong>${
-        student.points
-      } Points</strong>.</p>
+                              student.points
+                            } Points</strong>.</p>
                         </div>
                         
                         <div class="signature">
@@ -354,7 +363,7 @@ export const emailGenerator = async (
         currentDateFormatted, // Use school timezone formatted date
         school.name,
         school.address,
-        school.district,
+        school.district
       );
       attachmentName = "Receipt.png";
       break;
@@ -371,9 +380,10 @@ export const emailGenerator = async (
     sendEmail(teacher.email, subject, body, body, attachment, attachmentName);
   if (
     (form.studentEmail ||
-      form.type == FormType.DeductPoints ||
-      form.formType == FormType.PointWithdraw) &&
-    form.type != FormType.Feedback
+      form.formType == FormType.DeductPoints ||
+      form.formType == FormType.PointWithdraw ||
+      form.formType == FormType.Feedback) &&
+    student?.isStudentEmailVerified
   )
     sendEmail(student.email, subject, body, body, attachment, attachmentName);
   if (form.schoolAdminEmail)
@@ -383,7 +393,7 @@ export const emailGenerator = async (
       body,
       body,
       attachment,
-      attachmentName,
+      attachmentName
     );
   if (
     form.parentEmail &&
@@ -397,7 +407,7 @@ export const emailGenerator = async (
       body,
       body,
       attachment,
-      attachmentName,
+      attachmentName
     );
   if (
     form.parentEmail &&
@@ -411,7 +421,7 @@ export const emailGenerator = async (
       body,
       body,
       attachment,
-      attachmentName,
+      attachmentName
     );
 };
 
@@ -419,7 +429,7 @@ export const reportEmailGenerator = async (
   attachment,
   attachmentName,
   to,
-  data,
+  data
 ) => {
   try {
     let subject, body;
@@ -429,12 +439,12 @@ export const reportEmailGenerator = async (
     const currentDate = timezoneManager.formatForSchool(
       new Date(),
       schoolTimezone,
-      "MM/dd/yyyy",
+      "MM/dd/yyyy"
     );
     const reportDate = timezoneManager.formatForSchool(
       new Date(),
       schoolTimezone,
-      "MM/dd/yyyy",
+      "MM/dd/yyyy"
     );
 
     subject = `RADU E-Token Report for ${attachmentName
@@ -539,8 +549,8 @@ export const reportEmailGenerator = async (
                 <p>Attached you will find the report for ${
                   data.stdData.studentInfo.name
                 }, Grade ${
-      data.stdData.studentInfo.grade
-    } as of ${reportDate}.</p>
+                  data.stdData.studentInfo.grade
+                } as of ${reportDate}.</p>
                 <div class="contact-info">
                   <p>Contact Info</p>
                   <p>Parent/Guardian Email 1: ${

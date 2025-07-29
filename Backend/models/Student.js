@@ -10,14 +10,6 @@ const GaurdianSchema = new mongoose.Schema({
     type:String,
     default: null,
   },
-  phone1:{
-    type:String,
-    default:""
-  },
-  phone2:{
-    type:String,
-    default:""
-  },
 })
 
 const studentSchema = new mongoose.Schema({

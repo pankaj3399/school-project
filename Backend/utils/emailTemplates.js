@@ -6,8 +6,10 @@ import { timezoneManager } from './luxon.js';
 export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null, schoolTimezone = 'UTC+0') => {
   
   const description = role === Role.Teacher
-    ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to enable your E-Token system account and get updates."
-    : "Your account has been created by the system Manager of the RADU E-Token System.. Please verify your email address to enable your child's E-Token system account and get updates.";
+    ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to enable your E-Token system account and get updates."
+    : isStudent 
+      ? "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to start receiving updates."
+      : "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to enable your child's E-Token system account and get updates.";
 
   // Get base64 encoded logo - using synchronous version to avoid async complexity
   let logoSrc;
@@ -93,7 +95,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = n
       <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
         <h2 style="color: #00a58c; margin-bottom: 20px;">Welcome to The RADU E-Token System</h2>
         <p style="margin-bottom: 25px;">${description}</p>
-        ${tempPass ? `<p style="margin-bottom: 20px;">Your temporary password is: <strong>${tempPass}</strong></p>` : ""}
+        ${(role === Role.Teacher && tempPass) ? `<p style="margin-bottom: 20px;">Your temporary password is: <strong>${tempPass}</strong></p>` : ""}
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="${url}?otp=${otp}&role=${role}&email=${email}&isStudent=${isStudent}&toVerify=${toVerify ?? ""}" 

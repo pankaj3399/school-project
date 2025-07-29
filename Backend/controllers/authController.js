@@ -25,7 +25,7 @@ export const requestLoginOtp = async (req, res) => {
     const { email, role, password } = req.body; // Now requires password for validation
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user;
-    
+    console.log(userRole)
     switch (userRole) {
       case Role.Teacher: {
         user = await Teacher.findOne({ email });
@@ -41,7 +41,6 @@ export const requestLoginOtp = async (req, res) => {
       }
     }
     
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -58,6 +57,15 @@ export const requestLoginOtp = async (req, res) => {
       return res.status(401).json({ message: "User not approved" });
     }
     
+    // Check if user has a password before attempting bcrypt comparison
+    if (!user.password) {
+      console.log("User found but password is missing:", { email: user.email, role: user.role, hasPassword: !!user.password });
+      return res.status(401).json({ 
+        message: "Account setup incomplete." 
+      });
+    }
+    
+    console.log("Attempting password comparison for user:", user.email);
     // Validate password before sending OTP
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -79,8 +87,50 @@ export const requestLoginOtp = async (req, res) => {
       credentialsValid: true 
     });
   } catch (error) {
+    console.log("requestLoginOtp error:", error);
+    
+    // Provide specific error messages based on error type
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Invalid data provided", 
+        error: error.message 
+      });
+    }
+    
+    if (error.name === 'MongoError' || error.name === 'MongoServerError') {
+      return res.status(500).json({ 
+        message: "Database connection error. Please try again.", 
+        error: error.message 
+      });
+    }
+    
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      return res.status(500).json({ 
+        message: "Email service unavailable. Please try again later.", 
+        error: "Email service connection failed" 
+      });
+    }
+    
+    if (error.message && error.message.includes('email')) {
+      return res.status(500).json({ 
+        message: "Failed to send email. Please check your email address.", 
+        error: error.message 
+      });
+    }
+    
+    // Handle bcrypt errors specifically
+    if (error.message && error.message.includes('Illegal arguments')) {
+      return res.status(500).json({ 
+        message: "Password verification failed.", 
+        error: "Invalid password format in database" 
+      });
+    }
+    
     console.log(error)
-    res.status(500).json({ message: "Server Error", error: error.message });
+    return res.status(500).json({ 
+      message: "Email not verified or unindentified error.", 
+      error: error.message 
+    });
   }
 };
 
@@ -119,6 +169,13 @@ export const login = async (req, res) => {
     
     if (role === Role.Admin && !user.approved) {
       return res.status(401).json({ message: "User not approved" });
+    }
+    
+    // Check if user has a password before attempting bcrypt comparison
+    if (!user.password) {
+      return res.status(401).json({ 
+        message: "Account setup incomplete." 
+      });
     }
     
     const isMatch = await bcrypt.compare(password, user.password);
@@ -162,7 +219,49 @@ export const login = async (req, res) => {
       userId: user._id,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    console.log("login error:", error);
+    
+    // Provide specific error messages based on error type
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Invalid login data provided", 
+        error: error.message 
+      });
+    }
+    
+    if (error.name === 'MongoError' || error.name === 'MongoServerError') {
+      return res.status(500).json({ 
+        message: "Database connection error. Please try again.", 
+        error: error.message 
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(500).json({ 
+        message: "Authentication token error. Please try again.", 
+        error: "Token generation failed" 
+      });
+    }
+    
+    if (error.message && error.message.includes('password')) {
+      return res.status(500).json({ 
+        message: "Password verification failed. Please try again.", 
+        error: error.message 
+      });
+    }
+    
+    // Handle bcrypt errors specifically
+    if (error.message && error.message.includes('Illegal arguments')) {
+      return res.status(500).json({ 
+        message: "Password verification failed.", 
+        error: "Invalid password format in database" 
+      });
+    }
+    
+    return res.status(500).json({ 
+      message: "Login service temporarily unavailable. Please try again.", 
+      error: error.message 
+    });
   }
 };
 
@@ -222,7 +321,41 @@ export const verifyLoginOtp = async (req, res) => {
       userId: user._id,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    console.log("verifyLoginOtp error:", error);
+    
+    // Provide specific error messages based on error type
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Invalid OTP data provided", 
+        error: error.message 
+      });
+    }
+    
+    if (error.name === 'MongoError' || error.name === 'MongoServerError') {
+      return res.status(500).json({ 
+        message: "Database connection error. Please try again.", 
+        error: error.message 
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(500).json({ 
+        message: "Authentication token error. Please try again.", 
+        error: "Token generation failed" 
+      });
+    }
+    
+    if (error.message && error.message.includes('otp')) {
+      return res.status(500).json({ 
+        message: "OTP verification failed. Please try again.", 
+        error: error.message 
+      });
+    }
+    
+    return res.status(500).json({ 
+      message: "OTP verification service temporarily unavailable. Please try again.", 
+      error: error.message 
+    });
   }
 };
 
@@ -697,6 +830,44 @@ export const changePassword = async (req, res) => {
     await user.save();
 
     res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+export const verifyPassword = async (req, res) => {
+  const { password } = req.body;
+  const userId = req.user.id;
+
+  try {
+    let user;
+    
+    // Find user based on role from token
+    switch (req.user.role) {
+      case Role.Teacher: {
+        user = await Teacher.findById(userId);
+        break;
+      }
+      case Role.Student: {
+        user = await Student.findById(userId);
+        break;
+      }
+      default: {
+        user = await Admin.findById(userId);
+        break;
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    res.status(200).json({ message: "Password verified successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

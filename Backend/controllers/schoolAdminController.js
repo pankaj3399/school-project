@@ -655,6 +655,7 @@ export const teacherRoster = async (req, res) => {
             email: createdTeacher.email,
             url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
             registrationToken,
+            schoolLogo: school?.logo,
           });
 
           return {
@@ -721,15 +722,11 @@ export const studentRoster = async (req, res) => {
           guardian1: {
             name: student.guardian1.name,
             email: student.guardian1.email,
-            phone1: student.guardian1.phone1,
-            phone2: student.guardian1.phone2 || "",
           },
           guardian2: student.guardian2
             ? {
                 name: student.guardian2.name,
                 email: student.guardian2.email,
-                phone1: student.guardian2.phone1,
-                phone2: student.guardian2.phone2 || "",
               }
             : null,
           schoolId: schoolId,

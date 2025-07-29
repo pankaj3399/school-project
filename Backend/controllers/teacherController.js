@@ -54,11 +54,16 @@ export const addTeacher = async (req, res) => {
         },
       }
     );
+    
+    // Fetch school to get logo
+    const school = await School.findById(schoolAdmin.schoolId);
+    
     // Send registration email
     await sendTeacherRegistrationMail({
       email,
       url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
       registrationToken,
+      schoolLogo: school?.logo,
     });
     return res.status(200).json({
       message: "Teacher invite created successfully",
