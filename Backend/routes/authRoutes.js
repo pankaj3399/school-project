@@ -5,16 +5,16 @@ const router = express.Router();
 
 router.post('/login', login);
 router.post('/signup', signup);
+router.post('/sendotp', sendOtp);
 router.post('/verify', verifyOtp);
 router.post('/sendVerificationMail', sendVerifyEmail);
 router.post('/completeVerification', completeVerification);
 router.post('/resetpassword', resetPassword);
 router.post('/changePassword', authenticate, changePassword);
-router.post('/verify-password', authenticate, verifyPassword);
-
+router.post('/support-request',authenticate, createSupportTicket);
 router.post('/verify-login-otp', verifyLoginOtp);
 router.post('/request-login-otp', requestLoginOtp);
-router.post('/support', authenticate, createSupportTicket);
+router.post('/verify-password', authenticate, verifyPassword);
+
 
 export default router;
- 
