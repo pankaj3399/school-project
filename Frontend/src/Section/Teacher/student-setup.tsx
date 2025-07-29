@@ -22,14 +22,10 @@ interface StudentData {
   guardian1: {
     name: string;
     email: string;
-    phone1: string;
-    phone2?: string;
   };
   guardian2: {
     name: string;
     email: string;
-    phone1: string;
-    phone2?: string;
   } | null;
 }
 
@@ -100,18 +96,14 @@ export default function SetupStudents() {
           const guardian1 = {
             name: row['Guardian 1 Name'] || '',
             email: row['Guardian 1 Email'] || '',
-            phone1: row['Guardian 1 Phone'] || '',
-            phone2: row['Guardian 1 Phone 2'] || ''
           };
 
           // Check if Guardian 2 data exists
           let guardian2 = null;
-          if (row['Guardian 2 Name'] || row['Guardian 2 Email'] || row['Guardian 2 Phone']) {
+          if (row['Guardian 2 Name'] || row['Guardian 2 Email']) {
             guardian2 = {
               name: row['Guardian 2 Name'] || '',
               email: row['Guardian 2 Email'] || '',
-              phone1: row['Guardian 2 Phone'] || '',
-              phone2: row['Guardian 2 Phone 2'] || ''
             };
           }
 
@@ -175,8 +167,8 @@ export default function SetupStudents() {
       
       // Check Guardian 1 data completeness
       const g1 = student.guardian1;
-      if (!g1.name || !g1.email || !g1.phone1) {
-        errors.push(`Student ${identifier}: Missing required Guardian 1 information (${!g1.name ? 'name' : ''}${!g1.email ? ', email' : ''}${!g1.phone1 ? ', phone' : ''}).`);
+      if (!g1.name || !g1.email) {
+        errors.push(`Student ${identifier}: Missing required Guardian 1 information (${!g1.name ? 'name' : ''}${!g1.email ? ', email' : ''}).`);
       } else if (!g1.email.includes('@')) {
         errors.push(`Student ${identifier}: Guardian 1 email format is invalid.`);
       }
@@ -319,14 +311,6 @@ export default function SetupStudents() {
                           className="mb-2"
                           placeholder="Email"
                         />
-                        <Input
-                          value={editForm?.guardian1.phone1}
-                          onChange={(e) => setEditForm({
-                            ...editForm!,
-                            guardian1: { ...editForm!.guardian1, phone1: e.target.value }
-                          })}
-                          placeholder="Phone"
-                        />
                       </TableCell>
                       <TableCell>
                         <Input
@@ -349,15 +333,6 @@ export default function SetupStudents() {
                             className="mb-2"
                             placeholder="Email"
                             />
-                        <Input
-                          value={editForm?.guardian2?.phone1}
-                          onChange={(e) => setEditForm({
-                              ...editForm!,
-                              /*@ts-ignore*/
-                              guardian2: { ...editForm!.guardian2, phone1: e.target.value }
-                            })}
-                            placeholder="Phone"
-                        />
                       </TableCell>
                       <TableCell>
                         <div className="space-x-2">
@@ -379,8 +354,6 @@ export default function SetupStudents() {
                         <div className="space-y-1">
                           <p><>Name:</> {student.guardian1.name}</p>
                           <p><>Email:</> {student.guardian1.email}</p>
-                          <p><>Phone:</> {student.guardian1.phone1}</p>
-                          <p><>Phone2:</> {student.guardian1.phone2 ?? "N/A"}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -388,8 +361,6 @@ export default function SetupStudents() {
                           <div className="space-y-1">
                             <p><>Name:</> {student.guardian2.name}</p>
                             <p><>Email:</> {student.guardian2.email}</p>
-                            <p><>Phone1:</> {student.guardian2.phone1}</p>
-                            <p><>Phone2:</> {student.guardian2.phone2 ?? "N/A"}</p>
                           </div>
                         )}
                       </TableCell>

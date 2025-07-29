@@ -26,14 +26,10 @@ interface StudentData {
   guardian1: {
     name: string;
     email: string;
-    phone1: string;
-    phone2?: string;
   };
   guardian2: {
     name: string;
     email: string;
-    phone1: string;
-    phone2?: string;
   } | null;
 }
 
@@ -62,12 +58,8 @@ export default function SetupStudents() {
         'Student Number': '2024001',
         'Guardian 1 Name': 'Jane Doe',
         'Guardian 1 Email': 'jane.doe@email.com',
-        'Guardian 1 Phone': '+1234567890',
-        'Guardian 1 Phone 2': '+1234567891',
         'Guardian 2 Name': 'Mike Doe',
-        'Guardian 2 Email': 'mike.doe@email.com',
-        'Guardian 2 Phone': '+1234567892',
-        'Guardian 2 Phone 2': '+1234567893'
+        'Guardian 2 Email': 'mike.doe@email.com'
       },
       {
         'First Name': 'Sarah',
@@ -76,12 +68,8 @@ export default function SetupStudents() {
         'Student Number': '2024002',
         'Guardian 1 Name': 'Mary Smith',
         'Guardian 1 Email': 'mary.smith@email.com',
-        'Guardian 1 Phone': '+1234567894',
-        'Guardian 1 Phone 2': '',
         'Guardian 2 Name': '',
-        'Guardian 2 Email': '',
-        'Guardian 2 Phone': '',
-        'Guardian 2 Phone 2': ''
+        'Guardian 2 Email': ''
       },
       {
         'First Name': 'Alex',
@@ -90,12 +78,8 @@ export default function SetupStudents() {
         'Student Number': '2024003',
         'Guardian 1 Name': 'Robert Johnson',
         'Guardian 1 Email': 'robert.johnson@email.com',
-        'Guardian 1 Phone': '+1234567895',
-        'Guardian 1 Phone 2': '',
         'Guardian 2 Name': 'Lisa Johnson',
-        'Guardian 2 Email': 'lisa.johnson@email.com',
-        'Guardian 2 Phone': '+1234567896',
-        'Guardian 2 Phone 2': ''
+        'Guardian 2 Email': 'lisa.johnson@email.com'
       },
       {
         'First Name': 'Emily',
@@ -104,12 +88,8 @@ export default function SetupStudents() {
         'Student Number': '2024004',
         'Guardian 1 Name': 'Jennifer Davis',
         'Guardian 1 Email': 'jennifer.davis@email.com',
-        'Guardian 1 Phone': '+1234567897',
-        'Guardian 1 Phone 2': '',
         'Guardian 2 Name': 'Christopher Davis',
-        'Guardian 2 Email': 'chris.davis@email.com',
-        'Guardian 2 Phone': '+1234567898',
-        'Guardian 2 Phone 2': ''
+        'Guardian 2 Email': 'chris.davis@email.com'
       },
       {
         'First Name': 'Michael',
@@ -118,12 +98,8 @@ export default function SetupStudents() {
         'Student Number': '2024005',
         'Guardian 1 Name': 'Patricia Wilson',
         'Guardian 1 Email': 'patricia.wilson@email.com',
-        'Guardian 1 Phone': '+1234567899',
-        'Guardian 1 Phone 2': '+1234567900',
         'Guardian 2 Name': '',
-        'Guardian 2 Email': '',
-        'Guardian 2 Phone': '',
-        'Guardian 2 Phone 2': ''
+        'Guardian 2 Email': ''
       },
       {
         'First Name': 'Sofia',
@@ -132,12 +108,8 @@ export default function SetupStudents() {
         'Student Number': '2024006',
         'Guardian 1 Name': 'Carlos Garcia',
         'Guardian 1 Email': 'carlos.garcia@email.com',
-        'Guardian 1 Phone': '+1234567901',
-        'Guardian 1 Phone 2': '',
         'Guardian 2 Name': 'Isabella Garcia',
-        'Guardian 2 Email': 'isabella.garcia@email.com',
-        'Guardian 2 Phone': '+1234567902',
-        'Guardian 2 Phone 2': '+1234567903'
+        'Guardian 2 Email': 'isabella.garcia@email.com'
       },
       {
         'First Name': 'Ethan',
@@ -146,82 +118,8 @@ export default function SetupStudents() {
         'Student Number': '2024007',
         'Guardian 1 Name': 'Amanda Brown',
         'Guardian 1 Email': 'amanda.brown@email.com',
-        'Guardian 1 Phone': '+1234567904',
-        'Guardian 1 Phone 2': '',
         'Guardian 2 Name': '',
-        'Guardian 2 Email': '',
-        'Guardian 2 Phone': '',
-        'Guardian 2 Phone 2': ''
-      },
-      {
-        'First Name': 'Ava',
-        'Last Name': 'Miller',
-        'Grade': 'AN Center #3',
-        'Student Number': '2024008',
-        'Guardian 1 Name': 'David Miller',
-        'Guardian 1 Email': 'david.miller@email.com',
-        'Guardian 1 Phone': '+1234567905',
-        'Guardian 1 Phone 2': '+1234567906',
-        'Guardian 2 Name': 'Rachel Miller',
-        'Guardian 2 Email': 'rachel.miller@email.com',
-        'Guardian 2 Phone': '+1234567907',
-        'Guardian 2 Phone 2': ''
-      },
-      {
-        'First Name': 'Lucas',
-        'Last Name': 'Taylor',
-        'Grade': '1',
-        'Student Number': '2024009',
-        'Guardian 1 Name': 'Jessica Taylor',
-        'Guardian 1 Email': 'jessica.taylor@email.com',
-        'Guardian 1 Phone': '+1234567908',
-        'Guardian 1 Phone 2': '',
-        'Guardian 2 Name': 'Kevin Taylor',
-        'Guardian 2 Email': 'kevin.taylor@email.com',
-        'Guardian 2 Phone': '+1234567909',
-        'Guardian 2 Phone 2': '+1234567910'
-      },
-      {
-        'First Name': 'Mia',
-        'Last Name': 'Anderson',
-        'Grade': 'SSN #2',
-        'Student Number': '2024010',
-        'Guardian 1 Name': 'Thomas Anderson',
-        'Guardian 1 Email': 'thomas.anderson@email.com',
-        'Guardian 1 Phone': '+1234567911',
-        'Guardian 1 Phone 2': '',
-        'Guardian 2 Name': '',
-        'Guardian 2 Email': '',
-        'Guardian 2 Phone': '',
-        'Guardian 2 Phone 2': ''
-      },
-      {
-        'First Name': 'Noah',
-        'Last Name': 'Martinez',
-        'Grade': 'Case Manager #10',
-        'Student Number': '2024011',
-        'Guardian 1 Name': 'Maria Martinez',
-        'Guardian 1 Email': 'maria.martinez@email.com',
-        'Guardian 1 Phone': '+1234567912',
-        'Guardian 1 Phone 2': '+1234567913',
-        'Guardian 2 Name': 'Jose Martinez',
-        'Guardian 2 Email': 'jose.martinez@email.com',
-        'Guardian 2 Phone': '+1234567914',
-        'Guardian 2 Phone 2': ''
-      },
-      {
-        'First Name': 'Isabella',
-        'Last Name': 'Thompson',
-        'Grade': 'ASD #1',
-        'Student Number': '2024012',
-        'Guardian 1 Name': 'Richard Thompson',
-        'Guardian 1 Email': 'richard.thompson@email.com',
-        'Guardian 1 Phone': '+1234567915',
-        'Guardian 1 Phone 2': '',
-        'Guardian 2 Name': 'Susan Thompson',
-        'Guardian 2 Email': 'susan.thompson@email.com',
-        'Guardian 2 Phone': '+1234567916',
-        'Guardian 2 Phone 2': '+1234567917'
+        'Guardian 2 Email': ''
       }
     ];
 
@@ -259,18 +157,14 @@ export default function SetupStudents() {
           const guardian1 = {
             name: row['Guardian 1 Name'] || '',
             email: row['Guardian 1 Email'] || '',
-            phone1: row['Guardian 1 Phone'] || '',
-            phone2: row['Guardian 1 Phone 2'] || ''
           };
 
           // Check if Guardian 2 data exists
           let guardian2 = null;
-          if (row['Guardian 2 Name'] || row['Guardian 2 Email'] || row['Guardian 2 Phone']) {
+          if (row['Guardian 2 Name'] || row['Guardian 2 Email']) {
             guardian2 = {
               name: row['Guardian 2 Name'] || '',
               email: row['Guardian 2 Email'] || '',
-              phone1: row['Guardian 2 Phone'] || '',
-              phone2: row['Guardian 2 Phone 2'] || ''
             };
           }
 
@@ -351,10 +245,8 @@ export default function SetupStudents() {
       
       // Check Guardian 1 data completeness
       const g1 = student.guardian1;
-      if (!g1.name || !g1.email || !g1.phone1) {
-        errors.push(`Student ${identifier}: Missing required Guardian 1 information (${!g1.name ? 'name' : ''}${!g1.email ? ', email' : ''}${!g1.phone1 ? ', phone' : ''}).`);
-      } else if (!g1.email.includes('@')) {
-        errors.push(`Student ${identifier}: Guardian 1 email format is invalid.`);
+      if (!g1.name || !g1.email) {
+        errors.push(`Student ${identifier}: Missing required Guardian 1 information (${!g1.name ? 'name' : ''}${!g1.email ? ', email' : ''}).`);
       }
     });
     
@@ -441,12 +333,8 @@ export default function SetupStudents() {
                     <li><b>Student Number</b> - Unique student identifier</li>
                     <li><b>Guardian 1 Name</b> - Primary guardian's name</li>
                     <li><b>Guardian 1 Email</b> - Primary guardian's email</li>
-                    <li><b>Guardian 1 Phone</b> - Primary guardian's phone</li>
-                    <li><b>Guardian 1 Phone 2</b> - Primary guardian's secondary phone (optional)</li>
                     <li><b>Guardian 2 Name</b> - Secondary guardian's name (optional)</li>
                     <li><b>Guardian 2 Email</b> - Secondary guardian's email (optional)</li>
-                    <li><b>Guardian 2 Phone</b> - Secondary guardian's phone (optional)</li>
-                    <li><b>Guardian 2 Phone 2</b> - Secondary guardian's secondary phone (optional)</li>
                   </ul>
                 </div>
                 
@@ -456,8 +344,7 @@ export default function SetupStudents() {
                     <li><b>First Name & Last Name:</b> Required for all students</li>
                     <li><b>Grade:</b> Required, must be one of: Regular grades (K-12), Case Managers (#1-#20), Programs (#1-#20), or Centers (AN/ASD/SSN #1-#5)</li>
                     <li><b>Student Number:</b> Required, unique identifier</li>
-                    <li><b>Guardian 1 Name, Email, Phone:</b> Required for all students</li>
-                    <li><b>Guardian 1 Phone 2:</b> Optional</li>
+                    <li><b>Guardian 1 Name, Email:</b> Required for all students</li>
                     <li><b>Guardian 2 fields:</b> All optional, leave empty if not applicable</li>
                   </ul>
                 </div>
@@ -476,7 +363,6 @@ export default function SetupStudents() {
                   <h4 className="font-semibold mb-2">Important Notes:</h4>
                   <ul className="list-disc pl-5 space-y-1 text-sm">
                     <li>Email addresses must be in valid format (e.g., user@domain.com)</li>
-                    <li>Phone numbers can include country codes and formatting</li>
                     <li>All data can be edited after import before submission</li>
                     <li>Validation errors will be shown if required fields are missing or invalid</li>
                     <li>Download the template for proper formatting examples</li>
@@ -573,23 +459,6 @@ export default function SetupStudents() {
                           className="mb-2"
                           placeholder="Email"
                         />
-                        <Input
-                          value={editForm?.guardian1.phone1}
-                          onChange={(e) => setEditForm({
-                            ...editForm!,
-                            guardian1: { ...editForm!.guardian1, phone1: e.target.value }
-                          })}
-                          placeholder="Phone"
-                          className="mb-2"
-                        />
-                        <Input
-                          value={editForm?.guardian1.phone2 || ''}
-                          onChange={(e) => setEditForm({
-                            ...editForm!,
-                            guardian1: { ...editForm!.guardian1, phone2: e.target.value }
-                          })}
-                          placeholder="Phone 2 (optional)"
-                        />
                       </TableCell>
                       <TableCell>
                         <Input
@@ -597,7 +466,7 @@ export default function SetupStudents() {
                           onChange={(e) => setEditForm({
                             ...editForm!,
                             guardian2: { 
-                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '' }), 
+                              ...(editForm!.guardian2 || { name: '', email: '' }), 
                               name: e.target.value 
                             }
                           })}
@@ -609,35 +478,12 @@ export default function SetupStudents() {
                           onChange={(e) => setEditForm({
                             ...editForm!,
                             guardian2: { 
-                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '' }), 
+                              ...(editForm!.guardian2 || { name: '', email: '' }), 
                               email: e.target.value 
                             }
                           })}
                           className="mb-2"
                           placeholder="Email (optional)"
-                        />
-                        <Input
-                          value={editForm?.guardian2?.phone1 || ''}
-                          onChange={(e) => setEditForm({
-                            ...editForm!,
-                            guardian2: { 
-                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '' }), 
-                              phone1: e.target.value 
-                            }
-                          })}
-                          placeholder="Phone (optional)"
-                          className="mb-2"
-                        />
-                        <Input
-                          value={editForm?.guardian2?.phone2 || ''}
-                          onChange={(e) => setEditForm({
-                            ...editForm!,
-                            guardian2: { 
-                              ...(editForm!.guardian2 || { name: '', email: '', phone1: '', phone2: '' }), 
-                              phone2: e.target.value 
-                            }
-                          })}
-                          placeholder="Phone 2 (optional)"
                         />
                       </TableCell>
                       <TableCell>
@@ -660,10 +506,6 @@ export default function SetupStudents() {
                         <div className="space-y-1">
                           <p><span className="font-semibold">Name:</span> {student.guardian1.name}</p>
                           <p><span className="font-semibold">Email:</span> {student.guardian1.email}</p>
-                          <p><span className="font-semibold">Phone:</span> {student.guardian1.phone1}</p>
-                          {student.guardian1.phone2 && (
-                            <p><span className="font-semibold">Phone 2:</span> {student.guardian1.phone2}</p>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -671,10 +513,6 @@ export default function SetupStudents() {
                           <div className="space-y-1">
                             <p><span className="font-semibold">Name:</span> {student.guardian2.name}</p>
                             <p><span className="font-semibold">Email:</span> {student.guardian2.email}</p>
-                            <p><span className="font-semibold">Phone:</span> {student.guardian2.phone1}</p>
-                            {student.guardian2.phone2 && (
-                              <p><span className="font-semibold">Phone 2:</span> {student.guardian2.phone2}</p>
-                            )}
                           </div>
                         )}
                       </TableCell>

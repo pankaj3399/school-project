@@ -32,6 +32,7 @@ export type AnswerType = {
 export type AnswerTypeArray = {
   questionId: string,
   answer: string,
+  points: number,
 }[]
 
 export const GoalTypes = [

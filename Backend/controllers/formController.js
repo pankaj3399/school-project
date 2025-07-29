@@ -1,16 +1,17 @@
-import { Role } from "../enum.js";
-import Admin from "../models/Admin.js";
 import Form from "../models/Form.js";
 import FormSubmissions from "../models/FormSubmissions.js";
 import PointsHistory from "../models/PointsHistory.js";
-import School from "../models/School.js";
-import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
-import { emailGenerator } from "../utils/emailHelper.js";
+import Teacher from "../models/Teacher.js";
+import Admin from "../models/Admin.js";
+import School from "../models/School.js";
 import Feedback from "../models/Feedback.js";
-import { sendEmail } from "../services/mail.js";
-import { getVerificationEmailTemplate } from '../utils/emailTemplates.js';
 import PendingTokens from "../models/PendingTokens.js";
+import { Role } from "../enum.js";
+import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
+import { sendEmail } from "../services/mail.js";
+import { checkStudentFormEligibility } from "../utils/studentVerification.js";
+import { emailGenerator } from "../utils/emailHelper.js";
 
 const getGradeFromUser = async (userId) => {
     // Try finding user as admin first
@@ -200,12 +201,21 @@ export const submitFormTeacher = async (req, res) => {
   const teacherId = req.user.id;
   const teacher = await Teacher.findById(teacherId);
   const form = await Form.findById(formId);
-  const submittedForStudent = await Student.findById(submittedFor);
   const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
   const school = await School.findById(teacher.schoolId);
   const schoolAdmin = await Admin.findById(school.createdBy);
 
   try {
+    // Check if student is eligible for form submission
+    const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
+    if (!eligibilityCheck.eligible) {
+      return res.status(403).json({ 
+        message: eligibilityCheck.error 
+      });
+    }
+
+    const submittedForStudent = eligibilityCheck.student;
+
     const formSubmission = await FormSubmissions.create({
       formId,
       teacherId,
@@ -250,53 +260,20 @@ export const submitFormTeacher = async (req, res) => {
     }
 
     if (school && teacher && submittedForStudent) {
-      if(submittedForStudent.isStudentEmailVerified){
-        const leadTeacher = await Teacher.find({
-          grade: submittedForStudent.grade,
-          schoolId: teacher.schoolId,
-        })
-        emailGenerator(form, {
-          points: totalPoints,
-          submission: formSubmission,
-          teacher: teacher,
-          student: submittedForStudent,
-          schoolAdmin: schoolAdmin,
-          school: school,
-          submittedAt: submittedAt,
-          leadTeacher: leadTeacher[0] ?? null
-        })
-      }else{
-        
-        const data = {
-          points: totalPoints,
-          submission: {answers: formSubmission.answers},
-          teacher: {subject: teacher.subject, name: teacher.name, email: teacher.email, grade: teacher.grade ?? null}
-        }
-        
-        // Store in PendingTokens model instead of student.pendingEtokens
-        let pendingToken = await PendingTokens.findOne({ studentId: submittedForStudent._id });
-        if (!pendingToken) {
-          pendingToken = new PendingTokens({ 
-            studentId: submittedForStudent._id,
-            tokens: []
-          });
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        submittedForStudent.studentEmailVerificationCode = otp;
-        const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo);
-        await sendEmail(
-        submittedForStudent.email,
-        "Verify your email -  The RADU E-TOKEN System",
-        emailHTML2,
-        emailHTML2,
-        null
-       );
-        }
-        pendingToken.tokens.push({ form, data });
-        await pendingToken.save();
-        
-        await submittedForStudent.save();
-        
-      }
+      const leadTeacher = await Teacher.find({
+        grade: submittedForStudent.grade,
+        schoolId: teacher.schoolId,
+      })
+      emailGenerator(form, {
+        points: totalPoints,
+        submission: formSubmission,
+        teacher: teacher,
+        student: submittedForStudent,
+        schoolAdmin: schoolAdmin,
+        school: school,
+        submittedAt: submittedAt,
+        leadTeacher: leadTeacher[0] ?? null
+      })
     }
 
    
@@ -315,12 +292,21 @@ export const submitFormAdmin = async (req, res) => {
   const formId = req.params.formId;
   const { submittedFor, answers, submittedAt } = req.body;
   const form = await Form.findById(formId);
-  const submittedForStudent = await Student.findById(submittedFor);
   const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
   const schoolAdmin = await Admin.findById(req.user.id);
   const school = await School.findById(schoolAdmin.schoolId);
 
   try {
+    // Check if student is eligible for form submission
+    const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
+    if (!eligibilityCheck.eligible) {
+      return res.status(403).json({ 
+        message: eligibilityCheck.error 
+      });
+    }
+
+    const submittedForStudent = eligibilityCheck.student;
+
     const formSubmission = await FormSubmissions.create({
       formId,
       schoolAdminId: schoolAdmin._id,
@@ -365,54 +351,20 @@ export const submitFormAdmin = async (req, res) => {
     }
 
     if (school && submittedForStudent) {
-      if(submittedForStudent.isStudentEmailVerified){
-        const leadTeacher = await Teacher.find({
-          grade: submittedForStudent.grade,
-          schoolId: schoolAdmin.schoolId,
-        })
-        emailGenerator(form, {
-          points: totalPoints,
-          submission: formSubmission,
-          teacher: schoolAdmin,
-          student: submittedForStudent,
-          submittedAt: submittedAt,
-          schoolAdmin: schoolAdmin,
-          school: school,
-          leadTeacher: leadTeacher[0] ?? null
-        })
-      }else{
-       
-        const data = {
-          points: totalPoints,
-          submission: {answers: formSubmission.answers},
-          teacher: {subject: schoolAdmin.subject ?? null, name: schoolAdmin.name, email: schoolAdmin.email, grade: schoolAdmin.grade ?? null}
-        }
-        
-        // Store in PendingTokens model instead of student.pendingEtokens
-        let pendingToken = await PendingTokens.findOne({ studentId: submittedForStudent._id });
-        if (!pendingToken) {
-          pendingToken = new PendingTokens({ 
-            studentId: submittedForStudent._id,
-            tokens: []
-          });
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-          submittedForStudent.studentEmailVerificationCode = otp;
-          const emailHTML2 = await getVerificationEmailTemplate(Role.Student, otp, `${process.env.FRONTEND_URL}/verifyemail?otp=${otp}&role=Student&email=${submittedForStudent.email}`, submittedForStudent.email, true, null, school.logo); 
-        await sendEmail(
-        submittedForStudent.email,
-        "Verify your email -  The RADU E-TOKEN System",
-        emailHTML2,
-        emailHTML2,
-        null
-       );
-        }
-        pendingToken.tokens.push({ form, data });
-        await pendingToken.save();
-        
-        await submittedForStudent.save();
-        
-        
-      }
+      const leadTeacher = await Teacher.find({
+        grade: submittedForStudent.grade,
+        schoolId: schoolAdmin.schoolId,
+      })
+      emailGenerator(form, {
+        points: totalPoints,
+        submission: formSubmission,
+        teacher: schoolAdmin,
+        student: submittedForStudent,
+        submittedAt: submittedAt,
+        schoolAdmin: schoolAdmin,
+        school: school,
+        leadTeacher: leadTeacher[0] ?? null
+      })
     }
 
    

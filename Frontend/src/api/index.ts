@@ -36,8 +36,16 @@ export const signIn = async (data: { email: string; password: string; role: stri
   try {
     const response = await axios.post(`${API_URL}/auth/login`, data);
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    // Pass through the specific error message from the backend
+    return { 
+      error: {
+        message: error?.response?.data?.message || error?.message || "Login failed",
+        response: {
+          data: error?.response?.data
+        }
+      } 
+    };
   }
 };
 
@@ -45,8 +53,16 @@ export const requestLoginOtp = async ({ email, role, password }: { email: string
   try {
     const response = await axios.post(`${API_URL}/auth/request-login-otp`, { email, role, password });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    // Pass through the specific error message from the backend
+    return { 
+      error: {
+        message: error?.response?.data?.message || error?.message || "OTP request failed",
+        response: {
+          data: error?.response?.data
+        }
+      } 
+    };
   }
 };
 
@@ -979,3 +995,21 @@ export async function completeTeacherRegistration({ token, name, password, subje
   });
   return response.json();
 }
+
+export const verifyCurrentUserPassword = async (password: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.post(
+      `${API_URL}/auth/verify-password`,
+      { password },
+      {
+        headers: {
+          token,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};

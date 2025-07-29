@@ -60,7 +60,7 @@ useEffect(()=>{
       break
     case 'Feedback':
       setIsSendEmail({
-        studentEmail: false,
+        studentEmail: true,
         teacherEmail: true,
         schoolAdminEmail: true,
         parentEmail: false

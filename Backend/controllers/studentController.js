@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import {Role} from '../enum.js';
 import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
+
 export const addStudent = async (req, res) => {
     const {
         name,
@@ -56,22 +57,17 @@ export const addStudent = async (req, res) => {
 
 export const updateStudent = async (req, res) => {
     const studentId = req.params.id;
-    const { name, email, standard, parentEmail, sendNotifications, grade } = req.body; 
+    const { name, email, standard, parentEmail, sendNotifications, grade } = req.body;
 
     try{
         const updatedStudent = await Student.findByIdAndUpdate(studentId, {
             $set: { name, email, standard, parentEmail, sendNotifications, grade }
         }, { new: true });
 
-        if(!updatedStudent){
-            return res.status(404).json({ message: 'Student not found' });
-        }
-
         return res.status(200).json({ message: 'Student updated successfully', student: updatedStudent });
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });
     }
-
 }
 
 export const deleteStudent = async (req, res) => {
@@ -79,10 +75,6 @@ export const deleteStudent = async (req, res) => {
 
     try{
         const deletedStudent = await Student.findByIdAndDelete(studentId);
-
-        if(!deletedStudent){
-            return res.status(404).json({ message: 'Student not found' });
-        }
 
         await School.updateMany(
             { students: studentId },

@@ -102,11 +102,12 @@ export default function LoginForm() {
       });
 
       if (otpRes.error) {
+        const errorMessage = otpRes.error?.response?.data?.message || 
+                           otpRes.error?.message || 
+                           "Invalid credentials. Please try again.";
         toast({
-          title: "Error",
-          description:
-            otpRes.error?.response?.data?.message ||
-            "Invalid credentials. Please try again.",
+          title: "Login Error",
+          description: errorMessage,
           variant: "destructive",
         });
         setLoading(false);
@@ -125,11 +126,14 @@ export default function LoginForm() {
         description: "Check your email for the OTP to complete login.",
         variant: "default",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
+      const errorMessage = err?.response?.data?.message || 
+                          err?.message || 
+                          "An unexpected error occurred. Please try again.";
       toast({
-        title: "Unexpected Error",
-        description: "An error occurred. Please try again.",
+        title: "Login Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -153,13 +157,13 @@ export default function LoginForm() {
       });
 
       if (res.error) {
-        setOtpError(
-          res.error?.response?.data?.message || "Invalid or expired OTP"
-        );
+        const errorMessage = res.error?.response?.data?.message || 
+                           res.error?.message || 
+                           "Invalid or expired OTP";
+        setOtpError(errorMessage);
         toast({
           title: "OTP Error",
-          description:
-            res.error?.response?.data?.message || "Invalid or expired OTP",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
@@ -171,11 +175,14 @@ export default function LoginForm() {
         });
         navigateBasedOnRole(loginContext.role);
       }
-    } catch (err) {
-      setOtpError("An error occurred. Please try again.");
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || 
+                          err?.message || 
+                          "An error occurred. Please try again.";
+      setOtpError(errorMessage);
       toast({
         title: "OTP Error",
-        description: "An error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
