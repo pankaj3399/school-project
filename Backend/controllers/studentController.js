@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs"
 import {Role} from '../enum.js';
 import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
-import { checkStudentVerification } from "../utils/studentVerification.js";
+
 export const addStudent = async (req, res) => {
     const {
         name,
@@ -60,14 +60,6 @@ export const updateStudent = async (req, res) => {
     const { name, email, standard, parentEmail, sendNotifications, grade } = req.body;
 
     try{
-        // Check if student is verified before allowing updates
-        const verificationCheck = await checkStudentVerification(studentId);
-        if (!verificationCheck.verified) {
-            return res.status(403).json({ 
-                message: verificationCheck.error 
-            });
-        }
-
         const updatedStudent = await Student.findByIdAndUpdate(studentId, {
             $set: { name, email, standard, parentEmail, sendNotifications, grade }
         }, { new: true });
@@ -82,14 +74,6 @@ export const deleteStudent = async (req, res) => {
     const studentId = req.params.id;
 
     try{
-        // Check if student is verified before allowing deletion
-        const verificationCheck = await checkStudentVerification(studentId);
-        if (!verificationCheck.verified) {
-            return res.status(403).json({ 
-                message: verificationCheck.error 
-            });
-        }
-
         const deletedStudent = await Student.findByIdAndDelete(studentId);
 
         await School.updateMany(
