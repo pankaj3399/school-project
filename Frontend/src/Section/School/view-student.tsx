@@ -153,7 +153,7 @@ export default function ViewStudents() {
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${emailStatus ? 'bg-green-500' : 'bg-amber-500'}`}></span>
-          <span className="text-sm">Email: {emailStatus ? 'Verified' : 'Pending'}</span>
+          <span className="text-sm">Student Email: {emailStatus ? 'Verified' : 'Pending'}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${parent1Status ? 'bg-green-500' : 'bg-amber-500'}`}></span>
@@ -394,11 +394,11 @@ export default function ViewStudents() {
         <Table>
           <TableHeader>
             <TableRow className="border-b-black">
-              <TableHead className="text-gray-700">Name</TableHead>
-              <TableHead className="text-gray-700">Email</TableHead>
-              <TableHead className="text-gray-700">Parents/Guardians Email</TableHead>
+              <TableHead className="text-gray-700">Student Name</TableHead>
+              <TableHead className="text-gray-700">Student Email</TableHead>
+              <TableHead className="text-gray-700">Guardian Email</TableHead>
               <TableHead className="text-gray-700">Grade</TableHead>
-              <TableHead className="text-gray-700">Guardian Email Status</TableHead>
+              <TableHead className="text-gray-700">Email Verification Status</TableHead>
               <TableHead className="text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
