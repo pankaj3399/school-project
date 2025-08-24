@@ -398,8 +398,16 @@ export const submitFormTeacher = async (
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    // Extract the actual error message from axios response
+    return { 
+      error: {
+        message: error?.response?.data?.message || error?.message || "Form submission failed",
+        response: {
+          data: error?.response?.data
+        }
+      } 
+    };
   }
 };
 
@@ -439,8 +447,16 @@ export const submitFormAdmin = async (
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    // Extract the actual error message from axios response
+    return { 
+      error: {
+        message: error?.response?.data?.message || error?.message || "Form submission failed",
+        response: {
+          data: error?.response?.data
+        }
+      } 
+    };
   }
 };
 
