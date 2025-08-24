@@ -40,7 +40,7 @@ export const generateCouponImage = async (
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    ctx.fillText(`VALID ONLY AT ${schoolName.toUpperCase()} STORE`, canvas.width / 2, 40);
+    ctx.fillText('VALID ONLY AT THE AUTHORIZED LOCATION FOR EXCHANGE', canvas.width / 2, 40);
     ctx.font = 'bold 45px "Courier New Bold"'
     ctx.fillText(`${noOfTokens} E-TOKENS`, canvas.width / 2, 180);
     ctx.font = 'bold 16px "Courier New Bold"'
