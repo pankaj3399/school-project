@@ -97,10 +97,12 @@ export const generateStudentPDF = async ({
         const centerX = pageWidth / 2;
 
         yPos += 10;
-        ['THE RADU E-TOKEN SYSTEM', 'E-TOKEN SYSTEM', schoolData.school.name, teacherData.name, `Grade ${studentData.studentInfo.grade}`]
+        ['THE RADU E-TOKEN SYSTEM', 'E-TOKEN SYSTEM', schoolData?.school?.name || 'School Name', teacherData?.name || 'Teacher Name', `Grade ${studentData?.studentInfo?.grade || 'N/A'}`]
             .forEach(text => {
-                doc.text(text, centerX, yPos, { align: 'center' });
-                yPos += lineHeight;
+                if (text && typeof text === 'string') {
+                    doc.text(text, centerX, yPos, { align: 'center' });
+                    yPos += lineHeight;
+                }
             });
 
         // Student name with larger font but same family

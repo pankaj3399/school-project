@@ -3,7 +3,6 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "./mail.js";
 import path from 'path';
 import fs from 'fs';
-import nodemailer from 'nodemailer';
 
 export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass, schoolLogo=null) => {
     try {
@@ -284,18 +283,10 @@ export const sendTeacherRegistrationMail = async ({ email, url, registrationToke
     `$1\n<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">If the button above does not work, copy and paste this link into your browser:<br><a href="${registrationLink}" style="color: #00a58c; word-break: break-all;">${registrationLink}</a></p>`
   );
 
-  const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Complete Your Teacher Registration',
-    html: emailHTML
-  };
-  await transporter.sendMail(mailOptions);
+  await sendEmail(
+    email,
+    'Complete Your Teacher Registration',
+    emailHTML,
+    emailHTML
+  );
 };
