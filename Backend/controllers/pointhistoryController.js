@@ -99,13 +99,23 @@ const getGradeFromUser = async (userId) => {
   // If not admin, try finding as teacher
   const teacher = await Teacher.findById(userId);
   if (teacher) {
-    const studentIds = await Student.find({
-      schoolId: teacher.schoolId,
-      grade: teacher.grade,
-    }).select("_id");
+    let studentIds;
+    if (teacher.type === 'Lead') {
+      // Lead teachers only see their grade's students
+      studentIds = await Student.find({
+        schoolId: teacher.schoolId,
+        grade: teacher.grade,
+      }).select("_id");
+    } else {
+      // Special teachers see all students in the school
+      studentIds = await Student.find({
+        schoolId: teacher.schoolId,
+      }).select("_id");
+    }
     return {
       grade: teacher.grade,
       studentIds: studentIds.map((student) => student._id),
+      isSpecialTeacher: teacher.type === 'Special'
     };
   }
   throw new Error("User not authorized");
@@ -117,7 +127,7 @@ export const getYearPointsHistory = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const teacherData = await getGradeFromUser(req.user.id);
 
-    const yearStart = await getEducationalYearStart();
+    const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
 
     let pointsHistory;
@@ -377,7 +387,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const studentId = req.params.id;
 
-    const yearStart = await getEducationalYearStart();
+    const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
 
     const pointsHistory = await PointsHistory.aggregate([
@@ -912,28 +922,32 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     const { period, formType, studentId } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
-    const today = getLocalDateInTimezone(school.timeZone, new Date());
+    const today = getSchoolCurrentTime(schoolTimezone);
     let startDate;
 
     switch (period) {
       case "1W":
-        startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ weeks: 1 });
         break;
       case "1M":
-        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ months: 1 });
         break;
       case "3M":
-        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ months: 3 });
         break;
       case "6M":
-        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ months: 6 });
         break;
       case "1Y":
-        startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+        startDate = today.minus({ years: 1 });
         break;
       default:
         return res.status(400).json({ message: "Invalid period specified" });
     }
+
+    // Convert to UTC for database queries
+    const startDateUTC = timezoneManager.convertSchoolTimeToUTC(startDate.startOf('day'), schoolTimezone).toJSDate();
+    const todayUTC = timezoneManager.convertSchoolTimeToUTC(today.endOf('day'), schoolTimezone).toJSDate();
 
     let historicalPoints;
     let historicalPointsHistory;
@@ -947,8 +961,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
                 ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
                 : formType,
             submittedAt: {
-              $gte: startDate,
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
             submittedForId: new mongoose.Types.ObjectId(studentId),
           },
@@ -1003,8 +1017,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType,
             submittedAt: {
-              $gte: startDate,
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
             submittedForId: new mongoose.Types.ObjectId(studentId),
           },
@@ -1059,10 +1073,9 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
       .json({
         data: historicalPoints,
         history: historicalPointsHistory,
-        startDate,
-        startDate,
-        endDate: today,
-        timeZone: school.timeZone,
+        startDate: startDateUTC,
+        endDate: todayUTC,
+        timeZone: schoolTimezone,
       });
   } catch (error) {
     res.status(500).json({ message: error.message });
