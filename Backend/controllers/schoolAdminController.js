@@ -14,7 +14,7 @@ import { sendVerifyEmailRoster } from "../services/verificationMail.js";
 import { timezoneManager } from "../utils/luxon.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import Otp from "../models/Otp.js";
-import { sendEmail } from "../services/sendgrid.js";
+import { sendEmail } from "../services/mail.js";
 
 const getSchoolIdFromUser = async (userId) => {
   // Try finding user as admin first
