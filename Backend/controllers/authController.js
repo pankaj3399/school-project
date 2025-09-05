@@ -79,7 +79,7 @@ export const requestLoginOtp = async (req, res) => {
     await newOtp.save();
     
     const body = `<p>Use this code to login <b>${otp}</b> <br/> <i>The code will expire in 30 min</i></p>`;
-    const { sendEmail } = await import("../services/sendgrid.js");
+    const { sendEmail } = await import("../services/mail.js");
     await sendEmail(user.email, "LOGIN OTP", body, body, null);
     
     return res.status(200).json({ 
