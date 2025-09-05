@@ -233,7 +233,7 @@ export const getYearPointsHistory = async (req, res) => {
                 $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
               },
             },
-            totalPoints: { $sum: "$points" },
+            totalPoints: { $sum: { $toDouble: "$points" } },
             days: {
               $push: {
                 day: { $dayOfMonth: "$submittedAt" },
@@ -351,7 +351,7 @@ export const getYearPointsHistory = async (req, res) => {
                 $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
               },
             },
-            totalPoints: { $sum: "$points" },
+            totalPoints: { $sum: { $toDouble: "$points" } },
             days: {
               $push: {
                 day: { $dayOfMonth: "$submittedAt" },
@@ -476,7 +476,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
               $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
             },
           },
-          totalPoints: { $sum: "$points" },
+          totalPoints: { $sum: { $toDouble: "$points" } },
           days: {
             $push: {
               day: { $dayOfMonth: "$submittedAt" },
@@ -579,7 +579,7 @@ export const getWeekPointsHistory = async (req, res) => {
           $group: {
             _id: "$schoolDate",
             dayOfWeek: { $first: "$schoolDayOfWeek" },
-            points: { $sum: "$points" },
+            points: { $sum: { $toDouble: "$points" } },
           },
         },
         {
@@ -630,7 +630,7 @@ export const getWeekPointsHistory = async (req, res) => {
           $group: {
             _id: "$schoolDate",
             dayOfWeek: { $first: "$schoolDayOfWeek" },
-            points: { $sum: "$points" },
+            points: { $sum: { $toDouble: "$points" } },
           },
         },
         {
@@ -684,7 +684,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     const studentId = req.params.id;
 
     const { startDate, formType } = req.body;
-
+    
     let start;
     if (startDate) {
       start = convertToSchoolTime(new Date(startDate), schoolTimezone);
@@ -699,16 +699,18 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     // Convert to UTC for database queries
     const weekStartUTC = timezoneManager.convertSchoolTimeToUTC(weekStart, schoolTimezone).toJSDate();
     const weekEndUTC = timezoneManager.convertSchoolTimeToUTC(weekEnd, schoolTimezone).toJSDate();
-
+    
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+    
+    const formTypeFilter = formType === 'AwardPoints' 
+      ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] } 
+      : formType;
+    
     const weekPoints = await PointsHistory.aggregate([
       {
         $match: {
           schoolId: new mongoose.Types.ObjectId(schoolId),
-          formType: formType === 'AwardPoints'
-            ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
-            : formType,
+          formType: formTypeFilter,
           submittedForId: new mongoose.Types.ObjectId(studentId),
           submittedAt: {
             $gte: weekStartUTC,
@@ -729,7 +731,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
       {
         $group: {
           _id: "$schoolDayOfWeek",
-          points: { $sum: "$points" },
+          points: { $sum: { $toDouble: "$points" } },
         },
       },
       {
@@ -820,7 +822,7 @@ export const getHistoricalPointsData = async (req, res) => {
         {
           $group: {
             _id: "$schoolDate",
-            points: { $sum: "$points" },
+            points: { $sum: { $toDouble: "$points" } },
           },
         },
         {
@@ -876,7 +878,7 @@ export const getHistoricalPointsData = async (req, res) => {
         {
           $group: {
             _id: "$schoolDate",
-            points: { $sum: "$points" },
+            points: { $sum: { $toDouble: "$points" } },
           },
         },
         {
@@ -923,6 +925,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
     const today = getSchoolCurrentTime(schoolTimezone);
+    
     let startDate;
 
     switch (period) {
@@ -974,7 +977,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
               month: { $month: "$submittedAt" },
               day: { $dayOfMonth: "$submittedAt" },
             },
-            points: { $sum: "$points" },
+            points: { $sum: { $toDouble: "$points" } },
           },
         },
         {
@@ -1030,7 +1033,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
               month: { $month: "$submittedAt" },
               day: { $dayOfMonth: "$submittedAt" },
             },
-            points: { $sum: "$points" },
+            points: { $sum: { $toDouble: "$points" } },
           },
         },
         {
@@ -1067,7 +1070,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
         },
       ]);
     }
-
+    
     res
       .status(200)
       .json({
@@ -1091,13 +1094,13 @@ export const getPointsByTeacher = async (req, res) => {
       {
         $match: {
           schoolId: new mongoose.Types.ObjectId(schoolId),
-          formType: "AwardPoints",
+          formType: { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] },
         },
       },
       {
         $group: {
           _id: "$submittedByName",
-          totalPoints: { $sum: "$points" },
+          totalPoints: { $sum: { $toDouble: "$points" } },
         },
       },
     ]);
@@ -1128,12 +1131,13 @@ export const getPointsByStudent = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const teacherData = await getGradeFromUser(req.user.id);
+    
     let students;
     if (teacherData) {
-      students = await Student.find({ schoolId: schoolId });
-      students = students.filter((student) =>
-        teacherData.studentIds.includes(student._id)
-      );
+      students = await Student.find({ 
+        schoolId: schoolId,
+        _id: { $in: teacherData.studentIds }
+      });
     } else {
       students = await Student.find({ schoolId: schoolId });
     }
@@ -1147,14 +1151,14 @@ export const getPointsByStudent = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: "AwardPoints",
+            formType: { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] },
             submittedForId: { $in: teacherData.studentIds },
           },
         },
         {
           $group: {
             _id: "$submittedForName",
-            totalPoints: { $sum: "$points" },
+            totalPoints: { $sum: { $toDouble: "$points" } },
           },
         },
       ]);
@@ -1163,13 +1167,13 @@ export const getPointsByStudent = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: "AwardPoints",
+            formType: { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] },
           },
         },
         {
           $group: {
             _id: "$submittedForName",
-            totalPoints: { $sum: "$points" },
+            totalPoints: { $sum: { $toDouble: "$points" } },
           },
         },
       ]);
