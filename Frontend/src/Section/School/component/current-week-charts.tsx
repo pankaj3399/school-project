@@ -64,7 +64,12 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                     
                     awardRes.data.forEach((dayData:any) => {
                         const dayIndex = days.indexOf(dayData.day);
-                        if (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) { // Exclude Sunday
+                        // Handle both formats: student-specific data (no date field) and general data (with date field)
+                        const shouldInclude = dayData.date ? 
+                            (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) :
+                            (dayIndex !== -1);
+                        
+                        if (shouldInclude) {
                             awardWeekData[dayIndex] = {
                                 day: dayData.day,
                                 points: awardWeekData[dayIndex].points + Number(dayData.points)
@@ -78,7 +83,12 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 if(deductRes.data.length > 0)
                     deductRes.data.forEach((dayData:any) => {
                         const dayIndex = days.indexOf(dayData.day);
-                        if (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) {
+                        // Handle both formats: student-specific data (no date field) and general data (with date field)
+                        const shouldInclude = dayData.date ? 
+                            (dayIndex !== -1 && new Date(dayData.date) > new Date(deductRes.startDate)) :
+                            (dayIndex !== -1);
+                            
+                        if (shouldInclude) {
                             deductWeekData[dayIndex] = {
                                 day: dayData.day,
                                 points: deductWeekData[dayIndex].points + Number(dayData.points)
@@ -90,7 +100,12 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 if(withdrawRes.data.length > 0)
                     withdrawRes.data.forEach((dayData:any) => {
                         const dayIndex = days.indexOf(dayData.day);
-                        if (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) {
+                        // Handle both formats: student-specific data (no date field) and general data (with date field)
+                        const shouldInclude = dayData.date ? 
+                            (dayIndex !== -1 && new Date(dayData.date) > new Date(withdrawRes.startDate)) :
+                            (dayIndex !== -1);
+                            
+                        if (shouldInclude) {
                             withdrawWeekData[dayIndex] = {
                                 day: dayData.day,
                                 points: withdrawWeekData[dayIndex].points + Number(dayData.points)
