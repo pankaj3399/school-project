@@ -1,4 +1,5 @@
 import { getHistoryByTime, getStudents } from "@/api";
+import { FormType } from '@/lib/types';
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom"
 import PointsBarChart from "./component/points-bar-chart";
@@ -67,11 +68,11 @@ const formatDataByPeriod = (responseData: any, period: string, timezone: string,
 // Helper function to get form metadata
 const getFormMetadata = (formType: string | null) => {
     switch(formType) {
-        case 'AwardPoints': 
+        case FormType.AwardPoints: 
             return {title: 'Tokens', barColor: '#4CAF50', icon: '/etoken.svg'};
-        case 'DeductPoints': 
+        case FormType.DeductPoints: 
             return {title: 'Oopsies', barColor: '#F44336', icon: "/oopsie.svg"};
-        case 'PointWithdraw': 
+        case FormType.PointWithdraw: 
             return {title: 'Withdrawals', barColor: '#3d59f5', icon: "/Withdraw.svg"};
         default: 
             return {title: 'Points', barColor: '#4CAF50', icon: '/etoken.svg'};

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast"
 import Loading from "../../Loading"
 import { useAuth } from "@/authContext"
 import { timezoneManager } from "@/lib/luxon"
+import { FormType } from '@/lib/types'
 
 export default function ViewPointHistoryByData({data}:{
     data:any[]
@@ -44,7 +45,7 @@ export default function ViewPointHistoryByData({data}:{
   }, [toast, data])
 
    const formatFormType = (formType: string) => {
-    if(formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
+    if(formType === FormType.AwardPointsIEP) {
       return "Award Points with Individualized Education Plan (IEP)";
     }else{
        return formType

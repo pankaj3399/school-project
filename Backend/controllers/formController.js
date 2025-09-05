@@ -7,7 +7,7 @@ import Admin from "../models/Admin.js";
 import School from "../models/School.js";
 import Feedback from "../models/Feedback.js";
 import PendingTokens from "../models/PendingTokens.js";
-import { Role } from "../enum.js";
+import { Role, FormType } from "../enum.js";
 import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../services/mail.js";
 import { checkStudentFormEligibility } from "../utils/studentVerification.js";
@@ -146,7 +146,7 @@ export const getForms = async (req, res) => {
         forms = await Form.find({ 
           schoolId: user.schoolId,
         });
-        forms = forms.filter(form => form.formType != "PointWithdraw" && form.formType != "DeductPoints");
+        forms = forms.filter(form => form.formType != FormType.PointWithdraw && form.formType != FormType.DeductPoints);
       }else{
         forms = await Form.find({
           schoolId: user.schoolId,
@@ -245,7 +245,7 @@ export const submitFormTeacher = async (req, res) => {
       submittedAt,
     });
 
-    if(form.formType == "Feedback"){
+    if(form.formType == FormType.Feedback){
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
       await Feedback.create({
         schoolId: teacher.schoolId,
@@ -336,7 +336,7 @@ export const submitFormAdmin = async (req, res) => {
       submittedAt
     });
 
-    if(form.formType == "Feedback"){
+    if(form.formType == FormType.Feedback){
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
       await Feedback.create({
         schoolId: schoolAdmin.schoolId,

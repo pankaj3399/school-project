@@ -3,7 +3,7 @@ import User from "../models/Admin.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
-import { Role } from "../enum.js";
+import { Role, FormType } from "../enum.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js";
 import Admin from "../models/Admin.js";
 import PointsHistory from "../models/PointsHistory.js";
@@ -170,17 +170,17 @@ export const getStats = async (req, res) => {
           totalPoints: { $sum: "$points" },
           totalWithdrawPoints: {
             $sum: {
-              $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
+              $cond: [{ $eq: ["$formType", FormType.PointWithdraw] }, "$points", 0],
             },
           },
           totalDeductPoints: {
             $sum: {
-              $cond: [{ $eq: ["$formType", "DeductPoints"] }, "$points", 0],
+              $cond: [{ $eq: ["$formType", FormType.DeductPoints] }, "$points", 0],
             },
           },
           feedbackCount: {
             $sum: {
-              $cond: [{ $eq: ["$formType", "Feedback"] }, 1, 0],
+              $cond: [{ $eq: ["$formType", FormType.Feedback] }, 1, 0],
             },
           },
         },
@@ -415,7 +415,7 @@ export const getMonthlyStats = async (req, res) => {
             $sum: { $cond: [{ $lt: ["$points", 0] }, "$points", 0] }, // Sum only negative points
           },
           feedbackCount: {
-            $sum: { $cond: [{ $eq: ["$formType", "Feedback"] }, 1, 0] }, // Count formType as "Feedback"
+            $sum: { $cond: [{ $eq: ["$formType", FormType.Feedback] }, 1, 0] }, // Count formType as FormType.Feedback
           },
         },
       },

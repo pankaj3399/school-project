@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AnswerType, Question } from "@/lib/types";
+import { AnswerType, Question, FormType } from "@/lib/types";
 import { getStudents } from "@/api";
 import Modal from "@/Section/School/Modal";
 import { Loader2 } from "lucide-react";
@@ -158,21 +158,21 @@ export function FormSubmission({
 
   useEffect(() => {
     switch (form.formType) {
-      case "AwardPoints":
-      case "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)":
-      case "DeductPoints":
+      case FormType.AwardPoints:
+      case FormType.AwardPointsIEP:
+      case FormType.DeductPoints:
         {
           setDescription(
             `You will ${
-              form.formType == "AwardPoints" ||
+              form.formType == FormType.AwardPoints ||
               form.formType ==
-                "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)"
+                FormType.AwardPointsIEP
                 ? "Award"
                 : "Deduct"
             } ${Math.abs(totalPoints)} points ${
-              form.formType == "AwardPoints" ||
+              form.formType == FormType.AwardPoints ||
               form.formType ==
-                "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)"
+                FormType.AwardPointsIEP
                 ? "to"
                 : "from"
             } ${
@@ -182,7 +182,7 @@ export function FormSubmission({
           );
         }
         break;
-      case "Feedback":
+      case FormType.Feedback:
         {
           setDescription(
             `You will submit feedback about  ${
@@ -212,7 +212,7 @@ export function FormSubmission({
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (form.formType === "Feedback") {
+    if (form.formType === FormType.Feedback) {
       const feedbackQuestion =
         form.questions && form.questions.length > 0 ? form.questions[0] : null;
       const feedbackText = feedbackQuestion
@@ -239,7 +239,7 @@ export function FormSubmission({
   const renderQuestion = (question: Question) => {
     switch (question.type) {
       case "text":
-        return form.formType != "Feedback" ? (
+        return form.formType != FormType.Feedback ? (
           <>
             <div className="space-y-2 my-1 text-xs">
               {question.goal && (
@@ -264,7 +264,7 @@ export function FormSubmission({
               )}
             </div>
             <Input
-              type={form.formType == "Feedback" ? "text" : "number"}
+              type={form.formType == FormType.Feedback ? "text" : "number"}
               value={(answers[question.id]?.answer as string) || ""}
               max={question.maxPoints}
               min={0}
@@ -283,8 +283,8 @@ export function FormSubmission({
                 handleInputChange(question.id, {
                   answer: e.target.value,
                   points:
-                    form.formType === "DeductPoints" ||
-                    form.formType === "PointWithdraw"
+                    form.formType === FormType.DeductPoints ||
+                    form.formType === FormType.PointWithdraw
                       ? points * -1
                       : points,
                 });
@@ -365,8 +365,8 @@ export function FormSubmission({
                   handleInputChange(question.id, {
                     answer: e.target.value,
                     points:
-                      form.formType === "DeductPoints" ||
-                      form.formType === "PointWithdraw"
+                      form.formType === FormType.DeductPoints ||
+                      form.formType === FormType.PointWithdraw
                         ? Number(e.target.value) * -1
                         : Number(e.target.value),
                   });
@@ -391,8 +391,8 @@ export function FormSubmission({
               handleInputChange(question.id, {
                 answer: value,
                 points:
-                  form.formType === "DeductPoints" ||
-                  form.formType === "PointWithdraw"
+                  form.formType === FormType.DeductPoints ||
+                  form.formType === FormType.PointWithdraw
                     ? points * -1
                     : points,
               });
@@ -602,12 +602,12 @@ export function FormSubmission({
                         (Up to {question.maxPoints} Points)
                       </span>
                     )}
-                    {form.formType === "AwardPoints" ||
+                    {form.formType === FormType.AwardPoints ||
                     form.formType ===
-                      "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)" ? (
+                      FormType.AwardPointsIEP ? (
                       <span className="text-green-500 ml-1">Award</span>
-                    ) : form.formType === "DeductPoints" ||
-                      form.formType === "PointWithdraw" ? (
+                    ) : form.formType === FormType.DeductPoints ||
+                      form.formType === FormType.PointWithdraw ? (
                       <span className="text-red-500 ml-1">Deduct</span>
                     ) : (
                       ""
@@ -631,8 +631,8 @@ export function FormSubmission({
             )}
           </Button>
         </form>
-        {(form.formType == "DeductPoints" ||
-          form.formType == "PointWithdraw") &&
+        {(form.formType == FormType.DeductPoints ||
+          form.formType == FormType.PointWithdraw) &&
           submittedFor && (
             <div>
               <div className="bg-white p-4 border">

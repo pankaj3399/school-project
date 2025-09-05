@@ -1,4 +1,5 @@
 import { getHistoryOfYear, getHistoryOfYearByStudent } from '@/api';
+import { FormType } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { 
   ComposedChart, 
@@ -18,7 +19,7 @@ import {
 const generateData = async (month: string | null = null, studentId:string | null = null) => {
     let data:any[] = [];
     try{
-        let res = studentId ? await getHistoryOfYearByStudent(studentId):await getHistoryOfYear();
+        let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId):await getHistoryOfYear();
         if (!month) {
             
 
@@ -72,19 +73,19 @@ const generateData = async (month: string | null = null, studentId:string | null
             monthData.days.forEach((dayData:any) => {
                 const dayIndex = dayData.day - 1;
                 switch(dayData.formType){
-                    case 'AwardPoints': formattedDayData[dayIndex] = {
+                    case FormType.AwardPoints: formattedDayData[dayIndex] = {
                         ...formattedDayData[dayIndex],
                         day: dayData.day,
                         awardPoints: formattedDayData[dayIndex].awardPoints + Number(dayData.points),
                     }
                     break;
-                    case 'DeductPoints': formattedDayData[dayIndex] = {
+                    case FormType.DeductPoints: formattedDayData[dayIndex] = {
                         ...formattedDayData[dayIndex],
                         day: dayData.day,
                         deductPoints: formattedDayData[dayIndex].deductPoints + Number(dayData.points),
                     }
                     break;
-                    case 'PointWithdraw': formattedDayData[dayIndex] = {
+                    case FormType.PointWithdraw: formattedDayData[dayIndex] = {
                         ...formattedDayData[dayIndex],
                         day: dayData.day,
                         withdrawPoints: formattedDayData[dayIndex].withdrawPoints + Number(dayData.points),

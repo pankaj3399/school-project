@@ -7,6 +7,7 @@ import Admin from "../models/Admin.js";
 import FormSubmissions from "../models/FormSubmissions.js";
 import Feedback from "../models/Feedback.js";
 import { LuxonTimezoneManager } from "../utils/luxon.js";
+import { FormType } from "../enum.js";
 
 // Create timezone manager instance
 const timezoneManager = new LuxonTimezoneManager();
@@ -218,7 +219,7 @@ export const getYearPointsHistory = async (req, res) => {
                       {
                         $eq: [
                           "$formType",
-                          "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)",
+                          FormType.AwardPointsIEP,
                         ],
                       },
                     ],
@@ -337,8 +338,8 @@ export const getYearPointsHistory = async (req, res) => {
         $cond: [
             {
                 $or: [
-                    { $eq: ['$formType', 'AwardPoints'] },
-                    { $eq: ['$formType', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+                    { $eq: ['$formType', FormType.AwardPoints] },
+                    { $eq: ['$formType', FormType.AwardPointsIEP] }
                 ]
             },
             '$points',
@@ -546,9 +547,9 @@ export const getWeekPointsHistory = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            // Conditionally include 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
-            formType: formType === 'AwardPoints'
-              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            // Conditionally include FormType.AwardPointsIEP
+            formType: formType === FormType.AwardPoints
+              ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
               : formType,
             submittedAt: {
               $gte: startBounds.start,
@@ -599,8 +600,8 @@ export const getWeekPointsHistory = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: formType === 'AwardPoints'
-              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            formType: formType === FormType.AwardPoints
+              ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
               : formType,
             submittedAt: {
               $gte: startBounds.start,
@@ -702,8 +703,8 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     
-    const formTypeFilter = formType === 'AwardPoints' 
-      ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] } 
+    const formTypeFilter = formType === FormType.AwardPoints 
+      ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] } 
       : formType;
     
     const weekPoints = await PointsHistory.aggregate([
@@ -798,8 +799,8 @@ export const getHistoricalPointsData = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: formType === 'AwardPoints'
-              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            formType: formType === FormType.AwardPoints
+              ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
               : formType,
             submittedAt: {
               $gte: startDateUTC,
@@ -839,8 +840,8 @@ export const getHistoricalPointsData = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: formType === 'AwardPoints'
-              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            formType: formType === FormType.AwardPoints
+              ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
               : formType,
             submittedAt: {
               $gte: startDateUTC,
@@ -855,8 +856,8 @@ export const getHistoricalPointsData = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: formType === 'AwardPoints'
-              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            formType: formType === FormType.AwardPoints
+              ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
               : formType,
             submittedAt: {
               $gte: startDateUTC,
@@ -895,8 +896,8 @@ export const getHistoricalPointsData = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: formType === 'AwardPoints'
-              ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            formType: formType === FormType.AwardPoints
+              ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
               : formType,
             submittedAt: {
               $gte: startDateUTC,
@@ -960,8 +961,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType:formType === 'AwardPoints'
-                ? { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] }
+            formType:formType === FormType.AwardPoints
+                ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
                 : formType,
             submittedAt: {
               $gte: startDateUTC,
@@ -1094,7 +1095,7 @@ export const getPointsByTeacher = async (req, res) => {
       {
         $match: {
           schoolId: new mongoose.Types.ObjectId(schoolId),
-          formType: { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] },
+          formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
         },
       },
       {
@@ -1151,7 +1152,7 @@ export const getPointsByStudent = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] },
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
             submittedForId: { $in: teacherData.studentIds },
           },
         },
@@ -1167,7 +1168,7 @@ export const getPointsByStudent = async (req, res) => {
         {
           $match: {
             schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: { $in: ['AwardPoints', 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'] },
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
           },
         },
         {
@@ -1239,7 +1240,7 @@ export const getCombinedStudentPointsHistory = async (req, res) => {
               if (
                 point.formType === "AwardPoints" ||
                 point.formType ===
-                  "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)"
+                  FormType.AwardPointsIEP
               ) {
                 totalPoints.eToken += point.points;
               } else if (point.formType === "DeductPoints") {

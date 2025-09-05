@@ -6,7 +6,7 @@ import { FormDetails } from '@/Section/School/component/form-details'
 import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon, Edit2Icon, Trash2Icon } from 'lucide-react'
 import {  deleteForm, getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
-import { Form, Question } from '@/lib/types'
+import { Form, Question, FormType } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
 
@@ -51,13 +51,13 @@ export default function ViewFormsTeacher() {
 
   const getFormTypeIcon = (formType: string) => {
     switch (formType) {
-      case 'AwardPoints':
+      case FormType.AwardPoints:
         return <StarIcon className="h-6 w-6 text-yellow-500" />
-      case 'Feedback':
+      case FormType.Feedback:
         return <ClipboardIcon className="h-6 w-6 text-blue-500" />
-      case 'PointWithdraw':
+      case FormType.PointWithdraw:
         return <MinusCircleIcon className="h-6 w-6 text-red-500" />
-      case 'DeductPoints':
+      case FormType.DeductPoints:
         return <MinusCircleIcon className="h-6 w-6 text-orange-500" />
       default:
         return <ClipboardIcon className="h-6 w-6 text-gray-500" />

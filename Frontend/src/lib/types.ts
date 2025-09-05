@@ -1,4 +1,12 @@
-export type FormType = 'AwardPoints' | 'DeductPoints' | 'Feedback' | 'PointWithdraw' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
+export const FormType = {
+  AwardPoints: 'AwardPoints',
+  DeductPoints: 'DeductPoints', 
+  Feedback: 'Feedback',
+  PointWithdraw: 'PointWithdraw',
+  AwardPointsIEP: 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
+} as const;
+
+export type FormType = typeof FormType[keyof typeof FormType];
 export type Question = {
     id: string
     text: string

@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import fetch from 'node-fetch';
 import { timezoneManager } from "./luxon.js";
+import { FormType } from "../enum.js";
 
 const getImageAsBase64 = async (input) => {
     try {
@@ -211,7 +212,7 @@ export const generateStudentPDF = async ({
                         'Invalid Date',
                         'Invalid Time',
                         item.submittedByName,
-                        item.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award Points with Individualized Education Plan IEP' : item.formType,
+                        item.formType == FormType.AwardPointsIEP ? 'Award Points with Individualized Education Plan IEP' : item.formType,
                         item.points.toString()
                     ];
                 }
@@ -224,7 +225,7 @@ export const generateStudentPDF = async ({
                     formattedDate,
                     formattedTime,
                     item.submittedByName,
-                    item.formType == 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 'Award Points with Individualized Education Plan IEP' : item.formType,
+                    item.formType == FormType.AwardPointsIEP ? 'Award Points with Individualized Education Plan IEP' : item.formType,
                     item.points.toString()
                 ]
             });
