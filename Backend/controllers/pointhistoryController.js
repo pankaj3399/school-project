@@ -207,7 +207,7 @@ export const getYearPointsHistory = async (req, res) => {
             },
             avgDeductedPoints: {
               $sum: {
-                $cond: [{ $eq: ["$formType", "DeductPoints"] }, "$points", 0],
+                $cond: [{ $eq: ["$formType", FormType.DeductPoints] }, "$points", 0],
               },
             },
             avgAwardedPoints: {
@@ -215,7 +215,7 @@ export const getYearPointsHistory = async (req, res) => {
                 $cond: [
                   {
                     $or: [
-                      { $eq: ["$formType", "AwardPoints"] },
+                      { $eq: ["$formType", FormType.AwardPoints] },
                       {
                         $eq: [
                           "$formType",
@@ -231,7 +231,7 @@ export const getYearPointsHistory = async (req, res) => {
             },
             avgWithdrawPoints: {
               $sum: {
-                $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
+                $cond: [{ $eq: ["$formType", FormType.PointWithdraw] }, "$points", 0],
               },
             },
             totalPoints: { $sum: { $toDouble: "$points" } },
@@ -330,7 +330,7 @@ export const getYearPointsHistory = async (req, res) => {
             },
             avgDeductedPoints: {
               $sum: {
-                $cond: [{ $eq: ["$formType", "DeductPoints"] }, "$points", 0],
+                $cond: [{ $eq: ["$formType", FormType.DeductPoints] }, "$points", 0],
               },
             },
             avgAwardedPoints: {
@@ -349,7 +349,7 @@ export const getYearPointsHistory = async (req, res) => {
 },
             avgWithdrawPoints: {
               $sum: {
-                $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
+                $cond: [{ $eq: ["$formType", FormType.PointWithdraw] }, "$points", 0],
               },
             },
             totalPoints: { $sum: { $toDouble: "$points" } },
@@ -464,17 +464,26 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
           },
           avgDeductedPoints: {
             $sum: {
-              $cond: [{ $eq: ["$formType", "DeductPoints"] }, "$points", 0],
+              $cond: [{ $eq: ["$formType", FormType.DeductPoints] }, "$points", 0],
             },
           },
           avgAwardedPoints: {
             $sum: {
-              $cond: [{ $eq: ["$formType", "AwardPoints"] }, "$points", 0],
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ["$formType", FormType.AwardPoints] },
+                    { $eq: ["$formType", FormType.AwardPointsIEP] }
+                  ]
+                },
+                "$points",
+                0
+              ],
             },
           },
           avgWithdrawPoints: {
             $sum: {
-              $cond: [{ $eq: ["$formType", "PointWithdraw"] }, "$points", 0],
+              $cond: [{ $eq: ["$formType", FormType.PointWithdraw] }, "$points", 0],
             },
           },
           totalPoints: { $sum: { $toDouble: "$points" } },
