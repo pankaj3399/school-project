@@ -11,7 +11,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
-import { Question } from "@/lib/types";
+import { Question, FormType } from "@/lib/types";
 import { Textarea } from "@/components/ui/textarea";
 import { GoalTypes } from "@/lib/types";
 
@@ -19,12 +19,7 @@ type QuestionBuilderProps = {
   question: Question;
   onUpdate: (question: Question) => void;
   onRemove: (id: string) => void;
-  formType:
-    | "AwardPoints"
-    | "Feedback"
-    | "PointWithdraw"
-    | "DeductPoints"
-    | "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)";
+  formType: FormType;
 };
 
 export function QuestionBuilder({
@@ -75,7 +70,7 @@ export function QuestionBuilder({
 
   // Force minimum 1 point for IEP forms
   React.useEffect(() => {
-    if (formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
+    if (formType === FormType.AwardPointsIEP) {
       onUpdate({
         ...question,
         maxPoints: question.maxPoints < 1 ? 1 : question.maxPoints,
@@ -85,7 +80,7 @@ export function QuestionBuilder({
 
   return (
     <div className="border p-4 rounded-md space-y-4">
-      {formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)" && (
+      {formType === FormType.AwardPointsIEP && (
         <div className="space-y-4 border-b pb-4">
           <div className="space-y-2">
             <Label>1. GOAL</Label>
@@ -178,7 +173,7 @@ export function QuestionBuilder({
         </div>
 
         {/* Points input - only show for non-Feedback forms */}
-        {formType !== "Feedback" && (
+        {formType !== FormType.Feedback && (
           <>
             <div className="flex items-center w-full justify-start space-x-2">
               <Label htmlFor={`points-${question.id} w-full`}>Max Points</Label>

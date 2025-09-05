@@ -6,7 +6,7 @@ import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon } from 'lucide-r
 import { getForms } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { useNavigate } from 'react-router-dom'
-import { Form } from '@/lib/types'
+import { Form, FormType } from '@/lib/types'
 
 
 export default function ViewTeacherForms() {
@@ -39,13 +39,13 @@ export default function ViewTeacherForms() {
 
   const getFormTypeIcon = (formType: string) => {
     switch (formType) {
-      case 'AwardPoints':
+      case FormType.AwardPoints:
         return <StarIcon className="h-6 w-6 text-yellow-500" />
-      case 'Feedback':
+      case FormType.Feedback:
         return <ClipboardIcon className="h-6 w-6 text-blue-500" />
-      case 'PointWithdraw':
+      case FormType.PointWithdraw:
         return <MinusCircleIcon className="h-6 w-6 text-red-500" />
-      case 'DeductPoints':
+      case FormType.DeductPoints:
         return <MinusCircleIcon className="h-6 w-6 text-orange-500" />
       default:
         return <ClipboardIcon className="h-6 w-6 text-gray-500" />

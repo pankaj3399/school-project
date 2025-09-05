@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { getPointHistory, getStudents } from "@/api"
+import { FormType } from '@/lib/types'
 import Loading from "../../Loading"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/authContext"
@@ -125,7 +126,7 @@ export default function ViewPointHistoryTeacher() {
   };
 
    const formatFormType = (formType: string) => {
-    if(formType === "AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)") {
+    if(formType === FormType.AwardPointsIEP) {
       return "Award Points with Individualized Education Plan (IEP)";
     }else{
       return formType;

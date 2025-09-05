@@ -6,15 +6,13 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { createForm, getCurrentUser } from '@/api'
 import { toast } from '@/hooks/use-toast'
-import { Question } from '@/lib/types'
+import { Question, FormType } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
 
-type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
-
 export default function FormBuilderTeacher() {
   const [formName, setFormName] = useState('')
-  const [formType, setFormType] = useState<FormType>('AwardPoints')
+  const [formType, setFormType] = useState<FormType>(FormType.AwardPoints)
   const [grade, setGrade] = useState<number>(1)
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSendEmail, setIsSendEmail] = useState({
@@ -26,13 +24,13 @@ export default function FormBuilderTeacher() {
 
 const clearForm = () => {
   setFormName('')
-  setFormType('AwardPoints')
+  setFormType(FormType.AwardPoints)
   setQuestions([])
 }
 
 useEffect(()=>{
   switch(formType){
-    case 'AwardPoints':
+    case FormType.AwardPoints:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -40,7 +38,7 @@ useEffect(()=>{
         parentEmail: false
       })
       break
-    case 'DeductPoints':
+    case FormType.DeductPoints:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: false,
@@ -48,7 +46,7 @@ useEffect(()=>{
         parentEmail: true
       })
       break
-    case 'PointWithdraw':
+    case FormType.PointWithdraw:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -56,7 +54,7 @@ useEffect(()=>{
         parentEmail: false
       })
       break
-    case 'Feedback':
+    case FormType.Feedback:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -64,7 +62,7 @@ useEffect(()=>{
         parentEmail: false
       })
       break
-    case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
+    case FormType.AwardPointsIEP:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -90,7 +88,7 @@ const navigate = useNavigate()
     }
     // Ensure IEP questions have required fields, and remove for others
     const processedQuestions = questions.map(q => {
-      if (formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)') {
+      if (formType === FormType.AwardPointsIEP) {
         return {
           ...q,
           goal: q.goal || '',

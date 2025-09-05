@@ -1,6 +1,7 @@
 import  { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getHistoryOfCurrentWeek, getHistoryOfCurrentWeekByStudent } from "@/api";
+import { FormType } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
 
 const CurrentWeekCharts = ({studentId, isTeacher}:{
@@ -45,15 +46,15 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 let withdrawRes = {data: [], startDate: "", endDate: ""};
                 if(studentId === ""){
                     [awardRes, deductRes, withdrawRes] = await Promise.all([
-                        getHistoryOfCurrentWeek({formType: 'AwardPoints'}),
-                        getHistoryOfCurrentWeek({formType: 'DeductPoints'}),
-                        getHistoryOfCurrentWeek({formType: 'PointWithdraw'})
+                        getHistoryOfCurrentWeek({formType: FormType.AwardPoints}),
+                        getHistoryOfCurrentWeek({formType: FormType.DeductPoints}),
+                        getHistoryOfCurrentWeek({formType: FormType.PointWithdraw})
                     ]);
                 }else{
                     [awardRes, deductRes, withdrawRes] = await Promise.all([
-                        getHistoryOfCurrentWeekByStudent(studentId,{formType: 'AwardPoints'}),
-                        getHistoryOfCurrentWeekByStudent(studentId,{formType: 'DeductPoints'}),
-                        getHistoryOfCurrentWeekByStudent(studentId,{formType: 'PointWithdraw'})
+                        getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.AwardPoints}),
+                        getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.DeductPoints}),
+                        getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.PointWithdraw})
                     ]);
                 }
                 
@@ -179,13 +180,13 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
           onClick={() => {
             switch (title) {
               case "Tokens":
-                navigateToDetails("AwardPoints");
+                navigateToDetails(FormType.AwardPoints);
                 break;
               case "Withdrawals":
-                navigateToDetails("PointWithdraw");
+                navigateToDetails(FormType.PointWithdraw);
                 break;
               case "Oopsies":
-                navigateToDetails("DeductPoints");
+                navigateToDetails(FormType.DeductPoints);
                 break;
             }
           }}

@@ -6,16 +6,15 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { createForm } from '@/api'
 import { toast } from '@/hooks/use-toast'
-import { GRADE_OPTIONS, Question } from '@/lib/types'
+import { GRADE_OPTIONS, Question, FormType } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 
-type FormType = 'AwardPoints' | 'Feedback' | 'PointWithdraw' | 'DeductPoints' | 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
 
 export default function FormBuilder() {
   const [formName, setFormName] = useState('')
-  const [formType, setFormType] = useState<FormType>('AwardPoints')
+  const [formType, setFormType] = useState<FormType>(FormType.AwardPoints)
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSpecial, setIsSpecial] = useState(false)
 const [grade, setGrade] = useState<string>("K")
@@ -28,13 +27,13 @@ const [grade, setGrade] = useState<string>("K")
 
 const clearForm = () => {
   setFormName('')
-  setFormType('AwardPoints')
+  setFormType(FormType.AwardPoints)
   setQuestions([])
 }
 
 useEffect(()=>{
   switch(formType){
-    case 'AwardPoints':
+    case FormType.AwardPoints:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -42,7 +41,7 @@ useEffect(()=>{
         parentEmail: false
       })
       break
-    case 'DeductPoints':
+    case FormType.DeductPoints:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: false,
@@ -50,7 +49,7 @@ useEffect(()=>{
         parentEmail: true
       })
       break
-    case 'PointWithdraw':
+    case FormType.PointWithdraw:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -58,7 +57,7 @@ useEffect(()=>{
         parentEmail: false
       })
       break
-    case 'Feedback':
+    case FormType.Feedback:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -66,7 +65,7 @@ useEffect(()=>{
         parentEmail: false
       })
       break
-    case 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)':
+    case FormType.AwardPointsIEP:
       setIsSendEmail({
         studentEmail: true,
         teacherEmail: true,
@@ -92,7 +91,7 @@ const navigate = useNavigate()
     }
     // Ensure IEP questions have required fields, and remove for others
     const processedQuestions = questions.map(q => {
-      if (formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)') {
+      if (formType === FormType.AwardPointsIEP) {
         return {
           ...q,
           goal: q.goal || '',
@@ -188,11 +187,11 @@ const navigate = useNavigate()
             <SelectValue placeholder="Select form type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="AwardPoints">Award Points</SelectItem>
-            <SelectItem value="Feedback">Feedback</SelectItem>
-            <SelectItem value="PointWithdraw">Withdraw Points</SelectItem>
-            <SelectItem value="DeductPoints">Deduct Points</SelectItem>
-            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">Award Points with Individualized Education Plan (IEP)</SelectItem>
+            <SelectItem value={FormType.AwardPoints}>Award Points</SelectItem>
+            <SelectItem value={FormType.Feedback}>Feedback</SelectItem>
+            <SelectItem value={FormType.PointWithdraw}>Withdraw Points</SelectItem>
+            <SelectItem value={FormType.DeductPoints}>Deduct Points</SelectItem>
+            <SelectItem value={FormType.AwardPointsIEP}>Award Points with Individualized Education Plan (IEP)</SelectItem>
           </SelectContent>
         </Select>
       </div>

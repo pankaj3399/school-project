@@ -19,7 +19,7 @@ export default function EditFormTeacher() {
   const navigate = useNavigate()
   const [form, setForm] = useState<any | null>(null)
     const [formName, setFormName] = useState('')
-    const [formType, setFormType] = useState<FormType>('AwardPoints')
+    const [formType, setFormType] = useState<FormType>(FormType.AwardPoints)
     const [questions, setQuestions] = useState<Question[]>([])
     const [isSpecial, setIsSpecial] = useState(false)
 const [grade, setGrade] = useState<number>(1)
@@ -32,7 +32,7 @@ const [grade, setGrade] = useState<number>(1)
   
   const clearForm = () => {
     setFormName('')
-    setFormType('AwardPoints')
+    setFormType(FormType.AwardPoints)
     setQuestions([])
   }
 
@@ -146,11 +146,11 @@ const [grade, setGrade] = useState<number>(1)
             <SelectValue placeholder="Select form type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="AwardPoints">Award Points</SelectItem>
-            <SelectItem value="Feedback">Feedback</SelectItem>
-            <SelectItem value="PointWithdraw">Withdraw Points</SelectItem>
-            <SelectItem value="DeductPoints">Deduct Points</SelectItem>
-            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">
+            <SelectItem value={FormType.AwardPoints}>Award Points</SelectItem>
+            <SelectItem value={FormType.Feedback}>Feedback</SelectItem>
+            <SelectItem value={FormType.PointWithdraw}>Withdraw Points</SelectItem>
+            <SelectItem value={FormType.DeductPoints}>Deduct Points</SelectItem>
+            <SelectItem value={FormType.AwardPointsIEP}>
             Award Points with Individualized Education Plan (IEP)
             </SelectItem>
           </SelectContent>
@@ -217,10 +217,10 @@ const [grade, setGrade] = useState<number>(1)
         text: '',
         type: 'text',
         isCompulsory: false,
-        maxPoints: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? 1 : 0,
-        goal: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
-        goalSummary: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined,
-        targetedBehaviour: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)' ? '' : undefined
+        maxPoints: formType === FormType.AwardPointsIEP ? 1 : 0,
+        goal: formType === FormType.AwardPointsIEP ? '' : undefined,
+        goalSummary: formType === FormType.AwardPointsIEP ? '' : undefined,
+        targetedBehaviour: formType === FormType.AwardPointsIEP ? '' : undefined
       })}>
         Add Question
       </Button>
