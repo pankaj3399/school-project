@@ -4,6 +4,17 @@ const isProd = process.env.NODE_ENV === 'production';
 function errorHandler(err, req, res, next) {
   if (!err) return next();
 
+  // Zod validation errors
+  if (err.name === 'ZodError' || err?.issues) {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: err.issues.map(issue => ({
+        field: issue.path.join('.'),
+        message: issue.message
+      }))
+    });
+  }
+  
   // Mongoose validation errors
   if (err.name === 'ValidationError' && err.errors) {
     return res.status(400).json({

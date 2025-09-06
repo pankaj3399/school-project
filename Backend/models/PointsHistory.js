@@ -3,11 +3,13 @@ import mongoose from 'mongoose'
 const PointsHistorySchema = new mongoose.Schema({
     formId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Form'
+        ref: 'Form',
+        index: true  // Form analytics
     },
     formType:{
         type:String,
-        default:"N/A"
+        default:"N/A",
+        index: true  // Filter by form type
     },
     formName: {
         type: String,
@@ -19,7 +21,8 @@ const PointsHistorySchema = new mongoose.Schema({
     },
     submittedById: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher'
+        ref: 'Teacher',
+        index: true  // Teacher submissions
     },
     submittedByName: {
         type: String,
@@ -28,11 +31,13 @@ const PointsHistorySchema = new mongoose.Schema({
     submittedAt: {
         type: Date,
         required: true,
-        default: Date.now
+        default: Date.now,
+        index: true  // Date range queries
     },
     submittedForId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student'
+        ref: 'Student',
+        index: true  // Student history
     },
     submittedForName: {
         type: String,
@@ -40,12 +45,20 @@ const PointsHistorySchema = new mongoose.Schema({
     },
     points: {
         type: Number,
-        required: true
+        required: true,
+        index: true  // Points analytics
     },
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'School'
+        ref: 'School',
+        index: true  // School analytics
     }
 })
+
+// Compound indexes for analytics
+PointsHistorySchema.index({ schoolId: 1, submittedAt: -1 });        // School timeline
+PointsHistorySchema.index({ submittedForId: 1, submittedAt: -1 });  // Student history
+PointsHistorySchema.index({ schoolId: 1, formType: 1 });            // School form analytics
+PointsHistorySchema.index({ submittedById: 1, submittedAt: -1 });   // Teacher activity
 
 export default mongoose.models.PointsHistory || mongoose.model('PointsHistory', PointsHistorySchema)

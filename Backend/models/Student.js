@@ -14,9 +14,12 @@ const GaurdianSchema = new mongoose.Schema({
 
 const studentSchema = new mongoose.Schema({
   email:{
-    type:String,
-    required:true,
-    unique:true
+    type: String,
+    required: true,
+    unique: true,
+    index: true,  // Single field index
+    lowercase: true,
+    trim: true
   },
   name: {
     type: String,
@@ -42,15 +45,19 @@ const studentSchema = new mongoose.Schema({
   },
   standard:{
     type:String,
-    default: null
+    default: null,
+    index: true  // Search by standard
   },
   points:{
     type: Number,
-    default: 0
+    default: 0,
+    index: true   // Leaderboard queries
   },
   parentEmail:{
     type:String,
-    default: null
+    default: null,
+    index: true,  // Parent lookup
+    sparse: true  // Only index non-null values
   },
   sendNotifications:{
     type:Boolean,
@@ -60,11 +67,13 @@ const studentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'School', 
     default: null,
+    index: true  // Foreign key index
   },
   grade: {
     type: String,
     required: true,
-    default: 1
+    default: 1,
+    index: true  // Frequently queried
   },
   isParentOneEmailVerified:{
     type:Boolean,
@@ -105,5 +114,10 @@ studentSchema.pre('save', function (next) {
   next();
 });
 
+// Compound indexes for common queries
+studentSchema.index({ schoolId: 1, grade: 1 });           // Students by school and grade
+studentSchema.index({ schoolId: 1, points: -1 });         // School leaderboard
+studentSchema.index({ schoolId: 1, standard: 1 });        // Students by school and standard
+studentSchema.index({ email: 1, schoolId: 1 });           // Unique constraint per school
 
 export default mongoose.model('Student', studentSchema);
