@@ -10,7 +10,10 @@ const teacherSchema = new mongoose.Schema({
   email:{
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true,  // Auth lookup
+    lowercase: true,
+    trim: true
   },
   password: {
     type: String,
@@ -43,15 +46,19 @@ const teacherSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'School', 
     default: null,
+    index: true  // School queries
   },
   type: {
     type: String,
     enum: ['Lead', 'Special'],
-    required: true
+    required: true,
+    index: true  // Filter by teacher type
   },
   grade: {
     type: String,
-    required: function() { return this.type === 'Lead'; }
+    required: function() { return this.type === 'Lead'; },
+    index: true,  // Lead teacher by grade
+    sparse: true  // Only index when present
   },
   isEmailVerified:{
     type:Boolean,
@@ -75,5 +82,11 @@ teacherSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
+
+
+// Compound indexes
+teacherSchema.index({ schoolId: 1, type: 1 });           // Teachers by school and type
+teacherSchema.index({ schoolId: 1, grade: 1 });          // Lead teachers by grade
+teacherSchema.index({ type: 1, grade: 1 });              // Lead teachers across schools
 
 export default mongoose.model('Teacher', teacherSchema);

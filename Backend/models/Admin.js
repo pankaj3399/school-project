@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
+    index: true  // Auth lookup
   },
   password: {
     type: String,
@@ -21,17 +22,20 @@ const userSchema = new mongoose.Schema({
   approved:{
     type: Boolean,
     default: false,
+    index: true  // Pending approvals
   }
   ,
   role: {
     type: String,
     enum: Object.values(Role),
     required: true,
+    index: true  // Filter by role
   },
   schoolId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'School', 
     default: null,
+    index: true  // Admin by school
   },
   createdAt: {
     type: Date,
@@ -50,5 +54,8 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+// Compound indexes
+userSchema.index({ schoolId: 1, role: 1 });
+userSchema.index({ approved: 1, role: 1 });
 
 export default mongoose.model('User', userSchema);

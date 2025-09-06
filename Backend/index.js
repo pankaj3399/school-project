@@ -1,3 +1,4 @@
+import 'express-async-errors';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -14,6 +15,7 @@ import formRoutes from './routes/formRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import { authenticate } from './middlewares/authMiddleware.js';
 import { getCurrentUser } from './controllers/generalController.js';
+import errorHandler from './middlewares/errorHandler.js';
 
 dotenv.config();
 
@@ -49,11 +51,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'API is running...' });
 });
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send({ message: 'Server Error', error: err.message });
+// 404 fallback (ADDED) - must be before central error handler
+app.use((req, res, next) => {
+  const err = new Error('Not Found');
+  err.status = 404;
+  next(err);
 });
 
+// central error handler 
+app.use(errorHandler);
 
 
 const PORT = process.env.PORT || 5000;
