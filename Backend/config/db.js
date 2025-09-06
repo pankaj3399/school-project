@@ -22,9 +22,9 @@ const connectDB = async () => {
         PointsHistory.createIndexes(),
         Admin.createIndexes(),
       ]);
-      console.log('✅ All database indexes ensured');
+      console.log('All database indexes ensured');
     } catch (indexError) {
-      console.warn('⚠️ Error ensuring indexes:', indexError.message);
+      console.warn('Error ensuring indexes:', indexError.message);
     }
 
     return conn;
