@@ -116,7 +116,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = n
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #666;">
-        <p>This is an automated message from The RADU E-token System.<br>
+        <p>This is an automated message from The RADU E-Token System.<br>
            If you believe this was sent in error, please contact your school administrator.</p>
       </div>
     </body>

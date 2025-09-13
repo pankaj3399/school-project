@@ -50,7 +50,6 @@ const SetupPage = () => {
   const [state, setState] = useState("AL");
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState(TIMEZONE_OPTIONS[0].value);
-  const [domain, setDomain] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
@@ -76,7 +75,6 @@ const SetupPage = () => {
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
           setTimezone(data.school.timeZone || "UTC-5");
-          setDomain(data.school.domain || "");
         }
       } catch (error) {
         toast({
@@ -107,11 +105,6 @@ const SetupPage = () => {
       newErrors.logo = "Logo is required";
     }
 
-    if (!domain.trim()) {
-      newErrors.domain = "School domain is required";
-    } else if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain.trim())) {
-      newErrors.domain = "Please enter a valid domain (e.g., school.edu)";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -138,7 +131,6 @@ const SetupPage = () => {
       formData.append("state", state);
       formData.append("country", country);
       formData.append("timeZone", timezone);
-      formData.append("domain", domain);
       if (logo) {
         formData.append("logo", logo);
       }
@@ -254,7 +246,6 @@ const SetupPage = () => {
                   <p className="text-xl mb-1">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
                   <p className="text-xl mb-1">{school.address}</p>
                   <p className="text-xl mb-1">{school.state}, {school.country}</p>
-                  <p className="text-xl mb-1">Domain: {school.domain}</p>
                   <p className="text-xl mb-1">Timezone: {school.timeZone}</p>
                 </div>
               </div>
@@ -295,19 +286,6 @@ const SetupPage = () => {
                     />
                     {errors.district && (
                       <p className="text-red-500 text-sm mt-1">{errors.district}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="domain">School Domain</Label>
-                    <Input
-                      id="domain"
-                      value={domain}
-                      onChange={(e) => setDomain(e.target.value)}
-                      placeholder="school.edu"
-                      required
-                    />
-                    {errors.domain && (
-                      <p className="text-red-500 text-sm mt-1">{errors.domain}</p>
                     )}
                   </div>
                   {formFields}

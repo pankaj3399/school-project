@@ -175,7 +175,7 @@ export const sendSupportEmail = async (ticket, school) => {
                     
                     <div class="footer">
                         <p>Thanks.</p>
-                        <p>The RADU E-TOKEN system</p>
+                        <p>The RADU E-Token system</p>
                         <p>Customer Support</p>
                     </div>
                 </div>
@@ -185,7 +185,7 @@ export const sendSupportEmail = async (ticket, school) => {
 
         // Send to support team
         await sendEmail(
-            process.env.SUPPORT_EMAIL || 'support@raduframework.com',
+            process.env.SUPPORT_EMAIL || 'support@theraduetoken.com',
             emailSubject,
             emailBody,
             emailBody,
@@ -305,7 +305,7 @@ export const sendSupportEmail = async (ticket, school) => {
                     
                     <div class="footer">
                         <p>Thanks.</p>
-                        <p>The RADU E-TOKEN system</p>
+                        <p>The RADU E-Token system</p>
                         <p>Customer Support</p>
                     </div>
                 </div>

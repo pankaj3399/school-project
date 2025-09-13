@@ -10,7 +10,7 @@ export const FormType = Object.freeze({
     Feedback: 'Feedback',
     PointWithdraw: 'PointWithdraw',
     DeductPoints: 'DeductPoints',
-    AwardPointsIEP: 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
+    AwardPointsIEP: 'AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)'
 });
 //hello
 export const QuestionType = Object.freeze({

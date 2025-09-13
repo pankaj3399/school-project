@@ -215,7 +215,7 @@ const navigate = useNavigate()
         <SelectContent>
           {grades.map((g) => (
             <SelectItem key={g} value={g.toString()}>
-              Grade {g}
+              {g}
             </SelectItem>
           ))}
         </SelectContent>

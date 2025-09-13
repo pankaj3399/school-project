@@ -168,7 +168,7 @@ export function QuestionBuilder({
               checked={question.isCompulsory}
               onCheckedChange={handleCompulsoryChange}
             />
-            <Label htmlFor={`compulsory-${question.id}`}>Compulsory</Label>
+            <Label htmlFor={`compulsory-${question.id}`}>Required</Label>
           </div>
         </div>
 

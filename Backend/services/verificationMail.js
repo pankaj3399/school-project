@@ -198,7 +198,7 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
                     
                     <p style="margin-bottom: 20px;">Dear ${user.name},</p>
                     
-                    <p style="margin-bottom: 20px;">Welcome aboard as a ${userType}! We're excited to have you join The RADU E-token System community. To help you get started, we've prepared some essential resources for you.</p>
+                    <p style="margin-bottom: 20px;">Welcome aboard as a ${userType}! We're excited to have you join The RADU E-Token System community. To help you get started, we've prepared some essential resources for you.</p>
                     
                     <div class="resource-section">
                         <h3 style="color: #00a58c;">Your Resources</h3>
@@ -231,7 +231,7 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
                 </div>
                 
                 <div style="text-align: center; font-size: 12px; color: #666;">
-                    <p>This is an automated message from The RADU E-token System.<br>
+                    <p>This is an automated message from The RADU E-Token System.<br>
                        If you have any questions, please contact your school administrator.</p>
                 </div>
             </body>

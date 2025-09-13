@@ -32,7 +32,7 @@ export const emailGenerator = async (
   console.log(submittedAt, currentDateFormatted);
 
   switch (form.formType) {
-    case FormType["AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)"]:
+    case FormType["AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]:
     case FormType.AwardPoints: {
       subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`;
       body = `
@@ -40,7 +40,7 @@ export const emailGenerator = async (
             <p>The ${
               teacher.subject
                 ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`
-                : `<strong>The RADU E-token System</strong>`
+                : `<strong>The RADU E-Token System</strong>`
             }, <strong>${
               teacher.name
             }</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
@@ -49,7 +49,7 @@ export const emailGenerator = async (
             <p>
               ${schoolAdmin.name}<br>
               ${schoolAdmin.email}<br>
-              The RADU E-token System Manager<br>
+              The RADU E-Token System Manager<br>
               ${school.name}
             </p>
             `;
@@ -178,7 +178,7 @@ export const emailGenerator = async (
                         <div class="issued-by">
                             <strong>From:</strong> ${teacherLastName} - ${
                               teacher.subject ??
-                              "The RADU E-token System Manager"
+                              "The RADU E-Token System Manager"
                             }
                         </div>
                         
@@ -194,7 +194,7 @@ export const emailGenerator = async (
                             ${teacherFirstName} ${teacherLastName}<br>
                             ${
                               teacher.subject ??
-                              "The RADU E-token System Manager"
+                              "The RADU E-Token System Manager"
                             }<br>
                             ${school.name}<br>
                             ${school.district}
@@ -339,7 +339,7 @@ export const emailGenerator = async (
                               teacher.type === "Lead"
                                 ? "LEADER/ LEAD TEACHER"
                                 : teacher.subject ||
-                                  "The RADU E-token System Manager"
+                                  "The RADU E-Token System Manager"
                             }<br/>
                             ${teacher.grade}<br/>
                             ${school.name}
