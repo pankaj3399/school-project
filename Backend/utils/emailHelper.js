@@ -36,22 +36,121 @@ export const emailGenerator = async (
     case FormType.AwardPoints: {
       subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`;
       body = `
-            <p>Congratulations <strong>${student.name}</strong>!</p>
-            <p>The ${
-              teacher.subject
-                ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`
-                : `<strong>The RADU E-Token System</strong>`
-            }, <strong>${
-              teacher.name
-            }</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
-            <p>Please, check your E-Token's balance and exchange them at the AN Center or school store.</p>
-            <p>Keep up the good work!!!</p>
-            <p>
-              ${schoolAdmin.name}<br>
-              ${schoolAdmin.email}<br>
-              The RADU E-Token System Manager<br>
-              ${school.name}
-            </p>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        /* Reset and base styles */
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+                        /* Container styles */
+                        .container {
+                            font-family: Arial, sans-serif;
+                            max-width: 800px;
+                            margin: auto;
+                            padding: 20px;
+                            background-color: #ffffff;
+                        }
+
+                        /* Enhanced header styles */
+                        .header {
+                            position: relative;
+                            margin-bottom: 40px;
+                            padding: 20px 0;
+                            display: flex;
+                            justify-content: space-between;
+                            width: 100%;
+                            align-items: center;
+                            border-bottom: 2px solid #eaeaea;
+                        }
+
+                        /* Logo styles */
+                        .logo-left, .logo-right {
+                            flex: 0 0 auto;
+                            height: 200px;
+                            width: auto;
+                            max-width: 250px;
+                            object-fit: contain;
+                        }
+
+                        /* Title styles */
+                        .title {
+                            flex: 1;
+                            text-align: center;
+                            font-size: 28px;
+                            font-weight: bold;
+                            color: #333333;
+                            margin: 0 20px;
+                            padding: 10px;
+                            border-radius: 4px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                        }
+
+                        /* Responsive design */
+                        @media (max-width: 768px) {
+                            .header {
+                                flex-direction: column;
+                                gap: 15px;
+                            }
+                            .title {
+                                font-size: 24px;
+                                margin: 10px 0;
+                            }
+                            .logo-left, .logo-right {
+                                height: 150px;
+                                max-width: 150px;
+                            }
+                        }
+
+                        /* Content styles */
+                        .date-line { margin-bottom: 15px; }
+                        .message-content { margin: 30px 0; line-height: 1.6; }
+                        .signature { margin-top: 40px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <img src="${
+                              process.env.LOGO_URL ||
+                              "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
+                            }" alt="RADU Logo" class="logo-left">
+                            <h1 class="title">Award Points</h1>
+                            <img src="${
+                              school.logo
+                            }" alt="School Logo" class="logo-right">
+                        </div>
+
+                        <div class="date-line">
+                            <strong>Date:</strong> ${currentDateFormatted}
+                        </div>
+
+                        <div class="message-content">
+                            <p>Congratulations <strong>${student.name}</strong>!</p>
+                            <br/>
+                            <p>The ${
+                              teacher.subject
+                                ? `<strong>${teacher?.subject || "N/A"}</strong> teacher`
+                                : `<strong>The RADU E-Token System</strong>`
+                            }, <strong>${
+                              teacher.name
+                            }</strong>, has just awarded you with <strong>${points} E-Tokens</strong> for achieving your goals today.</p>
+                            <br/>
+                            <p>Please, check your E-Token's balance and exchange them at the AN Center or school store.</p>
+                            <br/>
+                            <p>Keep up the good work!!!</p>
+                        </div>
+
+                        <div class="signature">
+                            ${schoolAdmin.name}<br>
+                            ${schoolAdmin.email}<br>
+                            The RADU E-Token System Manager<br>
+                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
+                        </div>
+                    </div>
+                </body>
+                </html>
             `;
       attachment = await generateCouponImage(
         points,
@@ -196,8 +295,7 @@ export const emailGenerator = async (
                               teacher.subject ??
                               "The RADU E-Token System Manager"
                             }<br>
-                            ${school.name}<br>
-                            ${school.district}
+                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
                         </div>
                     </div>
                 </body>
@@ -341,8 +439,8 @@ export const emailGenerator = async (
                                 : teacher.subject ||
                                   "The RADU E-Token System Manager"
                             }<br/>
-                            ${teacher.grade}<br/>
-                            ${school.name}
+                            ${teacher.grade && teacher.grade !== 'undefined' ? `Grade ${teacher.grade}<br/>` : ''}
+                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
                         </div>
                     </div>
                 </body>
@@ -354,9 +452,116 @@ export const emailGenerator = async (
       subject = `${Math.abs(points)} points Withdrawn from student ${
         student.name
       }.`;
-      body = `${Math.abs(points)} points Withdrawn from student ${
-        student.name
-      }.`;
+      body = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        /* Reset and base styles */
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+                        /* Container styles */
+                        .container {
+                            font-family: Arial, sans-serif;
+                            max-width: 800px;
+                            margin: auto;
+                            padding: 20px;
+                            background-color: #ffffff;
+                        }
+
+                        /* Enhanced header styles */
+                        .header {
+                            position: relative;
+                            margin-bottom: 40px;
+                            padding: 20px 0;
+                            display: flex;
+                            justify-content: space-between;
+                            width: 100%;
+                            align-items: center;
+                            border-bottom: 2px solid #eaeaea;
+                        }
+
+                        /* Logo styles */
+                        .logo-left, .logo-right {
+                            flex: 0 0 auto;
+                            height: 200px;
+                            width: auto;
+                            max-width: 250px;
+                            object-fit: contain;
+                        }
+
+                        /* Title styles */
+                        .title {
+                            flex: 1;
+                            text-align: center;
+                            font-size: 28px;
+                            font-weight: bold;
+                            color: #333333;
+                            margin: 0 20px;
+                            padding: 10px;
+                            border-radius: 4px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                        }
+
+                        /* Responsive design */
+                        @media (max-width: 768px) {
+                            .header {
+                                flex-direction: column;
+                                gap: 15px;
+                            }
+                            .title {
+                                font-size: 24px;
+                                margin: 10px 0;
+                            }
+                            .logo-left, .logo-right {
+                                height: 150px;
+                                max-width: 150px;
+                            }
+                        }
+
+                        /* Rest of your existing styles */
+                        .date-line { margin-bottom: 15px; }
+                        .message-content { margin: 30px 0; line-height: 1.6; }
+                        .signature { margin-top: 40px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <img src="${
+                              process.env.LOGO_URL ||
+                              "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
+                            }" alt="RADU Logo" class="logo-left">
+                            <h1 class="title">Points Withdrawal</h1>
+                            <img src="${
+                              school.logo
+                            }" alt="School Logo" class="logo-right">
+                        </div>
+
+                        <div class="date-line">
+                            <strong>Date:</strong> ${currentDateFormatted}
+                        </div>
+
+                        <div class="message-content">
+                            <p>Hello <strong>${student.name}</strong>,</p>
+                            <br/>
+                            <p><strong>${Math.abs(points)} points</strong> have been withdrawn from your account.</p>
+                            <br/>
+                            <p>Your current balance is: <strong>${student.points} points</strong></p>
+                            <br/>
+                            <p>Thank you for using the RADU E-Token System!</p>
+                        </div>
+
+                        <div class="signature">
+                            ${schoolAdmin.name}<br>
+                            The RADU E-Token System Manager<br>
+                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
       attachment = await generateRecieptImage(
         points,
         student.name,
