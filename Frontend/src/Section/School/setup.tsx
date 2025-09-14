@@ -51,7 +51,7 @@ export default function Setup() {
   const downloadTemplate = () => {
     // Create a link element to download the existing template file
     const link = document.createElement("a");
-    link.href = "/src/assets/teacher.xlsx";
+    link.href = "/teacher.xlsx";
     link.download = "teacher-roster-template.xlsx";
     document.body.appendChild(link);
     link.click();
