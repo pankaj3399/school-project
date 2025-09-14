@@ -97,6 +97,11 @@ const formSchema = new mongoose.Schema({
     required: function(){return !this.isSpecial},
     default: ""
   },
+  preSelectedStudents: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Student',
+    default: []
+  }
 });
 
 export default mongoose.model("Form", formSchema);

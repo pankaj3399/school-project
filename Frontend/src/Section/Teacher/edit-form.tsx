@@ -169,7 +169,7 @@ const [grade, setGrade] = useState<number>(1)
         <SelectContent>
           {grades.map((g) => (
             <SelectItem key={g} value={g.toString()}>
-              Grade {g}
+              {g}
             </SelectItem>
           ))}
         </SelectContent>

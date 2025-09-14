@@ -3,7 +3,7 @@ export const FormType = {
   DeductPoints: 'DeductPoints', 
   Feedback: 'Feedback',
   PointWithdraw: 'PointWithdraw',
-  AwardPointsIEP: 'AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)'
+  AwardPointsIEP: 'AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)'
 } as const;
 
 export type FormType = typeof FormType[keyof typeof FormType];
@@ -30,7 +30,8 @@ export type Form = {
     studentEmail: boolean,
     parentEmail: boolean,
     teacherEmail: boolean,
-    schoolAdminEmail: boolean
+    schoolAdminEmail: boolean,
+    preSelectedStudents?: string[]
   }
 
 export type AnswerType = {

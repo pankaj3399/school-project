@@ -15,6 +15,7 @@ import { timezoneManager } from "../utils/luxon.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import Otp from "../models/Otp.js";
 import { sendEmail } from "../services/mail.js";
+import ParentVerification from "../models/ParentVerification.js";
 
 const getSchoolIdFromUser = async (userId) => {
   // Try finding user as admin first
@@ -106,6 +107,28 @@ export const addStudent = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Get the school ID
+    const admin = await Admin.findById(req.user.id);
+    const schoolId = admin.schoolId;
+
+    // Check if there's existing parent verification for this student email
+    const existingVerification = await ParentVerification.findOne({
+      studentEmail: email,
+      schoolId: schoolId
+    });
+
+    // Set verification status based on existing record
+    let isParentOneEmailVerified = false;
+    let isParentTwoEmailVerified = false;
+
+    if (existingVerification) {
+      // For school admin controller, we don't have parentEmail in req.body,
+      // so we check against standard field for parent emails
+      if (standard && standard === existingVerification.parentTwoEmail) {
+        isParentTwoEmailVerified = existingVerification.isParentTwoEmailVerified;
+      }
+    }
+
     const student = await Student.create({
       name,
       password: hashedPassword,
@@ -113,6 +136,9 @@ export const addStudent = async (req, res) => {
       email,
       role: Role.Student,
       grade,
+      isParentOneEmailVerified,
+      isParentTwoEmailVerified,
+      schoolId: schoolId
     });
     await School.findOneAndUpdate(
       {
@@ -712,9 +738,31 @@ export const studentRoster = async (req, res) => {
         //kept the password as 123456 for now, field might be used in future
         const hashedPassword = await bcrypt.hash("123456", 12);
 
+        const studentEmail = student.studentNumber + school.domain;
+
+        // Check if there's existing parent verification for this student email
+        const existingVerification = await ParentVerification.findOne({
+          studentEmail: studentEmail,
+          schoolId: schoolId
+        });
+
+        // Set verification status based on existing record
+        let isParentOneEmailVerified = false;
+        let isParentTwoEmailVerified = false;
+
+        if (existingVerification) {
+          // Check if parent emails match existing verification
+          if (student.guardian1?.email && student.guardian1.email === existingVerification.parentOneEmail) {
+            isParentOneEmailVerified = existingVerification.isParentOneEmailVerified;
+          }
+          if (student.guardian2?.email && student.guardian2.email === existingVerification.parentTwoEmail) {
+            isParentTwoEmailVerified = existingVerification.isParentTwoEmailVerified;
+          }
+        }
+
         const studentData = {
           name: student.name,
-          email: student.studentNumber + school.domain,
+          email: studentEmail,
           grade: student.grade,
           studentNumber: student.studentNumber,
           parentEmail: student.guardian1.email,
@@ -733,8 +781,8 @@ export const studentRoster = async (req, res) => {
           password: hashedPassword,
           role: Role.Student,
           isEmailVerified: false,
-          isParentOneEmailVerified: false,
-          isParentTwoEmailVerified: false,
+          isParentOneEmailVerified,
+          isParentTwoEmailVerified,
           sendNotifications: true,
         };
 

@@ -53,11 +53,18 @@ export class LuxonTimezoneManager {
 
   // Convert old UTC offset format to proper timezone
   getTimezoneFromOffset(utcOffset: string): string {
-    console.log(`Converting UTC offset: ${utcOffset}`);
-    if( utcOffset.startsWith('UTC')) {
-      return this.timezoneMap.get(utcOffset) || 'UTC'; // Already in proper format
+    // If it's already a proper IANA timezone, return as is
+    if (utcOffset.includes('/') || utcOffset === 'UTC') {
+      return utcOffset;
     }
-    return  utcOffset;
+
+    // If it starts with UTC, try to map it to IANA timezone
+    if (utcOffset.startsWith('UTC')) {
+      return this.timezoneMap.get(utcOffset) || 'UTC';
+    }
+
+    // Otherwise return as is
+    return utcOffset;
   }
 
   // Get current time in school's timezone

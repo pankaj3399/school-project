@@ -23,6 +23,9 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
 
     useEffect(() => {
         const fetchData = async () => {
+            console.log("=== CURRENT WEEK CHARTS DEBUG ===");
+            console.log("StudentId:", studentId);
+            console.log("IsTeacher:", isTeacher);
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
             // Initialize data arrays with zeros
@@ -45,17 +48,27 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 let deductRes = {data: [], startDate: "", endDate: ""};
                 let withdrawRes = {data: [], startDate: "", endDate: ""};
                 if(studentId === ""){
+                    console.log("=== FETCHING ALL STUDENTS DATA ===");
                     [awardRes, deductRes, withdrawRes] = await Promise.all([
                         getHistoryOfCurrentWeek({formType: FormType.AwardPoints}),
                         getHistoryOfCurrentWeek({formType: FormType.DeductPoints}),
                         getHistoryOfCurrentWeek({formType: FormType.PointWithdraw})
                     ]);
+                    console.log("All students data:", { awardRes, deductRes, withdrawRes });
                 }else{
-                    [awardRes, deductRes, withdrawRes] = await Promise.all([
-                        getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.AwardPoints}),
-                        getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.DeductPoints}),
-                        getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.PointWithdraw})
-                    ]);
+                    console.log("=== FETCHING STUDENT SPECIFIC DATA ===");
+                    console.log("Student ID for API calls:", studentId);
+                    try {
+                        [awardRes, deductRes, withdrawRes] = await Promise.all([
+                            getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.AwardPoints}),
+                            getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.DeductPoints}),
+                            getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.PointWithdraw})
+                        ]);
+                        console.log("Student specific data SUCCESS:", { studentId, awardRes, deductRes, withdrawRes });
+                    } catch (error: any) {
+                        console.error("Student specific data ERROR:", error);
+                        console.error("Error details:", error.response?.data || error.message);
+                    }
                 }
                 
 
@@ -149,7 +162,7 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
           height="100%"
         >
           <BarChart
-            data={data.slice(1, 7)} // First 6 days (excluding Sunday)
+            data={data.filter(d => d.day !== 'Sun').slice(0, 6)} // Monday to Saturday only
             margin={{
               top: 5,
               right: 30,

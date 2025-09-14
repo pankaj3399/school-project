@@ -73,7 +73,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
           <DialogHeader>
             <DialogTitle>Contact Support</DialogTitle>
             <DialogDescription>
-              Please provide details about your issue and how we can help you.
+              Please, let us know the challenge you are experiencing.
             </DialogDescription>
           </DialogHeader>
 
@@ -159,7 +159,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
                 id="issue"
                 value={formData.issue}
                 onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-                placeholder="Please provide details about your issue..."
+                placeholder="Please, let us know the challenge you are experiencing."
                 className="min-h-[100px] w-full"
                 required
               />
@@ -210,7 +210,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
                     )}
                   </div>
                 </div>
-                <p>Would you like to submit this support request?</p>
+                <p><strong>SUBMIT REQUEST?</strong></p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -225,7 +225,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
               className="bg-[#00a58c]"
               onClick={handleConfirmSubmit}
             >
-              Send Request
+              SUBMIT
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -237,7 +237,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
             <AlertDialogTitle>Request Submitted Successfully</AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
               <p>Hello {user?.name ? user.name.split(" ")[0]:"User"}.</p>
-              <p>Your request is important to us and we are pleased to answer your request.<br></br>Please expect a response from our Customer Support Team within 24 hours.</p>
+              <p>Got it! Our team will get back to you within 24 hours.</p>
               <p>Thanks!</p>
             </AlertDialogDescription>
           </AlertDialogHeader>

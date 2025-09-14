@@ -21,8 +21,12 @@ const AllCharts = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log("=== TEACHER ANALYTICS DEBUG ===");
       const token = localStorage.getItem("token");
+      console.log("Token:", token ? "exists" : "missing");
       const resTeacher = await getStudents(token ?? "");
+      console.log("Students response:", resTeacher);
+      console.log("Students array:", resTeacher.students);
       setStudents(resTeacher.students);
       setfilteredStudents(resTeacher.students);
     };
@@ -69,6 +73,8 @@ const AllCharts = () => {
             {filteredStudents.map((s: any) => (
               <Button
                 onClick={() => {
+                  console.log("=== STUDENT SELECTED ===");
+                  console.log("Selected student:", { id: s._id, name: s.name, grade: s.grade });
                   setStudentId(s._id);
                   setStudentName(s.name);
                   setIsPopOverOpen(false);

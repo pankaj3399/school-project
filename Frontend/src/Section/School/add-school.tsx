@@ -36,7 +36,6 @@ export default function SchoolPage() {
   const [state, setState] = useState("AL");
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState("UTC-5"); // Default to Eastern Time
-  const [domain, setDomain] = useState("");
 
   const [stats, setStats] = useState({
       teachers:0,
@@ -85,7 +84,6 @@ export default function SchoolPage() {
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
           setTimezone(data.school.timezone || "UTC-5");
-          setDomain(data.school.domain || "");
         }
       } catch (error) {
         toast({
@@ -116,11 +114,6 @@ export default function SchoolPage() {
       newErrors.logo = "Logo is required";
     }
 
-    if (!domain.trim()) {
-      newErrors.domain = "School domain is required";
-    } else if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain.trim())) {
-      newErrors.domain = "Please enter a valid domain (e.g., school.edu)";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -147,7 +140,6 @@ export default function SchoolPage() {
         formData.append("state", state);
         formData.append("country", country);
         formData.append("timeZone", timezone);
-        formData.append("domain", domain);
         if (logo) {
           formData.append("logo", logo);
         }
@@ -305,19 +297,6 @@ if (!response.error) {
                     <p className="text-red-500 text-sm mt-1">{errors.district}</p>
                   )}
                 </div>
-                <div>
-                  <Label htmlFor="domain">School Domain</Label>
-                  <Input
-                    id="domain"
-                    value={domain}
-                    onChange={(e) => setDomain(e.target.value)}
-                    placeholder="school.edu"
-                    required
-                  />
-                  {errors.domain && (
-                    <p className="text-red-500 text-sm mt-1">{errors.domain}</p>
-                  )}
-                </div>
                 {formFields}
                 {isEditing && (
                   <div>
@@ -387,19 +366,6 @@ if (!response.error) {
                     <p className="text-red-500 text-sm mt-1">{errors.district}</p>
                   )}
                 </div>
-          <div>
-            <Label htmlFor="domain">School Domain</Label>
-            <Input
-              id="domain"
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              placeholder="school.edu"
-              required
-            />
-            {errors.domain && (
-              <p className="text-red-500 text-sm mt-1">{errors.domain}</p>
-            )}
-          </div>
           {formFields}
           {!isEditing && (
             <div>

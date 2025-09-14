@@ -49,7 +49,7 @@ export default function VerifyEmail() {
           description: "Please try again",
           variant: "destructive",
         });
-      } else {
+      } else if (response.success) {
         toast({
           title: "Email Verified Successfully",
           description: "You can now close this window",

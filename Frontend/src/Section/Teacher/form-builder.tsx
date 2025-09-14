@@ -202,7 +202,7 @@ const navigate = useNavigate()
             <SelectItem value="Feedback">Feedback</SelectItem>
             <SelectItem value="PointWithdraw">Withdraw Points</SelectItem>
             <SelectItem value="DeductPoints">Deduct Points</SelectItem>
-            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCTION PLAN (IEP)">
+            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)">
             Award Points with Individualized Education Plan (IEP)
             </SelectItem>
           </SelectContent>

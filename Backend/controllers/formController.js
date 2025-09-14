@@ -41,7 +41,8 @@ export const createForm = async (req, res) => {
     schoolAdminEmail = false,
     parentEmail = false,
     isSpecial,
-    grade
+    grade,
+    preSelectedStudents = []
   } = req.body;
   const id = req.user.id;
   let school;
@@ -73,7 +74,8 @@ export const createForm = async (req, res) => {
       schoolAdminEmail,
       parentEmail,
       grade,
-      isSpecial
+      isSpecial,
+      preSelectedStudents: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)' ? preSelectedStudents : []
     });
     return res.status(200).json({
       message: "Form Created Successfully",
@@ -381,14 +383,19 @@ export const submitFormAdmin = async (req, res) => {
 
 export const getPointHistory = async (req, res) => {
   try {
-  
+    console.log("=== getPointHistory DEBUG ===");
+    console.log("User ID:", req.user.id);
+    console.log("User role:", req.user.role);
+    console.log("Query params:", req.query);
+
     const id = req.user.id;
     let user;
-    
+
     // Get pagination parameters from query
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    console.log("Pagination:", { page, limit, skip });
     
     // Query conditions
     let query = {};
@@ -423,10 +430,14 @@ export const getPointHistory = async (req, res) => {
         });
         
       case Role.Teacher:
+        console.log("Processing Teacher role...");
         user = await Teacher.findById(id);
+        console.log("Teacher found:", user);
         const grade = await getGradeFromUser(id);
-        
+        console.log("Grade data:", grade);
+
         if (!grade || !grade.studentIds) {
+          console.log("ERROR: No students found for teacher");
           return res.status(404).json({ message: "No students found for this grade" });
         }
         
@@ -436,12 +447,12 @@ export const getPointHistory = async (req, res) => {
         };
 
         console.log("Teacher Query:", query);
-        
+        console.log("Accessible student IDs:", grade.studentIds);
+
         // Get total count for pagination
         totalCount = await PointsHistory.countDocuments(query);
-
         console.log("Total Count:", totalCount);
-        
+
         // Execute query with pagination
         const teacherPointHistory = await PointsHistory.find(query)
           .populate("submittedForId")
@@ -449,15 +460,20 @@ export const getPointHistory = async (req, res) => {
           .skip(skip)
           .limit(limit);
 
-          console.log("Teacher History:", {
-            pointHistory: teacherPointHistory,
-            pagination: {
-              totalItems: totalCount,
-              totalPages: Math.ceil(totalCount / limit),
-              currentPage: page,
-              itemsPerPage: limit
-            }
-          });
+        console.log("Teacher point history results:", teacherPointHistory.length);
+        console.log("Teacher point history sample:", teacherPointHistory.slice(0, 3));
+
+        const response = {
+          pointHistory: teacherPointHistory,
+          pagination: {
+            totalItems: totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            itemsPerPage: limit
+          }
+        };
+
+        console.log("Final response:", response);
           
         return res.status(200).json({
           pointHistory: teacherPointHistory,

@@ -64,8 +64,12 @@ export default function ViewPointHistoryTeacher() {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log("=== TEACHER POINTS HISTORY DEBUG ===");
       const token = localStorage.getItem('token')
+      console.log("Token:", token ? "exists" : "missing");
       const resTeacher = await getStudents(token ?? "")
+      console.log("Students response:", resTeacher);
+      console.log("Students array:", resTeacher.students);
       setStudents(resTeacher.students)
     }
     fetchData()
@@ -73,9 +77,13 @@ export default function ViewPointHistoryTeacher() {
 
   const fetchPointHistoryData = async (page: number = 1) => {
     try {
+      console.log("=== FETCHING POINT HISTORY ===");
+      console.log("Page:", page);
+      console.log("Items per page:", pagination.itemsPerPage);
       setLoading(true);
       const token = localStorage.getItem("token")
       if (!token) {
+        console.log("ERROR: No token found");
         toast({
           title: "Error",
           description: "No token found.",
@@ -85,17 +93,24 @@ export default function ViewPointHistoryTeacher() {
         return
       }
 
+      console.log("Making API call to getPointHistory...");
       const data = await getPointHistory(token, page, pagination.itemsPerPage);
-      
+      console.log("Point history response:", data);
+
       // Update pagination info
       if (data.pagination) {
+        console.log("Pagination info:", data.pagination);
         setPagination(data.pagination);
       }
-      
+
+      console.log("Point history data:", data.pointHistory);
       setPointHistory(data.pointHistory || [])
       setShowPointHistory(data.pointHistory || [])
       setLoading(false)
-    } catch (error) {
+    } catch (error: any) {
+      console.error("=== ERROR FETCHING POINT HISTORY ===");
+      console.error("Error:", error);
+      console.error("Error response:", error.response?.data);
       toast({
         title: "Error",
         description: "Failed to fetch point history.",
@@ -110,7 +125,13 @@ export default function ViewPointHistoryTeacher() {
   }, []) // Load initial page
 
   useEffect(() => {
-    setShowPointHistory(pointHistory.filter(point => point.submittedForName == studentName))
+    console.log("=== FILTERING POINT HISTORY ===");
+    console.log("Selected student name:", studentName);
+    console.log("Total point history:", pointHistory.length);
+    const filtered = pointHistory.filter(point => point.submittedForName == studentName);
+    console.log("Filtered point history:", filtered.length);
+    console.log("Filtered data:", filtered);
+    setShowPointHistory(filtered);
   }, [studentName, pointHistory])
 
   // Handle page change
@@ -153,8 +174,14 @@ export default function ViewPointHistoryTeacher() {
         <div className="flex flex-wrap gap-4 items-center">
           <div className="grow max-w-md relative">
             <Select value={studentId} onValueChange={(value) => {
+              console.log("=== STUDENT SELECTED IN POINTS HISTORY ===");
+              console.log("Selected student ID:", value);
+              const selectedStudent = students.filter(student => value === student._id)[0];
+              console.log("Selected student object:", selectedStudent);
+              const selectedName = selectedStudent?.name || "";
+              console.log("Selected student name:", selectedName);
               setStudentId(value)
-              setStudentName(students.filter(student => value === student._id)[0]?.name || "")
+              setStudentName(selectedName)
             }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a Student" />

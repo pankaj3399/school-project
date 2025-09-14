@@ -45,8 +45,20 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-700 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} The RADU E-token System &#9415; All rights reserved.</p>
-          <p className="mt-2">Powered by Affective Academy LLC.</p>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex items-center space-x-3">
+              <img
+                src="/radu-logo-2.png"
+                alt="RADU E-Token Logo"
+                className="h-8 w-auto"
+              />
+              <p className="text-base font-medium">RADU E-Token — Sometimes being seen is all it takes to stay.</p>
+            </div>
+            <div className="space-y-2">
+              <p>&copy; {new Date().getFullYear()} The RADU E-token System &#9415; All rights reserved.</p>
+              <p>Powered by Affective Academy LLC.</p>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
