@@ -107,7 +107,7 @@ export default function ViewPointHistoryTeacher() {
       setPointHistory(data.pointHistory || [])
       setShowPointHistory(data.pointHistory || [])
       setLoading(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error("=== ERROR FETCHING POINT HISTORY ===");
       console.error("Error:", error);
       console.error("Error response:", error.response?.data);

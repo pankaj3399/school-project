@@ -11,7 +11,6 @@ import { getStudents } from "@/api";
 import EducationYearChart from "../School/component/new-chart";
 import CurrentWeekCharts from "../School/component/current-week-charts";
 import Ranks from "../School/component/ranks";
-import { useAuth } from "@/authContext";
 
 const AllCharts = () => {
   const [studentName, setStudentName] = useState<string>("");

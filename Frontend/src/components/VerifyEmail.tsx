@@ -49,15 +49,7 @@ export default function VerifyEmail() {
           description: "Please try again",
           variant: "destructive",
         });
-      } else if (response.alreadyVerified) {
-        // Show success message for already verified emails without red box
-        toast({
-          title: "Already Verified",
-          description: response.message || "This email was already verified. No update needed.",
-          variant: "default",
-        });
-        setVerificationSuccess(true);
-      } else {
+      } else if (response.success) {
         toast({
           title: "Email Verified Successfully",
           description: "You can now close this window",

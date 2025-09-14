@@ -165,12 +165,17 @@ const DetailedHistory = () => {
             }));
 
             setData(finalData);
-        } catch (error) {
+        } catch (error: any) {
             console.error('=== ERROR FETCHING DETAILED HISTORY ===');
             console.error('Error:', error);
             console.error('Error response:', error.response?.data);
             console.error('Error status:', error.response?.status);
-            console.error('Request that failed:', requestData);
+            const requestDataForLog = {
+                formType: searchParams.get('formType'),
+                period,
+                studentId: studentId || undefined
+            };
+            console.error('Request that failed:', requestDataForLog);
 
             if (error.response?.status === 403) {
                 console.error('Access denied error details:', error.response.data);

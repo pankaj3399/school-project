@@ -14,13 +14,6 @@ import { getStudents, getHistoryByTime } from "@/api";
 import PointsBarChart from "./points-bar-chart";
 import { FormType } from '@/lib/types';
 
-const periods = [
-  {label: '1W', value: '1 WEEK'},
-  {label: '1M', value: '1 MONTH'},
-  {label: '3M', value: '3 MONTHS'},
-  {label: '6M', value: '6 MONTHS'},
-  {label: '1Y', value: '1 YEAR'},
-];
 
 const AllCharts = () => {
   const [studentName, setStudentName] = useState<string>("");
@@ -28,7 +21,7 @@ const AllCharts = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [filteredStudents, setfilteredStudents] = useState<any[]>([]);
   const [isPopOverOpen, setIsPopOverOpen] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('1W');
+  const selectedPeriod = '1W';
   const [tokensData, setTokensData] = useState<any[]>([]);
   const [withdrawalsData, setWithdrawalsData] = useState<any[]>([]);
   const [oopsiesData, setOopsiesData] = useState<any[]>([]);

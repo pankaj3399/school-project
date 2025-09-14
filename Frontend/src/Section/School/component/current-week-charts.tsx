@@ -65,7 +65,7 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                             getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.PointWithdraw})
                         ]);
                         console.log("Student specific data SUCCESS:", { studentId, awardRes, deductRes, withdrawRes });
-                    } catch (error) {
+                    } catch (error: any) {
                         console.error("Student specific data ERROR:", error);
                         console.error("Error details:", error.response?.data || error.message);
                     }
