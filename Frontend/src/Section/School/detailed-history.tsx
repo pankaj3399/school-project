@@ -120,21 +120,34 @@ const DetailedHistory = () => {
     // Fetch data function
     const fetchData = useCallback(async () => {
         try {
+            console.log("=== DETAILED HISTORY FETCH DEBUG ===");
+            console.log("Search params:", Object.fromEntries(searchParams.entries()));
+            console.log("Period:", period);
+            console.log("Student ID:", studentId);
+            console.log("Student Name:", studentName);
+
             setLoading(true);
             const formType = searchParams.get('formType');
-            
-            const res = await getHistoryByTime({
+            console.log("Form Type:", formType);
+
+            const requestData = {
                 formType,
                 period,
                 studentId: studentId || undefined
-            });
+            };
+            console.log("API Request Data:", requestData);
+
+            const res = await getHistoryByTime(requestData);
+            console.log("API Response:", res);
 
             if (!res) {
+                console.log("No response received, setting empty data");
                 setData([]);
                 setHistoryData([]);
                 return;
             }
 
+            console.log("History data:", res.history);
             setHistoryData(res.history || []);
 
             // Format data using the helper function
@@ -153,7 +166,16 @@ const DetailedHistory = () => {
 
             setData(finalData);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('=== ERROR FETCHING DETAILED HISTORY ===');
+            console.error('Error:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+            console.error('Request that failed:', requestData);
+
+            if (error.response?.status === 403) {
+                console.error('Access denied error details:', error.response.data);
+            }
+
             setData([]);
             setHistoryData([]);
         } finally {

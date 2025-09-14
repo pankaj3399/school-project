@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import {Role} from '../enum.js';
 import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
+import ParentVerification from "../models/ParentVerification.js";
 
 export const addStudent = async (req, res) => {
     const {
@@ -27,7 +28,27 @@ export const addStudent = async (req, res) => {
 
     try{
         const hashedPassword = await bcrypt.hash(password, 12)
-        
+
+        // Check if there's existing parent verification for this student email
+        const existingVerification = await ParentVerification.findOne({
+            studentEmail: email,
+            schoolId: user.schoolId
+        });
+
+        // Set verification status based on existing record
+        let isParentOneEmailVerified = false;
+        let isParentTwoEmailVerified = false;
+
+        if (existingVerification) {
+            // Check if parent emails match existing verification
+            if (parentEmail && parentEmail === existingVerification.parentOneEmail) {
+                isParentOneEmailVerified = existingVerification.isParentOneEmailVerified;
+            }
+            if (standard && standard === existingVerification.parentTwoEmail) {
+                isParentTwoEmailVerified = existingVerification.isParentTwoEmailVerified;
+            }
+        }
+
         const student = await Student.create({
             name,
             password: hashedPassword,
@@ -37,7 +58,9 @@ export const addStudent = async (req, res) => {
             parentEmail,
             sendNotifications,
             schoolId: user.schoolId,
-            grade
+            grade,
+            isParentOneEmailVerified,
+            isParentTwoEmailVerified
         })
         await School.findOneAndUpdate({
             _id: user.schoolId
@@ -74,6 +97,30 @@ export const deleteStudent = async (req, res) => {
     const studentId = req.params.id;
 
     try{
+        const studentToDelete = await Student.findById(studentId);
+
+        if (!studentToDelete) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        // Save parent verification status before deletion
+        if (studentToDelete.parentEmail || studentToDelete.standard) {
+            await ParentVerification.findOneAndUpdate(
+                {
+                    studentEmail: studentToDelete.email,
+                    schoolId: studentToDelete.schoolId
+                },
+                {
+                    parentOneEmail: studentToDelete.parentEmail,
+                    isParentOneEmailVerified: studentToDelete.isParentOneEmailVerified,
+                    parentTwoEmail: studentToDelete.standard,
+                    isParentTwoEmailVerified: studentToDelete.isParentTwoEmailVerified,
+                    schoolId: studentToDelete.schoolId
+                },
+                { upsert: true, new: true }
+            );
+        }
+
         const deletedStudent = await Student.findByIdAndDelete(studentId);
 
         await School.updateMany(

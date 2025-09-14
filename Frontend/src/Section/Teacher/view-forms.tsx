@@ -64,18 +64,18 @@ export default function ViewFormsTeacher() {
     }
   }
 
-  const calculateTotalPoints = (questions: Question[]) =>
-  {
-    if(questions.length === 0) return 0
-    let sum = questions.reduce((sum, question) => sum + (question.maxPoints || 0), 0) 
-     questions.forEach(question => {
-      if(question.type == 'select'){
-        question.options?.forEach(option => {
-          sum += option.points
-        })
+  const calculateTotalPoints = (questions: Question[]) => {
+    if (questions.length === 0) return 0
+    return questions.reduce((sum, question) => {
+      if (question.type === 'select') {
+        // For select questions, use the maximum points from available options
+        const maxOptionPoints = Math.max(...(question.options?.map(opt => opt.points) || [0]))
+        return sum + maxOptionPoints
+      } else {
+        // For other question types, use maxPoints
+        return sum + (question.maxPoints || 0)
       }
-    })
-    return sum
+    }, 0)
   }
 
   const removeFromState = (id: string) => {
@@ -127,7 +127,7 @@ export default function ViewFormsTeacher() {
             <CardContent>
               <CardDescription className='text-black'>{form.formType}</CardDescription>
               <div className="flex items-center pt-2 text-xs text-muted-foreground text-black">
-                Total Points: {calculateTotalPoints(form.questions)}
+                Max Possible Points: {calculateTotalPoints(form.questions)}
               </div>
               <div className="flex items-center pt-4">
                 <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}

@@ -589,6 +589,12 @@ export const completeVerification = async (req, res) => {
         // Find teacher with matching verification code
         user = await Teacher.findOne({ emailVerificationCode });
         if (user) {
+          if (user.isEmailVerified) {
+            return res.status(200).json({
+              message: "This email was already verified. No update needed.",
+              alreadyVerified: true
+            });
+          }
           user.isEmailVerified = true;
           user.emailVerificationCode = null; // Clear the code
           await user.save();
@@ -607,8 +613,30 @@ export const completeVerification = async (req, res) => {
           student = await Student.findOne({ emailVerificationCode });
         }
         if (student) {
-          // If parent emails exist, verify them
+          // Check if already verified
+          if (!isStudent) {
+            if (student.parentEmail == toVerify && student.isParentOneEmailVerified) {
+              return res.status(200).json({
+                message: "This email was already verified. No update needed.",
+                alreadyVerified: true
+              });
+            }
+            if (student.standard == toVerify && student.isParentTwoEmailVerified) {
+              return res.status(200).json({
+                message: "This email was already verified. No update needed.",
+                alreadyVerified: true
+              });
+            }
+          } else {
+            if (student.isStudentEmailVerified) {
+              return res.status(200).json({
+                message: "This email was already verified. No update needed.",
+                alreadyVerified: true
+              });
+            }
+          }
 
+          // If parent emails exist, verify them
           if (!isStudent) {
             if (student.parentEmail == toVerify) {
               student.isParentOneEmailVerified = true;

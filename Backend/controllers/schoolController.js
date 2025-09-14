@@ -14,27 +14,38 @@ export const getAllSchools = async (req, res) => {
 
   export const getStudents = async (req, res) => {
     try {
+      console.log("=== getStudents DEBUG ===");
+      console.log("User ID:", req.user.id);
+      console.log("User role:", req.user.role);
+
       let students = [];
       if(req.user.role === Role.Teacher) {
         const teacher = await Teacher.findById(req.user.id);
+        console.log("Teacher found:", teacher);
         if(teacher.type === 'Lead') {
+          console.log("Lead teacher - filtering by grade:", teacher.grade);
           // Lead teachers only see their grade's students
-          students = await Student.find({ 
+          students = await Student.find({
             schoolId: teacher.schoolId,
-            grade: teacher.grade 
+            grade: teacher.grade
           });
         } else {
+          console.log("Special teacher - all students in school");
           // Special teachers see all students
           students = await Student.find({ schoolId: teacher.schoolId });
         }
       } else {
+        console.log("School admin - all students");
         // School admin sees all students
         const school = await School.findOne({ createdBy: req.user.id });
         if(school)
         students = await Student.find({ schoolId: school._id });
       }
+      console.log("Students found:", students.length);
+      console.log("Students list:", students.map(s => ({ id: s._id, name: s.name, grade: s.grade })));
       return res.status(200).json({ students });
     } catch (err) {
+      console.error("Error in getStudents:", err);
       return res.status(500).json({ error: err.message });
     }
   };

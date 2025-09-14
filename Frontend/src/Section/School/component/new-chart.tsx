@@ -121,10 +121,10 @@ const EducationYearChart = ({studentId, slimLines}:{
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
- 
-  
+
+
   // Get data based on selected month
-  
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,8 +139,8 @@ const EducationYearChart = ({studentId, slimLines}:{
   return (
     <div className="w-full">
       <div className="flex flex-wrap justify-center mb-4">
-        <button 
-          onClick={() => setSelectedMonth(null)} 
+        <button
+          onClick={() => setSelectedMonth(null)}
           className={`m-1 px-3 py-1 rounded ${selectedMonth === null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
           All Year

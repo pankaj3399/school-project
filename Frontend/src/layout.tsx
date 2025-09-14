@@ -3,6 +3,7 @@ import { SideNav } from "@/Section/School/component/side-nav";
 import { TeacherSideNav } from "@/Section/Teacher/component/side-nav";
 import { TopNav } from "@/Section/School/component/top-nav";
 import { Breadcrumb } from "@/Section/School/component/breadcrumb";
+import Footer from "@/components/Footer";
 import { useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./authContext";
@@ -34,10 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   if (isTeacherLayout) {
     return (
       <AuthProvider>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex min-h-screen bg-gray-100">
       <TeacherSideNav />
       <Toaster />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1">
         <TopNav />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#ffffff]">
           <div className="container mx-auto px-6 py-8">
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
         </main>
+        <Footer />
       </div>
     </div>
     </AuthProvider>
@@ -53,10 +55,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <AuthProvider>
-    <div className="flex h-screen bg-gray-200 ">
+    <div className="flex min-h-screen bg-gray-200 ">
       <SideNav />
       <Toaster />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1">
         <TopNav />
         <main className="flex-1 overflow-x-hidden overflow-y-auto  border bg-[#ffffff]   ">
           <div className="container mx-auto px-6 py-8">
@@ -64,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
         </main>
+        <Footer />
       </div>
     </div>
     </AuthProvider>

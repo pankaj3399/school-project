@@ -30,7 +30,8 @@ export type Form = {
     studentEmail: boolean,
     parentEmail: boolean,
     teacherEmail: boolean,
-    schoolAdminEmail: boolean
+    schoolAdminEmail: boolean,
+    preSelectedStudents?: string[]
   }
 
 export type AnswerType = {

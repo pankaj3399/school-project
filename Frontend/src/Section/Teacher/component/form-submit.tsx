@@ -108,7 +108,26 @@ export function FormSubmission({
     const getStudent = async () => {
       const token = localStorage.getItem("token") || "";
       const response = await getStudents(token);
-      if (form) {
+
+      // Filter students for IEP forms with pre-selection
+      if (form && form.formType === FormType.AwardPointsIEP && form.preSelectedStudents && form.preSelectedStudents.length > 0) {
+        const preSelectedStudents = response.students.filter((s: any) =>
+          form.preSelectedStudents.includes(s._id)
+        );
+
+        setStudent(
+          preSelectedStudents.map((s: any) => ({
+            ...s,
+            name: s.name + " - Grade " + s.grade,
+          }))
+        );
+        setfilteredStudent(
+          preSelectedStudents.map((s: any) => ({
+            ...s,
+            name: s.name + " - Grade " + s.grade,
+          }))
+        );
+      } else if (form) {
         if (form.isSpecial || user?.type == "Special") {
           setStudent(
             response.students.map((s: any) => ({
@@ -146,7 +165,7 @@ export function FormSubmission({
       }
     };
     getStudent();
-  }, []);
+  }, [form]);
 
   useEffect(() => {
     if (grade == "All") {

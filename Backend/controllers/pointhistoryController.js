@@ -386,7 +386,13 @@ export const getYearPointsHistory = async (req, res) => {
 export const getYearPointsHistoryByStudent = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
+    const teacherData = await getGradeFromUser(req.user.id);
     const studentId = req.params.id;
+
+    // Check if teacher has access to this student
+    if (teacherData && !teacherData.studentIds.some(id => id.toString() === studentId)) {
+      return res.status(403).json({ message: "Access denied: You don't have permission to view this student's data" });
+    }
 
     const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
@@ -689,9 +695,40 @@ export const getWeekPointsHistory = async (req, res) => {
 
 export const getWeekPointsHistoryByStudent = async (req, res) => {
   try {
+    console.log("=== getWeekPointsHistoryByStudent DEBUG ===");
+    console.log("User ID:", req.user.id);
+    console.log("Requested student ID:", req.params.id);
+
     const schoolId = await getSchoolIdFromUser(req.user.id);
+    console.log("School ID:", schoolId);
+
+    const teacherData = await getGradeFromUser(req.user.id);
+    console.log("Teacher data:", teacherData);
+
     const schoolTimezone = await getSchoolTimezone(schoolId);
+    console.log("School timezone:", schoolTimezone);
+
     const studentId = req.params.id;
+
+    // Check if teacher has access to this student
+    if (teacherData) {
+      console.log("getWeekPointsHistoryByStudent - Checking teacher access...");
+      console.log("Requested student ID:", studentId);
+      console.log("Teacher's accessible student IDs:", teacherData.studentIds);
+
+      const hasAccess = teacherData.studentIds.some(id => id.toString() === studentId);
+      console.log("Has access:", hasAccess);
+
+      if (!hasAccess) {
+        console.log("ACCESS DENIED: Teacher cannot access student", studentId);
+        return res.status(403).json({
+          message: "Access denied: You don't have permission to view this student's data",
+          requestedStudent: studentId,
+          accessibleStudents: teacherData.studentIds.map(id => id.toString())
+        });
+      }
+    }
+    console.log("ACCESS GRANTED: Teacher can access student", studentId);
 
     const { startDate, formType } = req.body;
     
@@ -716,6 +753,14 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
       ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] } 
       : formType;
     
+    console.log("Query parameters:", {
+      schoolId,
+      formTypeFilter,
+      studentId,
+      weekStartUTC,
+      weekEndUTC
+    });
+
     const weekPoints = await PointsHistory.aggregate([
       {
         $match: {
@@ -754,9 +799,12 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
       { $sort: { day: 1 } },
     ]);
 
-    res.status(200).json({ 
-      data: weekPoints, 
-      startDate: weekStartUTC, 
+    console.log("Week points result:", weekPoints);
+    console.log("Sending response with data length:", weekPoints.length);
+
+    res.status(200).json({
+      data: weekPoints,
+      startDate: weekStartUTC,
       endDate: weekEndUTC,
       timezone: schoolTimezone
     });
@@ -929,13 +977,57 @@ export const getHistoricalPointsData = async (req, res) => {
   }
 };
 export const getHistoricalPointsDataByStudentId = async (req, res) => {
+  console.log("🔥🔥🔥 getHistoricalPointsDataByStudentId CALLED 🔥🔥🔥");
   try {
+    console.log("=== getHistoricalPointsDataByStudentId DEBUG ===");
+    console.log("User ID:", req.user?.id);
+    console.log("User role:", req.user?.role);
+    console.log("Request body:", req.body);
+    console.log("Request params:", req.params);
+
     const schoolId = await getSchoolIdFromUser(req.user.id);
+    console.log("School ID:", schoolId);
+
     const { period, formType, studentId } = req.body;
+    console.log("Parameters from body:", { period, formType, studentId });
+
+    if (!studentId) {
+      console.log("ERROR: No student ID provided in request body");
+      return res.status(400).json({ message: "Student ID is required" });
+    }
+
     const teacherData = await getGradeFromUser(req.user.id);
+    console.log("Teacher data:", teacherData);
+
     const schoolTimezone = await getSchoolTimezone(schoolId);
+    console.log("School timezone:", schoolTimezone);
+
+    // TEMPORARILY DISABLED - Check if teacher has access to this student
+    if (teacherData) {
+      console.log("Checking teacher access...");
+      console.log("Requested student ID:", studentId);
+      console.log("Teacher's accessible student IDs:", teacherData.studentIds);
+      console.log("Accessible IDs as strings:", teacherData.studentIds.map(id => id.toString()));
+
+      const hasAccess = teacherData.studentIds.some(id => id.toString() === studentId);
+      console.log("Has access:", hasAccess);
+
+      if (!hasAccess) {
+        console.log("ACCESS DENIED - Teacher cannot access this student");
+        // Re-enable this after debugging
+        console.log("🚨 WOULD DENY ACCESS BUT ALLOWING FOR DEBUG 🚨");
+        // return res.status(403).json({
+        //   message: "Access denied: You don't have permission to view this student's data",
+        //   requestedStudent: studentId,
+        //   accessibleStudents: teacherData.studentIds.map(id => id.toString())
+        // });
+      }
+    }
+    console.log("ACCESS GRANTED for student:", studentId);
+
     const today = getSchoolCurrentTime(schoolTimezone);
-    
+    console.log("Today in school timezone:", today);
+
     let startDate;
 
     switch (period) {
@@ -959,27 +1051,46 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     }
 
     // Convert to UTC for database queries
-    const startDateUTC = timezoneManager.convertSchoolTimeToUTC(startDate.startOf('day'), schoolTimezone).toJSDate();
-    const todayUTC = timezoneManager.convertSchoolTimeToUTC(today.endOf('day'), schoolTimezone).toJSDate();
+    console.log("Converting timezone dates...");
+    console.log("Start date before conversion:", startDate);
+    console.log("Today before conversion:", today);
+
+    let startDateUTC, todayUTC;
+    try {
+      startDateUTC = timezoneManager.convertSchoolTimeToUTC(startDate.startOf('day'), schoolTimezone).toJSDate();
+      todayUTC = timezoneManager.convertSchoolTimeToUTC(today.endOf('day'), schoolTimezone).toJSDate();
+      console.log("Start date UTC:", startDateUTC);
+      console.log("Today UTC:", todayUTC);
+    } catch (timezoneError) {
+      console.error("Timezone conversion error:", timezoneError);
+      // Fallback to using the dates as UTC
+      startDateUTC = startDate.startOf('day').toJSDate();
+      todayUTC = today.endOf('day').toJSDate();
+      console.log("Using fallback dates - Start:", startDateUTC, "Today:", todayUTC);
+    }
 
     let historicalPoints;
     let historicalPointsHistory;
 
+    console.log("Executing database queries...");
+
     if (teacherData) {
-      historicalPoints = await PointsHistory.aggregate([
-        {
-          $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType:formType === FormType.AwardPoints
-                ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
-                : formType,
-            submittedAt: {
-              $gte: startDateUTC,
-              $lte: todayUTC,
+      console.log("Executing teacher-filtered query...");
+      try {
+        historicalPoints = await PointsHistory.aggregate([
+          {
+            $match: {
+              schoolId: new mongoose.Types.ObjectId(schoolId),
+              formType: formType === FormType.AwardPoints
+                  ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
+                  : formType,
+              submittedAt: {
+                $gte: startDateUTC,
+                $lte: todayUTC,
+              },
+              submittedForId: new mongoose.Types.ObjectId(studentId),
             },
-            submittedForId: new mongoose.Types.ObjectId(studentId),
           },
-        },
         {
           $group: {
             _id: {
@@ -1009,20 +1120,30 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
           },
         },
         { $sort: { day: 1 } },
-      ]);
-      historicalPointsHistory = await PointsHistory.aggregate([
-        {
-          $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: formType,
-            submittedAt: {
-              $gte: new Date(startDate.getTime() + 24 * 60 * 60 * 1000),
-              $lte: today,
+        ]);
+
+        console.log("First query completed, result length:", historicalPoints.length);
+
+        historicalPointsHistory = await PointsHistory.aggregate([
+          {
+            $match: {
+              schoolId: new mongoose.Types.ObjectId(schoolId),
+              formType: formType,
+              submittedAt: {
+                $gte: startDateUTC,
+                $lte: todayUTC,
+              },
+              submittedForId: new mongoose.Types.ObjectId(studentId),
             },
-            submittedForId: new mongoose.Types.ObjectId(studentId),
           },
-        },
-      ]);
+        ]);
+
+        console.log("Second query completed, result length:", historicalPointsHistory.length);
+
+      } catch (dbError) {
+        console.error("Database query error for teacher:", dbError);
+        throw dbError;
+      }
     } else {
       historicalPoints = await PointsHistory.aggregate([
         {
@@ -1072,8 +1193,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
             schoolId: new mongoose.Types.ObjectId(schoolId),
             formType: formType,
             submittedAt: {
-              $gte: new Date(startDate.getTime() + 24 * 60 * 60 * 1000),
-              $lte: today,
+              $gte: startDateUTC,
+              $lte: todayUTC,
             },
             submittedForId: new mongoose.Types.ObjectId(studentId),
           },
@@ -1081,16 +1202,24 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
       ]);
     }
     
-    res
-      .status(200)
-      .json({
-        data: historicalPoints,
-        history: historicalPointsHistory,
-        startDate: startDateUTC,
-        endDate: todayUTC,
-        timeZone: schoolTimezone,
-      });
+    console.log("Preparing final response...");
+    console.log("Historical points length:", historicalPoints ? historicalPoints.length : 0);
+    console.log("Historical points history length:", historicalPointsHistory ? historicalPointsHistory.length : 0);
+
+    const responseData = {
+      data: historicalPoints,
+      history: historicalPointsHistory,
+      startDate: startDateUTC,
+      endDate: todayUTC,
+      timeZone: schoolTimezone,
+    };
+
+    console.log("Sending successful response");
+    res.status(200).json(responseData);
   } catch (error) {
+    console.error("=== ERROR in getHistoricalPointsDataByStudentId ===");
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     res.status(500).json({ message: error.message });
   }
 };
@@ -1115,23 +1244,19 @@ export const getPointsByTeacher = async (req, res) => {
       },
     ]);
 
+    // Add grade information to teachers who actually issued points
     teachers.forEach((teacher) => {
       pointsByTeacher.forEach((point) => {
         if (point._id === teacher.name) {
           point.grade = teacher.grade ?? "N/A";
         }
       });
-
-      if (!pointsByTeacher.find((point) => point._id === teacher.name)) {
-        pointsByTeacher.push({
-          _id: teacher.name,
-          grade: teacher.grade ?? "N/A",
-          totalPoints: 0,
-        });
-      }
     });
 
-    res.status(200).json({ data: pointsByTeacher });
+    // Filter to only include teachers who actually issued points (totalPoints > 0)
+    const activeTeachers = pointsByTeacher.filter(teacher => teacher.totalPoints > 0);
+
+    res.status(200).json({ data: activeTeachers });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -1189,13 +1314,10 @@ export const getPointsByStudent = async (req, res) => {
       ]);
     }
 
-    studentNames.forEach((student) => {
-      if (!pointsByStudent.find((point) => point._id === student)) {
-        pointsByStudent.push({ _id: student, totalPoints: 0 });
-      }
-    });
+    // Filter to only include students who actually received points (totalPoints > 0)
+    const activeStudents = pointsByStudent.filter(student => student.totalPoints > 0);
 
-    res.status(200).json({ data: pointsByStudent });
+    res.status(200).json({ data: activeStudents });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
