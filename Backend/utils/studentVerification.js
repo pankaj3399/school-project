@@ -19,10 +19,10 @@ export const checkStudentFormEligibility = async (studentId, form) => {
     }
 
     // Check if parent emails are verified (if form requires parent notifications)
-    if (form.parentEmail && student.parentEmail) {
+    if (form.parentEmail && student.parentEmail && !student.isParentOneEmailVerified) {
       return {
         eligible: false,
-        error: "Cannot perform operations on students with no parent emails."
+        error: "Cannot perform operations on students with unverified parent emails."
       };
     }
 
