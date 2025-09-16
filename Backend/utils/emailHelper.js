@@ -16,7 +16,7 @@ export const emailGenerator = async (
     leadTeacher = null,
   }
 ) => {
-  let subject, body, attachment, attachmentName;
+  let subject = '', body = '', attachment, attachmentName;
 
   if (!student && !teacher && !schoolAdmin) {
     return { subject, body, attachment, attachmentName };
@@ -29,10 +29,9 @@ export const emailGenerator = async (
     schoolTimezone,
     "MM/dd/yyyy"
   );
-  console.log(submittedAt, currentDateFormatted);
 
   switch (form.formType) {
-    case FormType["AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]:
+    case FormType.AwardPointsIEP:
     case FormType.AwardPoints: {
       subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`;
       body = `
