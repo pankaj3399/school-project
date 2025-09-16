@@ -16,7 +16,7 @@ export const emailGenerator = async (
     leadTeacher = null,
   }
 ) => {
-  let subject, body, attachment, attachmentName;
+  let subject = '', body = '', attachment, attachmentName;
 
   if (!student && !teacher && !schoolAdmin) {
     return { subject, body, attachment, attachmentName };
@@ -29,10 +29,9 @@ export const emailGenerator = async (
     schoolTimezone,
     "MM/dd/yyyy"
   );
-  console.log(submittedAt, currentDateFormatted);
 
   switch (form.formType) {
-    case FormType["AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]:
+    case FormType.AwardPointsIEP:
     case FormType.AwardPoints: {
       subject = `GOOD NEWS, YOU EARNED ${points} E-TOKENS!`;
       body = `
@@ -146,7 +145,7 @@ export const emailGenerator = async (
                             ${schoolAdmin.name}<br>
                             ${schoolAdmin.email}<br>
                             The RADU E-Token System Manager<br>
-                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
+                            ${school.name}, ${school.address || school.district || school.state}
                         </div>
                     </div>
                 </body>
@@ -295,7 +294,7 @@ export const emailGenerator = async (
                               teacher.subject ??
                               "The RADU E-Token System Manager"
                             }<br>
-                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
+                            ${school.name}, ${school.address || school.district || school.state}
                         </div>
                     </div>
                 </body>
@@ -440,7 +439,7 @@ export const emailGenerator = async (
                                   "The RADU E-Token System Manager"
                             }<br/>
                             ${teacher.grade && teacher.grade !== 'undefined' ? `Grade ${teacher.grade}<br/>` : ''}
-                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
+                            ${school.name}, ${school.address || school.district || school.state}
                         </div>
                     </div>
                 </body>
@@ -556,7 +555,7 @@ export const emailGenerator = async (
                         <div class="signature">
                             ${schoolAdmin.name}<br>
                             The RADU E-Token System Manager<br>
-                            ${school.name}, ${school.city}, ${school.state}. ${school.zipCode}
+                            ${school.name}, ${school.address || school.district || school.state}
                         </div>
                     </div>
                 </body>
@@ -583,11 +582,17 @@ export const emailGenerator = async (
     teacher.isEmailVerified
   )
     sendEmail(teacher.email, subject, body, body, attachment, attachmentName);
+  const parentEmailRequired = form.parentEmail;
+  const parentEmailsVerified = (student.parentEmail && student.isParentOneEmailVerified) ||
+                               (student.standard && student.isParentTwoEmailVerified);
+  const shouldFallbackToStudent = parentEmailRequired && !parentEmailsVerified;
+
   if (
     (form.studentEmail ||
       form.formType == FormType.DeductPoints ||
       form.formType == FormType.PointWithdraw ||
-      form.formType == FormType.Feedback) &&
+      form.formType == FormType.Feedback ||
+      shouldFallbackToStudent) &&
     student?.isStudentEmailVerified
   )
     sendEmail(student.email, subject, body, body, attachment, attachmentName);
