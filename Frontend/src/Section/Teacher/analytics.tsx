@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getStudents } from "@/api";
-import EducationYearChart from "../School/component/new-chart";
 import CurrentWeekCharts from "../School/component/current-week-charts";
 import Ranks from "../School/component/ranks";
 
@@ -32,6 +31,9 @@ const AllCharts = () => {
     };
     fetchData();
   }, []);
+
+  console.log("=== ANALYTICS COMPONENT RENDERING ===");
+  console.log("StudentId for charts:", studentId);
 
   return (
     <div>
@@ -94,7 +96,6 @@ const AllCharts = () => {
       </div>
       <div className="mt-12 space-y-4 grid grid-cols-4">
         <div className="col-span-3">
-          <EducationYearChart studentId={studentId} />
           <CurrentWeekCharts studentId={studentId} isTeacher />
         </div>
         <Ranks />

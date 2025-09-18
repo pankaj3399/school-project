@@ -1,6 +1,6 @@
-import  { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { getHistoryOfCurrentWeek, getHistoryOfCurrentWeekByStudent } from "@/api";
+import {getHistoryByTime } from "@/api";
 import { FormType } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,123 +21,78 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
       }
     }
 
-    useEffect(() => {
-        const fetchData = async () => {
-            console.log("=== CURRENT WEEK CHARTS DEBUG ===");
-            console.log("StudentId:", studentId);
-            console.log("IsTeacher:", isTeacher);
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-            // Initialize data arrays with zeros
-            let awardWeekData = Array.from({length: 7}, (_, dayIndex) => ({
-                day: days[dayIndex],
-                points: 0,
-            }));
-            let deductWeekData = Array.from({length: 7}, (_, dayIndex) => ({
-                day: days[dayIndex],
-                points: 0,
-            }));
-            let withdrawWeekData = Array.from({length: 7}, (_, dayIndex) => ({
-                day: days[dayIndex],
-                points: 0,
-            }));
+    const fetchData = useCallback(async () => {
+            // Initialize empty data arrays - we'll populate them based on what the API returns
+            let awardWeekData: any[] = [];
+            let deductWeekData: any[] = [];
+            let withdrawWeekData: any[] = [];
 
             // Fetch data for each point type
             try {
-                let awardRes = {data: [], startDate: "", endDate: ""};
-                let deductRes = {data: [], startDate: "", endDate: ""};
-                let withdrawRes = {data: [], startDate: "", endDate: ""};
-                if(studentId === ""){
-                    console.log("=== FETCHING ALL STUDENTS DATA ===");
+                let awardRes, deductRes, withdrawRes;
+
+                // Use the same API as detailed view to ensure consistent data
+                if(studentId === "" || !studentId){
                     [awardRes, deductRes, withdrawRes] = await Promise.all([
-                        getHistoryOfCurrentWeek({formType: FormType.AwardPoints}),
-                        getHistoryOfCurrentWeek({formType: FormType.DeductPoints}),
-                        getHistoryOfCurrentWeek({formType: FormType.PointWithdraw})
+                        getHistoryByTime({formType: FormType.AwardPoints, period: '1W'}),
+                        getHistoryByTime({formType: FormType.DeductPoints, period: '1W'}),
+                        getHistoryByTime({formType: FormType.PointWithdraw, period: '1W'})
                     ]);
-                    console.log("All students data:", { awardRes, deductRes, withdrawRes });
-                }else{
-                    console.log("=== FETCHING STUDENT SPECIFIC DATA ===");
-                    console.log("Student ID for API calls:", studentId);
-                    try {
-                        [awardRes, deductRes, withdrawRes] = await Promise.all([
-                            getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.AwardPoints}),
-                            getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.DeductPoints}),
-                            getHistoryOfCurrentWeekByStudent(studentId,{formType: FormType.PointWithdraw})
-                        ]);
-                        console.log("Student specific data SUCCESS:", { studentId, awardRes, deductRes, withdrawRes });
-                    } catch (error: any) {
-                        console.error("Student specific data ERROR:", error);
-                        console.error("Error details:", error.response?.data || error.message);
-                    }
+                } else {
+                    [awardRes, deductRes, withdrawRes] = await Promise.all([
+                        getHistoryByTime({formType: FormType.AwardPoints, period: '1W', studentId}),
+                        getHistoryByTime({formType: FormType.DeductPoints, period: '1W', studentId}),
+                        getHistoryByTime({formType: FormType.PointWithdraw, period: '1W', studentId})
+                    ]);
                 }
                 
 
-                // Process Award Points
-                if(awardRes.data.length > 0){
-                    //@ts-ignore
-                    
-                    awardRes.data.forEach((dayData:any) => {
-                        const dayIndex = days.indexOf(dayData.day);
-                        // Handle both formats: student-specific data (no date field) and general data (with date field)
-                        const shouldInclude = dayData.date ? 
-                            (dayIndex !== -1 && new Date(dayData.date) > new Date(awardRes.startDate)) :
-                            (dayIndex !== -1);
-                        
-                        if (shouldInclude) {
-                            awardWeekData[dayIndex] = {
-                                day: dayData.day,
-                                points: awardWeekData[dayIndex].points + Number(dayData.points)
-                            };
-                        }
+                // Create a full week structure and populate with API data
+                const createFullWeekData = (apiData: any[]) => {
+                    // Create a map of API data by date for quick lookup
+                    const apiDataMap = new Map();
+                    apiData.forEach((dayData: any) => {
+                        apiDataMap.set(dayData.day, Math.abs(Number(dayData.points)));
                     });
 
-                }
+                    // Create 7 days for the last 7 days (6 days ago + today)
+                    const today = new Date();
+                    const weekData = [];
 
-                // Process Deduct Points
-                if(deductRes.data.length > 0)
-                    deductRes.data.forEach((dayData:any) => {
-                        const dayIndex = days.indexOf(dayData.day);
-                        // Handle both formats: student-specific data (no date field) and general data (with date field)
-                        const shouldInclude = dayData.date ? 
-                            (dayIndex !== -1 && new Date(dayData.date) > new Date(deductRes.startDate)) :
-                            (dayIndex !== -1);
-                            
-                        if (shouldInclude) {
-                            deductWeekData[dayIndex] = {
-                                day: dayData.day,
-                                points: deductWeekData[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    });
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - i);
+                        const dateString = date.toISOString().split('T')[0];
+                        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
 
-                // Process Withdraw Points
-                if(withdrawRes.data.length > 0)
-                    withdrawRes.data.forEach((dayData:any) => {
-                        const dayIndex = days.indexOf(dayData.day);
-                        // Handle both formats: student-specific data (no date field) and general data (with date field)
-                        const shouldInclude = dayData.date ? 
-                            (dayIndex !== -1 && new Date(dayData.date) > new Date(withdrawRes.startDate)) :
-                            (dayIndex !== -1);
-                            
-                        if (shouldInclude) {
-                            withdrawWeekData[dayIndex] = {
-                                day: dayData.day,
-                                points: withdrawWeekData[dayIndex].points + Number(dayData.points)
-                            };
-                        }
-                    });
+                        weekData.push({
+                            day: dayName,
+                            date: dateString,
+                            points: apiDataMap.get(dateString) || 0
+                        });
+                    }
 
-                // Update state
+                    return weekData;
+                };
+
+                // Convert API responses to full week chart data
+                awardWeekData = createFullWeekData(awardRes?.data || []);
+                deductWeekData = createFullWeekData(deductRes?.data || []);
+                withdrawWeekData = createFullWeekData(withdrawRes?.data || []);
+
+
+                // Update state (points are already processed as absolute values)
                 setCurrentAwardWeekData(awardWeekData);
-                setCurrentDeductWeekData(deductWeekData.map(d => ({...d, points: Math.abs(d.points)})));
-                setCurrentWithdrawWeekData(withdrawWeekData.map(d => ({...d, points: Math.abs(d.points)})));
+                setCurrentDeductWeekData(deductWeekData);
+                setCurrentWithdrawWeekData(withdrawWeekData);
             } catch (error) {
                 console.error("Error fetching week data:", error);
             }
-        };
+        }, [studentId, isTeacher]);
 
+    useEffect(() => {
         fetchData();
-    }, [studentId]);
+    }, [fetchData]);
 
     // Chart component to reduce repetition
     const PointsBarChart = ({
@@ -162,7 +117,7 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
           height="100%"
         >
           <BarChart
-            data={data.filter(d => d.day !== 'Sun').slice(0, 6)} // Monday to Saturday only
+            data={data} // Show all 7 days (last 6 days + today)
             margin={{
               top: 5,
               right: 30,
@@ -183,7 +138,7 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                   fill: "#0f0f0f",
                   fontSize: 18,
                   offset:12
-                } 
+                }
               }
             />
           </BarChart>
@@ -216,28 +171,32 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
       </div>
     );
 
+
     return (
-        <div className="p-4">
-            <PointsBarChart 
+        <div className="p-4" key={`current-week-charts-${studentId}-${isTeacher}`}>
+            <PointsBarChart
+                key={`tokens-${studentId}`}
                 icon='/etoken.svg'
-                data={currentAwardWeekData} 
-                title="Tokens" 
+                data={currentAwardWeekData}
+                title="Tokens"
                 barColor="#4CAF50" // Green
             />
-            <PointsBarChart 
+            <PointsBarChart
+                key={`withdrawals-${studentId}`}
                 icon='/Withdraw.svg'
-                data={currentWithdrawWeekData} 
-                title="Withdrawals" 
+                data={currentWithdrawWeekData}
+                title="Withdrawals"
                 barColor="#3d59f5" // blue
             />
-            <PointsBarChart 
+            <PointsBarChart
+                key={`oopsies-${studentId}`}
                 icon='/oopsie.svg'
-                data={currentDeductWeekData} 
-                title="Oopsies" 
+                data={currentDeductWeekData}
+                title="Oopsies"
                 barColor="#F44336" // Red
             />
         </div>
     );
 };
 
-export default CurrentWeekCharts;
+export default React.memo(CurrentWeekCharts);
