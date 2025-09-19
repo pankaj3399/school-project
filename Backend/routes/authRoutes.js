@@ -1,9 +1,12 @@
 import express from 'express';
 import { login,resetPassword,sendOtp,signup, verifyOtp, completeVerification, sendVerifyEmail, createSupportTicket, changePassword, verifyLoginOtp, requestLoginOtp, verifyPassword } from '../controllers/authController.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
+import validateZod from '../middlewares/validateZod.js';
+import { loginSchema } from '../validation/schemas.js';
+
 const router = express.Router();
 
-router.post('/login', login);
+router.post('/login',validateZod(loginSchema), login);
 router.post('/signup', signup);
 router.post('/sendotp', sendOtp);
 router.post('/verify', verifyOtp);
