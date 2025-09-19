@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import CurrentWeekCharts from "./current-week-charts";
+import EducationYearChart from "./new-chart";
 import Ranks from "./ranks";
 import {
   Popover,
@@ -93,9 +94,8 @@ const AllCharts = () => {
 
       <div className="mt-12 space-y-4 grid grid-cols-4">
         <div className="col-span-3">
+          <EducationYearChart studentId={studentId} />
           <CurrentWeekCharts key={`school-charts-${studentId}`} studentId={studentId} />
-
-          {/* Additional charts removed to prevent duplicates */}
         </div>
         <Ranks />
       </div>

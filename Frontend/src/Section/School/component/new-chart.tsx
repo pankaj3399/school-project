@@ -70,7 +70,8 @@ const generateData = async (month: string | null = null, studentId:string | null
                 }
             })
 
-            monthData.days.forEach((dayData:any) => {
+            if (monthData && monthData.days) {
+                monthData.days.forEach((dayData:any) => {
                 const dayIndex = dayData.day - 1;
                 switch(dayData.formType){
                     case FormType.AwardPoints: formattedDayData[dayIndex] = {
@@ -92,6 +93,7 @@ const generateData = async (month: string | null = null, studentId:string | null
                     }
                 }
             })
+            }
 
             data = formattedDayData.map((dayData:any) => {
                 return {

@@ -32,9 +32,6 @@ const AllCharts = () => {
     fetchData();
   }, []);
 
-  console.log("=== ANALYTICS COMPONENT RENDERING ===");
-  console.log("StudentId for charts:", studentId);
-
   return (
     <div>
       <div>
