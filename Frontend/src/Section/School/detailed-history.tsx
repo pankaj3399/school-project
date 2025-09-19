@@ -47,7 +47,7 @@ const formatDataByPeriod = (responseData: any, period: string, timezone: string,
         const date = new Date(targetDate);
         date.setDate(date.getDate() - (days - 1 - dayIndex));
         return {
-            day: date.toISOString().split('T')[0],
+            day: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
             points: 0
         };
     });

@@ -495,7 +495,7 @@ export function FormSubmission({
                 <Input
                   type="date"
                   required
-                  value={submittedAt.toISOString().split("T")[0]}
+                  value={`${submittedAt.getFullYear()}-${String(submittedAt.getMonth() + 1).padStart(2, '0')}-${String(submittedAt.getDate()).padStart(2, '0')}`}
                   onChange={(e) => {
                     const selectedDate = e.target.valueAsDate;
 
@@ -504,13 +504,11 @@ export function FormSubmission({
                       if (user?.schoolId?.timeZone) {
                         const timezone = user.schoolId.timeZone;
                         console.log(
-                          `Converting date ${selectedDate.toISOString()} to school's timezone: ${timezone}`
+                          `Converting date ${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()} to school's timezone: ${timezone}`
                         );
-                        const [year, month, day] = selectedDate
-                          .toISOString()
-                          .split("T")[0]
-                          .split("-")
-                          .map(Number);
+                        const year = selectedDate.getFullYear();
+                        const month = selectedDate.getMonth() + 1;
+                        const day = selectedDate.getDate();
                         console.log(
                           `Extracted date components - Year: ${year}, Month: ${month}, Day: ${day}`
                         );
