@@ -37,4 +37,6 @@ const feedbackSchema = new mongoose.Schema({
             }
 });
 
+feedbackSchema.index({ submittedForId: 1 });
+
 export default mongoose.model("Feedback", feedbackSchema);

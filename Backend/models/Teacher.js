@@ -76,4 +76,7 @@ teacherSchema.pre('save', function (next) {
   next();
 });
 
+teacherSchema.index({ registrationToken: 1 });
+teacherSchema.index({ schoolId: 1, grade: 1, type: 1 });
+
 export default mongoose.model('Teacher', teacherSchema);

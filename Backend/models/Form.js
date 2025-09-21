@@ -104,4 +104,6 @@ const formSchema = new mongoose.Schema({
   }
 });
 
+formSchema.index({ schoolId: 1, grade: 1, isSpecial: 1 });
+
 export default mongoose.model("Form", formSchema);

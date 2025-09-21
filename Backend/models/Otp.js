@@ -23,4 +23,7 @@ const otpSchema = new mongoose.Schema({
   },
 });
 
+otpSchema.index({ otp: 1, userId: 1 });
+otpSchema.index({ expiresAt: 1 });
+
 export default mongoose.model('Otp', otpSchema);
