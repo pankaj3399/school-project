@@ -213,7 +213,7 @@ export function FormSubmission({
         break;
       default: {
         setDescription(
-          `You will withdraw ${Math.abs(totalPoints)} POINTS from ${
+          `You will award ${Math.abs(totalPoints)} POINTS to ${
             student.find((item) => item._id == submittedFor)?.name || "Unknown"
           }'s Account.`
         );
