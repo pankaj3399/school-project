@@ -33,17 +33,37 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
 
                 // Use the same API as detailed view to ensure consistent data
                 if(studentId === "" || !studentId){
-                    [awardRes, deductRes, withdrawRes] = await Promise.all([
+                    const [awardBasicRes, awardIEPRes, deductRes_temp, withdrawRes_temp] = await Promise.all([
                         getHistoryByTime({formType: FormType.AwardPoints, period: '1W'}),
+                        getHistoryByTime({formType: FormType.AwardPointsIEP, period: '1W'}),
                         getHistoryByTime({formType: FormType.DeductPoints, period: '1W'}),
                         getHistoryByTime({formType: FormType.PointWithdraw, period: '1W'})
                     ]);
+
+                    // Combine both award types
+                    awardRes = {
+                        data: [...(awardBasicRes?.data || []), ...(awardIEPRes?.data || [])],
+                        history: [...(awardBasicRes?.history || []), ...(awardIEPRes?.history || [])]
+                    };
+
+                    // Assign to outer scope variables
+                    deductRes = deductRes_temp;
+                    withdrawRes = withdrawRes_temp;
                 } else {
-                    [awardRes, deductRes, withdrawRes] = await Promise.all([
+                    const [awardBasicRes, awardIEPRes, deductRes_temp, withdrawRes_temp] = await Promise.all([
                         getHistoryByTime({formType: FormType.AwardPoints, period: '1W', studentId}),
+                        getHistoryByTime({formType: FormType.AwardPointsIEP, period: '1W', studentId}),
                         getHistoryByTime({formType: FormType.DeductPoints, period: '1W', studentId}),
                         getHistoryByTime({formType: FormType.PointWithdraw, period: '1W', studentId})
                     ]);
+
+                    // Combine both award types
+                    awardRes = {
+                        data: [...(awardBasicRes?.data || []), ...(awardIEPRes?.data || [])],
+                        history: [...(awardBasicRes?.history || []), ...(awardIEPRes?.history || [])]
+                    };
+                    deductRes = deductRes_temp;
+                    withdrawRes = withdrawRes_temp;
                 }
                 
 
@@ -80,10 +100,9 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
                 };
 
                 // Convert API responses to full week chart data
-                awardWeekData = createFullWeekData(awardRes?.data || []);
-                deductWeekData = createFullWeekData(deductRes?.data || []);
-                withdrawWeekData = createFullWeekData(withdrawRes?.data || []);
-
+                awardWeekData = createFullWeekData(awardRes?.data || awardRes?.history || []);
+                deductWeekData = createFullWeekData(deductRes?.data || deductRes?.history || []);
+                withdrawWeekData = createFullWeekData(withdrawRes?.data || withdrawRes?.history || []);
 
                 // Update state (points are already processed as absolute values)
                 setCurrentAwardWeekData(awardWeekData);

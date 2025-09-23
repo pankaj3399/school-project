@@ -36,6 +36,7 @@ import SetupStudents from "./Section/School/setup-students";
 import SetupPage from "./Section/School/setup-page";
 // import FirstLogin from "./components/FirstLogin";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
+import ConditionalAnalytics from "./Section/ConditionalAnalytics";
 
 
 // Reusable ProtectedRoute component
@@ -57,7 +58,7 @@ export default function App() {
           <Route path="/verify" element={<OtpVerificationPage />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
 
-          <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><ConditionalAnalytics /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />

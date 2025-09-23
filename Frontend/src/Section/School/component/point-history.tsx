@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { getCurrentUser, getPointHistory, getStudents } from "@/api"
+import { getCurrentUser, getPointHistory, getStudents, getHistoryByTime } from "@/api"
 import { FormType } from '@/lib/types'
 import Loading from "../../Loading"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/authContext"
 import { timezoneManager } from "@/lib/luxon"
+import { useSearchParams } from "react-router-dom"
 
 // Define pagination interface
 interface PaginationData {
@@ -30,6 +31,8 @@ export default function ViewPointHistoryTeacher() {
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
   const {user} = useAuth();
+  const [searchParams] = useSearchParams();
+  const formTypeFromUrl = searchParams.get('formType') || '';
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationData>({
@@ -62,24 +65,53 @@ export default function ViewPointHistoryTeacher() {
         setLoading(false)
         return
       }
-      const teacher = await getCurrentUser();
-      const data = await getPointHistory(token, page, pagination.itemsPerPage);
-      
-      // Handle pagination data
-      if (data.pagination) {
-        setPagination(data.pagination);
-      }
-      
-      if (teacher && teacher.user?.grade) {
-        const filteredHistory = data.pointHistory?.filter((point: any) => 
-          point.submittedForId && 
-          point.submittedForId.grade && 
-          point.submittedForId.grade === teacher.user.grade
-        );
-        
-        setPointHistory(filteredHistory || []);
-        setShowPointHistory(filteredHistory || []);
+      let data;
+
+      // If formType is specified in URL, use the filtered API
+      if (formTypeFromUrl) {
+        // Handle AwardPoints by including both regular and IEP award points
+        if (formTypeFromUrl === FormType.AwardPoints) {
+          const [awardBasicRes, awardIEPRes] = await Promise.all([
+            getHistoryByTime({ formType: FormType.AwardPoints, period: '1Y' }),
+            getHistoryByTime({ formType: FormType.AwardPointsIEP, period: '1Y' })
+          ]);
+
+          // Combine both award types
+          const combinedHistory = [
+            ...(awardBasicRes?.history || []),
+            ...(awardIEPRes?.history || [])
+          ];
+
+          data = { history: combinedHistory };
+        } else {
+          // For other form types, use the original API
+          data = await getHistoryByTime({
+            formType: formTypeFromUrl,
+            period: '1Y'
+          });
+        }
+
+        // Convert the filtered data to match the expected format
+        if (data.history) {
+          setPointHistory(data.history || []);
+          setShowPointHistory(data.history || []);
+          // For filtered data, we don't have pagination, so set a basic pagination
+          setPagination({
+            totalItems: data.history?.length || 0,
+            totalPages: 1,
+            currentPage: 1,
+            itemsPerPage: data.history?.length || 0
+          });
+        }
       } else {
+        // Use the original pagination API for unfiltered data
+        data = await getPointHistory(token, page, pagination.itemsPerPage);
+
+        // Handle pagination data
+        if (data.pagination) {
+          setPagination(data.pagination);
+        }
+
         setPointHistory(data.pointHistory || []);
         setShowPointHistory(data.pointHistory || []);
       }
@@ -98,7 +130,7 @@ export default function ViewPointHistoryTeacher() {
 
   useEffect(() => {
     fetchStudents()
-  }, []) // Load initial page
+  }, [formTypeFromUrl]) // Reload when formType changes
 
   useEffect(()=>{
     setShowPointHistory(pointHistory.filter(point => point.submittedForName == studentName))
@@ -159,7 +191,14 @@ export default function ViewPointHistoryTeacher() {
     <div className="p-8 bg-white rounded-xl shadow-xl mt-10">
       {/* Header Section with improved spacing */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6">Point History</h1>
+        <h1 className="text-3xl font-bold mb-6">
+          Point History
+          {formTypeFromUrl && (
+            <span className="text-lg font-normal text-gray-600 ml-2">
+              - {formatFormType(formTypeFromUrl)}
+            </span>
+          )}
+        </h1>
         
         {Array.isArray(students) && students.length > 0 ? (
           <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
