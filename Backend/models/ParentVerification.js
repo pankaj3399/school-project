@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const parentVerificationSchema = new mongoose.Schema({
   studentEmail: {
     type: String,
-    required: true,
-    index: true
+    required: true
   },
   parentOneEmail: {
     type: String,

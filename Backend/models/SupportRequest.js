@@ -84,6 +84,10 @@ supportRequestSchema.pre('save', async function(next) {
   next();
 });
 
+supportRequestSchema.index({ schoolId: 1 });
+supportRequestSchema.index({ userId: 1 });
+supportRequestSchema.index({ status: 1 });
+
 const SupportRequest = mongoose.model('SupportRequest', supportRequestSchema);
 
 export default SupportRequest;

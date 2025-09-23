@@ -106,4 +106,6 @@ studentSchema.pre('save', function (next) {
 });
 
 
+studentSchema.index({ schoolId: 1, grade: 1 });
+
 export default mongoose.model('Student', studentSchema);

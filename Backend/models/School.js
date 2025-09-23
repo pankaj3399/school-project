@@ -15,4 +15,6 @@ const SchoolSchema = new mongoose.Schema({
     domain: {type: String, default: ''},
 });
 
+SchoolSchema.index({ createdBy: 1 });
+
 export default mongoose.model('School', SchoolSchema);

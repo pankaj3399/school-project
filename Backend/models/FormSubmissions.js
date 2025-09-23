@@ -37,4 +37,7 @@ const formSubmissionSchema = new mongoose.Schema({
 
 
 
+formSubmissionSchema.index({ formId: 1 });
+formSubmissionSchema.index({ teacherId: 1 });
+
 export default mongoose.model("FormSubmission", formSubmissionSchema);
