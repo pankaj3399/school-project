@@ -5,6 +5,7 @@ import {Role} from '../enum.js';
 import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
 import ParentVerification from "../models/ParentVerification.js";
+import PointsHistory from "../models/PointsHistory.js";
 
 export const addStudent = async (req, res) => {
     const {
@@ -121,7 +122,11 @@ export const deleteStudent = async (req, res) => {
             );
         }
 
-        const deletedStudent = await Student.findByIdAndDelete(studentId);
+        await PointsHistory.deleteMany({
+            submittedForId: studentId
+        });
+
+        await Student.findByIdAndDelete(studentId);
 
         await School.updateMany(
             { students: studentId },

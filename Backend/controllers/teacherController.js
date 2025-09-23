@@ -82,19 +82,29 @@ export const updateTeacher = async (req, res) => {
   const { name, email, subject, recieveMails, grade, type } = req.body;
 
   try {
+    console.log('Update request received:', {
+      teacherId,
+      name,
+      email,
+      subject,
+      recieveMails,
+      grade,
+      type,
+    });
+
+    // Build update object carefully to handle boolean values
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (subject !== undefined) updateData.subject = subject;
+    if (recieveMails !== undefined) updateData.recieveMails = Boolean(recieveMails);
+    if (grade !== undefined) updateData.grade = grade;
+    if (type !== undefined) updateData.type = type;
+
     const updatedTeacher = await Teacher.findByIdAndUpdate(
       teacherId,
-      {
-        $set: {
-          name,
-          email,
-          subject,
-          recieveMails,
-          grade,
-          type,
-        },
-      },
-      { new: true }
+      { $set: updateData },
+      { new: true, runValidators: true }
     );
 
     if (!updatedTeacher) {

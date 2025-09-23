@@ -71,17 +71,25 @@ export default function ViewStudents() {
       const token = localStorage.getItem("token")
       if (!token) throw new Error("No token found.")
 
-      await deleteStudent(id, token)
+      const result = await deleteStudent(id, token)
+
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to delete student")
+      }
+
       setStudents((prev) => prev.filter((student) => student._id !== id))
+      setFilteredStudents((prev) => prev.filter((student) => student._id !== id))
+
       toast({
         title: "Success",
         description: "Student deleted successfully.",
         variant: "default",
       })
     } catch (error) {
+      console.error("Delete student error:", error)
       toast({
         title: "Error",
-        description: "Failed to delete student.",
+        description: error instanceof Error ? error.message : "Failed to delete student.",
         variant: "destructive",
       })
     } finally {
