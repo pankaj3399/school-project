@@ -26,7 +26,7 @@ const formatDataByPeriod = (responseData: any, period: string, timezone: string,
         '6M': 180,
         '1Y': 365
     };
-    if(hasStudentFilter) console.log("Filtering data for student:", responseData);
+    // Filter data for student if needed
     
     const days = periodDays[period];
     if (!days) {
@@ -123,14 +123,47 @@ const DetailedHistory = () => {
             setLoading(true);
             const formType = searchParams.get('formType');
 
-            const requestData = {
-                formType,
-                period,
-                studentId: studentId || undefined
-            };
+            let res;
+            let combinedHistory: any[] = [];
+            let combinedData: any[] = [];
 
-            const res = await getHistoryByTime(requestData);
+            // Handle AwardPoints by including both regular and IEP award points
+            if (formType === FormType.AwardPoints) {
+                const requestData = {
+                    period,
+                    studentId: studentId || undefined
+                };
 
+                const [awardBasicRes, awardIEPRes] = await Promise.all([
+                    getHistoryByTime({ ...requestData, formType: FormType.AwardPoints }),
+                    getHistoryByTime({ ...requestData, formType: FormType.AwardPointsIEP })
+                ]);
+
+                // Combine both award types
+                combinedHistory = [
+                    ...(awardBasicRes?.history || []),
+                    ...(awardIEPRes?.history || [])
+                ];
+
+                combinedData = [
+                    ...(awardBasicRes?.data || []),
+                    ...(awardIEPRes?.data || [])
+                ];
+
+                // Use the first response for metadata (timezone, etc.)
+                res = awardBasicRes || awardIEPRes || {};
+                res.history = combinedHistory;
+                res.data = combinedData;
+            } else {
+                // For other form types, use the original API
+                const requestData = {
+                    formType,
+                    period,
+                    studentId: studentId || undefined
+                };
+
+                res = await getHistoryByTime(requestData);
+            }
 
             if (!res) {
                 setData([]);

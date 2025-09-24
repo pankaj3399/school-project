@@ -60,8 +60,10 @@ export const requestLoginOtp = async (req, res) => {
     // Check if user has a password before attempting bcrypt comparison
     if (!user.password) {
       console.log("User found but password is missing:", { email: user.email, role: user.role, hasPassword: !!user.password });
-      return res.status(401).json({ 
-        message: "Account setup incomplete." 
+      return res.status(401).json({
+        message: "Account setup incomplete. Please check your email for a registration link or contact your administrator for a new invitation.",
+        accountIncomplete: true,
+        email: user.email
       });
     }
     
@@ -173,8 +175,10 @@ export const login = async (req, res) => {
     
     // Check if user has a password before attempting bcrypt comparison
     if (!user.password) {
-      return res.status(401).json({ 
-        message: "Account setup incomplete." 
+      return res.status(401).json({
+        message: "Account setup incomplete. Please check your email for a registration link or contact your administrator for a new invitation.",
+        accountIncomplete: true,
+        email: user.email
       });
     }
     

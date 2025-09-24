@@ -10,7 +10,15 @@ const teacherSchema = new mongoose.Schema({
   email:{
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    trim: true,
+    lowercase: true,
+    validate: {
+      validator: function(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      },
+      message: 'Invalid email address format'
+    }
   },
   password: {
     type: String,
@@ -73,6 +81,12 @@ const teacherSchema = new mongoose.Schema({
 
 teacherSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
+
+  // Validate that teachers have either a password or a registration token
+  if (!this.password && !this.registrationToken) {
+    return next(new Error('Teacher must have either a password or a registration token'));
+  }
+
   next();
 });
 
