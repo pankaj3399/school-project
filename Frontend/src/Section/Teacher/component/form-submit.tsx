@@ -180,6 +180,7 @@ export function FormSubmission({
       case FormType.AwardPoints:
       case FormType.AwardPointsIEP:
       case FormType.DeductPoints:
+      case FormType.PointWithdraw:
         {
           setDescription(
             `You will ${
@@ -187,6 +188,8 @@ export function FormSubmission({
               form.formType ==
                 FormType.AwardPointsIEP
                 ? "Award"
+                : form.formType == FormType.PointWithdraw
+                ? "Withdraw"
                 : "Deduct"
             } ${Math.abs(totalPoints)} points ${
               form.formType == FormType.AwardPoints ||
@@ -213,9 +216,9 @@ export function FormSubmission({
         break;
       default: {
         setDescription(
-          `You will award ${Math.abs(totalPoints)} POINTS to ${
+          `You will submit this form for ${
             student.find((item) => item._id == submittedFor)?.name || "Unknown"
-          }'s Account.`
+          }.`
         );
       }
     }
