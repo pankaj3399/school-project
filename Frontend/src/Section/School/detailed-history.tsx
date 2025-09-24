@@ -18,7 +18,7 @@ const periods = [
 ]
 
 // Helper function to format data by period
-const formatDataByPeriod = (responseData: any, period: string, timezone: string, hasStudentFilter: boolean) => {
+const formatDataByPeriod = (responseData: any, period: string, timezone: string) => {
     const periodDays: Record<string, number> = {
         '1W': 7,
         '1M': 30,
@@ -177,8 +177,7 @@ const DetailedHistory = () => {
             const formattedData = formatDataByPeriod(
                 res.data || [],
                 period,
-                res.timeZone || 'UTC+0',
-                Boolean(studentId)
+                res.timeZone || 'UTC+0'
             );
 
 
