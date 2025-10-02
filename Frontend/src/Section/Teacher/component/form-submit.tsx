@@ -18,7 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/authContext";
 import { timezoneManager } from "@/lib/luxon";
@@ -484,7 +484,7 @@ export function FormSubmission({
                       {[...new Set(student.map((s: any) => s.grade))].map(
                         (grade) => (
                           <SelectItem key={grade} value={grade?.toString()}>
-                            Grade {grade}
+                           {grade}
                           </SelectItem>
                         )
                       )}
@@ -550,6 +550,7 @@ export function FormSubmission({
               <div>
                 <p>Student:</p>
                 {Array.isArray(student) && student.length > 0 ? (
+                  <div className="flex items-center gap-2">
                   <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -569,14 +570,24 @@ export function FormSubmission({
                         onChange={(e) => {
                           const value = e.target.value;
                           if (value == "") {
-                            setfilteredStudent(
-                              student.filter(
-                                (s: any) => s.grade == parseInt(grade)
-                              )
-                            );
+                            // Reset to show students based on selected grade
+                            if (grade === "All") {
+                              setfilteredStudent(student);
+                            } else {
+                              setfilteredStudent(
+                                student.filter(
+                                  (s: any) => s.grade == grade
+                                )
+                              );
+                            }
                           } else {
+                            // Filter from the base student list based on grade first, then search
+                            const baseList = grade === "All"
+                              ? student
+                              : student.filter((s: any) => s.grade == grade);
+
                             setfilteredStudent(
-                              filteredStudent.filter((s: any) =>
+                              baseList.filter((s: any) =>
                                 s.name
                                   .toLowerCase()
                                   .includes(value.toLowerCase())
@@ -603,6 +614,13 @@ export function FormSubmission({
                       </div>
                     </PopoverContent>
                   </Popover>
+                  {submittedFor && (
+                    <X
+                      onClick={() => setSubmittedFor("")}
+                      className="h-4 w-4 shrink-0 opacity-50 cursor-pointer hover:opacity-100"
+                    />
+                  )}
+                  </div>
                 ) : (
                   <div className="font-bold">
                     No students available for this Grade
