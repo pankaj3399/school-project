@@ -199,7 +199,7 @@ export default function ViewPointHistoryTeacher() {
                 </div>
                 {students && students.map((student: any) => (
                   <SelectItem key={student._id} value={student._id}>
-                    {student.name} (Grade {student.grade})
+                    {student.name} ({student.grade})
                   </SelectItem>
                 ))}
               </SelectContent>

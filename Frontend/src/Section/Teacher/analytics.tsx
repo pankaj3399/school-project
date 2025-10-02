@@ -50,7 +50,7 @@ const AllCharts = () => {
                 setStudentId("");
                 setStudentName("");
               }}
-              className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer"
+              className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer hover:opacity-100"
             />
           </div>
           <PopoverContent className="w-[600px] p-0 flex flex-col space-y-0">

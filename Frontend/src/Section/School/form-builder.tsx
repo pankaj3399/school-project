@@ -270,7 +270,7 @@ const navigate = useNavigate()
                       checked={selectedStudents.includes(student._id)}
                       className="mr-2"
                     />
-                    {student.name} (Grade {student.grade})
+                    {student.name} ({student.grade})
                   </Button>
                 ))}
               </div>

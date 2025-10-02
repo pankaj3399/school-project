@@ -386,7 +386,7 @@ export default function ViewStudents() {
             <SelectItem value="all">All Grades</SelectItem>
             {Array.from({ length: 12 }, (_, i) => (
               <SelectItem key={i + 1} value={(i + 1).toString()}>
-                Grade {i + 1}
+                {i + 1}
               </SelectItem>
             ))}
           </SelectContent>

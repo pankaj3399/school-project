@@ -282,7 +282,7 @@ const DetailedHistory = () => {
                                         className="justify-start w-full"
                                         variant="ghost"
                                     >
-                                        {s.name} {s.grade && `(Grade ${s.grade})`}
+                                        {s.name} {s.grade && `(${s.grade})`}
                                     </Button>
                                 ))}
                                 {filteredStudents.length === 0 && (
