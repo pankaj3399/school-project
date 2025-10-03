@@ -52,7 +52,7 @@ const PointsBarChart = ({
         let d = data.sort((a,b) => b.totalPoints - a.totalPoints)
 
         setShowData(d);
-    }, [data]);
+    }, [data, title]);
 
     const handlePrint = () => {
         const printContent = document.getElementById('data-table');
@@ -64,15 +64,22 @@ const PointsBarChart = ({
             window.location.reload();
         }
     };
+    // Calculate dynamic height based on number of items
+    // Each bar needs ~40px (30px bar + 10px gap), plus margins
+    const minHeight = 400;
+    const itemHeight = 40; // Height per bar item
+    const chartMargins = 100; // Top and bottom margins
+    const dynamicHeight = Math.max(minHeight, (showData.length * itemHeight) + chartMargins);
+
     return (
-    <div className="w-full grid grid-cols-8 place-items-center border-2 py-5 rounded-lg h-[400px] mb-6 mt-10">
+    <div className="w-full grid grid-cols-8 place-items-center border-2 py-5 rounded-lg mb-6 mt-10" style={{minHeight: `${minHeight}px`}}>
         <h2 className="text-wrap text-sm col-span-8 px-4 flex flex-col items-center font-bold text-center mb-4"
             style={{color: barColor}}
         >
             {title}
         </h2>
 
-        <div className="col-span-8 w-full h-full cursor-pointer" onClick={() => setIsTableOpen(true)}>
+        <div className="col-span-8 w-full cursor-pointer" style={{height: `${dynamicHeight}px`}} onClick={() => setIsTableOpen(true)}>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                     data={showData}
@@ -86,7 +93,7 @@ const PointsBarChart = ({
                     barGap={2}
                 >
                     <XAxis type="number" tickLine={false} />
-                    <YAxis dataKey="_id" type="category" orientation='left' fontSize={10} />
+                    <YAxis dataKey="_id" type="category" orientation='left' fontSize={10} width={150} />
                     <Tooltip />
                     <Bar dataKey="totalPoints" fill={barColor} barSize={30} background={{ fill: '#f5f5f5' }} label={{
                         position: 'insideLeft',

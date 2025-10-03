@@ -574,10 +574,17 @@ export const emailGenerator = async (
     }
   }
 
+  // Send email to teacher for all point-related form types (AwardPoints, AwardPointsIEP, DeductPoints, PointWithdraw)
+  // Teacher will receive email if:
+  // 1. Form has teacherEmail enabled OR it's a DeductPoints/PointWithdraw form (always notify)
+  // 2. Teacher has opted in to receive emails (recieveMails = true)
+  // 3. Teacher's email is verified
   if (
     (form.teacherEmail ||
       form.formType == FormType.DeductPoints ||
-      form.formType == FormType.PointWithdraw) &&
+      form.formType == FormType.PointWithdraw ||
+      form.formType == FormType.AwardPoints ||
+      form.formType == FormType.AwardPointsIEP) &&
     teacher?.recieveMails &&
     teacher.isEmailVerified
   )
