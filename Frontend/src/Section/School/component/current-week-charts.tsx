@@ -31,69 +31,73 @@ const CurrentWeekCharts = ({studentId, isTeacher}:{
             try {
                 let awardRes, deductRes, withdrawRes;
 
-                // Use the same API as detailed view to ensure consistent data
+
                 if(studentId === "" || !studentId){
-                    const [awardBasicRes, awardIEPRes, deductRes_temp, withdrawRes_temp] = await Promise.all([
+                    [awardRes, deductRes, withdrawRes] = await Promise.all([
                         getHistoryByTime({formType: FormType.AwardPoints, period: '1W'}),
-                        getHistoryByTime({formType: FormType.AwardPointsIEP, period: '1W'}),
                         getHistoryByTime({formType: FormType.DeductPoints, period: '1W'}),
                         getHistoryByTime({formType: FormType.PointWithdraw, period: '1W'})
                     ]);
-
-                    // Combine both award types
-                    awardRes = {
-                        data: [...(awardBasicRes?.data || []), ...(awardIEPRes?.data || [])],
-                        history: [...(awardBasicRes?.history || []), ...(awardIEPRes?.history || [])]
-                    };
-
-                    // Assign to outer scope variables
-                    deductRes = deductRes_temp;
-                    withdrawRes = withdrawRes_temp;
                 } else {
-                    const [awardBasicRes, awardIEPRes, deductRes_temp, withdrawRes_temp] = await Promise.all([
+                    [awardRes, deductRes, withdrawRes] = await Promise.all([
                         getHistoryByTime({formType: FormType.AwardPoints, period: '1W', studentId}),
-                        getHistoryByTime({formType: FormType.AwardPointsIEP, period: '1W', studentId}),
                         getHistoryByTime({formType: FormType.DeductPoints, period: '1W', studentId}),
                         getHistoryByTime({formType: FormType.PointWithdraw, period: '1W', studentId})
                     ]);
-
-                    // Combine both award types
-                    awardRes = {
-                        data: [...(awardBasicRes?.data || []), ...(awardIEPRes?.data || [])],
-                        history: [...(awardBasicRes?.history || []), ...(awardIEPRes?.history || [])]
-                    };
-                    deductRes = deductRes_temp;
-                    withdrawRes = withdrawRes_temp;
                 }
                 
 
                 // Create a full week structure and populate with API data
                 const createFullWeekData = (apiData: any[]) => {
+                    console.log('=== createFullWeekData DEBUG ===');
+                    console.log('API Data received:', apiData);
+
                     // Create a map of API data by date for quick lookup
                     const apiDataMap = new Map();
                     apiData.forEach((dayData: any) => {
-                        apiDataMap.set(dayData.day, Math.abs(Number(dayData.points)));
+                        const dateKey = dayData.day || dayData.date;
+                        apiDataMap.set(dateKey, Math.abs(Number(dayData.points)));
+                        console.log(`Mapped ${dateKey} -> ${Math.abs(Number(dayData.points))}`);
                     });
 
-                    // Create 7 days for the last 7 days (6 days ago + today)
-                    const today = new Date();
-                    const weekData = [];
+                    // Extract dates from API data or create last 7 days
+                    let weekData = [];
 
-                    for (let i = 6; i >= 0; i--) {
-                        const date = new Date(today);
-                        date.setDate(today.getDate() - i);
-                        // Use local timezone instead of UTC to avoid date shifting
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const dateString = `${year}-${month}-${day}`;
-                        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    if (apiData.length > 0 && apiData[0].date) {
+                        // Use dates directly from API response
+                        weekData = apiData.map((dayData: any) => {
+                            const dateString = dayData.date;
+                            const date = new Date(dateString + 'T00:00:00Z'); // Parse as UTC
+                            const dayName = date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
 
-                        weekData.push({
-                            day: dayName,
-                            date: dateString,
-                            points: apiDataMap.get(dateString) || 0
+                            return {
+                                day: dayName,
+                                date: dateString,
+                                points: Math.abs(Number(dayData.points))
+                            };
                         });
+                        console.log('Using API dates directly:', weekData);
+                    } else {
+                        // Fallback: Create 7 days for the last 7 days using UTC
+                        const today = new Date();
+
+                        for (let i = 6; i >= 0; i--) {
+                            const date = new Date(today);
+                            date.setUTCDate(today.getUTCDate() - i);
+                            // Use UTC methods to avoid timezone shifting
+                            const year = date.getUTCFullYear();
+                            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                            const day = String(date.getUTCDate()).padStart(2, '0');
+                            const dateString = `${year}-${month}-${day}`;
+                            const dayName = date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+
+                            weekData.push({
+                                day: dayName,
+                                date: dateString,
+                                points: apiDataMap.get(dateString) || 0
+                            });
+                        }
+                        console.log('Using fallback 7-day range:', weekData);
                     }
 
                     return weekData;

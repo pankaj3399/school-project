@@ -68,28 +68,18 @@ export default function ViewPointHistoryTeacher() {
       let data;
 
       // If formType is specified in URL, use the filtered API
+      // Use '1W' (1 week) to match analytics page default period
       if (formTypeFromUrl) {
-        // Handle AwardPoints by including both regular and IEP award points
-        if (formTypeFromUrl === FormType.AwardPoints) {
-          const [awardBasicRes, awardIEPRes] = await Promise.all([
-            getHistoryByTime({ formType: FormType.AwardPoints, period: '1Y' }),
-            getHistoryByTime({ formType: FormType.AwardPointsIEP, period: '1Y' })
-          ]);
+        console.log('=== Point History: Fetching filtered data ===');
+        console.log('Form Type:', formTypeFromUrl);
+        console.log('Period: 1W (matching analytics page)');
 
-          // Combine both award types
-          const combinedHistory = [
-            ...(awardBasicRes?.history || []),
-            ...(awardIEPRes?.history || [])
-          ];
-
-          data = { history: combinedHistory };
-        } else {
-          // For other form types, use the original API
-          data = await getHistoryByTime({
-            formType: formTypeFromUrl,
-            period: '1Y'
-          });
-        }
+        // Backend automatically includes AwardPointsIEP when fetching AwardPoints
+        data = await getHistoryByTime({
+          formType: formTypeFromUrl,
+          period: '1W'
+        });
+        console.log('History length:', data.history?.length);
 
         // Convert the filtered data to match the expected format
         if (data.history) {

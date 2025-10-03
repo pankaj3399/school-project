@@ -124,46 +124,16 @@ const DetailedHistory = () => {
             const formType = searchParams.get('formType');
 
             let res;
-            let combinedHistory: any[] = [];
-            let combinedData: any[] = [];
 
-            // Handle AwardPoints by including both regular and IEP award points
-            if (formType === FormType.AwardPoints) {
-                const requestData = {
-                    period,
-                    studentId: studentId || undefined
-                };
 
-                const [awardBasicRes, awardIEPRes] = await Promise.all([
-                    getHistoryByTime({ ...requestData, formType: FormType.AwardPoints }),
-                    getHistoryByTime({ ...requestData, formType: FormType.AwardPointsIEP })
-                ]);
+            // when formType is AwardPoints, so no need to fetch separately
+            const requestData = {
+                formType,
+                period,
+                studentId: studentId || undefined
+            };
 
-                // Combine both award types
-                combinedHistory = [
-                    ...(awardBasicRes?.history || []),
-                    ...(awardIEPRes?.history || [])
-                ];
-
-                combinedData = [
-                    ...(awardBasicRes?.data || []),
-                    ...(awardIEPRes?.data || [])
-                ];
-
-                // Use the first response for metadata (timezone, etc.)
-                res = awardBasicRes || awardIEPRes || {};
-                res.history = combinedHistory;
-                res.data = combinedData;
-            } else {
-                // For other form types, use the original API
-                const requestData = {
-                    formType,
-                    period,
-                    studentId: studentId || undefined
-                };
-
-                res = await getHistoryByTime(requestData);
-            }
+            res = await getHistoryByTime(requestData);
 
             if (!res) {
                 setData([]);
