@@ -1224,102 +1224,288 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
   }
 };
 
-export const getPointsByTeacher = async (req, res) => {
+// New comprehensive analytics API
+export const getAnalyticsData = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
-    const teachers = await Teacher.find({ schoolId: schoolId });
+    const { period, studentId } = req.body;
+    const teacherData = await getGradeFromUser(req.user.id);
+    const schoolTimezone = await getSchoolTimezone(schoolId);
 
-    const pointsByTeacher = await PointsHistory.aggregate([
-      {
-        $match: {
-          schoolId: new mongoose.Types.ObjectId(schoolId),
-          formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
+    // Get current time in school timezone
+    const today = getSchoolCurrentTime(schoolTimezone);
+    let startDate;
+
+    // Calculate start date based on period
+    switch (period) {
+      case "1W":
+        startDate = today.minus({ weeks: 1 });
+        break;
+      case "1M":
+        startDate = today.minus({ months: 1 });
+        break;
+      case "3M":
+        startDate = today.minus({ months: 3 });
+        break;
+      case "6M":
+        startDate = today.minus({ months: 6 });
+        break;
+      case "1Y":
+        startDate = today.minus({ years: 1 });
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid period specified" });
+    }
+
+    // Convert to UTC for database queries
+    const startDateUTC = timezoneManager.convertSchoolTimeToUTC(startDate.startOf('day'), schoolTimezone).toJSDate();
+    const todayUTC = timezoneManager.convertSchoolTimeToUTC(today.endOf('day'), schoolTimezone).toJSDate();
+
+    // Build match criteria
+    let matchCriteria = {
+      schoolId: new mongoose.Types.ObjectId(schoolId),
+      submittedAt: {
+        $gte: startDateUTC,
+        $lte: todayUTC,
+      }
+    };
+
+    // Filter by teacher's students if user is a teacher
+    if (teacherData) {
+      matchCriteria.submittedForId = { $in: teacherData.studentIds };
+    }
+
+    // Filter by specific student if studentId provided
+    if (studentId) {
+      matchCriteria.submittedForId = new mongoose.Types.ObjectId(studentId);
+    }
+
+    // Get aggregated data for each form type
+    console.log('🔍 Match criteria:', JSON.stringify(matchCriteria, null, 2));
+    console.log('🔍 FormType.AwardPoints:', FormType.AwardPoints);
+    console.log('🔍 FormType.AwardPointsIEP:', FormType.AwardPointsIEP);
+    console.log('🔍 FormType.DeductPoints:', FormType.DeductPoints);
+    console.log('🔍 FormType.PointWithdraw:', FormType.PointWithdraw);
+
+    const [awardPointsData, deductPointsData, withdrawPointsData] = await Promise.all([
+      // Award Points (includes AwardPointsIEP)
+      PointsHistory.aggregate([
+        {
+          $match: {
+            ...matchCriteria,
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
+          }
         },
-      },
-      {
-        $group: {
-          _id: "$submittedByName",
-          totalPoints: { $sum: { $toDouble: "$points" } },
+        {
+          $addFields: {
+            schoolDate: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
         },
-      },
+        {
+          $group: {
+            _id: "$schoolDate",
+            points: { $sum: { $toDouble: "$points" } },
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            date: "$_id",
+            points: { $abs: "$points" }
+          }
+        },
+        { $sort: { date: 1 } }
+      ]),
+
+      // Deduct Points
+      PointsHistory.aggregate([
+        {
+          $match: {
+            ...matchCriteria,
+            formType: FormType.DeductPoints
+          }
+        },
+        {
+          $addFields: {
+            schoolDate: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: "$schoolDate",
+            points: { $sum: { $toDouble: "$points" } },
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            date: "$_id",
+            points: { $abs: "$points" }
+          }
+        },
+        { $sort: { date: 1 } }
+      ]),
+
+      // Withdraw Points
+      PointsHistory.aggregate([
+        {
+          $match: {
+            ...matchCriteria,
+            formType: FormType.PointWithdraw
+          }
+        },
+        {
+          $addFields: {
+            schoolDate: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$submittedAt",
+                timezone: timezoneManager.getTimezoneFromOffset(schoolTimezone)
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: "$schoolDate",
+            points: { $sum: { $toDouble: "$points" } },
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            date: "$_id",
+            points: { $abs: "$points" }
+          }
+        },
+        { $sort: { date: 1 } }
+      ])
     ]);
 
-    // Add grade information to teachers who actually issued points
-    teachers.forEach((teacher) => {
-      pointsByTeacher.forEach((point) => {
-        if (point._id === teacher.name) {
-          point.grade = teacher.grade ?? "N/A";
-        }
-      });
+    console.log('📊 Award Points Data:', JSON.stringify(awardPointsData, null, 2));
+    console.log('📊 Deduct Points Data:', JSON.stringify(deductPointsData, null, 2));
+    console.log('📊 Withdraw Points Data:', JSON.stringify(withdrawPointsData, null, 2));
+
+    // Get rankings data (teacher and student rankings)
+    const [teacherRankings, studentRankings] = await Promise.all([
+      // Teacher rankings
+      PointsHistory.aggregate([
+        {
+          $match: {
+            schoolId: new mongoose.Types.ObjectId(schoolId),
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
+            ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
+          }
+        },
+        {
+          $group: {
+            _id: {
+              teacherId: "$submittedById",
+              teacherName: "$submittedByName"
+            },
+            totalPoints: { $sum: { $toDouble: "$points" } }
+          }
+        },
+        {
+          $lookup: {
+            from: "teachers",
+            localField: "_id.teacherId",
+            foreignField: "_id",
+            as: "teacherInfo"
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            name: "$_id.teacherName",
+            totalPoints: 1,
+            grade: {
+              $ifNull: [
+                { $arrayElemAt: ["$teacherInfo.grade", 0] },
+                "N/A"
+              ]
+            }
+          }
+        },
+        {
+          $match: {
+            totalPoints: { $gt: 0 }
+          }
+        },
+        { $sort: { totalPoints: -1 } }
+      ]),
+
+      // Student rankings
+      PointsHistory.aggregate([
+        {
+          $match: {
+            schoolId: new mongoose.Types.ObjectId(schoolId),
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
+            ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
+          }
+        },
+        {
+          $group: {
+            _id: {
+              studentId: "$submittedForId",
+              studentName: "$submittedForName"
+            },
+            totalPoints: { $sum: { $toDouble: "$points" } }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            name: "$_id.studentName",
+            totalPoints: 1
+          }
+        },
+        {
+          $match: {
+            totalPoints: { $gt: 0 }
+          }
+        },
+        { $sort: { totalPoints: -1 } }
+      ])
+    ]);
+
+    // Return comprehensive analytics data
+    res.status(200).json({
+      success: true,
+      data: {
+        awardPoints: awardPointsData,
+        deductPoints: deductPointsData,
+        withdrawPoints: withdrawPointsData,
+        teacherRankings,
+        studentRankings
+      },
+      meta: {
+        period,
+        startDate: startDateUTC,
+        endDate: todayUTC,
+        timezone: schoolTimezone,
+        studentId: studentId || null,
+        isTeacherView: !!teacherData
+      }
     });
-
-    // Filter to only include teachers who actually issued points (totalPoints > 0)
-    const activeTeachers = pointsByTeacher.filter(teacher => teacher.totalPoints > 0);
-
-    res.status(200).json({ data: activeTeachers });
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getPointsByStudent = async (req, res) => {
-  try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
-    const teacherData = await getGradeFromUser(req.user.id);
-    
-    let students;
-    if (teacherData) {
-      students = await Student.find({ 
-        schoolId: schoolId,
-        _id: { $in: teacherData.studentIds }
-      });
-    } else {
-      students = await Student.find({ schoolId: schoolId });
-    }
-
-    const studentNames = students.map((student) => student.name);
-
-    let pointsByStudent;
-
-    if (teacherData) {
-      pointsByStudent = await PointsHistory.aggregate([
-        {
-          $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
-            submittedForId: { $in: teacherData.studentIds },
-          },
-        },
-        {
-          $group: {
-            _id: "$submittedForName",
-            totalPoints: { $sum: { $toDouble: "$points" } },
-          },
-        },
-      ]);
-    } else {
-      pointsByStudent = await PointsHistory.aggregate([
-        {
-          $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
-          },
-        },
-        {
-          $group: {
-            _id: "$submittedForName",
-            totalPoints: { $sum: { $toDouble: "$points" } },
-          },
-        },
-      ]);
-    }
-
-    // Filter to only include students who actually received points (totalPoints > 0)
-    const activeStudents = pointsByStudent.filter(student => student.totalPoints > 0);
-
-    res.status(200).json({ data: activeStudents });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error in getAnalyticsData:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

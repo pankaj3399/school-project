@@ -28,7 +28,7 @@ import ViewFormsTeacher from "./Section/Teacher/view-forms";
 import FormBuilderTeacher from "./Section/Teacher/form-builder";
 import EditFormTeacher from "./Section/Teacher/edit-form";
 import AddStudentTeacher from "./Section/Teacher/add-student";
-import TeacherDashboard from "./Section/Teacher/analytics";
+import Analytics from "./Section/Teacher/analytics";
 import Finalize from "./Section/School/finalize";
 import VerifyEmail from "./components/VerifyEmail";
 import Setup from "./Section/School/setup";
@@ -78,7 +78,7 @@ export default function App() {
           <Route path="/teachers/addstudent" element={<ProtectedRoute><AddStudentTeacher /></ProtectedRoute>} />
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
           <Route path="/teachers/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
-          <Route path="/teachers/analytics" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
+          <Route path="/teachers/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/teachers/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 

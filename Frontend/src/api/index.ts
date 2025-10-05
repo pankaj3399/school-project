@@ -761,29 +761,21 @@ export const getHistoryByTime = async (data: any) => {
   }
 };
 
-export const getRanks = async () => {
+export const getAnalyticsData = async (data: { period: string; studentId?: string }) => {
   try {
     const token = getToken();
-    const response1 = await axios.post(
-      `${API_URL}/school/getTeacherPoints`,
-      {},
+    const response = await axios.post(
+      `${API_URL}/school/analytics`,
+      data,
       {
         headers: {
           token,
         },
-      },
+      }
     );
-    const response2 = await axios.post(
-      `${API_URL}/school/getStudentPoints`,
-      {},
-      {
-        headers: {
-          token,
-        },
-      },
-    );
-    return { teachers: response1.data, students: response2.data };
+    return response.data;
   } catch (error) {
+    console.error("Error fetching analytics data:", error);
     return { error };
   }
 };
