@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Input } from "@/components/ui/input"
 import { X } from "lucide-react"
 import { getStudents, getAnalyticsData } from "@/api"
 
@@ -23,10 +21,7 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
   } | null>(null)
   const [period, setPeriod] = useState<string>("1W")
   const [selectedStudent, setSelectedStudent] = useState<string>("")
-  const [selectedStudentName, setSelectedStudentName] = useState<string>("")
   const [students, setStudents] = useState<any[]>([])
-  const [filteredStudents, setFilteredStudents] = useState<any[]>([])
-  const [isPopOverOpen, setIsPopOverOpen] = useState(false)
   const [detailData, setDetailData] = useState<any>(null)
 
   useEffect(() => {
@@ -38,7 +33,6 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
     const token = localStorage.getItem("token")
     const res = await getStudents(token ?? "")
     setStudents(res.students || [])
-    setFilteredStudents(res.students || [])
   }
 
   const fetchWeekData = async () => {
@@ -277,11 +271,8 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
                         console.log('🔥 Student selected:', value)
                         if (value === "all") {
                           setSelectedStudent("")
-                          setSelectedStudentName("")
                         } else {
-                          const student = students.find((s: any) => s._id === value)
                           setSelectedStudent(value)
-                          setSelectedStudentName(student?.name || "")
                         }
                       }}
                     >
@@ -306,7 +297,6 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
                         onClick={() => {
                           console.log('Clearing student selection')
                           setSelectedStudent("")
-                          setSelectedStudentName("")
                         }}
                         className="h-4 w-4 cursor-pointer hover:opacity-70"
                       />
