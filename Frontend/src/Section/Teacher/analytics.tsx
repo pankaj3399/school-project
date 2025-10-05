@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { getStudents, getAnalyticsData } from "@/api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -455,7 +455,7 @@ const Analytics = () => {
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart
                     data={(() => {
-                      let currentData = []
+                      let currentData: any[] = []
                       if (detailView.type === 'award' && analyticsData) {
                         currentData = analyticsData.awardPoints
                       } else if (detailView.type === 'deduct' && analyticsData) {
