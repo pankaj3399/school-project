@@ -61,8 +61,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-col flex-1">
         <TopNav />
         <main className="flex-1 overflow-x-hidden overflow-y-auto  border bg-[#ffffff]   ">
-          <div className="container mx-auto px-6 py-8">
-            <Breadcrumb />
+          <div className="container mx-auto px-3 py-8">
+            {pathname !== '/analytics' && <Breadcrumb />}
             {children}
           </div>
         </main>

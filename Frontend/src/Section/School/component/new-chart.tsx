@@ -140,10 +140,10 @@ const EducationYearChart = ({studentId, slimLines}:{
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap justify-center mb-4">
+      <div className="flex flex-wrap justify-center mb-4 mr-12">
         <button
           onClick={() => setSelectedMonth(null)}
-          className={`m-1 px-3 py-1 rounded ${selectedMonth === null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`m-1 px-3 py-1 rounded text-sm ${selectedMonth === null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
           All Year
         </button>
@@ -151,7 +151,7 @@ const EducationYearChart = ({studentId, slimLines}:{
           <button
             key={month}
             onClick={() => setSelectedMonth(month)}
-            className={`m-1 px-3 py-1 rounded ${selectedMonth === month ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            className={`m-1 px-3 py-1 text-sm rounded ${selectedMonth === month ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
           >
             {month}
           </button>
@@ -164,9 +164,9 @@ const EducationYearChart = ({studentId, slimLines}:{
             data={chartData}
             margin={{
               top: 20,
-              right: 30,
-              left: 20,
-              bottom: 10,
+              right: 80,
+              left: -10,
+              bottom: 70,
             }}
             
           >
