@@ -1,4 +1,4 @@
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,28 +38,28 @@ export default function SchoolPage() {
   const [timezone, setTimezone] = useState("UTC-5"); // Default to Eastern Time
 
   const [stats, setStats] = useState({
-      teachers:0,
-      students:0,
-      points:0,
-      oopsie: 0,
-      feedbacks: 0,
-      withdrawals: 0
-    })
-  
-    useEffect(()=>{
-      const fetchStats = async () => {
-          const res = await getStats()
-          setStats({
-              teachers: res.totalTeachers,
-              students: res.totalStudents,
-              points: res.totalPoints,
-              oopsie: res.totalDeductPoints,
-              withdrawals: res.totalWithdrawPoints,
-              feedbacks: res.totalFeedbackCount
-          })
-      }
-      fetchStats()
-    },[])
+    teachers: 0,
+    students: 0,
+    points: 0,
+    oopsie: 0,
+    feedbacks: 0,
+    withdrawals: 0
+  })
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const res = await getStats()
+      setStats({
+        teachers: res.totalTeachers,
+        students: res.totalStudents,
+        points: res.totalPoints,
+        oopsie: res.totalDeductPoints,
+        withdrawals: res.totalWithdrawPoints,
+        feedbacks: res.totalFeedbackCount
+      })
+    }
+    fetchStats()
+  }, [])
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -122,54 +122,53 @@ export default function SchoolPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast({
-            title: "Error",
-            description: "You are not authenticated.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        const formData = new FormData();
-        formData.append("name", schoolName);
-        formData.append("address", address);
-        formData.append("district", district);
-        formData.append("state", state);
-        formData.append("country", country);
-        formData.append("timeZone", timezone);
-        if (logo) {
-          formData.append("logo", logo);
-        }
-        const response = isEditing
-    ? await updateSchool(formData, school._id, token)
-    : await addSchool(formData, token);
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You are not authenticated.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      const formData = new FormData();
+      formData.append("name", schoolName);
+      formData.append("address", address);
+      formData.append("district", district);
+      formData.append("state", state);
+      formData.append("country", country);
+      formData.append("timeZone", timezone);
+      if (logo) {
+        formData.append("logo", logo);
+      }
+      const response = isEditing
+        ? await updateSchool(formData, school._id, token)
+        : await addSchool(formData, token);
 
 
-if (!response.error) {
-    toast({
-        title: isEditing
+      if (!response.error) {
+        toast({
+          title: isEditing
             ? "School updated successfully"
             : "School added successfully",
-        description: `${schoolName} has been ${
-            isEditing ? "updated" : "added"
-        } to the system.`,
-    });
-    setLoading(false);
-    setSchool(response.data.school);
-    setIsEditing(false);
-    navigate("/analytics");
-  } else {
-    toast({
-      title: "Error",
-      description: "Failed to process the request. Please try again.",
-      variant: "destructive",
-      });
+          description: `${schoolName} has been ${isEditing ? "updated" : "added"
+            } to the system.`,
+        });
+        setLoading(false);
+        setSchool(response.data.school);
+        setIsEditing(false);
+        navigate("/analytics");
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to process the request. Please try again.",
+          variant: "destructive",
+        });
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  }
   };
 
 
@@ -228,32 +227,38 @@ if (!response.error) {
 
   if (school) {
     return (
-      <div className="grid  place-items-center">
-        <div className="space-y-4">
-          <div className="flex flex-col gap-4 items-center space-x-4">
+      <div className="grid grid-cols-1 place-items-center">
+        <div className="flex w-full">
+          <div className="flex flex-col gap-4 items-center">
             <img
               src={school.logo || "/default-logo.png"}
               alt={school.name}
-              className="w-36 h-36 object-cover rounded-full"
+              className="w-24 h-24 object-cover rounded-full"
             />
-            
-            <div className="text-center">
-              <p className="text-xl">{school.district}</p>
-              <h2 className="text-4xl font-bold">{school.name}</h2>
-              <p className="text-xl">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
-              <p className="text-xl">{school.address}</p>
-              <p className="text-xl">{school.state}, {school.country}</p>
+
+            <div className="flex flex-col gap-1 items-center text-center text-sm">
+              <p className="">{school.district}</p>
+              <h2 className="text-xl font-semibold">{school.name}</h2>
+              <p className="">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
+              <div className="flex gap-1">
+                <p className="">{school.address},</p>
+                <p className="">{school.state}, {school.country}</p>
+              </div>
             </div>
           </div>
+
+
+          <div className="flex flex-col gap-5 w-full">
+            {
+              !isEditing && <SchoolStats stats={stats} />
+            }
+            {
+              !isEditing && <AllCharts />
+            }
+          </div>
         </div>
-        { 
-          !isEditing && <SchoolStats stats={stats} />
-        }
-        {
-          !isEditing && <AllCharts />
-        }
-       
-        
+
+
         {isEditing && (
           <div className="grid place-items-center w-full h-full mt-20">
             <div className="bg-white shadow-xl p-4 rounded-lg">
@@ -355,17 +360,17 @@ if (!response.error) {
             )}
           </div>
           <div>
-                  <Label htmlFor="district">District</Label>
-                  <Input
-                    id="district"
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    required
-                  />
-                  {errors.district && (
-                    <p className="text-red-500 text-sm mt-1">{errors.district}</p>
-                  )}
-                </div>
+            <Label htmlFor="district">District</Label>
+            <Input
+              id="district"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              required
+            />
+            {errors.district && (
+              <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+            )}
+          </div>
           {formFields}
           {!isEditing && (
             <div>
@@ -386,7 +391,7 @@ if (!response.error) {
           </Button>
         </form>
       </div>
-      
+
     </div>
   );
 }

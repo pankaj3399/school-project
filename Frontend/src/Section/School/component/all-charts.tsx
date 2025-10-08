@@ -33,72 +33,73 @@ const AllCharts = () => {
 
   return (
     <div>
-      <div>
-      {Array.isArray(students) && students.length > 0 ? (
-        <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
-          <div className="flex items-center space-x-2 mt-10">
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                className="w-full justify-between"
-              >
-                {studentName
-                  ? students.find((s: any) => s._id === studentId)?.name
-                  : "Select student..."}
-              </Button>
-            </PopoverTrigger>
-            <X
-              onClick={() => {
-                setStudentId("");
-                setStudentName("");
-              }}
-              className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer"
-            />
-          </div>
-          <PopoverContent className="w-[600px]  p-0 flex flex-col space-y-0">
-            <Input
-              onChange={(e) => {
-                const value = e.target.value;
-                setfilteredStudents(
-                  students.filter((s: any) =>
-                    s.name.toLowerCase().includes(value.toLowerCase())
-                  )
-                );
-              }}
-              className="w-full"
-            />
-            <div className="flex flex-col h-[400px] overflow-y-auto">
-            {filteredStudents.map((s: any) => (
-              <Button
-                onClick={() => {
-                  setStudentId(s._id);
-                  setStudentName(s.name);
-                  setIsPopOverOpen(false);
-                }}
-                key={s._id}
-                className="justify-start"
-                variant={"ghost"}
-              >
-                {s.name} (Grade {s.grade})
-              </Button>
-            ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-      ) : (
-        <div>No students available</div>
-      )}
-      </div>
-
-
       <div className="mt-12 space-y-4 grid grid-cols-4">
         <div className="col-span-3">
-          <EducationYearChart studentId={studentId} />
+          <div className="flex w-full">
+            <div className="w-[97%]"><EducationYearChart studentId={studentId} /></div>
+            <div className="w-[3%] mr-24"><Ranks /></div>
+          </div>
+          <div>
+            {Array.isArray(students) && students.length > 0 ? (
+              <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
+                <div className="flex items-center space-x-2 mb-6">
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {studentName
+                        ? students.find((s: any) => s._id === studentId)?.name
+                        : "Select student..."}
+                    </Button>
+                  </PopoverTrigger>
+                  <X
+                    onClick={() => {
+                      setStudentId("");
+                      setStudentName("");
+                    }}
+                    className="ml-2 h-4 w-4 shrink-0 opacity-50 cursor-pointer"
+                  />
+                </div>
+                <PopoverContent className="w-[600px]  p-0 flex flex-col space-y-0">
+                  <Input
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setfilteredStudents(
+                        students.filter((s: any) =>
+                          s.name.toLowerCase().includes(value.toLowerCase())
+                        )
+                      );
+                    }}
+                    className="w-full"
+                  />
+                  <div className="flex flex-col h-[400px] overflow-y-auto">
+                    {filteredStudents.map((s: any) => (
+                      <Button
+                        onClick={() => {
+                          setStudentId(s._id);
+                          setStudentName(s.name);
+                          setIsPopOverOpen(false);
+                        }}
+                        key={s._id}
+                        className="justify-start"
+                        variant={"ghost"}
+                      >
+                        {s.name} (Grade {s.grade})
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <div>No students available</div>
+            )}
+          </div>
           <CurrentWeekCharts key={`school-charts-${studentId}`} studentId={studentId} />
         </div>
-        <Ranks />
       </div>
+
     </div>
   );
 };

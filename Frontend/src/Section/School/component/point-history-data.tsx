@@ -83,7 +83,7 @@ export default function ViewPointHistoryByData({data}:{
               <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
               <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
               <TableCell>{history.submittedForName}</TableCell>
-              <TableCell>{history.submittedByName}</TableCell>
+              <TableCell>{history.submittedBySubject}</TableCell>
               <TableCell>{formatFormType(history.formType) ?? "N/A"}</TableCell>
               <TableCell>{history.points}</TableCell>
             </TableRow>

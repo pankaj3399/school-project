@@ -102,7 +102,7 @@ export const addTeacher = async (req, res) => {
 };
 
 export const addStudent = async (req, res) => {
-  const { name, password, email, standard, grade } = req.body;
+  const { name, password, email, standard, grade, subject } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 12);

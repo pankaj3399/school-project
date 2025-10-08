@@ -111,6 +111,7 @@ export default function LoginForm() {
           variant: "destructive",
         });
         setLoading(false);
+        console.log(errorMessage);
         return;
       }
 

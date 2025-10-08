@@ -1,18 +1,18 @@
-//f
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
 const API_URL = import.meta.env.VITE_VERCEL
   ? import.meta.env.VITE_API_URL
   : import.meta.env.PROD
-  ? "/api"
-  : import.meta.env.VITE_API_URL;
-// console.log(
-//   import.meta.env,
-//   import.meta.env.PROD,
-//   import.meta.env.MODE,
-//   API_URL,
-// );
+    ? "/api"
+    : import.meta.env.VITE_API_URL;
+console.log(
+  import.meta.env,
+  import.meta.env.PROD,
+  import.meta.env.MODE,
+  API_URL,
+);
+
 
 const getToken = () => localStorage.getItem("token");
 
@@ -38,13 +38,13 @@ export const signIn = async (data: { email: string; password: string; role: stri
     return response.data;
   } catch (error: any) {
     // Pass through the specific error message from the backend
-    return { 
+    return {
       error: {
         message: error?.response?.data?.message || error?.message || "Login failed",
         response: {
           data: error?.response?.data
         }
-      } 
+      }
     };
   }
 };
@@ -55,13 +55,13 @@ export const requestLoginOtp = async ({ email, role, password }: { email: string
     return response.data;
   } catch (error: any) {
     // Pass through the specific error message from the backend
-    return { 
+    return {
       error: {
         message: error?.response?.data?.message || error?.message || "OTP request failed",
         response: {
           data: error?.response?.data
         }
-      } 
+      }
     };
   }
 };
@@ -400,13 +400,13 @@ export const submitFormTeacher = async (
     return response.data;
   } catch (error: any) {
     // Extract the actual error message from axios response
-    return { 
+    return {
       error: {
         message: error?.response?.data?.message || error?.message || "Form submission failed",
         response: {
           data: error?.response?.data
         }
-      } 
+      }
     };
   }
 };
@@ -449,18 +449,18 @@ export const submitFormAdmin = async (
     return response.data;
   } catch (error: any) {
     // Extract the actual error message from axios response
-    return { 
+    return {
       error: {
         message: error?.response?.data?.message || error?.message || "Form submission failed",
         response: {
           data: error?.response?.data
         }
-      } 
+      }
     };
   }
 };
 
-export const getPointHistory = async (token: string, page:number, limit:number = 20) => {
+export const getPointHistory = async (token: string, page: number, limit: number = 20) => {
   try {
     const response = await axios.get(`${API_URL}/form/getPointHistory?page=${page}&limit=${limit}`, {
       headers: { token },

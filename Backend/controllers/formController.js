@@ -240,6 +240,7 @@ export const submitFormTeacher = async (req, res) => {
       formSubmissionId: formSubmission._id,
       submittedById: teacherId,
       submittedByName: teacher.name,
+      submittedBySubject: teacher.subject || null,
       submittedForId: submittedFor,
       submittedForName: submittedForStudent.name,
       points: totalPoints,
@@ -331,6 +332,7 @@ export const submitFormAdmin = async (req, res) => {
       formSubmissionId: formSubmission._id,
       submittedById: schoolAdmin._id,
       submittedByName: schoolAdmin.name,
+      submittedBySubject: null,
       submittedForId: submittedFor,
       submittedForName: submittedForStudent.name,
       points: totalPoints,
@@ -412,11 +414,16 @@ export const getPointHistory = async (req, res) => {
 
         
         // Execute query with pagination
-        const adminPointHistory = await PointsHistory.find(query)
+        const adminPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")
+          .populate({ path: "submittedById", select: "subject" })
           .sort({ submittedAt: -1 })  // Sort by newest first
           .skip(skip)
           .limit(limit);
+        const adminPointHistory = adminPointHistoryRaw.map((doc)=>({
+          ...doc.toObject(),
+          submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null
+        }))
         
           
         return res.status(200).json({
@@ -454,11 +461,17 @@ export const getPointHistory = async (req, res) => {
         console.log("Total Count:", totalCount);
 
         // Execute query with pagination
-        const teacherPointHistory = await PointsHistory.find(query)
+        const teacherPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")
+          .populate({ path: "submittedById", select: "subject" })
           .sort({ submittedAt: -1 })  // Sort by newest first
           .skip(skip)
           .limit(limit);
+
+        const teacherPointHistory = teacherPointHistoryRaw.map((doc)=>({
+          ...doc.toObject(),
+          submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null
+        }))
 
         console.log("Teacher point history results:", teacherPointHistory.length);
         console.log("Teacher point history sample:", teacherPointHistory.slice(0, 3));

@@ -25,6 +25,10 @@ const PointsHistorySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    submittedBySubject: {
+        type: String,
+        default: null
+    },
     submittedAt: {
         type: Date,
         required: true,
