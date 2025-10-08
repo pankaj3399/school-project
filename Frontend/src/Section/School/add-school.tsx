@@ -225,14 +225,6 @@ export default function SchoolPage() {
 
   if (loading) return <Loading />;
 
-  // if(school) {
-  //   return (
-  //     <div>
-
-  //     </div>
-  //   )
-  // }
-
   if (school) {
     return (
       <div className="grid grid-cols-1 place-items-center">
