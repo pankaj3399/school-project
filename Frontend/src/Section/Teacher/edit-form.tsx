@@ -198,7 +198,7 @@ const [grade, setGrade] = useState<number>(1)
           </div>
       <div className="space-y-4">
         {questions.map((question, index) => (
-          <>
+          <div key={index}>
           <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
           <QuestionBuilder
             formType={formType}
@@ -207,7 +207,7 @@ const [grade, setGrade] = useState<number>(1)
             onUpdate={updateQuestion}
             onRemove={removeQuestion}
             />
-          </>
+          </div>
         ))}
       </div>
       <Button

@@ -21,7 +21,7 @@ const generateData = async (month: string | null = null, studentId: string | nul
   try {
     let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId) : await getHistoryOfYear();
 
-    
+
     if (!month) {
 
 
@@ -77,6 +77,12 @@ const generateData = async (month: string | null = null, studentId: string | nul
           const dayIndex = dayData.day - 1;
           switch (dayData.formType) {
             case FormType.AwardPointsIEP: formattedDayData[dayIndex] = {
+              ...formattedDayData[dayIndex],
+              day: dayData.day,
+              awardPoints: formattedDayData[dayIndex].awardPoints + Number(dayData.points),
+            }
+              break;
+            case FormType.AwardPoints: formattedDayData[dayIndex] = {
               ...formattedDayData[dayIndex],
               day: dayData.day,
               awardPoints: formattedDayData[dayIndex].awardPoints + Number(dayData.points),
