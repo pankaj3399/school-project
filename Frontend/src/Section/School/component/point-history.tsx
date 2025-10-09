@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { getPointHistory, getStudents, getHistoryByTime } from "@/api"
+import { getPointHistory, getStudents, getHistoryByTime, getFilteredPointHistory } from "@/api"
 import { FormType } from '@/lib/types'
 import Loading from "../../Loading"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -23,6 +23,7 @@ interface PaginationData {
 export default function ViewPointHistoryTeacher() {
   const [pointHistory, setPointHistory] = useState<any[]>([])
   const [showPointHistory, setShowPointHistory] = useState<any[]>([])
+  const [filteredPointHistory, setFilteredPointHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
   const [students, setStudents] = useState<any[]>([])
@@ -30,10 +31,10 @@ export default function ViewPointHistoryTeacher() {
   const [isPopOverOpen, setIsPopOverOpen] = useState(false)
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const formTypeFromUrl = searchParams.get('formType') || '';
-  
+
   // Pagination state
   const [pagination, setPagination] = useState<PaginationData>({
     totalItems: 0,
@@ -41,8 +42,8 @@ export default function ViewPointHistoryTeacher() {
     currentPage: 1,
     itemsPerPage: 20
   });
-  
-  useEffect(()=>{
+
+  useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token')
       const resTeacher = await getStudents(token ?? "")
@@ -50,7 +51,7 @@ export default function ViewPointHistoryTeacher() {
       setfilteredStudents(resTeacher.students)
     }
     fetchData()
-  },[])
+  }, [])
 
   const fetchStudents = async (page: number = 1) => {
     try {
@@ -113,7 +114,7 @@ export default function ViewPointHistoryTeacher() {
         variant: "destructive",
       })
       console.log(error);
-      
+
       setLoading(false)
     }
   }
@@ -122,9 +123,9 @@ export default function ViewPointHistoryTeacher() {
     fetchStudents()
   }, [formTypeFromUrl]) // Reload when formType changes
 
-  useEffect(()=>{
-    setShowPointHistory(pointHistory.filter(point => point.submittedForName == studentName))
-  },[studentName])
+  useEffect(() => {
+    setShowPointHistory(filteredPointHistory)
+  }, [studentName, filteredPointHistory])
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -136,21 +137,19 @@ export default function ViewPointHistoryTeacher() {
   const formatDateTime = (date: string | number | Date, format: 'date' | 'time') => {
     try {
       // Use the school's timezone if available
-      
+
       if (user?.schoolId?.timeZone) {
         if (format === 'date') {
-          console.log(date);
-          
           return timezoneManager.formatForSchool(date as string | Date, user.schoolId.timeZone, 'MM/dd/yyyy');
         } else {
           return timezoneManager.formatForSchool(date as string | Date, user.schoolId.timeZone, 'h:mm a');
         }
       }
-      
+
       // Fall back to browser's local timezone
       const dateObj = new Date(date);
-      return format === 'date' 
-        ? dateObj.toLocaleDateString() 
+      return format === 'date'
+        ? dateObj.toLocaleDateString()
         : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } catch (err) {
       console.error('Error formatting date:', err);
@@ -159,7 +158,7 @@ export default function ViewPointHistoryTeacher() {
   };
 
   const formatFormType = (formType: string) => {
-    if(formType === FormType.AwardPointsIEP) {
+    if (formType === FormType.AwardPointsIEP) {
       return "Award Points with Individualized Education Plan (IEP)";
     }
     return formType
@@ -189,7 +188,7 @@ export default function ViewPointHistoryTeacher() {
             </span>
           )}
         </h1>
-        
+
         {Array.isArray(students) && students.length > 0 ? (
           <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
             <div className="flex items-center space-x-3 w-full max-w-md">
@@ -205,29 +204,37 @@ export default function ViewPointHistoryTeacher() {
                 </Button>
               </PopoverTrigger>
               {studentName && (
-                <X 
-                  onClick={()=>{
+                <X
+                  onClick={() => {
                     fetchStudents(1)
                     setStudentId("")
                     setStudentName("")
                   }}
-                  className="h-5 w-5 shrink-0 opacity-70 hover:opacity-100 cursor-pointer transition-opacity" 
+                  className="h-5 w-5 shrink-0 opacity-70 hover:opacity-100 cursor-pointer transition-opacity"
                 />
               )}
             </div>
             <PopoverContent className="w-[600px] p-0 flex flex-col space-y-0 max-h-[300px] overflow-y-auto">
               <div className="sticky top-0 z-10 bg-white p-2 border-b">
-                <Input onChange={(e)=>{
+                <Input onChange={(e) => {
                   const value = e.target.value
                   setfilteredStudents(students.filter((s: any) => s.name.toLowerCase().includes(value.toLowerCase()) || s.grade.toLowerCase().includes(value.toLowerCase())))
+
                 }} className="w-full" placeholder="Search students..." />
               </div>
               <div className="p-0">
                 {filteredStudents.map((s: any) => (
-                  <Button onClick={()=>{ 
+                  <Button onClick={async () => {
                     setStudentId(s._id)
                     setStudentName(s.name)
                     setIsPopOverOpen(false)
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                      console.log('Token not provided')
+                      return
+                    }
+                    const data = await getFilteredPointHistory(token, s._id)
+                    setFilteredPointHistory(data.pointHistory)
                   }} key={s._id} className='justify-start w-full rounded-none' variant={"ghost"}>{s.name} (Grade {s.grade})</Button>
                 ))}
               </div>
@@ -253,7 +260,7 @@ export default function ViewPointHistoryTeacher() {
           </TableHeader>
           <TableBody>
             {showPointHistory.length > 0 ? (
-              showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
+              showPointHistory.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
                 <TableRow key={history._id}>
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
@@ -281,7 +288,7 @@ export default function ViewPointHistoryTeacher() {
       </div>
 
       {/* Pagination controls with improved styling */}
-      <div className="flex items-center justify-between border-t pt-4 mt-4">
+      {!studentName && <div className="flex items-center justify-between border-t pt-4 mt-4">
         <div className="text-sm text-gray-500">
           Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}-
           {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
@@ -297,7 +304,7 @@ export default function ViewPointHistoryTeacher() {
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Previous page</span>
           </Button>
-          
+
           {pagination.totalPages > 0 && (
             <>
               {/* First page button if not in first few pages */}
@@ -316,11 +323,11 @@ export default function ViewPointHistoryTeacher() {
                   )}
                 </>
               )}
-              
+
               {/* Page buttons showing around current page */}
               {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                 let pageNumber;
-                
+
                 if (pagination.currentPage <= 3) {
                   // If near start, show first 5 pages
                   pageNumber = i + 1;
@@ -331,7 +338,7 @@ export default function ViewPointHistoryTeacher() {
                   // Show 2 pages before and 2 pages after current
                   pageNumber = pagination.currentPage - 2 + i;
                 }
-                
+
                 if (pageNumber > 0 && pageNumber <= pagination.totalPages) {
                   return (
                     <Button
@@ -347,7 +354,7 @@ export default function ViewPointHistoryTeacher() {
                 }
                 return null;
               })}
-              
+
               {/* Last page button if not in last few pages */}
               {pagination.currentPage < pagination.totalPages - 2 && (
                 <>
@@ -366,7 +373,7 @@ export default function ViewPointHistoryTeacher() {
               )}
             </>
           )}
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -378,7 +385,7 @@ export default function ViewPointHistoryTeacher() {
             <span className="sr-only">Next page</span>
           </Button>
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

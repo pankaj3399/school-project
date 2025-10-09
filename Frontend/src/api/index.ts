@@ -1,17 +1,19 @@
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
-const API_URL = import.meta.env.VITE_VERCEL
-  ? import.meta.env.VITE_API_URL
-  : import.meta.env.PROD
-    ? "/api"
-    : import.meta.env.VITE_API_URL;
-console.log(
-  import.meta.env,
-  import.meta.env.PROD,
-  import.meta.env.MODE,
-  API_URL,
-);
+// const API_URL = import.meta.env.VITE_VERCEL
+//   ? import.meta.env.VITE_API_URL
+//   : import.meta.env.PROD
+//     ? "/api"
+//     : import.meta.env.VITE_API_URL;
+// console.log(
+//   import.meta.env,
+//   import.meta.env.PROD,
+//   import.meta.env.MODE,
+//   API_URL,
+// );
+
+const API_URL = "http://localhost:3000/api"
 
 
 const getToken = () => localStorage.getItem("token");
@@ -463,6 +465,17 @@ export const submitFormAdmin = async (
 export const getPointHistory = async (token: string, page: number, limit: number = 20) => {
   try {
     const response = await axios.get(`${API_URL}/form/getPointHistory?page=${page}&limit=${limit}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getFilteredPointHistory = async (token: string, studentId: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/form/getFilteredPointHistory?studentId=${studentId}`, {
       headers: { token },
     });
     return response.data;

@@ -509,3 +509,86 @@ export const getPointHistory = async (req, res) => {
     });
   }
 };
+
+export const getFilteredPointHistory = async (req, res) => {
+  try {
+    console.log("=== getPointHistory DEBUG ===");
+    console.log("User ID:", req.user.id);
+    console.log("User role:", req.user.role);
+    console.log("Query params:", req.query);
+
+    const id = req.user.id;
+    let user;
+    const { studentId } = req.query;
+
+    // Query conditions
+    let query = {};
+
+    switch (req.user.role) {
+      case Role.SchoolAdmin:
+        user = await Admin.findById(id);
+        query = { schoolId: user.schoolId, submittedForId: studentId };
+
+        const adminPointHistoryRaw = await PointsHistory.find(query)
+          .populate("submittedForId")
+          .populate({ path: "submittedById", select: "subject" })
+          .sort({ submittedAt: -1 });
+
+        const adminPointHistory = adminPointHistoryRaw.map((doc) => ({
+          ...doc.toObject(),
+          submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null,
+        }));
+
+        return res.status(200).json({
+          pointHistory: adminPointHistory,
+        });
+
+      case Role.Teacher:
+        console.log("Processing Teacher role...");
+        user = await Teacher.findById(id);
+        console.log("Teacher found:", user);
+        const grade = await getGradeFromUser(id);
+        console.log("Grade data:", grade);
+
+        if (!grade || !grade.studentIds) {
+          console.log("ERROR: No students found for teacher");
+          return res.status(404).json({ message: "No students found for this grade" });
+        }
+
+        query = {
+          schoolId: user.schoolId,
+          submittedForId: studentObjectId,
+          submittedForId: { $in: grade.studentIds },
+        };
+
+        console.log("Teacher Query:", query);
+        console.log("Accessible student IDs:", grade.studentIds);
+
+        const teacherPointHistoryRaw = await PointsHistory.find(query)
+          .populate("submittedForId")
+          .populate({ path: "submittedById", select: "subject" })
+          .sort({ submittedAt: -1 });
+
+        const teacherPointHistory = teacherPointHistoryRaw.map((doc) => ({
+          ...doc.toObject(),
+          submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null,
+        }));
+
+        console.log("Teacher point history results:", teacherPointHistory.length);
+        console.log("Teacher point history sample:", teacherPointHistory.slice(0, 3));
+
+        return res.status(200).json({
+          pointHistory: teacherPointHistory,
+        });
+
+      default:
+        return res.status(403).json({ message: "Forbidden" });
+    }
+  } catch (error) {
+    console.error("Error getting point history:", error);
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
