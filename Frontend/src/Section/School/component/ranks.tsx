@@ -1,45 +1,45 @@
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Award } from 'lucide-react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { getAnalyticsData } from '@/api'
-import { CartesianGrid, XAxis, YAxis, Legend, Tooltip, Bar, BarChart } from 'recharts'
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Award } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getAnalyticsData } from "@/api";
+import { XAxis, YAxis, Tooltip, Bar, BarChart } from "recharts";
 
 interface Teacher {
-  name: string
-  totalPoints: number
-  grade?: string
+  name: string;
+  totalPoints: number;
+  grade?: string;
 }
 
 interface Student {
-  name: string
-  totalPoints: number
+  name: string;
+  totalPoints: number;
 }
 
 const Ranks = () => {
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [students, setStudents] = useState<Student[]>([])
-  const [loading, setLoading] = useState(true)
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     try {
-      setLoading(true)
-      const data = await getAnalyticsData({ period: '1W' })
+      setLoading(true);
+      const data = await getAnalyticsData({ period: "1W" });
 
       if (data.success) {
-        setTeachers(data.data.teacherRankings || [])
-        setStudents(data.data.studentRankings || [])
+        setTeachers(data.data.teacherRankings || []);
+        setStudents(data.data.studentRankings || []);
       }
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error("Error fetching data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -50,7 +50,7 @@ const Ranks = () => {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -74,9 +74,14 @@ const Ranks = () => {
               barCategoryGap={20}
             >
               <XAxis type="number" />
-              <YAxis dataKey="name" type="category" className='text-xs' width={60}/>
-              <Tooltip itemStyle={{fontSize: '12px', }}/>
-              <Bar dataKey="totalPoints" fill="#3b82f6" barSize={20}/>
+              <YAxis
+                dataKey="name"
+                type="category"
+                className="text-xs"
+                width={60}
+              />
+              <Tooltip itemStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="totalPoints" fill="#3b82f6" barSize={20} />
             </BarChart>
           </ScrollArea>
         </CardContent>
@@ -100,16 +105,21 @@ const Ranks = () => {
               margin={{ top: 0, right: 10, left: 0, bottom: -10 }}
               barCategoryGap={40}
             >
-              <XAxis type="number"/>
-              <YAxis dataKey="name" type="category" className='text-xs' width={60}/>
-              <Tooltip itemStyle={{fontSize: '12px', }}/>
-              <Bar dataKey="totalPoints" fill="#22c55e" barSize={20}/>
+              <XAxis type="number" />
+              <YAxis
+                dataKey="name"
+                type="category"
+                className="text-xs"
+                width={60}
+              />
+              <Tooltip itemStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="totalPoints" fill="#22c55e" barSize={20} />
             </BarChart>
           </ScrollArea>
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default Ranks
+export default Ranks;
