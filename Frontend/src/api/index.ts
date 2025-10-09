@@ -471,6 +471,17 @@ export const getPointHistory = async (token: string, page: number, limit: number
   }
 };
 
+export const getFilteredPointHistory = async (token: string, studentId: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/form/getFilteredPointHistory?studentId=${studentId}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 export const getStats = async () => {
   try {
     const token = getToken();

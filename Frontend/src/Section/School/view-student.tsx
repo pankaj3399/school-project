@@ -124,7 +124,7 @@ export default function ViewStudents() {
     }
   }
 
-  const handleSendVerification = async (email: string, studentId: string, isStudent= false) => {
+  const handleSendVerification = async (email: string, studentId: string, isStudent = false) => {
     setSendingVerification(true);
     try {
       await sendVerificationMail({
@@ -134,7 +134,7 @@ export default function ViewStudents() {
         userId: studentId,
         isStudent
       });
-      
+
       toast({
         title: "Verification Email Sent",
         description: "A verification email has been sent to the parent.",
@@ -196,9 +196,9 @@ export default function ViewStudents() {
       <div className="flex justify-between mb-6">
         <h1 className="text-3xl font-bold">Student Roster</h1>
         <div className="flex gap-4">
-          
-          <Button 
-            className="bg-[#00a58c] hover:bg-[#00a58c]" 
+
+          <Button
+            className="bg-[#00a58c] hover:bg-[#00a58c]"
             onClick={() => navigate('/addstudent')}
           >
             Add Students
@@ -237,8 +237,8 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4">
-              
-             
+
+
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium">Email</label>
@@ -274,7 +274,7 @@ export default function ViewStudents() {
               <label className="block text-sm font-medium">Grade</label>
               <Select
                 value={editingStudent.grade.toString()}
-                onValueChange={(value) => 
+                onValueChange={(value) =>
                   setEditingStudent({
                     ...editingStudent,
                     grade: value
@@ -352,8 +352,8 @@ export default function ViewStudents() {
                 <p className="text-sm text-green-600">Email verified</p>
               )}
             </div>
-            <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e)=>setEditingStudent({...editingStudent,sendNotifications:e as boolean})} className="mt-2" />
-              <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to Parents/Guardians.</span>
+            <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e) => setEditingStudent({ ...editingStudent, sendNotifications: e as boolean })} className="mt-2" />
+            <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to Parents/Guardians.</span>
 
             <div className="flex space-x-4">
               <button
@@ -384,63 +384,63 @@ export default function ViewStudents() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Grades</SelectItem>
-            {Array.from({ length: 12 }, (_, i) => (
-              <SelectItem key={i + 1} value={(i + 1).toString()}>
-                {i + 1}
+            {GRADE_OPTIONS.map((grade) => (
+              <SelectItem key={grade} value={grade}>
+                {grade}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       {filteredStudents.length === 0 ? (
-      <div className="text-center">
-        <h2 className="text-xl font-bold">No Students Found</h2>
-        <p>Please ensure there are students in the system and try again.</p>
-      </div>
-    ) : (
-      <div className=" rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b-black">
-              <TableHead className="text-gray-700">Student Name</TableHead>
-              <TableHead className="text-gray-700">Student Email</TableHead>
-              <TableHead className="text-gray-700">Guardian Email</TableHead>
-              <TableHead className="text-gray-700">Grade</TableHead>
-              <TableHead className="text-gray-700">Email Verification Status</TableHead>
-              <TableHead className="text-gray-700">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredStudents.map((student) => (
-              <TableRow key={student._id} className="border-b-black">
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.email}</TableCell>
-                <TableCell>{student.parentEmail || "N/A"}<br/>{student.standard}</TableCell>
-                <TableCell>{student.grade || "N/A"}</TableCell>
-                <TableCell>{getVerificationStatus(student)}</TableCell>
-                <TableCell>
-                  <button
-                    onClick={() => setEditingStudent(student)}
-                    className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#00a58c]"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      setStudentToDelete(student._id)
-                      setShowModal(true)
-                    }}
-                    className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                </TableCell>
+        <div className="text-center">
+          <h2 className="text-xl font-bold">No Students Found</h2>
+          <p>Please ensure there are students in the system and try again.</p>
+        </div>
+      ) : (
+        <div className=" rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b-black">
+                <TableHead className="text-gray-700">Student Name</TableHead>
+                <TableHead className="text-gray-700">Student Email</TableHead>
+                <TableHead className="text-gray-700">Guardian Email</TableHead>
+                <TableHead className="text-gray-700">Grade</TableHead>
+                <TableHead className="text-gray-700">Email Verification Status</TableHead>
+                <TableHead className="text-gray-700">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    )}
+            </TableHeader>
+            <TableBody>
+              {filteredStudents.map((student) => (
+                <TableRow key={student._id} className="border-b-black">
+                  <TableCell>{student.name}</TableCell>
+                  <TableCell>{student.email}</TableCell>
+                  <TableCell>{student.parentEmail || "N/A"}<br />{student.standard}</TableCell>
+                  <TableCell>{student.grade || "N/A"}</TableCell>
+                  <TableCell>{getVerificationStatus(student)}</TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => setEditingStudent(student)}
+                      className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#00a58c]"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setStudentToDelete(student._id)
+                        setShowModal(true)
+                      }}
+                      className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
       {/* Modal for deletion confirmation */}
       <Modal
         isOpen={showModal}
@@ -451,6 +451,6 @@ export default function ViewStudents() {
         callToAction="Delete"
       />
     </div>
-    
+
   )
 }

@@ -180,9 +180,8 @@ export default function ViewTeachers() {
     return (
       <div className="flex items-center gap-2">
         <span
-          className={`h-2 w-2 rounded-full ${
-            teacher.isEmailVerified ? "bg-green-500" : "bg-amber-500"
-          }`}
+          className={`h-2 w-2 rounded-full ${teacher.isEmailVerified ? "bg-green-500" : "bg-amber-500"
+            }`}
         ></span>
         <span className="text-sm">
           {teacher.isEmailVerified ? "Verified" : "Pending"}
@@ -221,123 +220,6 @@ export default function ViewTeachers() {
           </Button>
         </div>
       </div>
-
-      <div className="flex gap-4 mb-6">
-        <div className="w-48">
-          <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by Grade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grades</SelectItem>
-              {GRADE_OPTIONS.map((grade) => (
-                <SelectItem key={grade} value={grade}>
-                  {grade}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="w-48">
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Lead">Leader/Lead Teacher</SelectItem>
-              <SelectItem value="Special">
-                Team Member/Special Teacher
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Debug info in development */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="mb-4 p-2 bg-gray-100 text-sm">
-          <p>Total teachers: {teachers.length}</p>
-          <p>Filtered teachers: {filteredTeachers.length}</p>
-          <p>Selected grade: {selectedGrade}</p>
-          <p>Selected type: {selectedType}</p>
-        </div>
-      )}
-
-      {filteredTeachers.length === 0 ? (
-        <div className="text-center py-8">
-          <h2 className="text-xl font-bold mb-2">No Teachers Found</h2>
-          {teachers.length === 0 ? (
-            <p className="text-gray-600">
-              No teachers exist in the system. Click "Add Teachers" to get
-              started.
-            </p>
-          ) : (
-            <p className="text-gray-600">
-              No teachers match the selected filters. Try adjusting your filters
-              above.
-            </p>
-          )}
-          <Button
-            onClick={fetchTeachers}
-            className="mt-4"
-            variant="outline"
-            disabled={loading}
-          >
-            {loading ? "Refreshing..." : "Refresh Data"}
-          </Button>
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b-black">
-              <TableHead className="text-gray-700">Name</TableHead>
-              <TableHead className="text-gray-700">Subject</TableHead>
-              <TableHead className="text-gray-700">Email</TableHead>
-              <TableHead className="text-gray-700">Email Status</TableHead>
-              <TableHead className="text-gray-700">Type</TableHead>
-              <TableHead className="text-gray-700">Grade</TableHead>
-              <TableHead className="text-gray-700">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTeachers.map((teacher) => (
-              <TableRow key={teacher._id} className="border-b-black">
-                <TableCell>{teacher.name || "N/A"}</TableCell>
-                <TableCell>{teacher.subject || "N/A"}</TableCell>
-                <TableCell>{teacher.email || "N/A"}</TableCell>
-                <TableCell>{getVerificationStatus(teacher)}</TableCell>
-                <TableCell>
-                  {teacher.type === "Lead"
-                    ? "Leader/Lead Teacher"
-                    : "Team Member/Special Teacher"}
-                </TableCell>
-                <TableCell>
-                  {teacher.type === "Lead" ? teacher.grade || "N/A" : "N/A"}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    onClick={() => setEditingTeacher(teacher)}
-                    className="mr-2 px-4 py-2 text-white bg-[#2DA194] rounded hover:bg-blue-800"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setTeacherToDelete(teacher._id);
-                      setShowModal(true);
-                    }}
-                    className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
 
       {editingTeacher && (
         <div className="mt-8 p-5 border rounded-xl bg-gray-50">
@@ -500,6 +382,123 @@ export default function ViewTeachers() {
             </div>
           </form>
         </div>
+      )}
+
+      <div className="flex gap-4 my-6">
+        <div className="w-48">
+          <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Grade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Grades</SelectItem>
+              {GRADE_OPTIONS.map((grade) => (
+                <SelectItem key={grade} value={grade}>
+                  {grade}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-48">
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Lead">Leader/Lead Teacher</SelectItem>
+              <SelectItem value="Special">
+                Team Member/Special Teacher
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Debug info in development */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="mb-4 p-2 bg-gray-100 text-sm">
+          <p>Total teachers: {teachers.length}</p>
+          <p>Filtered teachers: {filteredTeachers.length}</p>
+          <p>Selected grade: {selectedGrade}</p>
+          <p>Selected type: {selectedType}</p>
+        </div>
+      )}
+
+      {filteredTeachers.length === 0 ? (
+        <div className="text-center py-8">
+          <h2 className="text-xl font-bold mb-2">No Teachers Found</h2>
+          {teachers.length === 0 ? (
+            <p className="text-gray-600">
+              No teachers exist in the system. Click "Add Teachers" to get
+              started.
+            </p>
+          ) : (
+            <p className="text-gray-600">
+              No teachers match the selected filters. Try adjusting your filters
+              above.
+            </p>
+          )}
+          <Button
+            onClick={fetchTeachers}
+            className="mt-4"
+            variant="outline"
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh Data"}
+          </Button>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-black">
+              <TableHead className="text-gray-700">Name</TableHead>
+              <TableHead className="text-gray-700">Subject</TableHead>
+              <TableHead className="text-gray-700">Email</TableHead>
+              <TableHead className="text-gray-700">Email Status</TableHead>
+              <TableHead className="text-gray-700">Type</TableHead>
+              <TableHead className="text-gray-700">Grade</TableHead>
+              <TableHead className="text-gray-700">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTeachers.map((teacher) => (
+              <TableRow key={teacher._id} className="border-b-black">
+                <TableCell>{teacher.name || "N/A"}</TableCell>
+                <TableCell>{teacher.subject || "N/A"}</TableCell>
+                <TableCell>{teacher.email || "N/A"}</TableCell>
+                <TableCell>{getVerificationStatus(teacher)}</TableCell>
+                <TableCell>
+                  {teacher.type === "Lead"
+                    ? "Leader/Lead Teacher"
+                    : "Team Member/Special Teacher"}
+                </TableCell>
+                <TableCell>
+                  {teacher.type === "Lead" ? teacher.grade || "N/A" : "N/A"}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    onClick={() => setEditingTeacher(teacher)}
+                    className="mr-2 px-4 py-2 text-white bg-[#2DA194] rounded hover:bg-blue-800"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setTeacherToDelete(teacher._id);
+                      setShowModal(true);
+                    }}
+                    className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
 
       <Modal
