@@ -14,21 +14,21 @@ import { checkStudentFormEligibility } from "../utils/studentVerification.js";
 import { emailGenerator } from "../utils/emailHelper.js";
 
 const getGradeFromUser = async (userId) => {
-    // Try finding user as admin first
-    const admin = await Admin.findById(userId);
-    if (admin) {
-        return null;
-    }
-    // If not admin, try finding as teacher
-    const teacher = await Teacher.findById(userId);
-    if (teacher) {
-        const studentIds = await Student.find({ schoolId: teacher.schoolId, grade:teacher.grade }).select('_id');
-        return {
-            grade: teacher.grade,
-            studentIds: studentIds.map(student => student._id)
-        };
-    }
-    throw new Error('User not authorized');
+  // Try finding user as admin first
+  const admin = await Admin.findById(userId);
+  if (admin) {
+    return null;
+  }
+  // If not admin, try finding as teacher
+  const teacher = await Teacher.findById(userId);
+  if (teacher) {
+    const studentIds = await Student.find({ schoolId: teacher.schoolId, grade: teacher.grade }).select('_id');
+    return {
+      grade: teacher.grade,
+      studentIds: studentIds.map(student => student._id)
+    };
+  }
+  throw new Error('User not authorized');
 }
 
 export const createForm = async (req, res) => {
@@ -46,9 +46,9 @@ export const createForm = async (req, res) => {
   } = req.body;
   const id = req.user.id;
   let school;
-  
+
   try {
-    if(req.user.role == Role.Teacher){
+    if (req.user.role == Role.Teacher) {
       const user = await Teacher.findById(id)
       if (!user) {
         return res.status(404).json({ message: "Teacher not found" });
@@ -57,13 +57,13 @@ export const createForm = async (req, res) => {
       if (!school) {
         return res.status(404).json({ message: "School not found for teacher" });
       }
-    }else{
+    } else {
       school = await School.findOne({ createdBy: id });
       if (!school) {
         return res.status(404).json({ message: "School not found for admin" });
       }
     }
-    
+
     const form = await Form.create({
       schoolId: school._id,
       formName,
@@ -143,22 +143,22 @@ export const getForms = async (req, res) => {
 
   try {
     let forms = await Form.find({ schoolId });
-    if(req.user.role == Role.Teacher){
-      if(user.type == "Special"){
-        forms = await Form.find({ 
+    if (req.user.role == Role.Teacher) {
+      if (user.type == "Special") {
+        forms = await Form.find({
           schoolId: user.schoolId,
         });
         forms = forms.filter(form => form.formType != FormType.PointWithdraw && form.formType != FormType.DeductPoints);
-      }else{
+      } else {
         forms = await Form.find({
           schoolId: user.schoolId,
           $or: [
             { isSpecial: true },
-            {grade: user.grade}
+            { grade: user.grade }
           ]
         });
       }
-    }else{
+    } else {
       forms = await Form.find({ schoolId });
     }
     return res.status(200).json({
@@ -211,8 +211,8 @@ export const submitFormTeacher = async (req, res) => {
     // Check if student is eligible for form submission
     const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
     if (!eligibilityCheck.eligible) {
-      return res.status(403).json({ 
-        message: eligibilityCheck.error 
+      return res.status(403).json({
+        message: eligibilityCheck.error
       });
     }
 
@@ -222,10 +222,12 @@ export const submitFormTeacher = async (req, res) => {
       formId,
       teacherId,
       submittedAt,
-      answers: answers.map(ans => {return {
-        ...ans,
-        answer: ans.answer || "No Answer"
-      }}),
+      answers: answers.map(ans => {
+        return {
+          ...ans,
+          answer: ans.answer || "No Answer"
+        }
+      }),
     });
 
     submittedForStudent.$set({
@@ -248,7 +250,7 @@ export const submitFormTeacher = async (req, res) => {
       submittedAt,
     });
 
-    if(form.formType == FormType.Feedback){
+    if (form.formType == FormType.Feedback) {
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
       await Feedback.create({
         schoolId: teacher.schoolId,
@@ -258,7 +260,7 @@ export const submitFormTeacher = async (req, res) => {
         submittedForName: submittedForStudent.name,
         submittedBySubject: teacher.subject,
         feedback,
-        createdAt: submittedAt  
+        createdAt: submittedAt
       });
     }
 
@@ -279,7 +281,7 @@ export const submitFormTeacher = async (req, res) => {
       })
     }
 
-   
+
     return res.status(200).json({
       message: "Form Submitted Successfully",
       formSubmission: formSubmission,
@@ -303,8 +305,8 @@ export const submitFormAdmin = async (req, res) => {
     // Check if student is eligible for form submission
     const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
     if (!eligibilityCheck.eligible) {
-      return res.status(403).json({ 
-        message: eligibilityCheck.error 
+      return res.status(403).json({
+        message: eligibilityCheck.error
       });
     }
 
@@ -313,10 +315,12 @@ export const submitFormAdmin = async (req, res) => {
     const formSubmission = await FormSubmissions.create({
       formId,
       schoolAdminId: schoolAdmin._id,
-      answers: answers.map(ans => {return {
-        ...ans,
-        answer: ans.answer || "No Answer"
-      }}),
+      answers: answers.map(ans => {
+        return {
+          ...ans,
+          answer: ans.answer || "No Answer"
+        }
+      }),
       submittedAt
     });
 
@@ -340,7 +344,7 @@ export const submitFormAdmin = async (req, res) => {
       submittedAt
     });
 
-    if(form.formType == FormType.Feedback){
+    if (form.formType == FormType.Feedback) {
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
       await Feedback.create({
         schoolId: schoolAdmin.schoolId,
@@ -371,7 +375,7 @@ export const submitFormAdmin = async (req, res) => {
       })
     }
 
-   
+
     return res.status(200).json({
       message: "Form Submitted Successfully",
       formSubmission: formSubmission,
@@ -398,21 +402,21 @@ export const getPointHistory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     console.log("Pagination:", { page, limit, skip });
-    
+
     // Query conditions
     let query = {};
     let totalCount;
-    
+
     switch (req.user.role) {
       case Role.SchoolAdmin:
         user = await Admin.findById(id);
         query = { schoolId: user.schoolId };
 
-        
+
         // Get total count for pagination
         totalCount = await PointsHistory.countDocuments(query);
 
-        
+
         // Execute query with pagination
         const adminPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")
@@ -420,12 +424,12 @@ export const getPointHistory = async (req, res) => {
           .sort({ submittedAt: -1 })  // Sort by newest first
           .skip(skip)
           .limit(limit);
-        const adminPointHistory = adminPointHistoryRaw.map((doc)=>({
+        const adminPointHistory = adminPointHistoryRaw.map((doc) => ({
           ...doc.toObject(),
           submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null
         }))
-        
-          
+
+
         return res.status(200).json({
           pointHistory: adminPointHistory,
           pagination: {
@@ -435,7 +439,7 @@ export const getPointHistory = async (req, res) => {
             itemsPerPage: limit
           }
         });
-        
+
       case Role.Teacher:
         console.log("Processing Teacher role...");
         user = await Teacher.findById(id);
@@ -447,9 +451,9 @@ export const getPointHistory = async (req, res) => {
           console.log("ERROR: No students found for teacher");
           return res.status(404).json({ message: "No students found for this grade" });
         }
-        
-        query = { 
-          schoolId: user.schoolId, 
+
+        query = {
+          schoolId: user.schoolId,
           submittedForId: { $in: grade.studentIds }
         };
 
@@ -463,13 +467,14 @@ export const getPointHistory = async (req, res) => {
         // Execute query with pagination
         const teacherPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")
-          .populate({ path: "submittedById", select: "subject" })
+          .populate({ path: "submittedById", select: "name subject" })
           .sort({ submittedAt: -1 })  // Sort by newest first
           .skip(skip)
           .limit(limit);
 
-        const teacherPointHistory = teacherPointHistoryRaw.map((doc)=>({
+        const teacherPointHistory = teacherPointHistoryRaw.map((doc) => ({
           ...doc.toObject(),
+          submittedByName: doc.submittedByName || (doc.submittedById && doc.submittedById.name) || null,
           submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null
         }))
 
@@ -487,7 +492,7 @@ export const getPointHistory = async (req, res) => {
         };
 
         console.log("Final response:", response);
-          
+
         return res.status(200).json({
           pointHistory: teacherPointHistory,
           pagination: {
@@ -497,15 +502,15 @@ export const getPointHistory = async (req, res) => {
             itemsPerPage: limit
           }
         });
-        
+
       default:
         return res.status(403).json({ message: "Forbidden" });
     }
   } catch (error) {
     console.error("Error getting point history:", error);
-    return res.status(500).json({ 
-      message: "Server Error", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message
     });
   }
 };

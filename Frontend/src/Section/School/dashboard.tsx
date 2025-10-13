@@ -1,7 +1,7 @@
 //School/dashboard.tsx
 import CurrentWeekCharts from './component/current-week-charts'
 import EducationYearChart from './component/new-chart'
-import Ranks from './component/ranks'
+import Ranks from './component/TeacherRanks'
 
 const AdminDashboard = () => {
     

@@ -236,11 +236,11 @@ export default function SchoolPage() {
               className="w-24 h-24 object-cover rounded-full"
             />
 
-            <div className="flex flex-col gap-1 items-center text-center text-sm">
+            <div className="flex flex-col items-center text-center text-sm w-60">
               <p className="">{school.district}</p>
-              <h2 className="text-xl font-semibold">{school.name}</h2>
-              <p className="">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
-              <div className="flex gap-1">
+              <h2 className="text-lg font-semibold">{school.name}</h2>
+              <p className="text-sm">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
+              <div className="flex gap-1 text-xs">
                 <p className="">{school.address},</p>
                 <p className="">{school.state}, {school.country}</p>
               </div>
@@ -252,11 +252,12 @@ export default function SchoolPage() {
             {
               !isEditing && <SchoolStats stats={stats} />
             }
-            {
-              !isEditing && <AllCharts />
-            }
           </div>
         </div>
+
+        {
+          !isEditing && <AllCharts />
+        }
 
 
         {isEditing && (
