@@ -1,5 +1,5 @@
 //school/component
-import { memo, ReactNode } from "react"
+import { memo } from "react"
 import { IconAppleFilled, IconAwardFilled, IconMessageFilled, IconUsers, IconAlertTriangle, IconShoppingCart,  } from '@tabler/icons-react'; 
 
 const SchoolStats = memo(({stats}:{
