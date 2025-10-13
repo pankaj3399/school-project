@@ -29,7 +29,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
     fullName: user?.name || "",
     position: user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type === 'Special' ? 'Team Member/Special Teacher' : 'Leader/Lead Teacher',
     schoolName: user?.schoolId?.name ?? "",
-    schoolId:user?.schoolId?._id ?? "",
+    schoolId: user?.schoolId?._id ?? "",
     subjectGrade: user?.subject || user?.grade || "N/A",
     email: user?.email || "",
     phone: "",
@@ -221,7 +221,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
             >
               Edit
             </Button>
-            <Button 
+            <Button
               className="bg-[#00a58c]"
               onClick={handleConfirmSubmit}
             >
@@ -233,16 +233,36 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
 
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Request Submitted Successfully</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <p>Hello {user?.name ? user.name.split(" ")[0]:"User"}.</p>
-              <p>Got it! Our team will get back to you within 24 hours.</p>
-              <p>Thanks!</p>
+          <AlertDialogHeader className="text-center">
+            <AlertDialogTitle className="text-2xl font-semibold text-[#654f6f]">
+              Request Submitted Successfully
+            </AlertDialogTitle>
+
+            <AlertDialogDescription className="space-y-6 text-neutral-700">
+              {/* Footer message */}
+              <p className="text-base text-neutral-800 font-medium mt-5">
+                Got it! Our team will get back to you within 24 hours.
+              </p>
+              <div className="flex flex-col items-center gap-2 mt-4">
+                {/* Logo Circle */}
+                <div className="p-1 bg-[#654f6f]/10 rounded-full flex justify-center items-center w-20 h-20">
+                  <img
+                    src="/radu-logo-2.png"
+                    alt="Logo"
+                    className="w-20 h-20 object-contain"
+                  />
+                </div>
+
+                {/* Tagline */}
+                <p className="text-sm text-neutral-600 italic max-w-md">
+                  “RADU E-Token — Sometimes being seen is all it takes to stay.”
+                </p>
+              </div>
+
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button 
+            <Button
               className="bg-[#00a58c]"
               onClick={() => {
                 setShowSuccessDialog(false);
