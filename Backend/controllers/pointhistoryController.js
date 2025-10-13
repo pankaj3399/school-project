@@ -1576,6 +1576,9 @@ export const getCombinedStudentPointsHistory = async (req, res) => {
           })
         );
 
+        // sort name wise
+        studentsData.sort((a, b) => a.student.name.localeCompare(b.student.name));
+
         // Return grade-specific data
         return {
           grade,

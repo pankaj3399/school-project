@@ -13,7 +13,6 @@ console.log(
   API_URL,
 );
 
-
 const getToken = () => localStorage.getItem("token");
 
 export const signUp = async (data: {

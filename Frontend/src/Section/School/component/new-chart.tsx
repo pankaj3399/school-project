@@ -147,7 +147,7 @@ const EducationYearChart = ({ studentId, slimLines }: {
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap justify-center mb-4 mr-12">
+      <div className="flex flex-wrap justify-center mb-4 mr-12 gap-2">
         <button
           onClick={() => setSelectedMonth(null)}
           className={`m-1 px-3 py-1 rounded text-sm ${selectedMonth === null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
@@ -170,10 +170,10 @@ const EducationYearChart = ({ studentId, slimLines }: {
           <ComposedChart
             data={chartData}
             margin={{
-              top: 20,
-              right: 80,
-              left: -10,
-              bottom: 70,
+              top: 2,
+              right: 40,
+              left: 20,
+              bottom: 2,
             }}
 
           >
