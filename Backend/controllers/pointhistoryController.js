@@ -61,15 +61,15 @@ const getEducationalYearStart = async (schoolId) => {
   const schoolTimezone = await getSchoolTimezone(schoolId);
   const currentTime = getSchoolCurrentTime(schoolTimezone);
   const currentYear = currentTime.year;
-  
+
   // Create August 1st in school timezone
   const augFirst = timezoneManager.createSchoolDateTime(currentYear, 8, 1, 0, 0, schoolTimezone);
-  
+
   // If current date is before Aug 1, use previous year's start
-  const yearStart = currentTime < augFirst ? 
-    timezoneManager.createSchoolDateTime(currentYear - 1, 8, 1, 0, 0, schoolTimezone) : 
+  const yearStart = currentTime < augFirst ?
+    timezoneManager.createSchoolDateTime(currentYear - 1, 8, 1, 0, 0, schoolTimezone) :
     augFirst;
-    
+
   // Convert to UTC for database queries
   return timezoneManager.convertSchoolTimeToUTC(yearStart, schoolTimezone).toJSDate();
 };
@@ -334,19 +334,19 @@ export const getYearPointsHistory = async (req, res) => {
               },
             },
             avgAwardedPoints: {
-    $sum: {
-        $cond: [
-            {
-                $or: [
-                    { $eq: ['$formType', FormType.AwardPoints] },
-                    { $eq: ['$formType', FormType.AwardPointsIEP] }
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      { $eq: ['$formType', FormType.AwardPoints] },
+                      { $eq: ['$formType', FormType.AwardPointsIEP] }
+                    ]
+                  },
+                  '$points',
+                  0
                 ]
+              }
             },
-            '$points',
-            0
-        ]
-    }
-},
             avgWithdrawPoints: {
               $sum: {
                 $cond: [{ $eq: ["$formType", FormType.PointWithdraw] }, "$points", 0],
@@ -539,19 +539,19 @@ export const getWeekPointsHistory = async (req, res) => {
       // Use current date in school timezone
       endDate = getSchoolCurrentTime(schoolTimezone);
     }
-    
+
     // Calculate start of range (6 days before end date)
     //we need start date to be the start of current week only
 
     let startOfRange = endDate.startOf('week');
-    startOfRange = startOfRange.minus({day: 1}) // Start from Monday
-    
+    startOfRange = startOfRange.minus({ day: 1 }) // Start from Monday
+
     // Get UTC bounds for database queries
     const startBounds = getSchoolDayBoundsUTC(startOfRange.toJSDate(), schoolTimezone);
     const endBounds = getSchoolDayBoundsUTC(endDate.toJSDate(), schoolTimezone);
 
     console.log(`Fetching week points history from ${startBounds.start} to ${endBounds.end} (School TZ: ${schoolTimezone})`);
-    
+
 
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -680,11 +680,11 @@ export const getWeekPointsHistory = async (req, res) => {
         });
       }
     }
- 
 
-    res.status(200).json({ 
-      data: fullWeekData, 
-      startDate: startBounds.start, 
+
+    res.status(200).json({
+      data: fullWeekData,
+      startDate: startBounds.start,
       endDate: endBounds.end,
       timezone: schoolTimezone
     });
@@ -731,7 +731,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     console.log("ACCESS GRANTED: Teacher can access student", studentId);
 
     const { startDate, formType } = req.body;
-    
+
     let start;
     if (startDate) {
       start = convertToSchoolTime(new Date(startDate), schoolTimezone);
@@ -746,13 +746,13 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     // Convert to UTC for database queries
     const weekStartUTC = timezoneManager.convertSchoolTimeToUTC(weekStart, schoolTimezone).toJSDate();
     const weekEndUTC = timezoneManager.convertSchoolTimeToUTC(weekEnd, schoolTimezone).toJSDate();
-    
+
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    
-    const formTypeFilter = formType === FormType.AwardPoints 
-      ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] } 
+
+    const formTypeFilter = formType === FormType.AwardPoints
+      ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
       : formType;
-    
+
     console.log("Query parameters:", {
       schoolId,
       formTypeFilter,
@@ -819,7 +819,7 @@ export const getHistoricalPointsData = async (req, res) => {
     const { period, formType } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
-    
+
     // Get current time in school timezone
     const today = getSchoolCurrentTime(schoolTimezone);
     let startDate;
@@ -1082,8 +1082,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
             $match: {
               schoolId: new mongoose.Types.ObjectId(schoolId),
               formType: formType === FormType.AwardPoints
-                  ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
-                  : formType,
+                ? { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
+                : formType,
               submittedAt: {
                 $gte: startDateUTC,
                 $lte: todayUTC,
@@ -1091,35 +1091,35 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
               submittedForId: new mongoose.Types.ObjectId(studentId),
             },
           },
-        {
-          $group: {
-            _id: {
-              year: { $year: "$submittedAt" },
-              month: { $month: "$submittedAt" },
-              day: { $dayOfMonth: "$submittedAt" },
+          {
+            $group: {
+              _id: {
+                year: { $year: "$submittedAt" },
+                month: { $month: "$submittedAt" },
+                day: { $dayOfMonth: "$submittedAt" },
+              },
+              points: { $sum: { $toDouble: "$points" } },
             },
-            points: { $sum: { $toDouble: "$points" } },
           },
-        },
-        {
-          $project: {
-            _id: 0,
-            day: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-                date: {
-                  $dateFromParts: {
-                    year: "$_id.year",
-                    month: "$_id.month",
-                    day: "$_id.day",
+          {
+            $project: {
+              _id: 0,
+              day: {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: {
+                    $dateFromParts: {
+                      year: "$_id.year",
+                      month: "$_id.month",
+                      day: "$_id.day",
+                    },
                   },
                 },
               },
+              points: 1,
             },
-            points: 1,
           },
-        },
-        { $sort: { day: 1 } },
+          { $sort: { day: 1 } },
         ]);
 
         console.log("First query completed, result length:", historicalPoints.length);
@@ -1201,7 +1201,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
         },
       ]);
     }
-    
+
     console.log("Preparing final response...");
     console.log("Historical points length:", historicalPoints ? historicalPoints.length : 0);
     console.log("Historical points history length:", historicalPointsHistory ? historicalPointsHistory.length : 0);
@@ -1460,7 +1460,8 @@ export const getAnalyticsData = async (req, res) => {
           $group: {
             _id: {
               studentId: "$submittedForId",
-              studentName: "$submittedForName"
+              studentName: "$submittedForName",
+              teacherName: "$submittedByName"
             },
             totalPoints: { $sum: { $toDouble: "$points" } }
           }
@@ -1468,8 +1469,10 @@ export const getAnalyticsData = async (req, res) => {
         {
           $project: {
             _id: 0,
+            studentId: "$_id.studentId",
             name: "$_id.studentName",
-            totalPoints: 1
+            totalPoints: 1,
+            awardedBy: "$_id.teacherName"
           }
         },
         {
@@ -1479,6 +1482,7 @@ export const getAnalyticsData = async (req, res) => {
         },
         { $sort: { totalPoints: -1 } }
       ])
+
     ]);
 
     // Return comprehensive analytics data
@@ -1557,7 +1561,7 @@ export const getCombinedStudentPointsHistory = async (req, res) => {
               if (
                 point.formType === "AwardPoints" ||
                 point.formType ===
-                  FormType.AwardPointsIEP
+                FormType.AwardPointsIEP
               ) {
                 totalPoints.eToken += point.points;
               } else if (point.formType === "DeductPoints") {

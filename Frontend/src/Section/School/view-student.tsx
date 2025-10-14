@@ -20,7 +20,7 @@ export default function ViewStudents() {
   const [editingStudent, setEditingStudent] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
-  const [sendingVerification, setSendingVerification] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState<string | null>(null);
   const { toast } = useToast()
 
   useEffect(() => {
@@ -125,9 +125,9 @@ export default function ViewStudents() {
   }
 
   const handleSendVerification = async (email: string, studentId: string, isStudent = false) => {
-    setSendingVerification(true);
+    setSendingVerification(`${studentId}-${email}`);
     try {
-      await sendVerificationMail({
+      const data = await sendVerificationMail({
         email,
         role: "Student",
         url: `${window.location.origin}/verifyemail`,
@@ -136,8 +136,8 @@ export default function ViewStudents() {
       });
 
       toast({
-        title: "Verification Email Sent",
-        description: "A verification email has been sent to the parent.",
+        title: "Verification Email Status",
+        description: data.data.message as string,
       });
     } catch (error) {
       console.error('Verification error:', error);
@@ -147,7 +147,7 @@ export default function ViewStudents() {
         variant: "destructive"
       });
     } finally {
-      setSendingVerification(false);
+      setSendingVerification(null);
     }
   };
 
@@ -257,10 +257,12 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification}
+                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.email}`}
                   onClick={() => handleSendVerification(editingStudent.email, editingStudent._id, true)}
                 >
-                  {sendingVerification ? "Sending..." : "Verify Email"}
+                  {sendingVerification === `${editingStudent._id}-${editingStudent.email}`
+                    ? "Sending..."
+                    : "Verify Email"}
                 </Button>
               </div>
               {!editingStudent.isStudentEmailVerified && (
@@ -310,10 +312,12 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification}
+                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.parentEmail}`}
                   onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id)}
                 >
-                  {sendingVerification ? "Sending..." : "Verify Email"}
+                  {sendingVerification === `${editingStudent._id}-${editingStudent.parentEmail}`
+                    ? "Sending..."
+                    : "Verify Email"}
                 </Button>
               </div>
               {!editingStudent.isParentOneEmailVerified && (
@@ -339,10 +343,12 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification}
+                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.standard}`}
                   onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id)}
                 >
-                  {sendingVerification ? "Sending..." : "Verify Email"}
+                  {sendingVerification === `${editingStudent._id}-${editingStudent.standard}`
+                    ? "Sending..."
+                    : "Verify Email"}
                 </Button>
               </div>
               {!editingStudent.isParentTwoEmailVerified && editingStudent.standard && (

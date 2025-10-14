@@ -2,12 +2,13 @@ import { Role } from '../enum.js';
 import path from 'path';
 import fs from 'fs';
 import { timezoneManager } from './luxon.js';
+import { emailSignature } from './emailSignature.js';
 
-export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null, schoolTimezone = 'UTC+0') => {
-  
+export const getVerificationEmailTemplate = (signature, role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null, schoolTimezone = 'UTC+0') => {
+
   const description = role === Role.Teacher
     ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to enable your E-Token system account and get updates."
-    : isStudent 
+    : isStudent
       ? "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to start receiving updates."
       : "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to enable your child's E-Token system account and get updates.";
 
@@ -15,7 +16,7 @@ export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = n
   let logoSrc;
   try {
     const logoPath = path.join(process.cwd(), 'utils', 'radu-logo.png');
-    
+
     const logoBuffer = fs.readFileSync(logoPath);
     logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
   } catch (error) {
@@ -119,6 +120,15 @@ export const getVerificationEmailTemplate = (role, otp, url, email, toVerify = n
         <p>This is an automated message from The RADU E-Token System.<br>
            If you believe this was sent in error, please contact your school administrator.</p>
       </div>
+
+    ${signature ? emailSignature(
+    signature.name,
+    signature.schoolName,
+    signature.address,
+    signature.district,
+    signature.state,
+    signature.country
+  ) : "The RADU Team"}
     </body>
     </html>
   `;

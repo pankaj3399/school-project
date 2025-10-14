@@ -239,7 +239,7 @@ export default function SchoolPage() {
             <div className="flex flex-col items-center text-center text-sm w-60">
               <p className="">{school.district}</p>
               <h2 className="text-lg font-semibold">{school.name}</h2>
-              <p className="text-sm">{school.createdBy.name?.toUpperCase()} - SYSTEM MANAGER</p>
+              <p className="text-sm">{school.createdBy.name?.toUpperCase()}</p>
               <div className="flex gap-1 text-xs">
                 <p className="">{school.address},</p>
                 <p className="">{school.state}, {school.country}</p>

@@ -13,6 +13,7 @@ import SupportRequest from "../models/SupportRequest.js";
 import { sendSupportEmail } from "../services/supportRequestEmail.js";
 import School from "../models/School.js";
 import PendingTokens from "../models/PendingTokens.js";
+import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -40,23 +41,23 @@ export const requestLoginOtp = async (req, res) => {
         break;
       }
     }
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     if (
       (user.type === "Special" && role !== "SpecialTeacher") ||
       (user.type === "Lead" && role !== "Teacher")
     ) {
       return res.status(404).json({ message: "User Not Found" });
     }
-    
+
     console.log(user)
     if (role === Role.Admin && !user.approved) {
       return res.status(401).json({ message: "User not approved" });
     }
-    
+
     // Check if user has a password before attempting bcrypt comparison
     if (!user.password) {
       console.log("User found but password is missing:", { email: user.email, role: user.role, hasPassword: !!user.password });
@@ -66,7 +67,7 @@ export const requestLoginOtp = async (req, res) => {
         email: user.email
       });
     }
-    
+
     console.log("Attempting password comparison for user:", user.email);
     // Validate password before sending OTP
     const isMatch = await bcrypt.compare(password, user.password);
@@ -74,64 +75,64 @@ export const requestLoginOtp = async (req, res) => {
       console.log("invalid")
       return res.status(401).json({ message: "Invalid Credentials" });
     }
-    
+
     // Credentials are valid, now send OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const newOtp = new Otp({ userId: user._id, otp });
     await newOtp.save();
-    
+
     const body = `<p>Use this code to login <b>${otp}</b> <br/> <i>The code will expire in 30 min</i></p>`;
     const { sendEmail } = await import("../services/mail.js");
     await sendEmail(user.email, "LOGIN OTP", body, body, null);
-    
-    return res.status(200).json({ 
+
+    return res.status(200).json({
       message: "OTP sent to email. Please check your inbox.",
-      credentialsValid: true 
+      credentialsValid: true
     });
   } catch (error) {
     console.log("requestLoginOtp error:", error);
-    
+
     // Provide specific error messages based on error type
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Invalid data provided", 
-        error: error.message 
+      return res.status(400).json({
+        message: "Invalid data provided",
+        error: error.message
       });
     }
-    
+
     if (error.name === 'MongoError' || error.name === 'MongoServerError') {
-      return res.status(500).json({ 
-        message: "Database connection error. Please try again.", 
-        error: error.message 
+      return res.status(500).json({
+        message: "Database connection error. Please try again.",
+        error: error.message
       });
     }
-    
+
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      return res.status(500).json({ 
-        message: "Email service unavailable. Please try again later.", 
-        error: "Email service connection failed" 
+      return res.status(500).json({
+        message: "Email service unavailable. Please try again later.",
+        error: "Email service connection failed"
       });
     }
-    
+
     if (error.message && error.message.includes('email')) {
-      return res.status(500).json({ 
-        message: "Failed to send email. Please check your email address.", 
-        error: error.message 
+      return res.status(500).json({
+        message: "Failed to send email. Please check your email address.",
+        error: error.message
       });
     }
-    
+
     // Handle bcrypt errors specifically
     if (error.message && error.message.includes('Illegal arguments')) {
-      return res.status(500).json({ 
-        message: "Password verification failed.", 
-        error: "Invalid password format in database" 
+      return res.status(500).json({
+        message: "Password verification failed.",
+        error: "Invalid password format in database"
       });
     }
-    
+
     console.log(error)
-    return res.status(500).json({ 
-      message: "Email not verified or unindentified error.", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Email not verified or unindentified error.",
+      error: error.message
     });
   }
 };
@@ -139,7 +140,7 @@ export const requestLoginOtp = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password, role, otp } = req.body;
   let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-  
+
   try {
     let user;
     switch (userRole) {
@@ -156,11 +157,11 @@ export const login = async (req, res) => {
         break;
       }
     }
-    
+
     if (!user) {
       return res.status(404).json({ message: "User Not found" });
     }
-    
+
     // Enforce correct role/type mapping for teachers
     if (
       (user.type === "Teacher" && role !== "SpecialTeacher") ||
@@ -168,11 +169,11 @@ export const login = async (req, res) => {
     ) {
       return res.status(404).json({ message: "User Not Found" });
     }
-    
+
     if (role === Role.Admin && !user.approved) {
       return res.status(401).json({ message: "User not approved" });
     }
-    
+
     // Check if user has a password before attempting bcrypt comparison
     if (!user.password) {
       return res.status(401).json({
@@ -181,30 +182,30 @@ export const login = async (req, res) => {
         email: user.email
       });
     }
-    
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid Credentials" });
     }
-    
+
     // If no OTP provided, request OTP (this maintains backward compatibility)
     if (!otp) {
       return res.status(400).json({ message: "OTP is required" });
     }
-    
+
     // Verify OTP
     const storedOtp = await Otp.findOne({ otp, userId: user._id });
     if (!storedOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
-    
+
     if (storedOtp.expiresAt < new Date()) {
       await Otp.deleteOne({ _id: storedOtp._id });
       return res.status(400).json({ message: "OTP has expired" });
     }
-    
+
     await Otp.deleteOne({ _id: storedOtp._id });
-    
+
     const token = generateToken(user._id, userRole);
     if (userRole == Role.Teacher && user.isFirstLogin) {
       return res.status(200).json({
@@ -215,7 +216,7 @@ export const login = async (req, res) => {
         userId: user._id,
       });
     }
-    
+
     return res.status(200).json({
       message: "Login successful",
       token,
@@ -224,47 +225,47 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log("login error:", error);
-    
+
     // Provide specific error messages based on error type
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Invalid login data provided", 
-        error: error.message 
+      return res.status(400).json({
+        message: "Invalid login data provided",
+        error: error.message
       });
     }
-    
+
     if (error.name === 'MongoError' || error.name === 'MongoServerError') {
-      return res.status(500).json({ 
-        message: "Database connection error. Please try again.", 
-        error: error.message 
+      return res.status(500).json({
+        message: "Database connection error. Please try again.",
+        error: error.message
       });
     }
-    
+
     if (error.name === 'JsonWebTokenError') {
-      return res.status(500).json({ 
-        message: "Authentication token error. Please try again.", 
-        error: "Token generation failed" 
+      return res.status(500).json({
+        message: "Authentication token error. Please try again.",
+        error: "Token generation failed"
       });
     }
-    
+
     if (error.message && error.message.includes('password')) {
-      return res.status(500).json({ 
-        message: "Password verification failed. Please try again.", 
-        error: error.message 
+      return res.status(500).json({
+        message: "Password verification failed. Please try again.",
+        error: error.message
       });
     }
-    
+
     // Handle bcrypt errors specifically
     if (error.message && error.message.includes('Illegal arguments')) {
-      return res.status(500).json({ 
-        message: "Password verification failed.", 
-        error: "Invalid password format in database" 
+      return res.status(500).json({
+        message: "Password verification failed.",
+        error: "Invalid password format in database"
       });
     }
-    
-    return res.status(500).json({ 
-      message: "Login service temporarily unavailable. Please try again.", 
-      error: error.message 
+
+    return res.status(500).json({
+      message: "Login service temporarily unavailable. Please try again.",
+      error: error.message
     });
   }
 };
@@ -274,7 +275,7 @@ export const verifyLoginOtp = async (req, res) => {
     const { otp, email, role } = req.body;
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user;
-    
+
     switch (userRole) {
       case Role.Teacher: {
         user = await Teacher.findOne({ email });
@@ -289,24 +290,24 @@ export const verifyLoginOtp = async (req, res) => {
         break;
       }
     }
-    
+
     if (!user) return res.status(404).json({ message: "User not found" });
-    
+
     // Find the OTP associated with the user
     const storedOtp = await Otp.findOne({ otp, userId: user._id });
     if (!storedOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
-    
+
     // Check if the OTP has expired
     if (storedOtp.expiresAt < new Date()) {
       await Otp.deleteOne({ _id: storedOtp._id }); // Cleanup expired OTP
       return res.status(400).json({ message: "OTP has expired" });
     }
-    
+
     // OTP is valid, delete it (single use)
     await Otp.deleteOne({ _id: storedOtp._id });
-    
+
     const token = generateToken(user._id, userRole);
     if (userRole == Role.Teacher && user.isFirstLogin) {
       return res.status(200).json({
@@ -317,7 +318,7 @@ export const verifyLoginOtp = async (req, res) => {
         userId: user._id,
       });
     }
-    
+
     return res.status(200).json({
       message: "Login successful",
       token,
@@ -326,39 +327,39 @@ export const verifyLoginOtp = async (req, res) => {
     });
   } catch (error) {
     console.log("verifyLoginOtp error:", error);
-    
+
     // Provide specific error messages based on error type
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Invalid OTP data provided", 
-        error: error.message 
+      return res.status(400).json({
+        message: "Invalid OTP data provided",
+        error: error.message
       });
     }
-    
+
     if (error.name === 'MongoError' || error.name === 'MongoServerError') {
-      return res.status(500).json({ 
-        message: "Database connection error. Please try again.", 
-        error: error.message 
+      return res.status(500).json({
+        message: "Database connection error. Please try again.",
+        error: error.message
       });
     }
-    
+
     if (error.name === 'JsonWebTokenError') {
-      return res.status(500).json({ 
-        message: "Authentication token error. Please try again.", 
-        error: "Token generation failed" 
+      return res.status(500).json({
+        message: "Authentication token error. Please try again.",
+        error: "Token generation failed"
       });
     }
-    
+
     if (error.message && error.message.includes('otp')) {
-      return res.status(500).json({ 
-        message: "OTP verification failed. Please try again.", 
-        error: error.message 
+      return res.status(500).json({
+        message: "OTP verification failed. Please try again.",
+        error: error.message
       });
     }
-    
-    return res.status(500).json({ 
-      message: "OTP verification service temporarily unavailable. Please try again.", 
-      error: error.message 
+
+    return res.status(500).json({
+      message: "OTP verification service temporarily unavailable. Please try again.",
+      error: error.message
     });
   }
 };
@@ -397,7 +398,7 @@ export const sendOtp = async (req, res) => {
   try {
     const { email, role } = req.body;
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-    console.log(email,role)
+    console.log(email, role)
     let user = null;
     switch (userRole) {
       case Role.Teacher: {
@@ -512,9 +513,35 @@ export const sendVerifyEmail = async (req, res) => {
       return res.status(404).json({ message: "User Not Found" });
     }
 
+    if (userRole === Role.Teacher && user.isEmailVerified) {
+      return res.status(200).json({
+        message: "This email was already verified. No update needed.",
+      });
+    }
+
+    if (userRole === Role.Student) {
+      if (isStudent && user.isStudentEmailVerified) {
+        return res.status(200).json({
+          message: "This student email is already verified. No update needed.",
+        });
+      }
+
+      if (!isStudent && user.isParentOneEmailVerified && email === user.parentEmail) {
+        return res.status(200).json({
+          message: "This guardian email is already verified. No update needed.",
+        });
+      }
+
+      if (!isStudent && user.isParentTwoEmailVerified && email === user.standard) {
+        return res.status(200).json({
+          message: "This guardian email is already verified. No update needed.",
+        });
+      }
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
-    if(!isStudent)
+    if (!isStudent)
       user.emailVerificationCode = otp;
     if (isStudent) {
       user.studentEmailVerificationCode = otp2;
@@ -522,9 +549,12 @@ export const sendVerifyEmail = async (req, res) => {
     await user.save();
 
     const school = await School.findById(user.schoolId);
+    const signature = await getDynamicSignature(user.schoolId);
+    console.log(signature)
 
     // Wait for the template to be generated
     const emailHTML = await getVerificationEmailTemplate(
+      signature,
       role,
       otp,
       url,
@@ -532,7 +562,7 @@ export const sendVerifyEmail = async (req, res) => {
       email,
       false,
       null,
-      school?.logo
+      school?.logo,
     );
     const emailHTML2 = await getVerificationEmailTemplate(
       role,
@@ -540,9 +570,10 @@ export const sendVerifyEmail = async (req, res) => {
       url,
       email,
       email,
+      signature,
       isStudent,
       null,
-      school?.logo
+      school?.logo,
     );
 
     if (isStudent) {
@@ -585,7 +616,7 @@ export const completeVerification = async (req, res) => {
   try {
     const { emailVerificationCode, role, email, isStudent, toVerify } =
       req.body;
-      let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
+    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
 
     let user = null;
     switch (userRole) {
@@ -655,10 +686,10 @@ export const completeVerification = async (req, res) => {
 
           // Use the PendingTokens collection instead of student.pendingEtokens
           const pendingTokens = await PendingTokens.findOne({ studentId: student._id });
-          
+
           if (pendingTokens && pendingTokens.tokens && pendingTokens.tokens.length > 0) {
             const school = await School.findById(student.schoolId).populate("createdBy", "name email");
-            
+
             for (const tokenData of pendingTokens.tokens) {
               if (tokenData.form && tokenData.data) {
                 emailGenerator(tokenData.form, {
@@ -669,7 +700,7 @@ export const completeVerification = async (req, res) => {
                 });
               }
             }
-            
+
             // Clear the tokens after processing
             await PendingTokens.findByIdAndUpdate(pendingTokens._id, { tokens: [] });
           }
@@ -695,12 +726,12 @@ export const completeVerification = async (req, res) => {
         role,
         ...(role === Role.Student
           ? {
-              isParentEmailVerified: user.isParentEmailVerified,
-              isParentEmail2Verified: user.isParentEmail2Verified,
-            }
+            isParentEmailVerified: user.isParentEmailVerified,
+            isParentEmail2Verified: user.isParentEmail2Verified,
+          }
           : {
-              isEmailVerified: user.isEmailVerified,
-            }),
+            isEmailVerified: user.isEmailVerified,
+          }),
       },
     });
   } catch (error) {
@@ -873,7 +904,7 @@ export const verifyPassword = async (req, res) => {
 
   try {
     let user;
-    
+
     // Find user based on role from token
     switch (req.user.role) {
       case Role.Teacher: {
