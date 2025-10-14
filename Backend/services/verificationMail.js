@@ -25,7 +25,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         const school = await School.findById(user.schoolId);
 
         const signature = await getDynamicSignature(user.schoolId);
-        console.log(signatue);
+        // console.log(signatue);
 
         // Wait for the template to be generated
         const emailHTML = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.parentEmail, false, tempPass, schoolLogo);
@@ -265,7 +265,7 @@ export const sendTeacherRegistrationMail = async ({ email, url, registrationToke
     const school = await School.findById(user.schoolId);
 
     const signature = await getDynamicSignature(user.schoolId);
-    console.log(signature);
+    // console.log(signature);
 
     let emailHTML = getVerificationEmailTemplate(
         signature,

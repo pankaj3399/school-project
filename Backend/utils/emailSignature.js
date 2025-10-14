@@ -1,9 +1,10 @@
-export const emailSignature = (name, schoolName, city, state, zip) => `
+export const emailSignature = (name, schoolName, address, district, state, country) => `
   <br/><br/>
   <p style="font-size:14px; color:#444;">
     <strong>${name}</strong><br/>
     The RADU E-token System Manager<br/>
     ${schoolName}<br/>
-    ${city}, ${state}, ${zip}
+    ${address}<br/>
+    ${district}, ${state}, ${country}
   </p>
 `;

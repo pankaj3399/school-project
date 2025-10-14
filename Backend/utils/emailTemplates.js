@@ -5,7 +5,6 @@ import { timezoneManager } from './luxon.js';
 import { emailSignature } from './emailSignature.js';
 
 export const getVerificationEmailTemplate = (signature, role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null, schoolTimezone = 'UTC+0') => {
-
   const description = role === Role.Teacher
     ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to enable your E-Token system account and get updates."
     : isStudent
@@ -120,7 +119,6 @@ export const getVerificationEmailTemplate = (signature, role, otp, url, email, t
         <p>This is an automated message from The RADU E-Token System.<br>
            If you believe this was sent in error, please contact your school administrator.</p>
       </div>
-
     ${signature ? emailSignature(
     signature.name,
     signature.schoolName,

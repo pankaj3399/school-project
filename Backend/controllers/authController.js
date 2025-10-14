@@ -550,7 +550,7 @@ export const sendVerifyEmail = async (req, res) => {
 
     const school = await School.findById(user.schoolId);
     const signature = await getDynamicSignature(user.schoolId);
-    console.log(signature)
+    // console.log(signature)
 
     // Wait for the template to be generated
     const emailHTML = await getVerificationEmailTemplate(
@@ -565,12 +565,12 @@ export const sendVerifyEmail = async (req, res) => {
       school?.logo,
     );
     const emailHTML2 = await getVerificationEmailTemplate(
+      signature,
       role,
       otp2,
       url,
       email,
       email,
-      signature,
       isStudent,
       null,
       school?.logo,
