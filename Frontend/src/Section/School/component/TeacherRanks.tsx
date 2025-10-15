@@ -12,7 +12,7 @@ interface Teacher {
   grade?: string;
 }
 
-const TeacherRanks = () => {
+const TeacherRanks = ({ studentId }: { studentId: string }) => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -49,7 +49,7 @@ const TeacherRanks = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [studentId]);
 
   const fetchData = async () => {
     try {
@@ -57,7 +57,8 @@ const TeacherRanks = () => {
       const data = await getAnalyticsData({ period: "1W" });
 
       if (data.success) {
-        setTeachers(data.data.teacherRankings || []);
+        if(studentId === "") setTeachers(data.data.teacherRankings || []);
+        else setTeachers(data.data.studentRankings.filter((student: any) => student.studentId === studentId))
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -103,7 +104,7 @@ const TeacherRanks = () => {
               >
                 <XAxis type="number" />
                 <YAxis
-                  dataKey="name"
+                  dataKey={studentId === "" ? "name" : "awardedBy"}
                   type="category"
                   className="text-xs"
                   width={60}

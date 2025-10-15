@@ -11,7 +11,7 @@ export default function Footer() {
               The RADU E-Token System &#9415;
             </h3>
             <p className="text-sm">
-              Empowering schools with innovative point management solutions.
+              Sometimes being seen is all it takes to stay.
             </p>
           </div>
           <div>

@@ -153,7 +153,7 @@ export default function ViewTeachers() {
   const handleSendVerification = async (email: string, teacherId: string) => {
     setSendingVerification(true);
     try {
-      await sendVerificationMail({
+      const data = await sendVerificationMail({
         email,
         role: "Teacher",
         url: `${window.location.origin}/verifyemail`,
@@ -161,8 +161,8 @@ export default function ViewTeachers() {
       });
 
       toast({
-        title: "Verification Email Sent",
-        description: "A verification email has been sent to the teacher.",
+        title: "Verification Email Status",
+        description: data.data.message,
       });
     } catch (error) {
       console.error("Verification error:", error);

@@ -3,8 +3,9 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "./mail.js";
 import path from 'path';
 import fs from 'fs';
+import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 
-export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, tempPass, schoolLogo=null) => {
+export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
     try {
         const { url } = req.body;
 
@@ -14,19 +15,24 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         user.emailVerificationCode = otp;
-        if(isStudent){
+        if (isStudent) {
             user.studentEmailVerificationCode = otp2;
         }
         await user.save();
 
-        // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.parentEmail,false, tempPass, schoolLogo);
-        const emailHTMLP2 = await getVerificationEmailTemplate(user.role, otp, url, user.email,user.standard,false,null, schoolLogo);
-        const emailHTML2 = await getVerificationEmailTemplate(user.role, otp2, url, user.email,null, isStudent, null, schoolLogo);
+        const school = await School.findById(user.schoolId);
 
-        if(isStudent){            
+        const signature = await getDynamicSignature(user.schoolId);
+        // console.log(signatue);
+
+        // Wait for the template to be generated
+        const emailHTML = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.parentEmail, false, tempPass, schoolLogo);
+        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.standard, false, null, schoolLogo);
+        const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, url, user.email, null, isStudent, null, schoolLogo);
+
+        if (isStudent) {
             await sendEmail(
                 user.email,
                 "Verify your email -  The RADU E-TOKEN System",
@@ -37,11 +43,11 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
             return true
         }
         // For students, send to parent email(s)
-        const emailRecipients = user.role === Role.Student 
+        const emailRecipients = user.role === Role.Student
             ? [user.parentEmail, user.standard]
             : [user.email];
-        
-        if (user.role === Role.Student ){
+
+        if (user.role === Role.Student) {
             await sendEmail(
                 user.parentEmail,
                 "Verify your email -  The RADU E-TOKEN System",
@@ -49,7 +55,7 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
                 emailHTML,
                 null
             );
-            if(user.standard){
+            if (user.standard) {
                 await sendEmail(
                     user.standard,
                     "Verify your email -  The RADU E-TOKEN System",
@@ -78,13 +84,13 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent= false, te
     }
 };
 
-export const sendOnboardingEmail = async (user, schoolLogo=null) => {
+export const sendOnboardingEmail = async (user, schoolLogo = null) => {
     try {
         let pdf_url = null;
         let video_url = null;
         let userType = '';
 
-        switch(user.type) {
+        switch (user.type) {
             case 'Lead':
                 pdf_url = process.env.LEAD_PDF_URL ?? "";
                 video_url = process.env.LEAD_VIDEO_URL ?? "";
@@ -247,46 +253,52 @@ export const sendOnboardingEmail = async (user, schoolLogo=null) => {
         );
 
         return true;
-    } catch(err) {
+    } catch (err) {
         console.error('Error sending onboarding email:', err);
         throw new Error(err.message);
     }
 }
 
 export const sendTeacherRegistrationMail = async ({ email, url, registrationToken, schoolLogo = null }) => {
-  const registrationLink = `${url}?token=${registrationToken}`;
-  let emailHTML = getVerificationEmailTemplate(
-    'Teacher', // role
-    '',        // otp (not needed)
-    registrationLink, // url (will be replaced in button)
-    email,     // email
-    null,      // toVerify
-    false,     // isStudent
-    null,      // tempPass
-    schoolLogo, // schoolLogo - now using the passed parameter
-    'UTC+0'    // schoolTimezone
-  );
+    const registrationLink = `${url}?token=${registrationToken}`;
 
-  emailHTML = emailHTML.replace('Email Verification', 'Teacher Registration');
-  emailHTML = emailHTML.replace(
-    /<a href="[^"]+"([^>]*)>\s*Verify Email Address\s*<\/a>/,
-    `<a href="${registrationLink}"$1>Complete Registration</a>`
-  );
+    const school = await School.findById(user.schoolId);
 
-  emailHTML = emailHTML.replace(
-    /<p style="margin-bottom: 25px;">([\s\S]*?)<\/p>/,
-    '<p style="margin-bottom: 25px;">You have been invited to join as a teacher. Please complete your registration by clicking the button below:</p>'
-  );
+    const signature = await getDynamicSignature(user.schoolId);
+    // console.log(signature);
 
-  emailHTML = emailHTML.replace(
-    /(<\/div>\s*<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">[\s\S]*?<\/p>)/,
-    `$1\n<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">If the button above does not work, copy and paste this link into your browser:<br><a href="${registrationLink}" style="color: #00a58c; word-break: break-all;">${registrationLink}</a></p>`
-  );
+    let emailHTML = getVerificationEmailTemplate(
+        signature,
+        'Teacher', // role
+        '',        // otp (not needed)
+        registrationLink, // url (will be replaced in button)
+        email,     // email
+        null,      // toVerify
+        false,     // isStudent
+        null,      // tempPass
+        schoolLogo, // schoolLogo - now using the passed parameter
+    );
 
-  await sendEmail(
-    email,
-    'Complete Your Teacher Registration',
-    emailHTML,
-    emailHTML
-  );
+    emailHTML = emailHTML.replace('Email Verification', 'Teacher Registration');
+    emailHTML = emailHTML.replace(
+        /<a href="[^"]+"([^>]*)>\s*Verify Email Address\s*<\/a>/,
+        `<a href="${registrationLink}"$1>Complete Registration</a>`
+    );
+
+    emailHTML = emailHTML.replace(
+        /<p style="margin-bottom: 25px;">([\s\S]*?)<\/p>/,
+        '<p style="margin-bottom: 25px;">You have been invited to join as a teacher. Please complete your registration by clicking the button below:</p>'
+    );
+
+    emailHTML = emailHTML.replace(
+        /(<\/div>\s*<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">[\s\S]*?<\/p>)/,
+        `$1\n<p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">If the button above does not work, copy and paste this link into your browser:<br><a href="${registrationLink}" style="color: #00a58c; word-break: break-all;">${registrationLink}</a></p>`
+    );
+
+    await sendEmail(
+        email,
+        'Complete Your Teacher Registration',
+        emailHTML,
+        emailHTML
+    );
 };

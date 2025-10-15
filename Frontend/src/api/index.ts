@@ -848,12 +848,12 @@ export const sendReportImage = async (data: FormData, email: string) => {
 export const sendVerificationMail = async (data: any) => {
   try {
     const token = getToken();
-    await axios.post(`${API_URL}/auth/sendVerificationMail`, data, {
+    const response = await axios.post(`${API_URL}/auth/sendVerificationMail`, data, {
       headers: {
         token,
       },
     });
-    return { success: true };
+    return { success: true, data: response.data };
   } catch (error) {
     return { error };
   }

@@ -235,7 +235,7 @@ export default function ViewPointHistoryTeacher() {
                     }
                     const data = await getFilteredPointHistory(token, s._id)
                     setFilteredPointHistory(data.pointHistory)
-                  }} key={s._id} className='justify-start w-full rounded-none' variant={"ghost"}>{s.name} (Grade {s.grade})</Button>
+                  }} key={s._id} className='justify-start w-full rounded-none' variant={"ghost"}>{s.name} ({s.grade})</Button>
                 ))}
               </div>
             </PopoverContent>
@@ -253,8 +253,8 @@ export default function ViewPointHistoryTeacher() {
               <TableHead className="font-semibold">Date</TableHead>
               <TableHead className="font-semibold">Time</TableHead>
               <TableHead className="font-semibold">Student</TableHead>
-              <TableHead className="font-semibold">Subject</TableHead>
               <TableHead className="font-semibold">Teacher</TableHead>
+              <TableHead className="font-semibold">Subject</TableHead>
               <TableHead className="font-semibold">Action</TableHead>
               <TableHead className="font-semibold">Points</TableHead>
             </TableRow>
@@ -266,8 +266,8 @@ export default function ViewPointHistoryTeacher() {
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
                   <TableCell>{history.submittedForName}</TableCell>
-                  <TableCell>{history.submittedBySubject ?? "-"}</TableCell>
                   <TableCell>{history.submittedByName ?? "-"}</TableCell>
+                  <TableCell>{history.submittedBySubject ?? "-"}</TableCell>
                   <TableCell>
                     <span className="px-2 py-1 rounded-full text-gray-800 text-sm">
                       {formatFormType(history.formType) ?? "N/A"}

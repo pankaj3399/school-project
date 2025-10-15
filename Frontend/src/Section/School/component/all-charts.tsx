@@ -95,10 +95,10 @@ const AllCharts = () => {
                   <div>No students available</div>
                 )}
               </div>
-              <StudenRanks />
+              <StudenRanks studentId={studentId}/>
             </div>
             <div className="w-[90%]"><EducationYearChart studentId={studentId} /></div>
-            <div className="w-[7%] mr-24"><TeacherRanks /></div>
+            <div className="w-[7%] mr-24"><TeacherRanks studentId={studentId}/></div>
           </div>
           {/* <CurrentWeekCharts key={`school-charts-${studentId}`} studentId={studentId} /> */}
         </div>

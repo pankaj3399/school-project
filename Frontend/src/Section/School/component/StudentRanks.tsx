@@ -11,7 +11,7 @@ interface Student {
     totalPoints: number;
 }
 
-const StudenRanks = () => {
+const StudenRanks = ({ studentId }: { studentId: string }) => {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -19,7 +19,7 @@ const StudenRanks = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [studentId]);
 
     const handlePrint = () => {
         if (printRef.current) {
@@ -57,7 +57,9 @@ const StudenRanks = () => {
             const data = await getAnalyticsData({ period: "1W" });
 
             if (data.success) {
-                setStudents(data.data.studentRankings || []);
+                const students = data.data.studentRankings || [];
+                if(studentId === "") setStudents(students);
+                else setStudents(students.filter((student: any) => student.studentId === studentId));
             }
         } catch (error) {
             console.error("Error fetching data:", error);
