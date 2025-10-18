@@ -57,10 +57,33 @@ const StudenRanks = ({ studentId }: { studentId: string }) => {
             const data = await getAnalyticsData({ period: "1W" });
 
             if (data.success) {
-                const students = data.data.studentRankings || [];
-                if(studentId === "") setStudents(students);
-                else setStudents(students.filter((student: any) => student.studentId === studentId));
-            }
+                const rankings = data.data.studentRankings || [];
+          
+                const aggregatedMap = new Map<string, { studentId: string; name: string; totalPoints: number }>();
+          
+                rankings.forEach((student: any) => {
+                  const existing = aggregatedMap.get(student.studentId);
+                  if (existing) {
+                    existing.totalPoints += student.totalPoints;
+                  } else {
+                    aggregatedMap.set(student.studentId, {
+                      studentId: student.studentId,
+                      name: student.name,
+                      totalPoints: student.totalPoints,
+                    });
+                  }
+                });
+          
+                const aggregatedStudents = Array.from(aggregatedMap.values());
+          
+                aggregatedStudents.sort((a, b) => b.totalPoints - a.totalPoints);
+          
+                if (studentId === "") {
+                  setStudents(aggregatedStudents);
+                } else {
+                  setStudents(aggregatedStudents.filter((s) => s.studentId === studentId));
+                }
+              }
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -84,7 +107,7 @@ const StudenRanks = ({ studentId }: { studentId: string }) => {
         <div>
             <div className="flex gap-2">
                 {/* Students Card */}
-                <Card className="flex-1 h-[420px] flex flex-col" onClick={() => { setIsDialogOpen(true) }}>
+                <Card className="flex-1 h-[420px] w-[250px] flex flex-col" onClick={() => { setIsDialogOpen(true) }}>
                     <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <IconAwardFilled className="text-neutral-700 w-8 h-8" />
@@ -100,7 +123,7 @@ const StudenRanks = ({ studentId }: { studentId: string }) => {
                                 height={students.length * 50}
                                 data={students}
                                 layout="vertical"
-                                margin={{ top: 0, right: 10, left: 0, bottom: -10 }}
+                                margin={{ top: 0, right: -4, left: 20, bottom: -10 }}
                                 barCategoryGap={40}
                             >
                                 <XAxis type="number" />
@@ -140,7 +163,7 @@ const StudenRanks = ({ studentId }: { studentId: string }) => {
                                         <th className="px-6 py-2 text-left text-sm font-semibold text-neutral-700">
                                             Rank
                                         </th>
-                                        <th className="px-6 py-2 text-left text-sm font-semibold text-neutral-700">
+                                        <th className="px-6 py-2 text-left text-sm font-semibold text-neutral-700" colSpan={10}>
                                             Student Name
                                         </th>
                                         <th className="px-6 py-2 text-left text-sm font-semibold text-neutral-700">
@@ -157,7 +180,7 @@ const StudenRanks = ({ studentId }: { studentId: string }) => {
                                             <td className="px-6 py-2 text-sm text-neutral-700">
                                                 {index + 1}
                                             </td>
-                                            <td className="px-6 py-2 text-sm text-neutral-800 font-medium">
+                                            <td className="px-6 py-2 text-sm text-neutral-800 font-medium" colSpan={10}>
                                                 {student.name}
                                             </td>
                                             <td className="px-6 py-2 text-sm text-neutral-700">

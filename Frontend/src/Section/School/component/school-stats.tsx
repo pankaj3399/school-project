@@ -17,7 +17,7 @@ const SchoolStats = memo(({stats}:{
     <div className='h-fit w-full mt-5 flex gap-2 justify-center flex-wrap'>
         <StatCard label={"Total Teachers"} value={stats.teachers} Icon={IconAppleFilled}/>
         <StatCard label={"Total Students"} value={stats.students} Icon={IconUsers}/>
-        <StatCard label={"Total Earned Tokens"} value={stats.points} Icon={IconAwardFilled} />
+        <StatCard label={"Tokens"} value={stats.points} Icon={IconAwardFilled} />
         <StatCard label={"Total Feedbacks"} value={stats.feedbacks} Icon={IconMessageFilled}/>
         <StatCard label={"Total Oopsies"} value={stats.oopsie} Icon={IconAlertTriangle}/>
         <StatCard label={"Total Withdrawals"} value={stats.withdrawals} Icon={IconShoppingCart}/>

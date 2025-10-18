@@ -86,7 +86,7 @@ const TeacherRanks = ({ studentId }: { studentId: string }) => {
     <div className="relative">
       <div className="flex gap-2">
         {/* Teachers Card */}
-        <Card className="flex-1 h-[420px] flex flex-col mt-16" onClick={() => { setIsDialogOpen(true) }}>
+        <Card className="flex-1 h-[420px] w-[250px] flex flex-col mt-16" onClick={() => { setIsDialogOpen(true) }}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <IconAppleFilled className="text-neutral-700 w-8 h-8" />
@@ -158,7 +158,7 @@ const TeacherRanks = ({ studentId }: { studentId: string }) => {
                         {index + 1}
                       </td>
                       <td className="px-6 py-2 text-sm text-neutral-800 font-medium">
-                        {teacher.awardedBy}
+                        {studentId === '' ? teacher.name : teacher.awardedBy}
                       </td>
                       <td className="px-6 py-2 text-sm text-neutral-700">
                         {teacher.totalPoints}

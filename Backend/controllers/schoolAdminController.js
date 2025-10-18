@@ -193,7 +193,15 @@ export const getStats = async (req, res) => {
       {
         $group: {
           _id: null,
-          totalPoints: { $sum: "$points" },
+          totalPoints: {
+            $sum: {
+              $cond: [
+                { $in: ["$formType", [FormType.AwardPoints, FormType.AwardPointsIEP]] },
+                "$points",
+                0
+              ]
+            }
+          },
           totalWithdrawPoints: {
             $sum: {
               $cond: [{ $eq: ["$formType", FormType.PointWithdraw] }, "$points", 0],
@@ -773,9 +781,9 @@ export const studentRoster = async (req, res) => {
           },
           guardian2: student.guardian2
             ? {
-                name: student.guardian2.name,
-                email: student.guardian2.email,
-              }
+              name: student.guardian2.name,
+              email: student.guardian2.email,
+            }
             : null,
           schoolId: schoolId,
           password: hashedPassword,
