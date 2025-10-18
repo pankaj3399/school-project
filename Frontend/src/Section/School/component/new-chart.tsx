@@ -173,14 +173,14 @@ const EducationYearChart = ({ studentId, slimLines }: {
               top: 2,
               right: 40,
               left: 20,
-              bottom: 2,
+              bottom: 24,
             }}
 
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey={selectedMonth ? "day" : "month"}
-              label={{ value: selectedMonth ? `${selectedMonth}` : `${new Date().getFullYear()}`, position: 'insideBottom', offset: -5, fontSize: 16 }}
+              label={{ value: selectedMonth ? `${selectedMonth}` : `${new Date().getFullYear()}`, position: 'insideBottom', offset: -5, fontSize: 22, dy: 12 }}
 
             />
             <YAxis />
