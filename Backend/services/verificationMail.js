@@ -4,6 +4,8 @@ import { sendEmail } from "./mail.js";
 import path from 'path';
 import fs from 'fs';
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
+import School from "../models/School.js";
+import Admin from "../models/Admin.js";
 
 export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
     try {
@@ -259,12 +261,10 @@ export const sendOnboardingEmail = async (user, schoolLogo = null) => {
     }
 }
 
-export const sendTeacherRegistrationMail = async ({ email, url, registrationToken, schoolLogo = null }) => {
+export const sendTeacherRegistrationMail = async ({ email, url, registrationToken, schoolId, schoolLogo = null }) => {
     const registrationLink = `${url}?token=${registrationToken}`;
 
-    const school = await School.findById(user.schoolId);
-
-    const signature = await getDynamicSignature(user.schoolId);
+    const signature = await getDynamicSignature(schoolId);
     // console.log(signature);
 
     let emailHTML = getVerificationEmailTemplate(

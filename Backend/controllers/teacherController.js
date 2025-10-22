@@ -54,15 +54,17 @@ export const addTeacher = async (req, res) => {
         },
       }
     );
-    
+    console.log("teacher", teacher);
+    console.log('schoolAdmin', schoolAdmin)
     // Fetch school to get logo
     const school = await School.findById(schoolAdmin.schoolId);
-    
+    console.log("school", school);
     // Send registration email
     await sendTeacherRegistrationMail({
       email,
       url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
       registrationToken,
+      schoolId: schoolAdmin.schoolId,
       schoolLogo: school?.logo,
     });
     return res.status(200).json({
@@ -73,7 +75,7 @@ export const addTeacher = async (req, res) => {
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .json({ message: "Server Error in teacherController.js", error: error.message });
   }
 };
 
