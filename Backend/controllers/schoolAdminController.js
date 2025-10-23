@@ -689,6 +689,7 @@ export const teacherRoster = async (req, res) => {
             email: createdTeacher.email,
             url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
             registrationToken,
+            schoolId,
             schoolLogo: school?.logo,
           });
 
