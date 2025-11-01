@@ -193,7 +193,7 @@ const EducationYearChart = ({ studentId, slimLines }: {
 
             {/* Bars */}
             <Bar dataKey="withdrawals" fill="#3d59f5" name="Withdrawals" barSize={20} />
-            <Bar dataKey="tokens" fill="#4CAF50" name="Total tokens" barSize={20} />
+            <Bar dataKey="tokens" fill="#4CAF50" name="Tokens" barSize={20} />
             <Bar dataKey="oopsies" fill="#F44336" name="Oopsies" barSize={20} />
 
             {/* Trend Lines */}
