@@ -36,7 +36,7 @@ type FormSubmissionProps = {
       parentEmail: boolean;
     },
     submittedAt: Date,
-    isManuallySet: boolean
+    isManuallySet: boolean,
   ) => void;
 };
 
@@ -67,7 +67,7 @@ export function FormSubmission({
     // Initialize with current date in school's timezone
     if (user?.schoolId?.timeZone) {
       const schoolCurrentTime = timezoneManager.getSchoolCurrentTime(
-        user.schoolId.timeZone
+        user.schoolId.timeZone,
       );
       return schoolCurrentTime.toJSDate();
     }
@@ -100,7 +100,7 @@ export function FormSubmission({
       student.find((st) => st._id == submittedFor)?.points + totalPoints < 0;
 
     setIsFormValid(
-      allCompulsoryQuestionsAnswered && !isInvalid && !!submittedFor
+      allCompulsoryQuestionsAnswered && !isInvalid && !!submittedFor,
     );
   }, [answers, totalPoints, form.questions, submittedFor]);
 
@@ -110,22 +110,27 @@ export function FormSubmission({
       const response = await getStudents(token);
 
       // Filter students for IEP forms with pre-selection
-      if (form && form.formType === FormType.AwardPointsIEP && form.preSelectedStudents && form.preSelectedStudents.length > 0) {
+      if (
+        form &&
+        form.formType === FormType.AwardPointsIEP &&
+        form.preSelectedStudents &&
+        form.preSelectedStudents.length > 0
+      ) {
         const preSelectedStudents = response.students.filter((s: any) =>
-          form.preSelectedStudents.includes(s._id)
+          form.preSelectedStudents.includes(s._id),
         );
 
         setStudent(
           preSelectedStudents.map((s: any) => ({
             ...s,
             name: s.name + " - Grade " + s.grade,
-          }))
+          })),
         );
         setfilteredStudent(
           preSelectedStudents.map((s: any) => ({
             ...s,
             name: s.name + " - Grade " + s.grade,
-          }))
+          })),
         );
       } else if (form) {
         if (form.isSpecial || user?.type == "Special") {
@@ -133,34 +138,34 @@ export function FormSubmission({
             response.students.map((s: any) => ({
               ...s,
               name: s.name + " - Grade " + s.grade,
-            }))
+            })),
           );
           setfilteredStudent(
             response.students.map((s: any) => ({
               ...s,
               name: s.name + " - Grade " + s.grade,
-            }))
+            })),
           );
         } else {
           setStudent(
             response.students.map((s: any) => ({
               ...s,
               name: s.name + " - Grade " + s.grade,
-            }))
+            })),
           );
           setfilteredStudent(
             response.students.map((s: any) => ({
               ...s,
               name: s.name + " - Grade " + s.grade,
-            }))
+            })),
           );
         }
       } else {
         setStudent(
-          response.students.filter((s: any) => s.grade === form.grade)
+          response.students.filter((s: any) => s.grade === form.grade),
         );
         setfilteredStudent(
-          response.students.filter((s: any) => s.grade === form.grade)
+          response.students.filter((s: any) => s.grade === form.grade),
         );
       }
     };
@@ -183,37 +188,40 @@ export function FormSubmission({
       case FormType.PointWithdraw:
         {
           setDescription(
-            `You will ${form.formType == FormType.AwardPoints ||
-              form.formType ==
-              FormType.AwardPointsIEP
-              ? "Award"
-              : form.formType == FormType.PointWithdraw
+            `You will ${
+              form.formType == FormType.AwardPoints ||
+              form.formType == FormType.AwardPointsIEP
+                ? "Award"
+                : form.formType == FormType.PointWithdraw
                 ? "Withdraw"
                 : "Deduct"
-            } ${Math.abs(totalPoints)} points ${form.formType == FormType.AwardPoints ||
-              form.formType ==
-              FormType.AwardPointsIEP
-              ? "to"
-              : "from"
-            } ${student.find((item) => item._id == submittedFor)?.name ||
-            "Unknown"
-            }.`
+            } ${Math.abs(totalPoints)} points ${
+              form.formType == FormType.AwardPoints ||
+              form.formType == FormType.AwardPointsIEP
+                ? "to"
+                : "from"
+            } ${
+              student.find((item) => item._id == submittedFor)?.name ||
+              "Unknown"
+            }.`,
           );
         }
         break;
       case FormType.Feedback:
         {
           setDescription(
-            `You will submit feedback about  ${student.find((item) => item._id == submittedFor)?.name ||
-            "Unknown"
-            }.`
+            `You will submit feedback about  ${
+              student.find((item) => item._id == submittedFor)?.name ||
+              "Unknown"
+            }.`,
           );
         }
         break;
       default: {
         setDescription(
-          `You will submit this form for ${student.find((item) => item._id == submittedFor)?.name || "Unknown"
-          }.`
+          `You will submit this form for ${
+            student.find((item) => item._id == submittedFor)?.name || "Unknown"
+          }.`,
         );
       }
     }
@@ -221,7 +229,7 @@ export function FormSubmission({
 
   const handleInputChange = (
     questionId: string,
-    value: { answer: string; points: number }
+    value: { answer: string; points: number },
   ) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
@@ -241,11 +249,17 @@ export function FormSubmission({
       if (feedbackQuestion) {
         feedbackAnswers[feedbackQuestion.id] = {
           answer: feedbackText,
-          points: 0
+          points: 0,
         };
       }
 
-      onSubmit(feedbackAnswers, submittedFor, isSendEmail, submittedAt, isManuallySet);
+      onSubmit(
+        feedbackAnswers,
+        submittedFor,
+        isSendEmail,
+        submittedAt,
+        isManuallySet,
+      );
     } else {
       onSubmit(answers, submittedFor, isSendEmail, submittedAt, isManuallySet);
     }
@@ -271,7 +285,7 @@ export function FormSubmission({
               )}
               {question.targetedBehaviour && (
                 <p className="font-semibold text-gray-900">
-                  Targeted Behaviour: {question.targetedBehaviour}
+                  Targeted Behavior: {question.targetedBehaviour}
                 </p>
               )}
               {question.otherGoal && (
@@ -291,7 +305,7 @@ export function FormSubmission({
                   : Number(e.target.value);
                 if (points > question.maxPoints) {
                   e.target.setCustomValidity(
-                    `Value must be less than or equal to ${question.maxPoints}`
+                    `Value must be less than or equal to ${question.maxPoints}`,
                   );
                 } else {
                   e.target.setCustomValidity("");
@@ -301,7 +315,7 @@ export function FormSubmission({
                   answer: e.target.value,
                   points:
                     form.formType === FormType.DeductPoints ||
-                      form.formType === FormType.PointWithdraw
+                    form.formType === FormType.PointWithdraw
                       ? points * -1
                       : points,
                 });
@@ -322,7 +336,7 @@ export function FormSubmission({
               )}
               {question.targetedBehaviour && (
                 <p className="text-muted-foreground">
-                  Targeted Behaviour: {question.targetedBehaviour}
+                  Targeted Behavior: {question.targetedBehaviour}
                 </p>
               )}
               {question.otherGoal && (
@@ -360,7 +374,7 @@ export function FormSubmission({
               )}
               {question.targetedBehaviour && (
                 <p className="font-semibold border p-1 rounded-md text-gray-500">
-                  Targeted Behaviour: {question.targetedBehaviour}
+                  Targeted Behavior: {question.targetedBehaviour}
                 </p>
               )}
               {question.otherGoal && (
@@ -383,7 +397,7 @@ export function FormSubmission({
                     answer: e.target.value,
                     points:
                       form.formType === FormType.DeductPoints ||
-                        form.formType === FormType.PointWithdraw
+                      form.formType === FormType.PointWithdraw
                         ? Number(e.target.value) * -1
                         : Number(e.target.value),
                   });
@@ -402,14 +416,14 @@ export function FormSubmission({
             value={(answers[question.id]?.answer as string) || ""}
             onValueChange={(value) => {
               const selectedOption = question.options?.find(
-                (o) => o.value === value
+                (o) => o.value === value,
               );
               const points = selectedOption ? selectedOption.points : 0;
               handleInputChange(question.id, {
                 answer: value,
                 points:
                   form.formType === FormType.DeductPoints ||
-                    form.formType === FormType.PointWithdraw
+                  form.formType === FormType.PointWithdraw
                     ? points * -1
                     : points,
               });
@@ -441,12 +455,16 @@ export function FormSubmission({
   };
 
   useEffect(() => {
-    if (!form?.isSpecial && form.type !== 'AwardPointsIEP' && FormType.AwardPointsIEP && student.length > 0) {
+    if (
+      !form?.isSpecial &&
+      form.type !== "AwardPointsIEP" &&
+      FormType.AwardPointsIEP &&
+      student.length > 0
+    ) {
       const filtered = student.filter((s: any) => s.grade === form.grade);
       setfilteredStudent(filtered);
     }
   }, [student, form]);
-
 
   console.log(student, submittedFor);
 
@@ -489,7 +507,7 @@ export function FormSubmission({
                           <SelectItem key={grade} value={grade?.toString()}>
                             {grade}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -501,7 +519,12 @@ export function FormSubmission({
                 <Input
                   type="date"
                   required
-                  value={`${submittedAt.getFullYear()}-${String(submittedAt.getMonth() + 1).padStart(2, '0')}-${String(submittedAt.getDate()).padStart(2, '0')}`}
+                  value={`${submittedAt.getFullYear()}-${String(
+                    submittedAt.getMonth() + 1,
+                  ).padStart(2, "0")}-${String(submittedAt.getDate()).padStart(
+                    2,
+                    "0",
+                  )}`}
                   onChange={(e) => {
                     const selectedDate = e.target.valueAsDate;
 
@@ -510,13 +533,15 @@ export function FormSubmission({
                       if (user?.schoolId?.timeZone) {
                         const timezone = user.schoolId.timeZone;
                         console.log(
-                          `Converting date ${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()} to school's timezone: ${timezone}`
+                          `Converting date ${selectedDate.getFullYear()}-${
+                            selectedDate.getMonth() + 1
+                          }-${selectedDate.getDate()} to school's timezone: ${timezone}`,
                         );
                         const year = selectedDate.getFullYear();
                         const month = selectedDate.getMonth() + 1;
                         const day = selectedDate.getDate();
                         console.log(
-                          `Extracted date components - Year: ${year}, Month: ${month}, Day: ${day}`
+                          `Extracted date components - Year: ${year}, Month: ${month}, Day: ${day}`,
                         );
 
                         const noonInUserTimezone =
@@ -526,10 +551,10 @@ export function FormSubmission({
                             day,
                             12, // 12 PM (noon)
                             0, // 0 minutes
-                            timezone
+                            timezone,
                           );
                         console.log(
-                          `Converted date in user's timezone: ${noonInUserTimezone.toJSDate()}`
+                          `Converted date in user's timezone: ${noonInUserTimezone.toJSDate()}`,
                         );
                         setSubmittedAt(noonInUserTimezone.toJSDate());
                       } else {
@@ -544,7 +569,7 @@ export function FormSubmission({
                     {timezoneManager.formatForSchool(
                       submittedAt,
                       user.schoolId.timeZone,
-                      "ZZZZ"
+                      "ZZZZ",
                     )}
                     )
                   </p>
@@ -554,7 +579,10 @@ export function FormSubmission({
                 <p>Student:</p>
                 {Array.isArray(student) && student.length > 0 ? (
                   <div className="flex items-center gap-2">
-                    <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
+                    <Popover
+                      open={isPopOverOpen}
+                      onOpenChange={setIsPopOverOpen}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -563,7 +591,7 @@ export function FormSubmission({
                         >
                           {submittedFor
                             ? student.find((s: any) => s._id === submittedFor)
-                              ?.name
+                                ?.name
                             : "Select student..."}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -576,37 +604,44 @@ export function FormSubmission({
                               // Reset to show students based on selected grade
                               setfilteredStudent(
                                 student.filter(
-                                  (s: any) => s.grade == form.grade
-                                )
+                                  (s: any) => s.grade == form.grade,
+                                ),
                               );
                             } else {
                               // Filter from the base student list based on grade first, then search
                               setfilteredStudent(
-                                student.filter((s: any) =>
-                                  (s.name
-                                    .toLowerCase()
-                                    .includes(value.toLowerCase())) && s.grade === form.grade
-                                )
+                                student.filter(
+                                  (s: any) =>
+                                    s.name
+                                      .toLowerCase()
+                                      .includes(value.toLowerCase()) &&
+                                    s.grade === form.grade,
+                                ),
                               );
                             }
-                          }
-                          }
+                          }}
                         />
                         <div className="flex flex-col h-[200px] overflow-y-auto">
-                          {filteredStudent.length > 0 ? filteredStudent.map((s: any) => (
-                            <Button
-                              onClick={() => {
-                                setSubmittedFor(s._id);
+                          {filteredStudent.length > 0 ? (
+                            filteredStudent.map((s: any) => (
+                              <Button
+                                onClick={() => {
+                                  setSubmittedFor(s._id);
 
-                                setIsPopOverOpen(false);
-                              }}
-                              key={s._id}
-                              className="justify-start"
-                              variant={"ghost"}
-                            >
-                              {s.name}
-                            </Button>
-                          )): <div className="text-center text-sm text-neutral-700 mt-5">No Students Found</div>}
+                                  setIsPopOverOpen(false);
+                                }}
+                                key={s._id}
+                                className="justify-start"
+                                variant={"ghost"}
+                              >
+                                {s.name}
+                              </Button>
+                            ))
+                          ) : (
+                            <div className="text-center text-sm text-neutral-700 mt-5">
+                              No Students Found
+                            </div>
+                          )}
                         </div>
                       </PopoverContent>
                     </Popover>
@@ -629,7 +664,7 @@ export function FormSubmission({
                   <h3 className="font-medium mb-2">
                     {index + 1}. {question.text}{" "}
                     {question.type === "select" ||
-                      form.formType === "Feedback" ? (
+                    form.formType === "Feedback" ? (
                       <span className="text-muted-foreground"></span>
                     ) : (
                       <span className="text-muted-foreground">
@@ -637,8 +672,7 @@ export function FormSubmission({
                       </span>
                     )}
                     {form.formType === FormType.AwardPoints ||
-                      form.formType ===
-                      FormType.AwardPointsIEP ? (
+                    form.formType === FormType.AwardPointsIEP ? (
                       <span className="text-green-500 ml-1">Award</span>
                     ) : form.formType === FormType.DeductPoints ||
                       form.formType === FormType.PointWithdraw ? (

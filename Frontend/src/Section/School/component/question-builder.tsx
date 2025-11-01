@@ -123,13 +123,13 @@ export function QuestionBuilder({
           </div>
 
           <div className="space-y-2">
-            <Label>3. TARGETED BEHAVIOUR</Label>
+            <Label>3. TARGETED BEHAVIOR</Label>
             <Textarea
               value={question.targetedBehaviour || ""}
               onChange={(e) =>
                 onUpdate({ ...question, targetedBehaviour: e.target.value })
               }
-              placeholder="Describe the targeted behaviour"
+              placeholder="Describe the targeted behavior"
             />
           </div>
         </div>
@@ -213,7 +213,7 @@ export function QuestionBuilder({
                     options: question.options?.map((o, i) =>
                       i === index
                         ? { ...o, points: parseInt(e.target.value, 10) || 0 }
-                        : o
+                        : o,
                     ),
                   })
                 }
