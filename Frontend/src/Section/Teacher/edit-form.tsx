@@ -22,7 +22,7 @@ export default function EditFormTeacher() {
     const [formType, setFormType] = useState<FormType>(FormType.AwardPoints)
     const [questions, setQuestions] = useState<Question[]>([])
     const [isSpecial, setIsSpecial] = useState(false)
-const [grade, setGrade] = useState<number>(1)
+const [grade, setGrade] = useState<string>("K")
     const [isSendEmail, setIsSendEmail] = useState({
       studentEmail: false,
       teacherEmail: false,
@@ -102,7 +102,7 @@ const [grade, setGrade] = useState<number>(1)
     setFormType(form.formType as FormType)
     setQuestions(form.questions)
     setIsSpecial(form.isSpecial || false)
-    setGrade(form.grade || 1)
+    setGrade(form.grade || "K")
     setIsSendEmail({
       ...isSendEmail,
       studentEmail: !!form.studentEmail,
@@ -162,13 +162,13 @@ const [grade, setGrade] = useState<number>(1)
   {!isSpecial && (
     <div>
       <Label htmlFor="grade">Grade</Label>
-      <Select disabled value={grade.toString()} onValueChange={(value) => setGrade(parseInt(value))}>
+      <Select value={grade} onValueChange={(value) => setGrade(value)}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select grade" />
         </SelectTrigger>
         <SelectContent>
           {grades.map((g) => (
-            <SelectItem key={g} value={g.toString()}>
+            <SelectItem key={g} value={g}>
               {g}
             </SelectItem>
           ))}

@@ -14,7 +14,7 @@ export default function ViewForms() {
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
   const [groupedForms, setGroupedForms] = useState<{
     special: Form[],
-    byGrade: { [key: number]: Form[] }
+    byGrade: { [key: string]: Form[] }
   }>({ special: [], byGrade: {} })
   const [deleteModal, setDeleteModal] = useState<{ form: Form | null, open: boolean }>({ form: null, open: false })
 
@@ -60,11 +60,21 @@ export default function ViewForms() {
         acc.byGrade[form.grade].push(form)
       }
       return acc
-    }, { special: [] as Form[], byGrade: {} as { [key: number]: Form[] } })
+    }, { special: [] as Form[], byGrade: {} as { [key: string]: Form[] } })
 
-    // Sort grades
+    // Sort grades - handle both numeric and string grades
     const sortedByGrade = Object.fromEntries(
-      Object.entries(grouped.byGrade).sort(([a], [b]) => Number(a) - Number(b))
+      Object.entries(grouped.byGrade).sort(([a], [b]) => {
+        // Try to parse as numbers for numeric grades
+        const numA = Number(a)
+        const numB = Number(b)
+        // If both are valid numbers, sort numerically
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB
+        }
+        // Otherwise sort alphabetically
+        return a.localeCompare(b)
+      })
     )
 
     setGroupedForms({ ...grouped, byGrade: sortedByGrade })
