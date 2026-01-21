@@ -567,7 +567,8 @@ export const emailGenerator = async (
         currentDateFormatted, // Use school timezone formatted date
         school.name,
         school.address,
-        school.district
+        school.district,
+        student.points // Pass current balance to display on receipt
       );
       attachmentName = "Receipt.png";
       break;

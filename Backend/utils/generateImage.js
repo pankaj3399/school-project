@@ -66,6 +66,7 @@ export const generateRecieptImage = async (
   schoolName,
   schoolAddress,
   schoolDistrict,
+  currentBalance = 0,
 ) => {
   try {
     loadFontFromURL(path.join(__dirname, '../fonts/courbd.ttf'),'Courier New Bold')
@@ -95,6 +96,17 @@ export const generateRecieptImage = async (
     ctx.fillText(`ISSUED TO: ${student.toUpperCase()}`, canvas.width /2, 330);
     ctx.font = 'bold 100px "Courier New Bold"'
     ctx.fillText(`${Math.abs(noOfTokens)}`, canvas.width / 2, 420);
+    
+    // Draw a border box for the messages
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    // Moved down further to 520 to fully clear background asterisks
+    ctx.strokeRect(40, 520, canvas.width - 80, 90);
+    
+    // Add current balance at the bottom
+    ctx.font = 'bold 15px "Courier New Bold"';
+    ctx.fillText(`YOUR CURRENT BALANCE IS: ${currentBalance}`, canvas.width / 2, 580);
+    
     return canvas.toBuffer();
   } catch (error) {
     console.error('Error generating coupon image:', error);
