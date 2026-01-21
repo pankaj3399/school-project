@@ -1031,3 +1031,18 @@ export const verifyCurrentUserPassword = async (password: string) => {
     return { error };
   }
 };
+
+export const subscribeToWaitlist = async (email: string, confirmEmail: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/waitlist`, {
+      email,
+      confirmEmail,
+    });
+    return response.data;
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Something went wrong",
+    };
+  }
+};

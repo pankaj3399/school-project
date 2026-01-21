@@ -12,6 +12,7 @@ import schoolAdminRoutes from './routes/schoolAdminRoutes.js';
 import schoolRoutes from './routes/schoolRoutes.js';
 import formRoutes from './routes/formRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
+import waitlistRoutes from './routes/waitlistRoutes.js';
 import { authenticate } from './middlewares/authMiddleware.js';
 import { getCurrentUser } from './controllers/generalController.js';
 
@@ -44,6 +45,7 @@ app.use('/api/school', schoolRoutes);
 app.use('/api/student', studentRoutes);
 app.get("/api/user", authenticate, getCurrentUser);
 app.use('/api/form', formRoutes);
+app.use('/api/waitlist', waitlistRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'API is running...' });
