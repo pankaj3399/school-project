@@ -22,59 +22,59 @@ export default function FormBuilderTeacher() {
     parentEmail: false
   })
 
-const clearForm = () => {
-  setFormName('')
-  setFormType(FormType.AwardPoints)
-  setQuestions([])
-}
-
-useEffect(()=>{
-  switch(formType){
-    case FormType.AwardPoints:
-      setIsSendEmail({
-        studentEmail: true,
-        teacherEmail: true,
-        schoolAdminEmail: false,
-        parentEmail: false
-      })
-      break
-    case FormType.DeductPoints:
-      setIsSendEmail({
-        studentEmail: true,
-        teacherEmail: false,
-        schoolAdminEmail: false,
-        parentEmail: true
-      })
-      break
-    case FormType.PointWithdraw:
-      setIsSendEmail({
-        studentEmail: true,
-        teacherEmail: true,
-        schoolAdminEmail: false,
-        parentEmail: false
-      })
-      break
-    case FormType.Feedback:
-      setIsSendEmail({
-        studentEmail: true,
-        teacherEmail: true,
-        schoolAdminEmail: true,
-        parentEmail: false
-      })
-      break
-    case FormType.AwardPointsIEP:
-      setIsSendEmail({
-        studentEmail: true,
-        teacherEmail: true,
-        schoolAdminEmail: false,
-        parentEmail: false
-      })
-      break
-
+  const clearForm = () => {
+    setFormName('')
+    setFormType(FormType.AwardPoints)
+    setQuestions([])
   }
-},[formType])
 
-const navigate = useNavigate()
+  useEffect(() => {
+    switch (formType) {
+      case FormType.AwardPoints:
+        setIsSendEmail({
+          studentEmail: true,
+          teacherEmail: true,
+          schoolAdminEmail: false,
+          parentEmail: false
+        })
+        break
+      case FormType.DeductPoints:
+        setIsSendEmail({
+          studentEmail: true,
+          teacherEmail: false,
+          schoolAdminEmail: false,
+          parentEmail: true
+        })
+        break
+      case FormType.PointWithdraw:
+        setIsSendEmail({
+          studentEmail: true,
+          teacherEmail: true,
+          schoolAdminEmail: false,
+          parentEmail: false
+        })
+        break
+      case FormType.Feedback:
+        setIsSendEmail({
+          studentEmail: true,
+          teacherEmail: true,
+          schoolAdminEmail: true,
+          parentEmail: false
+        })
+        break
+      case FormType.AwardPointsIEP:
+        setIsSendEmail({
+          studentEmail: true,
+          teacherEmail: true,
+          schoolAdminEmail: false,
+          parentEmail: false
+        })
+        break
+
+    }
+  }, [formType])
+
+  const navigate = useNavigate()
 
   const handleCreateForm = async () => {
     // Validation
@@ -103,36 +103,36 @@ const navigate = useNavigate()
     });
     // Ensure grade is provided for teacher forms
     if (!grade) {
-      toast({ 
-        title: 'Error', 
-        description: 'Grade is required for teacher forms', 
-        variant: 'destructive' 
+      toast({
+        title: 'Error',
+        description: 'Grade is required for teacher forms',
+        variant: 'destructive'
       });
       return;
     }
 
     const response = await createForm(
-        {
-          formName, 
-          formType, 
-          questions: processedQuestions, 
-          isSpecial:false,
-          grade: grade?.toString?.() || null,
-          ...isSendEmail
-        },
-        localStorage.getItem('token')!
-      )
-    if(response.error){
+      {
+        formName,
+        formType,
+        questions: processedQuestions,
+        isSpecial: false,
+        grade: grade?.toString?.() || null,
+        ...isSendEmail
+      },
+      localStorage.getItem('token')!
+    )
+    if (response.error) {
       // Extract error message from the error object
-      const errorMessage = response.error?.response?.data?.message || 
-                          response.error?.message || 
-                          'An error occurred while creating the form';
+      const errorMessage = response.error?.response?.data?.message ||
+        response.error?.message ||
+        'An error occurred while creating the form';
       toast({
         title: 'Error',
         description: errorMessage,
         variant: 'destructive'
-      })   
-    }else{
+      })
+    } else {
       toast({
         title: 'Success',
         description: 'Form Created Successfully'
@@ -157,36 +157,36 @@ const navigate = useNavigate()
     setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q))
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     const fetchTeacher = async () => {
       const res = await getCurrentUser();
-      if(res.error){
+      if (res.error) {
         toast({
           title: 'Error',
           description: res.error,
           variant: 'destructive'
         })
-    }else{
-      setGrade(res.user.grade)
+      } else {
+        setGrade(res.user.grade)
+      }
     }
-  }
 
     fetchTeacher()
-  },[])
+  }, [])
 
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">
       <h1 className="text-2xl font-bold">Create Form</h1>
       <div>
-            <Label htmlFor="formName">Form Name</Label>
-            <Input
-              id="formName"
-              name="formName"
-              value={formName}
-              placeholder='Enter Form Name'
-              onChange={(e)=>setFormName(e.target.value)}
-              required
-            />
+        <Label htmlFor="formName">Form Name</Label>
+        <Input
+          id="formName"
+          name="formName"
+          value={formName}
+          placeholder='Enter Form Name'
+          onChange={(e) => setFormName(e.target.value)}
+          required
+        />
       </div>
 
       <div>
@@ -198,60 +198,60 @@ const navigate = useNavigate()
             <SelectValue placeholder="Select form type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="AwardPoints">Award Points</SelectItem>
-            <SelectItem value="Feedback">Feedback</SelectItem>
-            <SelectItem value="PointWithdraw">Withdraw Points</SelectItem>
-            <SelectItem value="DeductPoints">Deduct Points</SelectItem>
-            <SelectItem value="AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)">
-            Award Points with Individualized Education Plan (IEP)
+            <SelectItem value={FormType.AwardPoints}>Award Points</SelectItem>
+            <SelectItem value={FormType.Feedback}>Feedback</SelectItem>
+            <SelectItem value={FormType.PointWithdraw}>Withdraw Points</SelectItem>
+            <SelectItem value={FormType.DeductPoints}>Deduct Points</SelectItem>
+            <SelectItem value={FormType.AwardPointsIEP}>
+              Award Points with Individualized Education Plan (IEP)
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
-      
-      
+
+
       <div className='flex gap-2 text-sm'>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, studentEmail: !prev.studentEmail}))}/>
-              <p>Notify Student</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, teacherEmail: !prev.teacherEmail}))}/>
-              <p>Notify Teacher</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, schoolAdminEmail: !prev.schoolAdminEmail}))}/>
-              <p>Notify Admin</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({...prev, parentEmail: !prev.parentEmail}))}/>
-              <p>Notify Parents/Guardians</p>
-            </div>
-           
-          </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.studentEmail} onCheckedChange={() => setIsSendEmail(prev => ({ ...prev, studentEmail: !prev.studentEmail }))} />
+          <p>Notify Student</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.teacherEmail} onCheckedChange={() => setIsSendEmail(prev => ({ ...prev, teacherEmail: !prev.teacherEmail }))} />
+          <p>Notify Teacher</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.schoolAdminEmail} onCheckedChange={() => setIsSendEmail(prev => ({ ...prev, schoolAdminEmail: !prev.schoolAdminEmail }))} />
+          <p>Notify Admin</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox checked={isSendEmail.parentEmail} onCheckedChange={() => setIsSendEmail(prev => ({ ...prev, parentEmail: !prev.parentEmail }))} />
+          <p>Notify Parents/Guardians</p>
+        </div>
+
+      </div>
       <div className="space-y-4">
         {questions.map((question, index) => (
           <>
-          <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
-          <QuestionBuilder
-            formType={formType}
-            key={question.id}
-            question={question}
-            onUpdate={updateQuestion}
-            onRemove={removeQuestion}
+            <p className='text-sm text-muted-foreground'>Question {index + 1}</p>
+            <QuestionBuilder
+              formType={formType}
+              key={question.id}
+              question={question}
+              onUpdate={updateQuestion}
+              onRemove={removeQuestion}
             />
           </>
         ))}
       </div>
       <Button
-      variant='outline'
-       onClick={() => addQuestion({
-        id: Date.now().toString(),
-        text: '',
-        type: 'text',
-        isCompulsory: false,
-        maxPoints: 0
-      })}>
+        variant='outline'
+        onClick={() => addQuestion({
+          id: Date.now().toString(),
+          text: '',
+          type: 'text',
+          isCompulsory: false,
+          maxPoints: 0
+        })}>
         Add Question
       </Button>
       <Button className='w-full bg-[#00a58c] hover:bg-[#00a58c]' onClick={handleCreateForm}>Create Form</Button>

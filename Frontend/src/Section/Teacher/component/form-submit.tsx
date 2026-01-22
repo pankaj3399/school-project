@@ -188,21 +188,18 @@ export function FormSubmission({
       case FormType.PointWithdraw:
         {
           setDescription(
-            `You will ${
-              form.formType == FormType.AwardPoints ||
+            `You will ${form.formType == FormType.AwardPoints ||
               form.formType == FormType.AwardPointsIEP
-                ? "Award"
-                : form.formType == FormType.PointWithdraw
+              ? "Award"
+              : form.formType == FormType.PointWithdraw
                 ? "Withdraw"
                 : "Deduct"
-            } ${Math.abs(totalPoints)} points ${
-              form.formType == FormType.AwardPoints ||
+            } ${Math.abs(totalPoints)} points ${form.formType == FormType.AwardPoints ||
               form.formType == FormType.AwardPointsIEP
-                ? "to"
-                : "from"
-            } ${
-              student.find((item) => item._id == submittedFor)?.name ||
-              "Unknown"
+              ? "to"
+              : "from"
+            } ${student.find((item) => item._id == submittedFor)?.name ||
+            "Unknown"
             }.`,
           );
         }
@@ -210,17 +207,15 @@ export function FormSubmission({
       case FormType.Feedback:
         {
           setDescription(
-            `You will submit feedback about  ${
-              student.find((item) => item._id == submittedFor)?.name ||
-              "Unknown"
+            `You will submit feedback about  ${student.find((item) => item._id == submittedFor)?.name ||
+            "Unknown"
             }.`,
           );
         }
         break;
       default: {
         setDescription(
-          `You will submit this form for ${
-            student.find((item) => item._id == submittedFor)?.name || "Unknown"
+          `You will submit this form for ${student.find((item) => item._id == submittedFor)?.name || "Unknown"
           }.`,
         );
       }
@@ -315,7 +310,7 @@ export function FormSubmission({
                   answer: e.target.value,
                   points:
                     form.formType === FormType.DeductPoints ||
-                    form.formType === FormType.PointWithdraw
+                      form.formType === FormType.PointWithdraw
                       ? points * -1
                       : points,
                 });
@@ -397,7 +392,7 @@ export function FormSubmission({
                     answer: e.target.value,
                     points:
                       form.formType === FormType.DeductPoints ||
-                      form.formType === FormType.PointWithdraw
+                        form.formType === FormType.PointWithdraw
                         ? Number(e.target.value) * -1
                         : Number(e.target.value),
                   });
@@ -423,7 +418,7 @@ export function FormSubmission({
                 answer: value,
                 points:
                   form.formType === FormType.DeductPoints ||
-                  form.formType === FormType.PointWithdraw
+                    form.formType === FormType.PointWithdraw
                     ? points * -1
                     : points,
               });
@@ -457,8 +452,7 @@ export function FormSubmission({
   useEffect(() => {
     if (
       !form?.isSpecial &&
-      form.type !== "AwardPointsIEP" &&
-      FormType.AwardPointsIEP &&
+      form.formType !== FormType.AwardPointsIEP &&
       student.length > 0
     ) {
       const filtered = student.filter((s: any) => s.grade === form.grade);
@@ -533,8 +527,7 @@ export function FormSubmission({
                       if (user?.schoolId?.timeZone) {
                         const timezone = user.schoolId.timeZone;
                         console.log(
-                          `Converting date ${selectedDate.getFullYear()}-${
-                            selectedDate.getMonth() + 1
+                          `Converting date ${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1
                           }-${selectedDate.getDate()} to school's timezone: ${timezone}`,
                         );
                         const year = selectedDate.getFullYear();
@@ -591,7 +584,7 @@ export function FormSubmission({
                         >
                           {submittedFor
                             ? student.find((s: any) => s._id === submittedFor)
-                                ?.name
+                              ?.name
                             : "Select student..."}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -664,7 +657,7 @@ export function FormSubmission({
                   <h3 className="font-medium mb-2">
                     {index + 1}. {question.text}{" "}
                     {question.type === "select" ||
-                    form.formType === "Feedback" ? (
+                      form.formType === "Feedback" ? (
                       <span className="text-muted-foreground"></span>
                     ) : (
                       <span className="text-muted-foreground">
@@ -672,7 +665,7 @@ export function FormSubmission({
                       </span>
                     )}
                     {form.formType === FormType.AwardPoints ||
-                    form.formType === FormType.AwardPointsIEP ? (
+                      form.formType === FormType.AwardPointsIEP ? (
                       <span className="text-green-500 ml-1">Award</span>
                     ) : form.formType === FormType.DeductPoints ||
                       form.formType === FormType.PointWithdraw ? (

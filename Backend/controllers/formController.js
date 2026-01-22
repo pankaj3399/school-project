@@ -75,7 +75,7 @@ export const createForm = async (req, res) => {
       parentEmail,
       grade,
       isSpecial,
-      preSelectedStudents: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)' ? preSelectedStudents : []
+      preSelectedStudents: formType === FormType.AwardPointsIEP ? preSelectedStudents : []
     });
     return res.status(200).json({
       message: "Form Created Successfully",
@@ -99,7 +99,8 @@ export const editForm = async (req, res) => {
     schoolAdminEmail = false,
     parentEmail = false,
     grade,
-    isSpecial
+    isSpecial,
+    preSelectedStudents = []
   } = req.body;
   try {
     const form = await Form.findByIdAndUpdate(formId, {
@@ -111,7 +112,8 @@ export const editForm = async (req, res) => {
       schoolAdminEmail,
       parentEmail,
       grade,
-      isSpecial
+      isSpecial,
+      preSelectedStudents: formType === FormType.AwardPointsIEP ? preSelectedStudents : []
     });
     return res.status(200).json({
       message: "Form Edited Successfully",
@@ -235,20 +237,53 @@ export const submitFormTeacher = async (req, res) => {
     });
     await submittedForStudent.save();
 
-    await PointsHistory.create({
-      formId: form._id,
-      formType: form.formType,
-      formName: form.formName,
-      formSubmissionId: formSubmission._id,
-      submittedById: teacherId,
-      submittedByName: teacher.name,
-      submittedBySubject: teacher.subject || null,
-      submittedForId: submittedFor,
-      submittedForName: submittedForStudent.name,
-      points: totalPoints,
-      schoolId: teacher.schoolId,
-      submittedAt,
-    });
+    // For IEP forms, aggregate points by goal category
+    if (form.formType === FormType.AwardPointsIEP && form.questions) {
+      const goalPointsMap = {};
+      
+      answers.forEach(ans => {
+        const question = form.questions.find(q => q.id === ans.id);
+        const goal = question?.goal || "Other";
+        goalPointsMap[goal] = (goalPointsMap[goal] || 0) + (ans.points || 0);
+      });
+
+      // Create history entries for each goal
+      const historyPromises = Object.entries(goalPointsMap).map(([goal, points]) => {
+        if (points === 0) return Promise.resolve();
+        return PointsHistory.create({
+          formId: form._id,
+          formType: form.formType,
+          formName: form.formName,
+          formSubmissionId: formSubmission._id,
+          submittedById: teacherId,
+          submittedByName: teacher.name,
+          submittedBySubject: teacher.subject || null,
+          submittedForId: submittedFor,
+          submittedForName: submittedForStudent.name,
+          points: points,
+          schoolId: teacher.schoolId,
+          submittedAt,
+          goal: goal,
+        });
+      });
+      await Promise.all(historyPromises);
+    } else {
+      await PointsHistory.create({
+        formId: form._id,
+        formType: form.formType,
+        formName: form.formName,
+        formSubmissionId: formSubmission._id,
+        submittedById: teacherId,
+        submittedByName: teacher.name,
+        submittedBySubject: teacher.subject || null,
+        submittedForId: submittedFor,
+        submittedForName: submittedForStudent.name,
+        points: totalPoints,
+        schoolId: teacher.schoolId,
+        submittedAt,
+        goal: null,
+      });
+    }
 
     if (form.formType == FormType.Feedback) {
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
@@ -329,20 +364,53 @@ export const submitFormAdmin = async (req, res) => {
     });
     await submittedForStudent.save();
 
-    await PointsHistory.create({
-      formId: form._id,
-      formType: form.formType,
-      formName: form.formName,
-      formSubmissionId: formSubmission._id,
-      submittedById: schoolAdmin._id,
-      submittedByName: schoolAdmin.name,
-      submittedBySubject: null,
-      submittedForId: submittedFor,
-      submittedForName: submittedForStudent.name,
-      points: totalPoints,
-      schoolId: schoolAdmin.schoolId,
-      submittedAt
-    });
+    // For IEP forms, aggregate points by goal category
+    if (form.formType === FormType.AwardPointsIEP && form.questions) {
+      const goalPointsMap = {};
+      
+      answers.forEach(ans => {
+        const question = form.questions.find(q => q.id === ans.id);
+        const goal = question?.goal || "Other";
+        goalPointsMap[goal] = (goalPointsMap[goal] || 0) + (ans.points || 0);
+      });
+
+      // Create history entries for each goal
+      const historyPromises = Object.entries(goalPointsMap).map(([goal, points]) => {
+        if (points === 0) return Promise.resolve();
+        return PointsHistory.create({
+          formId: form._id,
+          formType: form.formType,
+          formName: form.formName,
+          formSubmissionId: formSubmission._id,
+          submittedById: schoolAdmin._id,
+          submittedByName: schoolAdmin.name,
+          submittedBySubject: null,
+          submittedForId: submittedFor,
+          submittedForName: submittedForStudent.name,
+          points: points,
+          schoolId: schoolAdmin.schoolId,
+          submittedAt,
+          goal: goal,
+        });
+      });
+      await Promise.all(historyPromises);
+    } else {
+      await PointsHistory.create({
+        formId: form._id,
+        formType: form.formType,
+        formName: form.formName,
+        formSubmissionId: formSubmission._id,
+        submittedById: schoolAdmin._id,
+        submittedByName: schoolAdmin.name,
+        submittedBySubject: null,
+        submittedForId: submittedFor,
+        submittedForName: submittedForStudent.name,
+        points: totalPoints,
+        schoolId: schoolAdmin.schoolId,
+        submittedAt,
+        goal: null,
+      });
+    }
 
     if (form.formType == FormType.Feedback) {
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");

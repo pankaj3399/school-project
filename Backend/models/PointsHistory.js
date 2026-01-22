@@ -49,6 +49,11 @@ const PointsHistorySchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School'
+    },
+    // Goal category for IEP form submissions (e.g., 'Communication goal', 'Math goal', etc.)
+    goal: {
+        type: String,
+        default: null
     }
 })
 
