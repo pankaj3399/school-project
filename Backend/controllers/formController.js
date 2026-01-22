@@ -99,7 +99,8 @@ export const editForm = async (req, res) => {
     schoolAdminEmail = false,
     parentEmail = false,
     grade,
-    isSpecial
+    isSpecial,
+    preSelectedStudents = []
   } = req.body;
   try {
     const form = await Form.findByIdAndUpdate(formId, {
@@ -111,7 +112,8 @@ export const editForm = async (req, res) => {
       schoolAdminEmail,
       parentEmail,
       grade,
-      isSpecial
+      isSpecial,
+      preSelectedStudents: formType === 'AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)' ? preSelectedStudents : []
     });
     return res.status(200).json({
       message: "Form Edited Successfully",
@@ -235,6 +237,13 @@ export const submitFormTeacher = async (req, res) => {
     });
     await submittedForStudent.save();
 
+    // For IEP forms, extract the goal category from the first question with a goal
+    let goalCategory = null;
+    if (form.formType === FormType.AwardPointsIEP && form.questions) {
+      const questionWithGoal = form.questions.find(q => q.goal);
+      goalCategory = questionWithGoal?.goal || null;
+    }
+
     await PointsHistory.create({
       formId: form._id,
       formType: form.formType,
@@ -248,6 +257,7 @@ export const submitFormTeacher = async (req, res) => {
       points: totalPoints,
       schoolId: teacher.schoolId,
       submittedAt,
+      goal: goalCategory,
     });
 
     if (form.formType == FormType.Feedback) {
@@ -329,6 +339,13 @@ export const submitFormAdmin = async (req, res) => {
     });
     await submittedForStudent.save();
 
+    // For IEP forms, extract the goal category from the first question with a goal
+    let goalCategory = null;
+    if (form.formType === FormType.AwardPointsIEP && form.questions) {
+      const questionWithGoal = form.questions.find(q => q.goal);
+      goalCategory = questionWithGoal?.goal || null;
+    }
+
     await PointsHistory.create({
       formId: form._id,
       formType: form.formType,
@@ -341,7 +358,8 @@ export const submitFormAdmin = async (req, res) => {
       submittedForName: submittedForStudent.name,
       points: totalPoints,
       schoolId: schoolAdmin.schoolId,
-      submittedAt
+      submittedAt,
+      goal: goalCategory,
     });
 
     if (form.formType == FormType.Feedback) {

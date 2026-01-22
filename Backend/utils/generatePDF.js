@@ -216,13 +216,104 @@ export const generateStudentPDF = async ({
           right: 6,
         },
       },
-      styles: {
-        cellPadding: 6,
-        fontSize: 12,
-        cellWidth: "auto",
-      },
       margin: { left: margin },
     });
+
+    // Goal Summary Table for IEP students
+    // Check if student has any IEP form submissions with goals
+    const goalData = studentData.data.filter(
+      (item) => item.goal && item.formType === FormType.AwardPointsIEP
+    );
+
+    if (goalData.length > 0) {
+      // Define goal categories
+      const goalCategories = [
+        "Communication goal",
+        "Math goal",
+        "Reading goal",
+        "Social Emotional goal",
+        "Self determination goal",
+        "Writing goal",
+        "Other",
+      ];
+
+      // Aggregate points by goal category
+      const goalTotals = {};
+      goalCategories.forEach((cat) => {
+        goalTotals[cat] = 0;
+      });
+
+      goalData.forEach((item) => {
+        if (goalTotals.hasOwnProperty(item.goal)) {
+          goalTotals[item.goal] += item.points;
+        } else {
+          // Handle any custom "Other" goals
+          goalTotals["Other"] += item.points;
+        }
+      });
+
+      // Calculate total
+      const grandTotal = Object.values(goalTotals).reduce(
+        (sum, val) => sum + val,
+        0
+      );
+
+      // Build table data - format goal names for display (remove " goal" suffix)
+      const goalTableBody = goalCategories.map((cat) => {
+        const displayName = cat.replace(" goal", "");
+        return [displayName, goalTotals[cat].toString()];
+      });
+      goalTableBody.push(["TOTAL", grandTotal.toString()]);
+
+      yPos = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("IEP Goal Summary", margin, yPos);
+      yPos += 8;
+
+      doc.autoTable({
+        startY: yPos,
+        head: [["GOAL", "Earned Tokens"]],
+        body: goalTableBody,
+        theme: "grid",
+        headStyles: {
+          fillColor: [240, 240, 240],
+          textColor: [0, 0, 0],
+          fontSize: 11,
+          fontStyle: "bold",
+          cellPadding: 3,
+          halign: "center",
+          lineWidth: 0.5,
+          lineColor: [0, 0, 0],
+          font: "helvetica",
+        },
+        bodyStyles: {
+          fontSize: 10,
+          halign: "center",
+          lineWidth: 0.5,
+          lineColor: [0, 0, 0],
+          font: "helvetica",
+          cellPadding: 2,
+        },
+        styles: {
+          cellPadding: 4,
+          fontSize: 10,
+          cellWidth: "auto",
+        },
+        columnStyles: {
+          0: { halign: "left", cellWidth: 80 },
+          1: { halign: "center", cellWidth: 50 },
+        },
+        margin: { left: margin },
+        // Bold the TOTAL row
+        didParseCell: function (data) {
+          if (data.row.index === goalTableBody.length - 1) {
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.fillColor = [220, 220, 220];
+          }
+        },
+      });
+    }
 
     // Add footer to first page
     addFooter(doc, 1);

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FormDetails } from '@/Section/School/component/form-details'
-import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon, Edit2Icon, Trash2Icon } from 'lucide-react'
-import { deleteForm, getForms } from '@/api'
+import { CalendarIcon, ClipboardIcon, StarIcon, MinusCircleIcon, Edit2Icon, Trash2Icon, UserIcon } from 'lucide-react'
+import { deleteForm, getForms, getStudents } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { Form, Question, FormType } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
@@ -17,6 +17,7 @@ export default function ViewForms() {
     byGrade: { [key: string]: Form[] }
   }>({ special: [], byGrade: {} })
   const [deleteModal, setDeleteModal] = useState<{ form: Form | null, open: boolean }>({ form: null, open: false })
+  const [students, setStudents] = useState<any[]>([])
 
 
   const openDeleteModal = (form: Form) => {
@@ -28,25 +29,34 @@ export default function ViewForms() {
   }
 
   useEffect(() => {
-    const fetchForms = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getForms(localStorage.getItem('token')!)
-        if (data.error) {
+        const token = localStorage.getItem('token')!
+        const [formsData, studentsData] = await Promise.all([
+          getForms(token),
+          getStudents(token)
+        ])
+
+        if (formsData.error) {
           toast({
             title: 'Error',
-            description: data.error,
+            description: formsData.error,
             variant: 'destructive'
           })
         } else {
-          setForms(data.forms)
-          groupForms(data.forms)
+          setForms(formsData.forms)
+          groupForms(formsData.forms)
+        }
+
+        if (studentsData?.students) {
+          setStudents(studentsData.students)
         }
       } catch (error) {
-        console.error('Error fetching forms:', error)
+        console.error('Error fetching data:', error)
       }
     }
 
-    fetchForms()
+    fetchData()
   }, [])
 
   const groupForms = (forms: any[]) => {
@@ -164,6 +174,21 @@ export default function ViewForms() {
             {new Date(form.createdAt).toLocaleDateString()}
           </span>
         </div>
+        {/* Display assigned students for IEP forms */}
+        {form.formType === FormType.AwardPointsIEP && form.preSelectedStudents && form.preSelectedStudents.length > 0 && (
+          <div className="flex items-center pt-2 text-xs text-black">
+            <UserIcon className="mr-2 h-4 w-4 opacity-70" />
+            <span className="font-medium">Assigned to: </span>
+            <span className="ml-1">
+              {form.preSelectedStudents
+                .map((studentId: string) => {
+                  const student = students.find((s: any) => s._id === studentId);
+                  return student?.name || 'Unknown';
+                })
+                .join(', ')}
+            </span>
+          </div>
+        )}
         <div className='flex items-center mt-4 gap-2'>
           <Button
             className="flex-1 bg-[#ffcdd3] hover:bg-[#ffcdd3] text-black hover:text-black"
@@ -198,8 +223,8 @@ export default function ViewForms() {
     <div className="container mx-auto p-4">
       <div className='flex justify-between mb-6'>
         <h1 className="text-2xl font-bold">Forms</h1>
-        <Button 
-          className='bg-[#00a58c] hover:bg-[#00a58c]' 
+        <Button
+          className='bg-[#00a58c] hover:bg-[#00a58c]'
           onClick={() => navigate('/createform')}
         >
           Create Form
@@ -242,10 +267,10 @@ export default function ViewForms() {
 }
 
 
-const FormDeleteModal = ({ form, onClose, remove }: { form: Form, onClose: () => void, remove: (id:string) => Promise<any> }) => {
+const FormDeleteModal = ({ form, onClose, remove }: { form: Form, onClose: () => void, remove: (id: string) => Promise<any> }) => {
 
 
-  
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
