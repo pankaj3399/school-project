@@ -20,6 +20,12 @@ const AdminDashboard = () => {
         throw new Error('Failed to download waitlist');
       }
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('text/csv')) {
+        const errorJson = await response.json();
+        throw new Error(errorJson.message || 'Invalid response format');
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
