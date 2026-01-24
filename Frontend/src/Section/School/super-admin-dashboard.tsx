@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 
 const SuperAdminDashboard = () => {
     const { user } = useAuth();
-    const isSuperAdmin = user?.email === import.meta.env.VITE_ADMIN_EMAIL;
+    const isSuperAdmin = user?.role === 'Admin';
 
     // Redirect if not authorized
     if (!isSuperAdmin) {
