@@ -109,10 +109,9 @@ export function FormSubmission({
       const token = localStorage.getItem("token") || "";
       const response = await getStudents(token);
 
-      // Filter students for IEP forms with pre-selection
+      // Filter students for any form with pre-selection
       if (
         form &&
-        form.formType === FormType.AwardPointsIEP &&
         form.preSelectedStudents &&
         form.preSelectedStudents.length > 0
       ) {
@@ -171,6 +170,13 @@ export function FormSubmission({
     };
     getStudent();
   }, [form]);
+
+  // Auto-select if only one student is available in the filtered list
+  useEffect(() => {
+    if (filteredStudent.length === 1 && !submittedFor) {
+      setSubmittedFor(filteredStudent[0]._id);
+    }
+  }, [filteredStudent, submittedFor]);
 
   useEffect(() => {
     if (grade == "All") {

@@ -75,7 +75,7 @@ export const createForm = async (req, res) => {
       parentEmail,
       grade,
       isSpecial,
-      preSelectedStudents: formType === FormType.AwardPointsIEP ? preSelectedStudents : []
+      preSelectedStudents: preSelectedStudents
     });
     return res.status(200).json({
       message: "Form Created Successfully",
@@ -113,7 +113,7 @@ export const editForm = async (req, res) => {
       parentEmail,
       grade,
       isSpecial,
-      preSelectedStudents: formType === FormType.AwardPointsIEP ? preSelectedStudents : []
+      preSelectedStudents: preSelectedStudents
     });
     return res.status(200).json({
       message: "Form Edited Successfully",
