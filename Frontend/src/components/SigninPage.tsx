@@ -96,15 +96,15 @@ export default function LoginForm() {
     try {
       // First, validate credentials and request OTP
       const otpRes = await requestLoginOtp({
-        email: formData.email,
+        email: formData.email.toLowerCase(),
         role: formData.role,
         password: formData.password,
       });
 
       if (otpRes.error) {
-        const errorMessage = otpRes.error?.response?.data?.message || 
-                           otpRes.error?.message || 
-                           "Invalid credentials. Please try again.";
+        const errorMessage = otpRes.error?.response?.data?.message ||
+          otpRes.error?.message ||
+          "Invalid credentials. Please try again.";
         toast({
           title: "Login Error",
           description: errorMessage,
@@ -118,7 +118,7 @@ export default function LoginForm() {
       // Credentials are valid, OTP sent successfully
       setOtpStep(true);
       setLoginContext({
-        email: formData.email,
+        email: formData.email.toLowerCase(),
         role: formData.role,
         password: formData.password,
       });
@@ -129,9 +129,9 @@ export default function LoginForm() {
       });
     } catch (err: any) {
       console.error("Login error:", err);
-      const errorMessage = err?.response?.data?.message || 
-                          err?.message || 
-                          "An unexpected error occurred. Please try again.";
+      const errorMessage = err?.response?.data?.message ||
+        err?.message ||
+        "An unexpected error occurred. Please try again.";
       toast({
         title: "Login Error",
         description: errorMessage,
@@ -158,9 +158,9 @@ export default function LoginForm() {
       });
 
       if (res.error) {
-        const errorMessage = res.error?.response?.data?.message || 
-                           res.error?.message || 
-                           "Invalid or expired OTP";
+        const errorMessage = res.error?.response?.data?.message ||
+          res.error?.message ||
+          "Invalid or expired OTP";
         setOtpError(errorMessage);
         toast({
           title: "OTP Error",
@@ -177,9 +177,9 @@ export default function LoginForm() {
         navigateBasedOnRole(loginContext.role);
       }
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || 
-                          err?.message || 
-                          "An error occurred. Please try again.";
+      const errorMessage = err?.response?.data?.message ||
+        err?.message ||
+        "An error occurred. Please try again.";
       setOtpError(errorMessage);
       toast({
         title: "OTP Error",
@@ -192,7 +192,9 @@ export default function LoginForm() {
   };
 
   const navigateBasedOnRole = (role: string) => {
-    if (role === "SchoolAdmin") {
+    if (role === "Admin") {
+      navigate("/super-admin");
+    } else if (role === "SchoolAdmin") {
       navigate("/analytics");
     } else if (role === "SpecialTeacher") {
       navigate("/teachers/managepoints");
@@ -293,6 +295,7 @@ export default function LoginForm() {
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Admin">Administrator</SelectItem>
                     <SelectItem value="SchoolAdmin">System Manager</SelectItem>
                     <SelectItem value="Teacher">Leader/Lead Teacher</SelectItem>
                     <SelectItem value="SpecialTeacher">
