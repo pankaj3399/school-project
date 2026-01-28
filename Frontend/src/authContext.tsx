@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { getCurrentUser } from "./api";
 
-interface User {_id: string, email:string, role:string, name:string , grade?:string, subject?:string, type?:string, schoolId?:any}
+interface User { _id: string, email: string, role: string, name: string, grade?: string, subject?: string, type?: string, schoolId?: any }
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +21,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUser = async (token: string) => {
     try {
       const response = await getCurrentUser(token);
+      if (response.error) {
+        if (response.error.response && response.error.response.status === 404) {
+          localStorage.removeItem("token");
+        }
+        setUser(null);
+        return;
+      }
       setUser(response.user);
     } catch (error) {
       console.error("Error fetching user:", error);

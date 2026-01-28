@@ -135,3 +135,30 @@ export const subscribeToWaitlist = async (req, res) => {
     });
   }
 };
+
+export const exportWaitlistData = async (req, res) => {
+  try {
+    const subscribers = await Waitlist.find({}).sort({ createdAt: -1 });
+
+    const headers = ['Email', 'Joined At'];
+    const csvRows = [headers.join(',')];
+
+    subscribers.forEach(sub => {
+      const email = `"${sub.email.replace(/"/g, '""')}"`;
+      const date = `"${new Date(sub.createdAt).toISOString()}"`;
+      csvRows.push(`${email},${date}`);
+    });
+
+    const csvContent = csvRows.join('\n');
+
+    res.header('Content-Type', 'text/csv');
+    res.header('Content-Disposition', 'attachment; filename=waitlist.csv');
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export waitlist error:', error);
+    res.status(500).json({ 
+      message: 'Failed to export waitlist data' 
+    });
+  }
+};

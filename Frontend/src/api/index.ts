@@ -258,12 +258,11 @@ export const getCurrrentSchool = async (token: string) => {
 };
 
 export const getCurrentUser = async (token?: string) => {
-  token?.split("");
   try {
-    const token = getToken();
+    const storedToken = getToken();
     const response = await axios.get(`${API_URL}/user`, {
       headers: {
-        token,
+        token: token || storedToken,
       },
     });
     return response.data;

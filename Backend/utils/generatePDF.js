@@ -195,25 +195,25 @@ export const generateStudentPDF = async ({
       headStyles: {
         fillColor: [240, 240, 240],
         textColor: [0, 0, 0],
-        fontSize: 12,
+        fontSize: 10, // Reduced font size
         fontStyle: "bold",
-        cellPadding: 3,
+        cellPadding: 2, // Reduced padding
         halign: "center",
         lineWidth: 0.5,
         lineColor: [0, 0, 0],
         font: "helvetica",
       },
       bodyStyles: {
-        fontSize: 12,
+        fontSize: 10, // Reduced font size
         halign: "center",
         lineWidth: 0.5,
         lineColor: [0, 0, 0],
         font: "helvetica",
         cellPadding: {
-          top: 6 * lineSpacing,
-          bottom: 6 * lineSpacing,
-          left: 6,
-          right: 6,
+          top: 1,
+          bottom: 1,
+          left: 4,
+          right: 4,
         },
       },
       margin: { left: margin },
@@ -222,7 +222,7 @@ export const generateStudentPDF = async ({
     // Goal Summary Table for IEP students
     // Check if student has any IEP form submissions with goals
     const goalData = studentData.data.filter(
-      (item) => item.goal && item.formType === FormType.AwardPointsIEP
+        (item) => item.goal && item.formType === FormType.AwardPointsIEP
     );
 
     if (goalData.length > 0) {
@@ -265,11 +265,11 @@ export const generateStudentPDF = async ({
       });
       goalTableBody.push(["TOTAL", grandTotal.toString()]);
 
-      yPos = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(14);
+      yPos = doc.lastAutoTable.finalY + 5; // Reduced gap
+      doc.setFontSize(12); // Reduced font size
       doc.setFont("helvetica", "bold");
       doc.text("IEP Goal Summary", margin, yPos);
-      yPos += 8;
+      yPos += 5; // Reduced gap
 
       doc.autoTable({
         startY: yPos,
@@ -279,25 +279,30 @@ export const generateStudentPDF = async ({
         headStyles: {
           fillColor: [240, 240, 240],
           textColor: [0, 0, 0],
-          fontSize: 11,
+          fontSize: 10, // Reduced font size
           fontStyle: "bold",
-          cellPadding: 3,
+          cellPadding: 1, // Reduced padding
           halign: "center",
           lineWidth: 0.5,
           lineColor: [0, 0, 0],
           font: "helvetica",
         },
         bodyStyles: {
-          fontSize: 10,
+          fontSize: 9, // Reduced font size
           halign: "center",
           lineWidth: 0.5,
           lineColor: [0, 0, 0],
           font: "helvetica",
-          cellPadding: 2,
+           cellPadding: {
+              top: 1,
+              bottom: 1,
+              left: 2,
+              right: 2,
+            },
         },
         styles: {
-          cellPadding: 4,
-          fontSize: 10,
+          cellPadding: 1,
+          fontSize: 9,
           cellWidth: "auto",
         },
         columnStyles: {

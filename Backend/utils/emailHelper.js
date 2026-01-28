@@ -666,8 +666,10 @@ export const reportEmailGenerator = async (
     );
 
     subject = `RADU E-Token Report for ${attachmentName
+      .replace("Etoken Report-", "")
       .replace(".pdf", "")
-      .replaceAll("_", " ")}`;
+      .replaceAll("_", " ")
+      .split("-As")[0]}`;
     body = `
       <!DOCTYPE html>
       <html>

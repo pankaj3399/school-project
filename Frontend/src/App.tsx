@@ -1,6 +1,6 @@
 import RootLayout from "./layout";
 import LandingPage from "./Section/LandingPage";
-import {SignupForm} from "./components/SignupPage";
+import { SignupForm } from "./components/SignupPage";
 import LoginForm from "./components/SigninPage";
 import AddSchool from "./Section/School/add-school";
 import AddTeacher from "./Section/School/add-teacher";
@@ -19,6 +19,7 @@ import FormPage from "./Section/Teacher/submit-form";
 import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
 import AdminDashboard from "./Section/School/dashboard";
+import SuperAdminDashboard from "./Section/School/super-admin-dashboard";
 import ForgotPassword from "./components/ForgetPassword";
 import OtpVerificationPage from "./components/OtpVerification";
 import { ResetPassword } from "./components/ResetPassword";
@@ -40,7 +41,7 @@ import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration
 
 // Reusable ProtectedRoute component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   return user ? <>{children}</> : <Navigate to="/" />;
 };
 
@@ -49,7 +50,7 @@ export default function App() {
     <div className="min-h-screen bg-white text-gray-800">
       <RootLayout>
         <Routes>
-          
+
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
@@ -69,7 +70,7 @@ export default function App() {
           <Route path="/editform/:id" element={<ProtectedRoute><EditForm /></ProtectedRoute>} />
           <Route path="/schoolAdmin/submitform/:id" element={<ProtectedRoute><FormPageAdmin /></ProtectedRoute>} />
 
- 
+
           <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
           <Route path="/teachers/createform" element={<ProtectedRoute><FormBuilderTeacher /></ProtectedRoute>} />
           <Route path="/teachers/editform/:id" element={<ProtectedRoute><EditFormTeacher /></ProtectedRoute>} />
@@ -84,10 +85,11 @@ export default function App() {
 
           {/*Dashboards*/}
           <Route path="/home" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
-          
+
           <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
           <Route path="/teachers/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
 
