@@ -25,7 +25,7 @@ const seedAdmin = async () => {
     const existingAdmin = await Admin.findOne({ email: adminEmail });
 
     if (existingAdmin) {
-        console.log(`Admin ${adminEmail} already exists. Updating password...`);
+        console.log(`[SEED] Admin ${adminEmail} already exists. Updating password...`);
         const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
         const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
         existingAdmin.password = hashedAdminPassword;
@@ -33,14 +33,14 @@ const seedAdmin = async () => {
         
         // Ensure role is correct if it was somehow changed
         if (existingAdmin.role !== Role.Admin) {
-             console.log(`Updating role from ${existingAdmin.role} to ${Role.Admin}`);
+             console.log(`[SEED] Updating role from ${existingAdmin.role} to ${Role.Admin}`);
              existingAdmin.role = Role.Admin;
         }
         
         await existingAdmin.save();
-        console.log("Admin updated successfully.");
+        console.log(`[SEED] Admin ${adminEmail} updated successfully with role: ${existingAdmin.role}`);
     } else {
-        console.log("Creating new admin...");
+        console.log(`[SEED] Creating new admin with email: ${adminEmail}...`);
         const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
         const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
         
@@ -51,10 +51,10 @@ const seedAdmin = async () => {
           password: hashedAdminPassword,
           approved: true
         });
-        console.log("Created admin:", admin.email);
+        console.log(`[SEED] Created admin: ${admin.email} with role: ${admin.role}`);
     }
 
-    console.log("Admin seeding completed successfully!");
+    console.log("[SEED] Admin seeding completed successfully!");
     await mongoose.disconnect();
     process.exit(0);
 

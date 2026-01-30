@@ -42,10 +42,15 @@ export const requestLoginOtp = async (req, res) => {
       }
     }
 
-    console.log(user)
-
     if (!user) {
+      console.log(`[AUTH] User not found for email: ${email} and role: ${role}`);
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Role consistency check
+    if (userRole === Role.Admin && user.role !== Role.Admin) {
+       console.log(`[AUTH] Role mismatch: User ${email} has role ${user.role} but requested ${role}`);
+       return res.status(403).json({ message: "Role mismatch. Please select the correct role." });
     }
 
     if (
@@ -82,6 +87,8 @@ export const requestLoginOtp = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const newOtp = new Otp({ userId: user._id, otp });
     await newOtp.save();
+
+    console.log(`[AUTH] Generated OTP for ${user.email}: ${otp}`);
 
     const body = `<p>Use this code to login <b>${otp}</b> <br/> <i>The code will expire in 30 min</i></p>`;
     const { sendEmail } = await import("../services/mail.js");
@@ -161,7 +168,14 @@ export const login = async (req, res) => {
     }
 
     if (!user) {
+      console.log(`[AUTH] Login failed: User not found for ${email}`);
       return res.status(404).json({ message: "User Not found" });
+    }
+
+    // Role consistency check
+    if (userRole === Role.Admin && user.role !== Role.Admin) {
+       console.log(`[AUTH] Role mismatch during login: User ${email} has role ${user.role} but requested ${role}`);
+       return res.status(403).json({ message: "Role mismatch. Please select the correct role." });
     }
 
     // Enforce correct role/type mapping for teachers
