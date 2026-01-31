@@ -39,7 +39,7 @@ export function TopNav() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative mr-8 h-8 w-fit rounded-full">
-              {user?.name} | {user?.role === 'SchoolAdmin' ? 'System Manager' : user?.role === 'Admin' ? 'System Admin' : user?.type == 'Special' ? `Teacher | ${user?.subject}` : `Lead Teacher${user?.grade ? " | Grade " + user?.grade : ""}`}
+              {user?.role === 'Admin' ? 'Super Admin' : `${user?.name} | ${user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type == 'Special' ? `Teacher | ${user?.subject}` : `Lead Teacher${user?.grade ? " | Grade " + user?.grade : ""}`}`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
