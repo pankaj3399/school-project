@@ -13,10 +13,10 @@ import { useState } from "react"
 import { useNavigate } from 'react-router-dom';
 
 export function TopNav() {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [showSupport, setShowSupport] = useState(false);
   const navigate = useNavigate();
-  
+
   const handleLogout = () => {
     // Remove token from localStorage and sessionStorage
     localStorage.removeItem('token');
@@ -27,7 +27,7 @@ export function TopNav() {
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
       <div className="flex items-center justify-end h-16 px-4 space-x-4">
-        <SupportPanel 
+        <SupportPanel
           isOpen={showSupport}
           onOpenChange={setShowSupport}
           trigger={
@@ -38,8 +38,11 @@ export function TopNav() {
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative mr-8 h-8 w-fit rounded-full">
-              {user?.name} | {user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type == 'Special' ? `Teacher | ${user?.subject}`:`${"Lead Teacher | Grade " + user?.grade}`}
+            <Button
+              variant="ghost"
+              className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === 'Admin' ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
+            >
+              {user?.role === 'Admin' ? 'Super Admin' : `${user?.name} | ${user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type === 'Special' ? `Teacher | ${user?.subject}` : `Lead Teacher${user?.grade ? " | Grade " + user?.grade : ""}`}`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
