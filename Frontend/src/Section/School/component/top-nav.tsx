@@ -42,7 +42,7 @@ export function TopNav() {
               variant="ghost"
               className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === 'Admin' ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
             >
-              {user?.role === 'Admin' ? 'Super Admin' : `${user?.name} | ${user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type == 'Special' ? `Teacher | ${user?.subject}` : `Lead Teacher${user?.grade ? " | Grade " + user?.grade : ""}`}`}
+              {user?.role === 'Admin' ? 'Super Admin' : `${user?.name} | ${user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type === 'Special' ? `Teacher | ${user?.subject}` : `Lead Teacher${user?.grade ? " | Grade " + user?.grade : ""}`}`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
