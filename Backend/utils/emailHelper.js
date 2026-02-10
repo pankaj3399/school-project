@@ -650,13 +650,15 @@ export const reportEmailGenerator = async (
   attachment,
   attachmentName,
   to,
-  data
+  data = {}
 ) => {
   try {
     let subject, body;
+    const schData = data.schData || { school: { name: 'E-Token System', logo: '', timeZone: 'UTC+0' } };
+    const stdData = data.stdData || { studentInfo: { name: 'Student', grade: 'N/A', parentEmail: '', standard: '' } };
 
     // Use school timezone for report date
-    const schoolTimezone = data.schData.school.timeZone || "UTC+0";
+    const schoolTimezone = schData.school.timeZone || "UTC+0";
     const currentDate = timezoneManager.formatForSchool(
       new Date(),
       schoolTimezone,
@@ -764,24 +766,24 @@ export const reportEmailGenerator = async (
                   }" alt="RADU Logo" class="logo-left">
                   <h1 class="title">E-Token Report</h1>
                   <img src="${
-                    data.schData.school.logo
+                    schData.school.logo
                   }" alt="School Logo" class="logo-right">
               </div>
 
               <div class="report-content">
                 <p>Attached you will find the report for ${
-                  data.stdData.studentInfo.name
+                  stdData.studentInfo.name
                 }, Grade ${
-                  data.stdData.studentInfo.grade
+                  stdData.studentInfo.grade
                 } as of ${reportDate}.</p>
                 <div class="contact-info">
                   <p>Contact Info</p>
                   <p>Parent/Guardian Email 1: ${
-                    data.stdData.studentInfo.parentEmail
+                    stdData.studentInfo.parentEmail
                   }</p>
                   ${
-                    data.stdData.studentInfo.standard
-                      ? `<p>Parent/Guardian Email 2: ${data.stdData.studentInfo.standard}</p>`
+                    stdData.studentInfo.standard
+                      ? `<p>Parent/Guardian Email 2: ${stdData.studentInfo.standard}</p>`
                       : ""
                   }
                 </div>

@@ -597,7 +597,7 @@ export const genreport = async (req, res) => {
     const schData = JSON.parse(schoolData);
     const stdData = JSON.parse(studentData);
     const tchData = JSON.parse(teacherData);
-    const barChartImage = req.file.buffer;
+    const barChartImage = req.file ? req.file.buffer : null;
     const gen = await generateStudentPDF({
       schoolData: schData,
       studentData: stdData,

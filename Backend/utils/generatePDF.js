@@ -503,7 +503,7 @@ export const generateStudentPDF = async ({
     // Add footer to second page
     addFooter(doc, 2);
 
-    return Buffer.from(doc.output("arraybuffer"));
+    return Buffer.from(new Uint8Array(doc.output("arraybuffer")));
   } catch (error) {
     console.error("PDF Generation Error:", error);
     throw error;

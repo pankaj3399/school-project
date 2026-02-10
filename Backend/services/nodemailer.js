@@ -43,6 +43,7 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
                 {
                   filename: 'coupon.png',
                   content: attachment,
+                  contentType: 'image/png',
                   cid: 'couponImage', // Content-ID for referencing in the email body
                 },
               ],
@@ -77,6 +78,7 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
                 {
                   filename: attachmentName,
                   content: attachment,
+                  contentType: 'application/pdf',
                   cid: 'reportPdf', 
                 },
               ],
