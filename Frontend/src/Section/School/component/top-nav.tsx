@@ -24,6 +24,24 @@ export function TopNav() {
     navigate('/');
   };
 
+  const getUserLabel = () => {
+    if (!user) return "";
+    if (user.role === 'Admin') return 'Super Admin';
+
+    let label = user.name || "";
+    if (user.role === 'SchoolAdmin') {
+      label += ' | System Manager';
+    } else if (user.type === 'Special') {
+      label += ` | Teacher | ${user.subject || 'N/A'}`;
+    } else {
+      label += ' | Lead Teacher';
+      if (user.grade) {
+        label += ` | Grade ${user.grade}`;
+      }
+    }
+    return label;
+  };
+
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
       <div className="flex items-center justify-end h-16 px-4 space-x-4">
@@ -42,7 +60,7 @@ export function TopNav() {
               variant="ghost"
               className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === 'Admin' ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
             >
-              {user?.role === 'Admin' ? 'Super Admin' : `${user?.name} | ${user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type === 'Special' ? `Teacher | ${user?.subject}` : `Lead Teacher${user?.grade ? " | Grade " + user?.grade : ""}`}`}
+              {getUserLabel()}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
