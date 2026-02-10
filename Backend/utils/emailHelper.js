@@ -643,7 +643,29 @@ export const emailGenerator = async (
       attachmentName
     ));
 
-  await Promise.all(emailPromises);
+  const results = await Promise.allSettled(emailPromises);
+  
+  const summary = {
+    total: results.length,
+    successful: 0,
+    failed: 0,
+    errors: []
+  };
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      summary.successful++;
+    } else {
+      summary.failed++;
+      console.error(`Email send failed for index ${index}:`, result.reason);
+      summary.errors.push({
+        index,
+        error: result.reason?.message || result.reason
+      });
+    }
+  });
+
+  return summary;
 };
 
 export const reportEmailGenerator = async (
