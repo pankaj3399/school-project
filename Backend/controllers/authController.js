@@ -694,7 +694,7 @@ export const completeVerification = async (req, res) => {
 
             for (const tokenData of pendingTokens.tokens) {
               if (tokenData.form && tokenData.data) {
-                emailGenerator(tokenData.form, {
+                await emailGenerator(tokenData.form, {
                   ...tokenData.data,
                   student,
                   school,

@@ -304,7 +304,7 @@ export const submitFormTeacher = async (req, res) => {
         grade: submittedForStudent.grade,
         schoolId: teacher.schoolId,
       })
-      emailGenerator(form, {
+      await emailGenerator(form, {
         points: totalPoints,
         submission: formSubmission,
         teacher: teacher,
@@ -431,7 +431,7 @@ export const submitFormAdmin = async (req, res) => {
         grade: submittedForStudent.grade,
         schoolId: schoolAdmin.schoolId,
       })
-      emailGenerator(form, {
+      await emailGenerator(form, {
         points: totalPoints,
         submission: formSubmission,
         teacher: schoolAdmin,

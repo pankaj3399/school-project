@@ -17,6 +17,7 @@ export const emailGenerator = async (
   }
 ) => {
   let subject = '', body = '', attachment, attachmentName;
+  const emailPromises = [];
 
   if (!student && !teacher && !schoolAdmin) {
     return { subject, body, attachment, attachmentName };
@@ -308,14 +309,14 @@ export const emailGenerator = async (
             ? `grade ${student.grade}.`
             : `${teacher.subject} class.`
         }`;
-        sendEmail(
+        emailPromises.push(sendEmail(
           leadTeacher.email,
           leadTeacherSubject,
           body,
           body,
           attachment,
           attachmentName
-        );
+        ));
       }
       break;
     }
@@ -589,7 +590,7 @@ export const emailGenerator = async (
     teacher?.recieveMails &&
     teacher.isEmailVerified
   )
-    sendEmail(teacher.email, subject, body, body, attachment, attachmentName);
+    emailPromises.push(sendEmail(teacher.email, subject, body, body, attachment, attachmentName));
   const parentEmailRequired = form.parentEmail;
   const parentEmailsVerified = (student.parentEmail && student.isParentOneEmailVerified) ||
                                (student.standard && student.isParentTwoEmailVerified);
@@ -603,44 +604,46 @@ export const emailGenerator = async (
       shouldFallbackToStudent) &&
     student?.isStudentEmailVerified
   )
-    sendEmail(student.email, subject, body, body, attachment, attachmentName);
+    emailPromises.push(sendEmail(student.email, subject, body, body, attachment, attachmentName));
   if (form.schoolAdminEmail)
-    sendEmail(
+    emailPromises.push(sendEmail(
       schoolAdmin.email,
       subject,
       body,
       body,
       attachment,
       attachmentName
-    );
+    ));
   if (
     form.parentEmail &&
     student.parentEmail &&
     student.sendNotifications &&
     student.isParentOneEmailVerified
   )
-    sendEmail(
+    emailPromises.push(sendEmail(
       student.parentEmail,
       subject,
       body,
       body,
       attachment,
       attachmentName
-    );
+    ));
   if (
     form.parentEmail &&
     student.standard &&
     student.sendNotifications &&
     student.isParentTwoEmailVerified
   )
-    sendEmail(
+    emailPromises.push(sendEmail(
       student.standard,
       subject,
       body,
       body,
       attachment,
       attachmentName
-    );
+    ));
+
+  await Promise.all(emailPromises);
 };
 
 export const reportEmailGenerator = async (
@@ -791,8 +794,12 @@ export const reportEmailGenerator = async (
       </body>
       </html>
     `;
-    sendEmailReport(to, subject, body, body, attachment, attachmentName);
+    const success = await sendEmailReport(to, subject, body, body, attachment, attachmentName);
+    if (!success) {
+      throw new Error("Failed to send report email");
+    }
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
