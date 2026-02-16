@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (to, subject, text, html, attachment, attachmentName = 'coupon.png') => {
     try {
-        console.log(`[NODEMAILER] Sending email to ${to} with subject: ${subject}`);
+
         if(!to){
             console.error('[NODEMAILER] No recipient email address provided.');
             return false;
@@ -57,8 +57,7 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
             html:html,
         });
 
-        console.log('[NODEMAILER] Email sent successfully to:', to);
-        console.log('[NODEMAILER] Message ID:', info.messageId);
+
         return true
     } catch (error) {
         console.error('[NODEMAILER] Error sending email:', error);
@@ -68,8 +67,7 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
 }
 export const sendEmailReport = async (to, subject, text, html, attachment, attachmentName) => {
     try {
-        console.log(`[NODEMAILER] Sending report email to ${to} with subject: ${subject}`);
-        console.log(`[NODEMAILER] Attachment: ${attachmentName ? attachmentName : 'none'}`);
+
         let info;
         if(attachment)
         info = await transporter.sendMail({
@@ -95,8 +93,7 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
             text,
             html:html,
         });
-        console.log('[NODEMAILER] Report email sent successfully to:', to);
-        console.log('[NODEMAILER] Message ID:', info.messageId);
+
         
         return true
     } catch (error) {
