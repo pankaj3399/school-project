@@ -591,19 +591,26 @@ export const resetStudentRoster = async (req, res) => {
 
 export const genreport = async (req, res) => {
   try {
+    console.log('[GENREPORT] Starting report generation...');
     const { studentData, schoolData, teacherData } = req.body;
 
     const email = req.params.email;
+    console.log('[GENREPORT] Target email:', email);
+    console.log('[GENREPORT] Request user role:', req.user.role);
+    
     const schData = JSON.parse(schoolData);
     const stdData = JSON.parse(studentData);
     const tchData = JSON.parse(teacherData);
     const barChartImage = req.file ? req.file.buffer : null;
+    
+    console.log('[GENREPORT] Generating PDF...');
     const gen = await generateStudentPDF({
       schoolData: schData,
       studentData: stdData,
       teacherData: tchData,
       barChartImage,
     });
+    console.log('[GENREPORT] PDF generated successfully');
 
     const timeZone = schData.school.timeZone || "UTC+0";
     const offsetHours = parseInt(timeZone.replace("UTC", "") || "0");
@@ -620,6 +627,7 @@ export const genreport = async (req, res) => {
       "MMMM dd, yyyy"
     );
 
+    console.log('[GENREPORT] Sending report to teacher email:', email);
     await reportEmailGenerator(
       gen,
       `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`,
@@ -627,6 +635,7 @@ export const genreport = async (req, res) => {
       { stdData, schData, tchData }
     );
     if (req.user.role == "SchoolAdmin") {
+      console.log('[GENREPORT] Also sending report to school admin:', schData.school.createdBy.email);
       await reportEmailGenerator(
         gen,
         `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`,
@@ -634,11 +643,13 @@ export const genreport = async (req, res) => {
         { stdData, schData, tchData }
       );
     }
+    console.log('[GENREPORT] Report sent successfully');
     return res
       .status(200)
       .json({ message: "Student report sent successfully" });
   } catch (error) {
-    console.log(error);
+    console.error('[GENREPORT] Error:', error);
+    console.error('[GENREPORT] Error stack:', error.stack);
 
     return res
       .status(500)

@@ -1,4 +1,4 @@
-import { FormType } from "../enum.js";
+import { FormType, Role } from "../enum.js";
 import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 import { timezoneManager } from "./luxon.js";
@@ -566,9 +566,9 @@ export const emailGenerator = async (
         points,
         student.name,
         currentDateFormatted, // Use school timezone formatted date
-        school.name,
-        school.address,
-        school.district,
+        school.name || '',
+        school.address || '',
+        school.district || '',
         student.points // Pass current balance to display on receipt
       );
       attachmentName = "Receipt.png";
@@ -579,22 +579,45 @@ export const emailGenerator = async (
   // Send email to teacher for all point-related form types (AwardPoints, AwardPointsIEP, DeductPoints, PointWithdraw)
   // Teacher will receive email if:
   // 1. Form has teacherEmail enabled OR it's a DeductPoints/PointWithdraw form (always notify)
-  // 2. Teacher has opted in to receive emails (recieveMails = true)
-  // 3. Teacher's email is verified
+  // 2. Teacher has opted in to receive emails (recieveMails = true) OR is an Admin
+  // 3. Teacher's email is verified OR is an Admin
+  const isTeacherAdmin = teacher?.role === Role.SchoolAdmin || teacher?.role === Role.Admin;
+  const canSendToTeacher = isTeacherAdmin || (teacher?.recieveMails && teacher?.isEmailVerified);
+
+  console.log(`[EMAIL GENERATOR] Checking teacher email conditions:`, {
+    formType: form.formType,
+    teacherEmailEnabled: form.teacherEmail,
+    isTeacherAdmin,
+    teacherReceivesMails: teacher?.recieveMails,
+    teacherEmailVerified: teacher?.isEmailVerified,
+    teacherEmail: teacher?.email,
+    canSendToTeacher
+  });
+
   if (
     (form.teacherEmail ||
       form.formType == FormType.DeductPoints ||
       form.formType == FormType.PointWithdraw ||
       form.formType == FormType.AwardPoints ||
       form.formType == FormType.AwardPointsIEP) &&
-    teacher?.recieveMails &&
-    teacher.isEmailVerified
-  )
+    canSendToTeacher
+  ) {
+    console.log(`[EMAIL GENERATOR] Adding teacher email to queue: ${teacher.email}`);
     emailPromises.push(sendEmail(teacher.email, subject, body, body, attachment, attachmentName));
+  }
+
   const parentEmailRequired = form.parentEmail;
   const parentEmailsVerified = (student.parentEmail && student.isParentOneEmailVerified) ||
                                (student.standard && student.isParentTwoEmailVerified);
   const shouldFallbackToStudent = parentEmailRequired && !parentEmailsVerified;
+
+  console.log(`[EMAIL GENERATOR] Checking student email conditions:`, {
+    formType: form.formType,
+    studentEmailEnabled: form.studentEmail,
+    studentEmailVerified: student?.isStudentEmailVerified,
+    shouldFallbackToStudent,
+    studentEmail: student?.email
+  });
 
   if (
     (form.studentEmail ||
@@ -603,9 +626,18 @@ export const emailGenerator = async (
       form.formType == FormType.Feedback ||
       shouldFallbackToStudent) &&
     student?.isStudentEmailVerified
-  )
+  ) {
+    console.log(`[EMAIL GENERATOR] Adding student email to queue: ${student.email}`);
     emailPromises.push(sendEmail(student.email, subject, body, body, attachment, attachmentName));
-  if (form.schoolAdminEmail)
+  }
+
+  console.log(`[EMAIL GENERATOR] Checking school admin email:`, {
+    schoolAdminEmailEnabled: form.schoolAdminEmail,
+    schoolAdminEmail: schoolAdmin?.email
+  });
+
+  if (form.schoolAdminEmail && schoolAdmin?.email) {
+    console.log(`[EMAIL GENERATOR] Adding school admin email to queue: ${schoolAdmin.email}`);
     emailPromises.push(sendEmail(
       schoolAdmin.email,
       subject,
@@ -614,12 +646,22 @@ export const emailGenerator = async (
       attachment,
       attachmentName
     ));
+  }
+
+  console.log(`[EMAIL GENERATOR] Checking parent email 1 conditions:`, {
+    parentEmailEnabled: form.parentEmail,
+    studentSendNotifications: student?.sendNotifications,
+    parentEmailVerified: student?.isParentOneEmailVerified,
+    parentEmail: student?.parentEmail
+  });
+
   if (
     form.parentEmail &&
     student.parentEmail &&
     student.sendNotifications &&
     student.isParentOneEmailVerified
-  )
+  ) {
+    console.log(`[EMAIL GENERATOR] Adding parent email 1 to queue: ${student.parentEmail}`);
     emailPromises.push(sendEmail(
       student.parentEmail,
       subject,
@@ -628,12 +670,22 @@ export const emailGenerator = async (
       attachment,
       attachmentName
     ));
+  }
+
+  console.log(`[EMAIL GENERATOR] Checking parent email 2 conditions:`, {
+    parentEmailEnabled: form.parentEmail,
+    studentSendNotifications: student?.sendNotifications,
+    parentTwoEmailVerified: student?.isParentTwoEmailVerified,
+    parentTwoEmail: student?.standard
+  });
+
   if (
     form.parentEmail &&
     student.standard &&
     student.sendNotifications &&
     student.isParentTwoEmailVerified
-  )
+  ) {
+    console.log(`[EMAIL GENERATOR] Adding parent email 2 to queue: ${student.standard}`);
     emailPromises.push(sendEmail(
       student.standard,
       subject,
@@ -642,7 +694,9 @@ export const emailGenerator = async (
       attachment,
       attachmentName
     ));
+  }
 
+  console.log(`[EMAIL GENERATOR] Sending ${emailPromises.length} emails for form type: ${form.formType}`);
   const results = await Promise.allSettled(emailPromises);
   
   const summary = {
@@ -655,9 +709,10 @@ export const emailGenerator = async (
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       summary.successful++;
+      console.log(`[EMAIL GENERATOR] Email ${index + 1}/${results.length} sent successfully`);
     } else {
       summary.failed++;
-      console.error(`Email send failed for index ${index}:`, result.reason);
+      console.error(`[EMAIL GENERATOR] Email ${index + 1}/${results.length} failed:`, result.reason);
       summary.errors.push({
         index,
         error: result.reason?.message || result.reason
@@ -665,6 +720,7 @@ export const emailGenerator = async (
     }
   });
 
+  console.log(`[EMAIL GENERATOR] Summary: ${summary.successful} successful, ${summary.failed} failed out of ${summary.total}`);
   return summary;
 };
 
@@ -675,6 +731,8 @@ export const reportEmailGenerator = async (
   data = {}
 ) => {
   try {
+    console.log(`[REPORT EMAIL] Generating report email for: ${to}`);
+    console.log(`[REPORT EMAIL] Attachment name: ${attachmentName}`);
     let subject, body;
     const schData = data.schData || { school: { name: 'E-Token System', logo: '', timeZone: 'UTC+0' } };
     const stdData = data.stdData || { studentInfo: { name: 'Student', grade: 'N/A', parentEmail: '', standard: '' } };
@@ -818,12 +876,15 @@ export const reportEmailGenerator = async (
       </body>
       </html>
     `;
+    console.log(`[REPORT EMAIL] Sending report email to: ${to}`);
     const success = await sendEmailReport(to, subject, body, body, attachment, attachmentName);
     if (!success) {
+      console.error(`[REPORT EMAIL] Failed to send report email to: ${to}`);
       throw new Error("Failed to send report email");
     }
+    console.log(`[REPORT EMAIL] Successfully sent report email to: ${to}`);
   } catch (err) {
-    console.error(err);
+    console.error('[REPORT EMAIL] Error in reportEmailGenerator:', err);
     throw err;
   }
 };
