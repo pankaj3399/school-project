@@ -38,8 +38,8 @@ router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin)
 // OTP routes for reset confirmation
 router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), sendResetOtp);
 router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), verifyResetOtp);
-router.post('/sendreport/:email', authenticate, authorizeRoles(Role.Admin), upload.single('file'), sendReport);
-router.post('/genreport/:email', authenticate, authorizeRoles(Role.Admin), upload.single('file'), genreport);
+router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin), upload.single('file'), sendReport);
+router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin), upload.single('file'), genreport);
 router.post('/teacher-roster', authenticate,authorizeRoles(Role.SchoolAdmin), teacherRoster);
 router.post('/student-roster', authenticate, studentRoster);
 

@@ -1,4 +1,4 @@
-import { FormType } from "../enum.js";
+import { FormType, Role } from "../enum.js";
 import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 import { timezoneManager } from "./luxon.js";
@@ -566,9 +566,9 @@ export const emailGenerator = async (
         points,
         student.name,
         currentDateFormatted, // Use school timezone formatted date
-        school.name,
-        school.address,
-        school.district,
+        school.name || '',
+        school.address || '',
+        school.district || '',
         student.points // Pass current balance to display on receipt
       );
       attachmentName = "Receipt.png";
@@ -579,22 +579,31 @@ export const emailGenerator = async (
   // Send email to teacher for all point-related form types (AwardPoints, AwardPointsIEP, DeductPoints, PointWithdraw)
   // Teacher will receive email if:
   // 1. Form has teacherEmail enabled OR it's a DeductPoints/PointWithdraw form (always notify)
-  // 2. Teacher has opted in to receive emails (recieveMails = true)
-  // 3. Teacher's email is verified
+  // 2. Teacher has opted in to receive emails (recieveMails = true) OR is an Admin
+  // 3. Teacher's email is verified OR is an Admin
+  const isTeacherAdmin = teacher?.role === Role.SchoolAdmin || teacher?.role === Role.Admin;
+  const canSendToTeacher = isTeacherAdmin || (teacher?.recieveMails && teacher?.isEmailVerified);
+
+
+
   if (
     (form.teacherEmail ||
       form.formType == FormType.DeductPoints ||
       form.formType == FormType.PointWithdraw ||
       form.formType == FormType.AwardPoints ||
       form.formType == FormType.AwardPointsIEP) &&
-    teacher?.recieveMails &&
-    teacher.isEmailVerified
-  )
+    canSendToTeacher
+  ) {
+
     emailPromises.push(sendEmail(teacher.email, subject, body, body, attachment, attachmentName));
+  }
+
   const parentEmailRequired = form.parentEmail;
   const parentEmailsVerified = (student.parentEmail && student.isParentOneEmailVerified) ||
                                (student.standard && student.isParentTwoEmailVerified);
   const shouldFallbackToStudent = parentEmailRequired && !parentEmailsVerified;
+
+
 
   if (
     (form.studentEmail ||
@@ -603,9 +612,15 @@ export const emailGenerator = async (
       form.formType == FormType.Feedback ||
       shouldFallbackToStudent) &&
     student?.isStudentEmailVerified
-  )
+  ) {
+
     emailPromises.push(sendEmail(student.email, subject, body, body, attachment, attachmentName));
-  if (form.schoolAdminEmail)
+  }
+
+
+
+  if (form.schoolAdminEmail && schoolAdmin?.email) {
+
     emailPromises.push(sendEmail(
       schoolAdmin.email,
       subject,
@@ -614,12 +629,17 @@ export const emailGenerator = async (
       attachment,
       attachmentName
     ));
+  }
+
+
+
   if (
     form.parentEmail &&
     student.parentEmail &&
     student.sendNotifications &&
     student.isParentOneEmailVerified
-  )
+  ) {
+
     emailPromises.push(sendEmail(
       student.parentEmail,
       subject,
@@ -628,12 +648,17 @@ export const emailGenerator = async (
       attachment,
       attachmentName
     ));
+  }
+
+
+
   if (
     form.parentEmail &&
     student.standard &&
     student.sendNotifications &&
     student.isParentTwoEmailVerified
-  )
+  ) {
+
     emailPromises.push(sendEmail(
       student.standard,
       subject,
@@ -642,6 +667,8 @@ export const emailGenerator = async (
       attachment,
       attachmentName
     ));
+  }
+
 
   const results = await Promise.allSettled(emailPromises);
   
@@ -655,15 +682,17 @@ export const emailGenerator = async (
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       summary.successful++;
+
     } else {
       summary.failed++;
-      console.error(`Email send failed for index ${index}:`, result.reason);
+      console.error(`[EMAIL GENERATOR] Email ${index + 1}/${results.length} failed:`, result.reason);
       summary.errors.push({
         index,
         error: result.reason?.message || result.reason
       });
     }
   });
+
 
   return summary;
 };
@@ -675,6 +704,7 @@ export const reportEmailGenerator = async (
   data = {}
 ) => {
   try {
+
     let subject, body;
     const schData = data.schData || { school: { name: 'E-Token System', logo: '', timeZone: 'UTC+0' } };
     const stdData = data.stdData || { studentInfo: { name: 'Student', grade: 'N/A', parentEmail: '', standard: '' } };
@@ -818,12 +848,15 @@ export const reportEmailGenerator = async (
       </body>
       </html>
     `;
+
     const success = await sendEmailReport(to, subject, body, body, attachment, attachmentName);
     if (!success) {
+      console.error(`[REPORT EMAIL] Failed to send report email to: ${to}`);
       throw new Error("Failed to send report email");
     }
+
   } catch (err) {
-    console.error(err);
+    console.error('[REPORT EMAIL] Error in reportEmailGenerator:', err);
     throw err;
   }
 };

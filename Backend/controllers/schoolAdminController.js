@@ -591,19 +591,25 @@ export const resetStudentRoster = async (req, res) => {
 
 export const genreport = async (req, res) => {
   try {
+
     const { studentData, schoolData, teacherData } = req.body;
 
     const email = req.params.email;
+
+    
     const schData = JSON.parse(schoolData);
     const stdData = JSON.parse(studentData);
     const tchData = JSON.parse(teacherData);
     const barChartImage = req.file ? req.file.buffer : null;
+    
+
     const gen = await generateStudentPDF({
       schoolData: schData,
       studentData: stdData,
       teacherData: tchData,
       barChartImage,
     });
+
 
     const timeZone = schData.school.timeZone || "UTC+0";
     const offsetHours = parseInt(timeZone.replace("UTC", "") || "0");
@@ -620,6 +626,7 @@ export const genreport = async (req, res) => {
       "MMMM dd, yyyy"
     );
 
+
     await reportEmailGenerator(
       gen,
       `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`,
@@ -627,6 +634,7 @@ export const genreport = async (req, res) => {
       { stdData, schData, tchData }
     );
     if (req.user.role == "SchoolAdmin") {
+
       await reportEmailGenerator(
         gen,
         `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`,
@@ -634,11 +642,13 @@ export const genreport = async (req, res) => {
         { stdData, schData, tchData }
       );
     }
+
     return res
       .status(200)
       .json({ message: "Student report sent successfully" });
   } catch (error) {
-    console.log(error);
+    console.error('[GENREPORT] Error:', error);
+    console.error('[GENREPORT] Error stack:', error.stack);
 
     return res
       .status(500)

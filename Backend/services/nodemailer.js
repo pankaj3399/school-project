@@ -17,17 +17,17 @@ const transporter = nodemailer.createTransport({
 });
 
 
-export const sendEmail = async (to, subject, text, html, attachment) => {
+export const sendEmail = async (to, subject, text, html, attachment, attachmentName = 'coupon.png') => {
     try {
-        console.log(`Sending email to ${to} with subject:`);
+
         if(!to){
-            console.error('No recipient email address provided.');
+            console.error('[NODEMAILER] No recipient email address provided.');
             return false;
         }
         //check if the email is valid
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(to)) {
-            console.error('Invalid email address:', to);
+            console.error('[NODEMAILER] Invalid email address:', to);
             return false;
         }        
         
@@ -41,9 +41,9 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
             html:html,
             attachments: [
                 {
-                  filename: 'coupon.png',
+                  filename: attachmentName,
                   content: attachment,
-                  contentType: 'image/png',
+                  contentType: attachmentName.endsWith('.pdf') ? 'application/pdf' : 'image/png',
                   cid: 'couponImage', // Content-ID for referencing in the email body
                 },
               ],
@@ -57,15 +57,17 @@ export const sendEmail = async (to, subject, text, html, attachment) => {
             html:html,
         });
 
-        console.log('Email sent:', info);
+
         return true
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('[NODEMAILER] Error sending email:', error);
+        console.error('[NODEMAILER] Error details:', error.message);
         return false
     }
 }
 export const sendEmailReport = async (to, subject, text, html, attachment, attachmentName) => {
     try {
+
         let info;
         if(attachment)
         info = await transporter.sendMail({
@@ -91,11 +93,12 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
             text,
             html:html,
         });
-        console.log('Email sent:', info);
+
         
         return true
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('[NODEMAILER] Error sending report email:', error);
+        console.error('[NODEMAILER] Error details:', error.message);
         return false
     }
 }
