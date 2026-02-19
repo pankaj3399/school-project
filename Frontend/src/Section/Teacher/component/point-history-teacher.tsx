@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { timezoneManager } from "@/lib/luxon"
+import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
 
 // Define pagination interface
 interface PaginationData {
@@ -106,7 +107,11 @@ export default function ViewPointHistoryTeacher() {
       console.log("Point history data:", data.pointHistory);
       const aggregated = aggregateHistoryData(data.pointHistory || []);
       setPointHistory(aggregated)
-      setShowPointHistory(aggregated)
+      setShowPointHistory([...aggregated])
+      
+      // Note: Server pagination is based on raw (unaggregated) documents,
+      // but we display aggregated rows. The aggregated count for this page
+      // may be less than itemsPerPage due to aggregation combining IEP entries.
       setLoading(false)
     } catch (error: any) {
       console.error("=== ERROR FETCHING POINT HISTORY ===");
@@ -129,12 +134,10 @@ export default function ViewPointHistoryTeacher() {
     console.log("=== FILTERING POINT HISTORY ===");
     console.log("Selected student name:", studentName);
     console.log("Total point history:", pointHistory.length);
-    const filtered = pointHistory.filter(point => point.submittedForName == studentName);
+    const filtered = pointHistory.filter(point => point.submittedForName === studentName);
     console.log("Filtered point history:", filtered.length);
     console.log("Filtered data:", filtered);
-    // Aggregate the filtered data as well
-    const aggregated = aggregateHistoryData(filtered);
-    setShowPointHistory(aggregated);
+    setShowPointHistory(filtered);
   }, [studentName, pointHistory])
 
   // Handle page change
@@ -155,33 +158,6 @@ export default function ViewPointHistoryTeacher() {
     }else{
       return formType;
     }
-  }
-
-  // Helper function to aggregate IEP form submissions by formSubmissionId
-  // This ensures history shows one row per submission with total points (same as PDF)
-  const aggregateHistoryData = (data: any[]) => {
-    const groupedData: { [key: string]: any } = {};
-    const nonIEPData: any[] = [];
-
-    data.forEach((item) => {
-      // For IEP forms, group by formSubmissionId
-      if (item.formType === FormType.AwardPointsIEP && item.formSubmissionId) {
-        const submissionId = item.formSubmissionId?.toString ? item.formSubmissionId.toString() : String(item.formSubmissionId);
-        if (!groupedData[submissionId]) {
-          groupedData[submissionId] = {
-            ...item,
-            points: 0,
-          };
-        }
-        groupedData[submissionId].points += item.points || 0;
-      } else {
-        // Non-IEP forms or entries without formSubmissionId go as-is
-        nonIEPData.push(item);
-      }
-    });
-
-    // Combine grouped IEP entries with non-IEP entries
-    return [...Object.values(groupedData), ...nonIEPData];
   }
 
   if (loading) {
@@ -263,7 +239,7 @@ export default function ViewPointHistoryTeacher() {
           </TableHeader>
           <TableBody>
             {showPointHistory.length > 0 ? (
-              showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
+              [...showPointHistory].sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
                 <TableRow key={history._id} className="hover:bg-gray-50">
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
@@ -292,8 +268,20 @@ export default function ViewPointHistoryTeacher() {
       {/* Improved pagination controls */}
       <div className="flex items-center justify-between border-t pt-4 mt-4">
         <div className="text-sm text-gray-500">
-          Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}-
-          {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
+          {(() => {
+            const startIndex = pagination.totalItems > 0 
+              ? (pagination.currentPage - 1) * pagination.itemsPerPage + 1 
+              : 0;
+            const endIndex = pagination.totalItems > 0
+              ? Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)
+              : 0;
+            
+            if (pagination.totalItems === 0) {
+              return "No entries";
+            }
+            
+            return `Showing ${startIndex}-${endIndex} of ${pagination.totalItems} ${pagination.totalItems === 1 ? 'entry' : 'entries'}`;
+          })()}
         </div>
         <div className="space-x-1">
           <Button

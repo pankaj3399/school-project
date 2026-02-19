@@ -345,16 +345,26 @@ export const generateStudentPDF = async ({
         // For IEP forms, group by formSubmissionId to aggregate points
         // This ensures history shows one row per submission with total points
         if (item.formType === FormType.AwardPointsIEP && item.formSubmissionId) {
-          // Handle both string and ObjectId formats
-          const submissionId = item.formSubmissionId.toString ? item.formSubmissionId.toString() : String(item.formSubmissionId);
+          const submissionId = String(item.formSubmissionId);
           if (!groupedData[submissionId]) {
             groupedData[submissionId] = {
               ...item,
-              points: 0,
+              points: item.points || 0,
             };
+          } else {
+            groupedData[submissionId].points += item.points || 0;
           }
-          groupedData[submissionId].points += item.points || 0;
         } else {
+          // Defensive logging for IEP items missing formSubmissionId (legacy/malformed data)
+          if (item.formType === FormType.AwardPointsIEP && !item.formSubmissionId) {
+            console.warn('[generatePDF] IEP item missing formSubmissionId:', {
+              _id: item._id,
+              studentId: item.submittedForId,
+              formType: item.formType,
+              submittedAt: item.submittedAt,
+              points: item.points
+            });
+          }
           // Non-IEP forms or entries without formSubmissionId go as-is
           nonIEPData.push(item);
         }

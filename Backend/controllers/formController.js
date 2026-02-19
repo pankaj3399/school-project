@@ -12,6 +12,7 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../services/mail.js";
 import { checkStudentFormEligibility } from "../utils/studentVerification.js";
 import { emailGenerator } from "../utils/emailHelper.js";
+import mongoose from "mongoose";
 
 const getGradeFromUser = async (userId) => {
   // Try finding user as admin first
@@ -480,23 +481,102 @@ export const getPointHistory = async (req, res) => {
         user = await Admin.findById(id);
         query = { schoolId: user.schoolId };
 
+        // Use aggregation pipeline to aggregate IEP entries by formSubmissionId before pagination
+        const adminAggregationResult = await PointsHistory.aggregate([
+          // Match documents
+          { $match: query },
+          // Lookup submittedForId (Student)
+          {
+            $lookup: {
+              from: "students",
+              localField: "submittedForId",
+              foreignField: "_id",
+              as: "submittedForId"
+            }
+          },
+          { $unwind: { path: "$submittedForId", preserveNullAndEmptyArrays: true } },
+          // Lookup submittedById (Teacher) for subject
+          {
+            $lookup: {
+              from: "teachers",
+              localField: "submittedById",
+              foreignField: "_id",
+              as: "submittedById"
+            }
+          },
+          { $unwind: { path: "$submittedById", preserveNullAndEmptyArrays: true } },
+          // Group IEP entries by formSubmissionId, keep non-IEP entries separate
+          {
+            $group: {
+              _id: {
+                // For IEP entries with formSubmissionId, group by formSubmissionId
+                // For others, use _id to keep them separate
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$formType", FormType.AwardPointsIEP] },
+                      { $ne: ["$formSubmissionId", null] }
+                    ]
+                  },
+                  { formSubmissionId: "$formSubmissionId", isIEP: true },
+                  { _id: "$_id", isIEP: false }
+                ]
+              },
+              // Keep first document's fields (they should be the same for grouped IEP entries)
+              formId: { $first: "$formId" },
+              formType: { $first: "$formType" },
+              formName: { $first: "$formName" },
+              formSubmissionId: { $first: "$formSubmissionId" },
+              submittedById: { $first: "$submittedById" },
+              submittedByName: { $first: "$submittedByName" },
+              submittedBySubject: { $first: { $ifNull: ["$submittedBySubject", "$submittedById.subject"] } },
+              submittedAt: { $first: "$submittedAt" },
+              submittedForId: { $first: "$submittedForId" },
+              submittedForName: { $first: "$submittedForName" },
+              schoolId: { $first: "$schoolId" },
+              goal: { $first: "$goal" },
+              // Sum points for grouped entries
+              points: { $sum: { $toDouble: "$points" } }
+            }
+          },
+          // Sort by submittedAt descending
+          { $sort: { submittedAt: -1 } },
+          // Use facet to get both paginated results and total count
+          {
+            $facet: {
+              data: [
+                { $skip: skip },
+                { $limit: limit }
+              ],
+              totalCount: [
+                { $count: "count" }
+              ]
+            }
+          }
+        ]);
 
-        // Get total count for pagination
-        totalCount = await PointsHistory.countDocuments(query);
+        // Extract results
+        const adminPointHistoryRaw = adminAggregationResult[0]?.data || [];
+        const adminTotalCountResult = adminAggregationResult[0]?.totalCount[0];
+        totalCount = adminTotalCountResult ? adminTotalCountResult.count : 0;
 
-
-        // Execute query with pagination
-        const adminPointHistoryRaw = await PointsHistory.find(query)
-          .populate("submittedForId")
-          .populate({ path: "submittedById", select: "subject" })
-          .sort({ submittedAt: -1 })  // Sort by newest first
-          .skip(skip)
-          .limit(limit);
+        // Format the results to match expected structure
         const adminPointHistory = adminPointHistoryRaw.map((doc) => ({
-          ...doc.toObject(),
-          submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null
-        }))
-
+          _id: doc._id.isIEP ? doc.formSubmissionId : doc._id._id,
+          formId: doc.formId,
+          formType: doc.formType,
+          formName: doc.formName,
+          formSubmissionId: doc.formSubmissionId,
+          submittedById: doc.submittedById?._id || doc.submittedById,
+          submittedByName: doc.submittedByName,
+          submittedBySubject: doc.submittedBySubject || null,
+          submittedAt: doc.submittedAt,
+          submittedForId: doc.submittedForId?._id || doc.submittedForId,
+          submittedForName: doc.submittedForName,
+          schoolId: doc.schoolId,
+          goal: doc.goal,
+          points: doc.points
+        }));
 
         return res.status(200).json({
           pointHistory: adminPointHistory,
@@ -528,38 +608,122 @@ export const getPointHistory = async (req, res) => {
         console.log("Teacher Query:", query);
         console.log("Accessible student IDs:", grade.studentIds);
 
-        // Get total count for pagination
-        totalCount = await PointsHistory.countDocuments(query);
-        console.log("Total Count:", totalCount);
+        // Use aggregation pipeline to aggregate IEP entries by formSubmissionId before pagination
+        const teacherAggregationResult = await PointsHistory.aggregate([
+          // Match documents
+          { $match: query },
+          // Lookup submittedForId (Student)
+          {
+            $lookup: {
+              from: "students",
+              localField: "submittedForId",
+              foreignField: "_id",
+              as: "submittedForId"
+            }
+          },
+          { $unwind: { path: "$submittedForId", preserveNullAndEmptyArrays: true } },
+          // Lookup submittedById (Teacher) for name and subject
+          {
+            $lookup: {
+              from: "teachers",
+              localField: "submittedById",
+              foreignField: "_id",
+              as: "submittedById"
+            }
+          },
+          { $unwind: { path: "$submittedById", preserveNullAndEmptyArrays: true } },
+          // Add field to get subject from populated teacher or use existing submittedBySubject
+          {
+            $addFields: {
+              finalSubmittedBySubject: {
+                $ifNull: [
+                  "$submittedBySubject",
+                  { $ifNull: ["$submittedById.subject", null] }
+                ]
+              },
+              finalSubmittedByName: {
+                $ifNull: [
+                  "$submittedByName",
+                  { $ifNull: ["$submittedById.name", null] }
+                ]
+              }
+            }
+          },
+          // Group IEP entries by formSubmissionId, keep non-IEP entries separate
+          {
+            $group: {
+              _id: {
+                // For IEP entries with formSubmissionId, group by formSubmissionId
+                // For others, use _id to keep them separate
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$formType", FormType.AwardPointsIEP] },
+                      { $ne: ["$formSubmissionId", null] }
+                    ]
+                  },
+                  { formSubmissionId: "$formSubmissionId", isIEP: true },
+                  { _id: "$_id", isIEP: false }
+                ]
+              },
+              // Keep first document's fields (they should be the same for grouped IEP entries)
+              formId: { $first: "$formId" },
+              formType: { $first: "$formType" },
+              formName: { $first: "$formName" },
+              formSubmissionId: { $first: "$formSubmissionId" },
+              submittedById: { $first: "$submittedById" },
+              submittedByName: { $first: "$finalSubmittedByName" },
+              submittedBySubject: { $first: "$finalSubmittedBySubject" },
+              submittedAt: { $first: "$submittedAt" },
+              submittedForId: { $first: "$submittedForId" },
+              submittedForName: { $first: "$submittedForName" },
+              schoolId: { $first: "$schoolId" },
+              goal: { $first: "$goal" },
+              // Sum points for grouped entries
+              points: { $sum: { $toDouble: "$points" } }
+            }
+          },
+          // Sort by submittedAt descending
+          { $sort: { submittedAt: -1 } },
+          // Use facet to get both paginated results and total count
+          {
+            $facet: {
+              data: [
+                { $skip: skip },
+                { $limit: limit }
+              ],
+              totalCount: [
+                { $count: "count" }
+              ]
+            }
+          }
+        ]);
 
-        // Execute query with pagination
-        const teacherPointHistoryRaw = await PointsHistory.find(query)
-          .populate("submittedForId")
-          .populate({ path: "submittedById", select: "name subject" })
-          .sort({ submittedAt: -1 })  // Sort by newest first
-          .skip(skip)
-          .limit(limit);
+        // Extract results
+        const teacherPointHistoryRaw = teacherAggregationResult[0]?.data || [];
+        const teacherTotalCountResult = teacherAggregationResult[0]?.totalCount[0];
+        totalCount = teacherTotalCountResult ? teacherTotalCountResult.count : 0;
 
+        // Format the results to match expected structure
         const teacherPointHistory = teacherPointHistoryRaw.map((doc) => ({
-          ...doc.toObject(),
-          submittedByName: doc.submittedByName || (doc.submittedById && doc.submittedById.name) || null,
-          submittedBySubject: doc.submittedBySubject || (doc.submittedById && doc.submittedById.subject) || null
-        }))
+          _id: doc._id.isIEP ? doc.formSubmissionId : doc._id._id,
+          formId: doc.formId,
+          formType: doc.formType,
+          formName: doc.formName,
+          formSubmissionId: doc.formSubmissionId,
+          submittedById: doc.submittedById?._id || doc.submittedById,
+          submittedByName: doc.submittedByName || null,
+          submittedBySubject: doc.submittedBySubject || null,
+          submittedAt: doc.submittedAt,
+          submittedForId: doc.submittedForId?._id || doc.submittedForId,
+          submittedForName: doc.submittedForName,
+          schoolId: doc.schoolId,
+          goal: doc.goal,
+          points: doc.points
+        }));
 
         console.log("Teacher point history results:", teacherPointHistory.length);
         console.log("Teacher point history sample:", teacherPointHistory.slice(0, 3));
-
-        const response = {
-          pointHistory: teacherPointHistory,
-          pagination: {
-            totalItems: totalCount,
-            totalPages: Math.ceil(totalCount / limit),
-            currentPage: page,
-            itemsPerPage: limit
-          }
-        };
-
-        console.log("Final response:", response);
 
         return res.status(200).json({
           pointHistory: teacherPointHistory,
@@ -628,10 +792,15 @@ export const getFilteredPointHistory = async (req, res) => {
           return res.status(404).json({ message: "No students found for this grade" });
         }
 
+        // Verify the requested student is accessible to this teacher
+        const isStudentAccessible = grade.studentIds.some(id => id.toString() === studentId);
+        if (!isStudentAccessible) {
+          return res.status(403).json({ message: "Student not accessible to this teacher" });
+        }
+
         query = {
           schoolId: user.schoolId,
-          submittedForId: studentObjectId,
-          submittedForId: { $in: grade.studentIds },
+          submittedForId: studentId,
         };
 
         console.log("Teacher Query:", query);

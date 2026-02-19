@@ -5,6 +5,7 @@ import Loading from "../../Loading"
 import { useAuth } from "@/authContext"
 import { timezoneManager } from "@/lib/luxon"
 import { FormType } from '@/lib/types'
+import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
 
 export default function ViewPointHistoryByData({data}:{
     data:any[]
@@ -38,37 +39,10 @@ export default function ViewPointHistoryByData({data}:{
     }
   };
 
-  // Helper function to aggregate IEP form submissions by formSubmissionId
-  // This ensures history shows one row per submission with total points (same as PDF)
-  const aggregateHistoryData = (data: any[]) => {
-    const groupedData: { [key: string]: any } = {};
-    const nonIEPData: any[] = [];
-
-    data.forEach((item) => {
-      // For IEP forms, group by formSubmissionId
-      if (item.formType === FormType.AwardPointsIEP && item.formSubmissionId) {
-        const submissionId = item.formSubmissionId?.toString ? item.formSubmissionId.toString() : String(item.formSubmissionId);
-        if (!groupedData[submissionId]) {
-          groupedData[submissionId] = {
-            ...item,
-            points: 0,
-          };
-        }
-        groupedData[submissionId].points += item.points || 0;
-      } else {
-        // Non-IEP forms or entries without formSubmissionId go as-is
-        nonIEPData.push(item);
-      }
-    });
-
-    // Combine grouped IEP entries with non-IEP entries
-    return [...Object.values(groupedData), ...nonIEPData];
-  }
-
   useEffect(() => {
     const aggregated = aggregateHistoryData(data);
     setPointHistory(aggregated)
-    setShowPointHistory(aggregated)
+    setShowPointHistory([...aggregated])
     setLoading(false)
   }, [toast, data])
 
@@ -106,7 +80,7 @@ export default function ViewPointHistoryByData({data}:{
           </TableRow>
         </TableHeader>
         <TableBody>
-          {showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
+          {[...showPointHistory].sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
             <TableRow key={history._id}>
               <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
               <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
