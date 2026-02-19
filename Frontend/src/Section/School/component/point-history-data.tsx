@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
-import { useToast } from "@/hooks/use-toast"
 import Loading from "../../Loading"
 import { useAuth } from "@/authContext"
 import { timezoneManager } from "@/lib/luxon"
 import { FormType } from '@/lib/types'
+import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
 
 export default function ViewPointHistoryByData({data}:{
     data:any[]
@@ -12,7 +12,6 @@ export default function ViewPointHistoryByData({data}:{
   const [pointHistory, setPointHistory] = useState<any[]>(data)
   const [showPointHistory, setShowPointHistory] = useState<any[]>(data)
   const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
   const { user } = useAuth();
   
   // Helper function to format date and time with timezone
@@ -39,10 +38,11 @@ export default function ViewPointHistoryByData({data}:{
   };
 
   useEffect(() => {
-    setPointHistory(data)
-    setShowPointHistory(data)
+    const aggregated = aggregateHistoryData(data);
+    setPointHistory(aggregated)
+    setShowPointHistory([...aggregated])
     setLoading(false)
-  }, [toast, data])
+  }, [data])
 
    const formatFormType = (formType: string) => {
     if(formType === FormType.AwardPointsIEP) {
@@ -78,7 +78,7 @@ export default function ViewPointHistoryByData({data}:{
           </TableRow>
         </TableHeader>
         <TableBody>
-          {showPointHistory.sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
+          {[...showPointHistory].sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
             <TableRow key={history._id}>
               <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
               <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>

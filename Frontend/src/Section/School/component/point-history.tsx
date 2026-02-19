@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from "@/authContext"
 import { timezoneManager } from "@/lib/luxon"
 import { useSearchParams } from "react-router-dom"
+import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
 
 // Define pagination interface
 interface PaginationData {
@@ -84,14 +85,17 @@ export default function ViewPointHistoryTeacher() {
 
         // Convert the filtered data to match the expected format
         if (data.history) {
-          setPointHistory(data.history || []);
-          setShowPointHistory(data.history || []);
+          // For filtered data (getHistoryByTime), still need client-side aggregation
+          // as this endpoint doesn't aggregate
+          const aggregated = aggregateHistoryData(data.history || []);
+          setPointHistory(aggregated);
+          setShowPointHistory(aggregated);
           // For filtered data, we don't have pagination, so set a basic pagination
           setPagination({
-            totalItems: data.history?.length || 0,
+            totalItems: aggregated.length,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: data.history?.length || 0
+            itemsPerPage: aggregated.length
           });
         }
       } else {
@@ -103,8 +107,9 @@ export default function ViewPointHistoryTeacher() {
           setPagination(data.pagination);
         }
 
+        // Backend now aggregates IEP entries, so no need for client-side aggregation
         setPointHistory(data.pointHistory || []);
-        setShowPointHistory(data.pointHistory || []);
+        setShowPointHistory([...data.pointHistory || []]);
       }
       setLoading(false)
     } catch (error) {
@@ -124,7 +129,7 @@ export default function ViewPointHistoryTeacher() {
   }, [formTypeFromUrl]) // Reload when formType changes
 
   useEffect(() => {
-    setShowPointHistory(filteredPointHistory)
+    setShowPointHistory(filteredPointHistory);
   }, [studentName, filteredPointHistory])
 
   // Handle page change
@@ -234,7 +239,9 @@ export default function ViewPointHistoryTeacher() {
                       return
                     }
                     const data = await getFilteredPointHistory(token, s._id)
-                    setFilteredPointHistory(data.pointHistory)
+                    // getFilteredPointHistory doesn't aggregate, so we need client-side aggregation
+                    const aggregated = aggregateHistoryData(data.pointHistory || []);
+                    setFilteredPointHistory(aggregated)
                   }} key={s._id} className='justify-start w-full rounded-none' variant={"ghost"}>{s.name} ({s.grade})</Button>
                 ))}
               </div>
@@ -261,7 +268,7 @@ export default function ViewPointHistoryTeacher() {
           </TableHeader>
           <TableBody>
             {showPointHistory.length > 0 ? (
-              showPointHistory.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
+              [...showPointHistory].sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
                 <TableRow key={history._id}>
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
@@ -292,8 +299,20 @@ export default function ViewPointHistoryTeacher() {
       {/* Pagination controls with improved styling */}
       {!studentName && <div className="flex items-center justify-between border-t pt-4 mt-4">
         <div className="text-sm text-gray-500">
-          Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}-
-          {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
+          {(() => {
+            const startIndex = pagination.totalItems > 0 
+              ? (pagination.currentPage - 1) * pagination.itemsPerPage + 1 
+              : 0;
+            const endIndex = pagination.totalItems > 0
+              ? Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)
+              : 0;
+            
+            if (pagination.totalItems === 0) {
+              return "No entries";
+            }
+            
+            return `Showing ${startIndex}-${endIndex} of ${pagination.totalItems} ${pagination.totalItems === 1 ? 'entry' : 'entries'}`;
+          })()}
         </div>
         <div className="space-x-1">
           <Button
