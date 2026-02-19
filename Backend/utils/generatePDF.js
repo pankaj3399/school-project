@@ -336,7 +336,34 @@ export const generateStudentPDF = async ({
     if (studentData.data.length > 0) {
       const schoolTimezone = schoolData.school.timeZone || "UTC+0";
 
-      const historyData = studentData.data
+      // Group IEP form submissions by formSubmissionId to aggregate points
+      // This ensures history shows one row per submission with total points
+      const groupedData = {};
+      const nonIEPData = [];
+
+      studentData.data.forEach((item) => {
+        // For IEP forms, group by formSubmissionId to aggregate points
+        // This ensures history shows one row per submission with total points
+        if (item.formType === FormType.AwardPointsIEP && item.formSubmissionId) {
+          // Handle both string and ObjectId formats
+          const submissionId = item.formSubmissionId.toString ? item.formSubmissionId.toString() : String(item.formSubmissionId);
+          if (!groupedData[submissionId]) {
+            groupedData[submissionId] = {
+              ...item,
+              points: 0,
+            };
+          }
+          groupedData[submissionId].points += item.points || 0;
+        } else {
+          // Non-IEP forms or entries without formSubmissionId go as-is
+          nonIEPData.push(item);
+        }
+      });
+
+      // Combine grouped IEP entries with non-IEP entries
+      const allHistoryData = [...Object.values(groupedData), ...nonIEPData];
+
+      const historyData = allHistoryData
         .sort((a, b) => {
           // Sort by submittedAt in descending order
           try {

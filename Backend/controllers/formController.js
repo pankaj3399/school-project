@@ -242,7 +242,7 @@ export const submitFormTeacher = async (req, res) => {
       const goalPointsMap = {};
       
       answers.forEach(ans => {
-        const question = form.questions.find(q => q.id === ans.id);
+        const question = form.questions.find(q => q.id === ans.questionId);
         const goal = question?.goal || "Other";
         goalPointsMap[goal] = (goalPointsMap[goal] || 0) + (ans.points || 0);
       });
@@ -369,7 +369,7 @@ export const submitFormAdmin = async (req, res) => {
       const goalPointsMap = {};
       
       answers.forEach(ans => {
-        const question = form.questions.find(q => q.id === ans.id);
+        const question = form.questions.find(q => q.id === ans.questionId);
         const goal = question?.goal || "Other";
         goalPointsMap[goal] = (goalPointsMap[goal] || 0) + (ans.points || 0);
       });

@@ -84,8 +84,9 @@ export default function ViewPointHistoryTeacher() {
 
         // Convert the filtered data to match the expected format
         if (data.history) {
-          setPointHistory(data.history || []);
-          setShowPointHistory(data.history || []);
+          const aggregated = aggregateHistoryData(data.history || []);
+          setPointHistory(aggregated);
+          setShowPointHistory(aggregated);
           // For filtered data, we don't have pagination, so set a basic pagination
           setPagination({
             totalItems: data.history?.length || 0,
@@ -103,8 +104,9 @@ export default function ViewPointHistoryTeacher() {
           setPagination(data.pagination);
         }
 
-        setPointHistory(data.pointHistory || []);
-        setShowPointHistory(data.pointHistory || []);
+        const aggregated = aggregateHistoryData(data.pointHistory || []);
+        setPointHistory(aggregated);
+        setShowPointHistory(aggregated);
       }
       setLoading(false)
     } catch (error) {
@@ -124,7 +126,8 @@ export default function ViewPointHistoryTeacher() {
   }, [formTypeFromUrl]) // Reload when formType changes
 
   useEffect(() => {
-    setShowPointHistory(filteredPointHistory)
+    const aggregated = aggregateHistoryData(filteredPointHistory);
+    setShowPointHistory(aggregated);
   }, [studentName, filteredPointHistory])
 
   // Handle page change
@@ -162,6 +165,33 @@ export default function ViewPointHistoryTeacher() {
       return "Award Points with Individualized Education Plan (IEP)";
     }
     return formType
+  }
+
+  // Helper function to aggregate IEP form submissions by formSubmissionId
+  // This ensures history shows one row per submission with total points (same as PDF)
+  const aggregateHistoryData = (data: any[]) => {
+    const groupedData: { [key: string]: any } = {};
+    const nonIEPData: any[] = [];
+
+    data.forEach((item) => {
+      // For IEP forms, group by formSubmissionId
+      if (item.formType === FormType.AwardPointsIEP && item.formSubmissionId) {
+        const submissionId = item.formSubmissionId?.toString ? item.formSubmissionId.toString() : String(item.formSubmissionId);
+        if (!groupedData[submissionId]) {
+          groupedData[submissionId] = {
+            ...item,
+            points: 0,
+          };
+        }
+        groupedData[submissionId].points += item.points || 0;
+      } else {
+        // Non-IEP forms or entries without formSubmissionId go as-is
+        nonIEPData.push(item);
+      }
+    });
+
+    // Combine grouped IEP entries with non-IEP entries
+    return [...Object.values(groupedData), ...nonIEPData];
   }
 
   if (loading) {
@@ -234,7 +264,8 @@ export default function ViewPointHistoryTeacher() {
                       return
                     }
                     const data = await getFilteredPointHistory(token, s._id)
-                    setFilteredPointHistory(data.pointHistory)
+                    const aggregated = aggregateHistoryData(data.pointHistory || []);
+                    setFilteredPointHistory(aggregated)
                   }} key={s._id} className='justify-start w-full rounded-none' variant={"ghost"}>{s.name} ({s.grade})</Button>
                 ))}
               </div>

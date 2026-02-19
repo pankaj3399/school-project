@@ -38,9 +38,37 @@ export default function ViewPointHistoryByData({data}:{
     }
   };
 
+  // Helper function to aggregate IEP form submissions by formSubmissionId
+  // This ensures history shows one row per submission with total points (same as PDF)
+  const aggregateHistoryData = (data: any[]) => {
+    const groupedData: { [key: string]: any } = {};
+    const nonIEPData: any[] = [];
+
+    data.forEach((item) => {
+      // For IEP forms, group by formSubmissionId
+      if (item.formType === FormType.AwardPointsIEP && item.formSubmissionId) {
+        const submissionId = item.formSubmissionId?.toString ? item.formSubmissionId.toString() : String(item.formSubmissionId);
+        if (!groupedData[submissionId]) {
+          groupedData[submissionId] = {
+            ...item,
+            points: 0,
+          };
+        }
+        groupedData[submissionId].points += item.points || 0;
+      } else {
+        // Non-IEP forms or entries without formSubmissionId go as-is
+        nonIEPData.push(item);
+      }
+    });
+
+    // Combine grouped IEP entries with non-IEP entries
+    return [...Object.values(groupedData), ...nonIEPData];
+  }
+
   useEffect(() => {
-    setPointHistory(data)
-    setShowPointHistory(data)
+    const aggregated = aggregateHistoryData(data);
+    setPointHistory(aggregated)
+    setShowPointHistory(aggregated)
     setLoading(false)
   }, [toast, data])
 
