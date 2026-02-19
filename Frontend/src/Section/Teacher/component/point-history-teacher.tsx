@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { timezoneManager } from "@/lib/luxon"
-import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
 
 // Define pagination interface
 interface PaginationData {
@@ -105,13 +104,9 @@ export default function ViewPointHistoryTeacher() {
       }
 
       console.log("Point history data:", data.pointHistory);
-      const aggregated = aggregateHistoryData(data.pointHistory || []);
-      setPointHistory(aggregated)
-      setShowPointHistory([...aggregated])
-      
-      // Note: Server pagination is based on raw (unaggregated) documents,
-      // but we display aggregated rows. The aggregated count for this page
-      // may be less than itemsPerPage due to aggregation combining IEP entries.
+      // Backend now aggregates IEP entries, so no need for client-side aggregation
+      setPointHistory(data.pointHistory || [])
+      setShowPointHistory([...data.pointHistory || []])
       setLoading(false)
     } catch (error: any) {
       console.error("=== ERROR FETCHING POINT HISTORY ===");

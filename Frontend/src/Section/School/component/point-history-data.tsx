@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
-import { useToast } from "@/hooks/use-toast"
 import Loading from "../../Loading"
 import { useAuth } from "@/authContext"
 import { timezoneManager } from "@/lib/luxon"
@@ -13,7 +12,6 @@ export default function ViewPointHistoryByData({data}:{
   const [pointHistory, setPointHistory] = useState<any[]>(data)
   const [showPointHistory, setShowPointHistory] = useState<any[]>(data)
   const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
   const { user } = useAuth();
   
   // Helper function to format date and time with timezone
@@ -44,7 +42,7 @@ export default function ViewPointHistoryByData({data}:{
     setPointHistory(aggregated)
     setShowPointHistory([...aggregated])
     setLoading(false)
-  }, [toast, data])
+  }, [data])
 
    const formatFormType = (formType: string) => {
     if(formType === FormType.AwardPointsIEP) {
