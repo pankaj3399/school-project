@@ -167,6 +167,17 @@ export default function ViewPointHistoryTeacher() {
     )
   }
 
+  // Calculate pagination label
+  const startIndex = pagination.totalItems > 0 
+    ? (pagination.currentPage - 1) * pagination.itemsPerPage + 1 
+    : 0;
+  const endIndex = pagination.totalItems > 0
+    ? Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)
+    : 0;
+  const paginationLabel = pagination.totalItems === 0
+    ? "No entries"
+    : `Showing ${startIndex}-${endIndex} of ${pagination.totalItems} ${pagination.totalItems === 1 ? 'entry' : 'entries'}`;
+
   return (
     <div className="p-8 bg-white rounded-xl shadow-xl mt-10">
       {/* Header Section with improved spacing */}
@@ -234,7 +245,7 @@ export default function ViewPointHistoryTeacher() {
           </TableHeader>
           <TableBody>
             {showPointHistory.length > 0 ? (
-              [...showPointHistory].sort((a,b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()).map((history) => (
+              [...showPointHistory].sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map((history) => (
                 <TableRow key={history._id} className="hover:bg-gray-50">
                   <TableCell>{formatDateTime(history.submittedAt, 'date')}</TableCell>
                   <TableCell>{formatDateTime(history.submittedAt, 'time')}</TableCell>
@@ -263,20 +274,7 @@ export default function ViewPointHistoryTeacher() {
       {/* Improved pagination controls */}
       <div className="flex items-center justify-between border-t pt-4 mt-4">
         <div className="text-sm text-gray-500">
-          {(() => {
-            const startIndex = pagination.totalItems > 0 
-              ? (pagination.currentPage - 1) * pagination.itemsPerPage + 1 
-              : 0;
-            const endIndex = pagination.totalItems > 0
-              ? Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)
-              : 0;
-            
-            if (pagination.totalItems === 0) {
-              return "No entries";
-            }
-            
-            return `Showing ${startIndex}-${endIndex} of ${pagination.totalItems} ${pagination.totalItems === 1 ? 'entry' : 'entries'}`;
-          })()}
+          {paginationLabel}
         </div>
         <div className="space-x-1">
           <Button

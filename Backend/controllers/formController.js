@@ -12,7 +12,6 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../services/mail.js";
 import { checkStudentFormEligibility } from "../utils/studentVerification.js";
 import { emailGenerator } from "../utils/emailHelper.js";
-import mongoose from "mongoose";
 
 const getGradeFromUser = async (userId) => {
   // Try finding user as admin first
