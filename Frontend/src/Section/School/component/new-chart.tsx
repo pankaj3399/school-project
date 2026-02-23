@@ -181,14 +181,16 @@ const EducationYearChart = ({ studentId, slimLines }: {
             <XAxis
               dataKey={selectedMonth ? "day" : "month"}
               label={{ value: selectedMonth ? `${selectedMonth}` : `${new Date().getFullYear()}`, position: 'insideBottom', offset: -5, fontSize: 22, dy: 12 }}
-
+              tick={{ fontSize: 18 }}
             />
-            <YAxis />
+            <YAxis tick={{ fontSize: 16 }} />
             <Tooltip />
             <Legend
               orientation="horizontal"
               verticalAlign="top"
               align="center"
+              wrapperStyle={{ fontSize: 20 }}
+              iconSize={20}
             />
 
             {/* Bars */}
