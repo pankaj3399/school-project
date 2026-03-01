@@ -219,13 +219,12 @@ export const generateStudentPDF = async ({
       margin: { left: margin },
     });
 
-    // Goal Summary Table for IEP students
-    // Check if student has any IEP form submissions with goals
+    // Goal Summary Table: show when student has any earned tokens (IEP + non-IEP)
     const goalData = studentData.data.filter(
         (item) => item.goal && item.formType === FormType.AwardPointsIEP
     );
 
-    if (goalData.length > 0) {
+    if (studentData.totalPoints.eToken > 0) {
       // Define goal categories
       const goalCategories = [
         "Communication goal",
@@ -252,17 +251,22 @@ export const generateStudentPDF = async ({
         }
       });
 
-      // Calculate total
-      const grandTotal = Object.values(goalTotals).reduce(
-        (sum, val) => sum + val,
-        0
-      );
+      // Non-IEP award points (e.g. Taco Tuesday) - distinct row so table total matches top summary
+      const nonIEPTotal = (studentData.data || [])
+        .filter((item) => item.formType === FormType.AwardPoints)
+        .reduce((sum, item) => sum + (item.points || 0), 0);
 
-      // Build table data - format goal names for display (remove " goal" suffix)
+      // Grand total = IEP categories + non-IEP (equals studentData.totalPoints.eToken)
+      const grandTotal =
+        Object.values(goalTotals).reduce((sum, val) => sum + val, 0) +
+        nonIEPTotal;
+
+      // Build table body: 7 goal rows, then "Other (non-IEP)" row, then TOTAL
       const goalTableBody = goalCategories.map((cat) => {
         const displayName = cat.replace(" goal", "");
         return [displayName, goalTotals[cat].toString()];
       });
+      goalTableBody.push(["Other (non-IEP)", nonIEPTotal.toString()]);
       goalTableBody.push(["TOTAL", grandTotal.toString()]);
 
       yPos = doc.lastAutoTable.finalY + 5; // Reduced gap

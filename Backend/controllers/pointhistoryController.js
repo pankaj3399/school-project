@@ -1516,7 +1516,7 @@ export const getAnalyticsData = async (req, res) => {
 export const getCombinedStudentPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
-    const yearStart = await getEducationalYearStart();
+    const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
     const { grades } = req.body; // grades is now an array of strings
 
@@ -1618,7 +1618,7 @@ export const getStudentPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req.user.id);
     const studentId = req.params.id;
-    const yearStart = await getEducationalYearStart();
+    const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
     const { grade } = req.body;
 
