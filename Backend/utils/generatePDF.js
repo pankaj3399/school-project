@@ -224,8 +224,10 @@ export const generateStudentPDF = async ({
         (item) => item.goal && item.formType === FormType.AwardPointsIEP
     );
 
-    if (studentData.totalPoints.eToken > 0) {
-      // Define goal categories
+    const totalETokens = studentData?.totalPoints?.eToken ?? 0;
+
+    if (totalETokens > 0) {
+      // Define goal categories (six fixed IEP goals)
       const goalCategories = [
         "Communication goal",
         "Math goal",
@@ -233,7 +235,6 @@ export const generateStudentPDF = async ({
         "Social Emotional goal",
         "Self determination goal",
         "Writing goal",
-        "Other",
       ];
 
       // Aggregate points by goal category
@@ -244,29 +245,32 @@ export const generateStudentPDF = async ({
 
       goalData.forEach((item) => {
         if (goalTotals.hasOwnProperty(item.goal)) {
-          goalTotals[item.goal] += item.points;
-        } else {
-          // Handle any custom "Other" goals
-          goalTotals["Other"] += item.points;
+          goalTotals[item.goal] += item.points || 0;
         }
+        // IEP items with goals outside these six are implicitly counted in "Others"
+        // via the difference between totalETokens and the sum of these six buckets.
       });
 
-      // Non-IEP award points (e.g. Taco Tuesday) - distinct row so table total matches top summary
-      const nonIEPTotal = (studentData.data || [])
-        .filter((item) => item.formType === FormType.AwardPoints)
-        .reduce((sum, item) => sum + (item.points || 0), 0);
+      // Sum of the six fixed goal categories
+      const sumOfSix = Object.values(goalTotals).reduce(
+        (sum, val) => sum + (val || 0),
+        0
+      );
 
-      // Grand total = IEP categories + non-IEP (equals studentData.totalPoints.eToken)
-      const grandTotal =
-        Object.values(goalTotals).reduce((sum, val) => sum + val, 0) +
-        nonIEPTotal;
+      // Others acts as balancing bucket so table TOTAL matches top E-Tokens
+      let othersTotal = totalETokens - sumOfSix;
+      if (othersTotal < 0) {
+        othersTotal = 0;
+      }
 
-      // Build table body: 7 goal rows, then "Other (non-IEP)" row, then TOTAL
+      const grandTotal = totalETokens;
+
+      // Build table body: 6 goal rows, then "Others" row, then TOTAL
       const goalTableBody = goalCategories.map((cat) => {
         const displayName = cat.replace(" goal", "");
-        return [displayName, goalTotals[cat].toString()];
+        return [displayName, (goalTotals[cat] || 0).toString()];
       });
-      goalTableBody.push(["Other (non-IEP)", nonIEPTotal.toString()]);
+      goalTableBody.push(["Others", othersTotal.toString()]);
       goalTableBody.push(["TOTAL", grandTotal.toString()]);
 
       yPos = doc.lastAutoTable.finalY + 5; // Reduced gap
