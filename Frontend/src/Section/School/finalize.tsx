@@ -78,7 +78,7 @@ const Finalize = () => {
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
     if (barChart) {
-      const src = await htmlToImage.toPng(barChart)
+      const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
       const formdata = new FormData();
       // Convert image data URL to Blob
       const imageBlob = await (await fetch(src)).blob();
