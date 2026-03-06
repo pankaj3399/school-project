@@ -276,7 +276,7 @@ export const generateStudentPDF = async ({
       yPos = doc.lastAutoTable.finalY + 5; // Reduced gap
       doc.setFontSize(12); // Reduced font size
       doc.setFont("helvetica", "bold");
-      doc.text("IEP Goal Summary", margin, yPos);
+      doc.text("E-tokens earned", margin, yPos);
       yPos += 5; // Reduced gap
 
       doc.autoTable({
