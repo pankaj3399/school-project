@@ -200,6 +200,7 @@ const Finalize = () => {
         title="Email Reports"
         description={`You are about to email ${selectedStudentsData.length} reports to ${user.email || "your email"}. Are you sure you want to proceed?`}
         callToAction='Confirm'
+        confirmDisabled={isGenerating}
       />
 
       <LoadingModal isOpen={isGenerating} progress={progress} />

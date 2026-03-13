@@ -31,6 +31,19 @@ export const emailGenerator = async (
     "MM/dd/yyyy"
   );
 
+  // Keep track of emails already queued to prevent double sending
+  const sentEmails = new Set();
+
+  const queueEmail = (emailAddress, customSubject = subject) => {
+    if (emailAddress) {
+      const normalized = String(emailAddress).trim().toLowerCase();
+      if (!sentEmails.has(normalized)) {
+        sentEmails.add(normalized);
+        emailPromises.push(sendEmail(emailAddress, customSubject, body, body, attachment, attachmentName));
+      }
+    }
+  };
+
   switch (form.formType) {
     case FormType.AwardPointsIEP:
     case FormType.AwardPoints: {
@@ -310,18 +323,7 @@ export const emailGenerator = async (
             : `${teacher.subject} class.`
         }`;
         // Note: Lead teacher gets a different subject, handle separately
-        // Add to sentEmails to prevent duplicate from later queueEmail calls
-        if (leadTeacher.email && !sentEmails.has(leadTeacher.email)) {
-          sentEmails.add(leadTeacher.email);
-          emailPromises.push(sendEmail(
-            leadTeacher.email,
-            leadTeacherSubject,
-            body,
-            body,
-            attachment,
-            attachmentName
-          ));
-        }
+        queueEmail(leadTeacher.email, leadTeacherSubject);
       }
       break;
     }
@@ -591,15 +593,6 @@ export const emailGenerator = async (
 
 
 
-  // Keep track of emails already queued to prevent double sending
-  const sentEmails = new Set();
-
-  const queueEmail = (emailAddress) => {
-    if (emailAddress && !sentEmails.has(emailAddress)) {
-      sentEmails.add(emailAddress);
-      emailPromises.push(sendEmail(emailAddress, subject, body, body, attachment, attachmentName));
-    }
-  };
 
   if (
     (form.teacherEmail ||

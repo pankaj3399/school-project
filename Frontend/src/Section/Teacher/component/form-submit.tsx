@@ -720,7 +720,7 @@ export function FormSubmission({
         title="Submit Form"
         description={description}
         callToAction="Submit"
-        disabled={isSubmitting}
+        confirmDisabled={isSubmitting}
       />
     </>
   );
