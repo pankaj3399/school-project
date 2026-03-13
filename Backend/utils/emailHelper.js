@@ -39,7 +39,7 @@ export const emailGenerator = async (
       const normalized = String(emailAddress).trim().toLowerCase();
       if (!sentEmails.has(normalized)) {
         sentEmails.add(normalized);
-        emailPromises.push(sendEmail(emailAddress, customSubject, body, body, attachment, attachmentName));
+        emailPromises.push(sendEmail(normalized, customSubject, body, body, attachment, attachmentName));
       }
     }
   };
