@@ -321,13 +321,7 @@ export const emailGenerator = async (
 
       // Send to lead teacher if available (existing logic)
       if (leadTeacher) {
-        const leadTeacherSubject = `Hi, I have a feedback about ${student.name} from ${
-          !teacher.subject
-            ? `grade ${student.grade}.`
-            : `${teacher.subject} class.`
-        }`;
-        // Note: Lead teacher gets a different subject, handle separately
-        queueEmail(leadTeacher.email, leadTeacherSubject);
+        queueEmail(leadTeacher.email);
       }
       break;
     }
