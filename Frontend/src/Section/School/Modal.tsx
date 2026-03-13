@@ -6,10 +6,11 @@ interface ModalProps {
   onConfirm: () => void;
   title: string;
   description: string;
-  callToAction:string
+  callToAction:string;
+  disabled?: boolean;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, description, callToAction }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, description, callToAction, disabled }) => {
   if (!isOpen) return null;
 
   return (
@@ -20,22 +21,29 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, descri
         <div className="flex justify-between space-x-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            disabled={disabled}
+            className={`px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Cancel
           </button>
           {
-            callToAction == 'Delete' ? <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Delete
-          </button>:<button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            {callToAction}
-          </button>
+            callToAction === 'Delete' ? (
+              <button
+                onClick={onConfirm}
+                disabled={disabled}
+                className={`px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Delete
+              </button>
+            ) : (
+              <button
+                onClick={onConfirm}
+                disabled={disabled}
+                className={`px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {disabled ? 'Processing...' : callToAction}
+              </button>
+            )
           }
         </div>
       </div>

@@ -586,6 +586,16 @@ export const emailGenerator = async (
 
 
 
+  // Keep track of emails already queued to prevent double sending
+  const sentEmails = new Set();
+
+  const queueEmail = (emailAddress) => {
+    if (emailAddress && !sentEmails.has(emailAddress)) {
+      sentEmails.add(emailAddress);
+      emailPromises.push(sendEmail(emailAddress, subject, body, body, attachment, attachmentName));
+    }
+  };
+
   if (
     (form.teacherEmail ||
       form.formType == FormType.DeductPoints ||
@@ -594,8 +604,7 @@ export const emailGenerator = async (
       form.formType == FormType.AwardPointsIEP) &&
     canSendToTeacher
   ) {
-
-    emailPromises.push(sendEmail(teacher.email, subject, body, body, attachment, attachmentName));
+    queueEmail(teacher.email);
   }
 
   const parentEmailRequired = form.parentEmail;
@@ -613,22 +622,13 @@ export const emailGenerator = async (
       shouldFallbackToStudent) &&
     student?.isStudentEmailVerified
   ) {
-
-    emailPromises.push(sendEmail(student.email, subject, body, body, attachment, attachmentName));
+    queueEmail(student.email);
   }
 
 
 
   if (form.schoolAdminEmail && schoolAdmin?.email) {
-
-    emailPromises.push(sendEmail(
-      schoolAdmin.email,
-      subject,
-      body,
-      body,
-      attachment,
-      attachmentName
-    ));
+    queueEmail(schoolAdmin.email);
   }
 
 
@@ -639,15 +639,7 @@ export const emailGenerator = async (
     student.sendNotifications &&
     student.isParentOneEmailVerified
   ) {
-
-    emailPromises.push(sendEmail(
-      student.parentEmail,
-      subject,
-      body,
-      body,
-      attachment,
-      attachmentName
-    ));
+    queueEmail(student.parentEmail);
   }
 
 
@@ -658,15 +650,7 @@ export const emailGenerator = async (
     student.sendNotifications &&
     student.isParentTwoEmailVerified
   ) {
-
-    emailPromises.push(sendEmail(
-      student.standard,
-      subject,
-      body,
-      body,
-      attachment,
-      attachmentName
-    ));
+    queueEmail(student.standard);
   }
 
 
