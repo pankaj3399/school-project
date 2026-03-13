@@ -20,6 +20,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, descri
         <p className="text-sm mb-6">{description}</p>
         <div className="flex justify-between space-x-4">
           <button
+            type="button"
             onClick={onClose}
             disabled={disabled}
             className={`px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -29,6 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, descri
           {
             callToAction === 'Delete' ? (
               <button
+                type="button"
                 onClick={onConfirm}
                 disabled={disabled}
                 className={`px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -37,6 +39,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, descri
               </button>
             ) : (
               <button
+                type="button"
                 onClick={onConfirm}
                 disabled={disabled}
                 className={`px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}

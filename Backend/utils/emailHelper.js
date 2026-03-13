@@ -1,4 +1,4 @@
-import { FormType, Role } from "../enum.js";
+ import { FormType, Role } from "../enum.js";
 import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 import { timezoneManager } from "./luxon.js";
@@ -309,14 +309,19 @@ export const emailGenerator = async (
             ? `grade ${student.grade}.`
             : `${teacher.subject} class.`
         }`;
-        emailPromises.push(sendEmail(
-          leadTeacher.email,
-          leadTeacherSubject,
-          body,
-          body,
-          attachment,
-          attachmentName
-        ));
+        // Note: Lead teacher gets a different subject, handle separately
+        // Add to sentEmails to prevent duplicate from later queueEmail calls
+        if (leadTeacher.email && !sentEmails.has(leadTeacher.email)) {
+          sentEmails.add(leadTeacher.email);
+          emailPromises.push(sendEmail(
+            leadTeacher.email,
+            leadTeacherSubject,
+            body,
+            body,
+            attachment,
+            attachmentName
+          ));
+        }
       }
       break;
     }
