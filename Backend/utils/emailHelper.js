@@ -35,13 +35,17 @@ export const emailGenerator = async (
   const sentEmails = new Set();
 
   const queueEmail = (emailAddress, customSubject = subject) => {
-    if (emailAddress) {
-      const normalized = String(emailAddress).trim().toLowerCase();
-      if (!sentEmails.has(normalized)) {
-        sentEmails.add(normalized);
-        emailPromises.push(sendEmail(normalized, customSubject, body, body, attachment, attachmentName));
-      }
-    }
+    const cleaned = typeof emailAddress === "string" ? emailAddress.trim() : "";
+    if (!cleaned) return;
+    const dedupeKey = cleaned.toLowerCase();
+    if (sentEmails.has(dedupeKey)) return;
+    sentEmails.add(dedupeKey);
+    emailPromises.push(
+      sendEmail(cleaned, customSubject, body, body, attachment, attachmentName).then((ok) => {
+        if (!ok) throw new Error(`Failed to send email to ${cleaned}`);
+        return ok;
+      })
+    );
   };
 
   switch (form.formType) {
