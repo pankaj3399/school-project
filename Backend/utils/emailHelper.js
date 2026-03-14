@@ -160,8 +160,8 @@ export const emailGenerator = async (
                         </div>
 
                         <div class="signature">
-                            ${schoolAdmin.name}<br>
-                            ${schoolAdmin.email}<br>
+                            ${schoolAdmin?.name || "The RADU E-Token System"}<br>
+                            ${schoolAdmin?.email || ""}<br>
                             The RADU E-Token System Manager<br>
                             ${school.name}, ${school.address || school.district || school.state}
                         </div>
@@ -319,10 +319,6 @@ export const emailGenerator = async (
                 </html>
             `;
 
-      // Send to lead teacher if available (existing logic)
-      if (leadTeacher) {
-        queueEmail(leadTeacher.email);
-      }
       break;
     }
     case FormType.DeductPoints: {
@@ -648,6 +644,11 @@ export const emailGenerator = async (
   ) {
     queueEmail(student.standard);
   }
+
+  const leadTeachers = Array.isArray(leadTeacher) ? leadTeacher : [leadTeacher];
+  leadTeachers
+    .filter((lt) => lt?.email)
+    .forEach((lt) => queueEmail(lt.email));
 
 
   const results = await Promise.allSettled(emailPromises);
