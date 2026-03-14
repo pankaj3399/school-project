@@ -40,6 +40,7 @@ export default function ViewTeachers() {
   const [sendingVerification, setSendingVerification] = useState(false);
   const { toast } = useToast();
   const [customGrade, setCustomGrade] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchTeachers = async () => {
     try {
@@ -101,6 +102,7 @@ export default function ViewTeachers() {
 
   const handleDelete = async (id: string) => {
     try {
+      setIsDeleting(true);
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found.");
 
@@ -120,6 +122,8 @@ export default function ViewTeachers() {
         description: "Failed to delete teacher.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -513,6 +517,8 @@ export default function ViewTeachers() {
         title="Confirm Deletion"
         description="Are you sure you want to delete this teacher? This action cannot be undone."
         callToAction="Delete"
+        variant="danger"
+        confirmDisabled={isDeleting}
       />
     </div>
   );

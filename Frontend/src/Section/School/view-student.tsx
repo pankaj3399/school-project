@@ -455,6 +455,7 @@ export default function ViewStudents() {
         title="Delete Student"
         description="Are you sure you want to delete this student? This action cannot be undone."
         callToAction="Delete"
+        variant="danger"
       />
     </div>
 

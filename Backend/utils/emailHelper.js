@@ -1,4 +1,4 @@
-import { FormType, Role } from "../enum.js";
+ import { FormType, Role } from "../enum.js";
 import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 import { timezoneManager } from "./luxon.js";
@@ -30,6 +30,23 @@ export const emailGenerator = async (
     schoolTimezone,
     "MM/dd/yyyy"
   );
+
+  // Keep track of emails already queued to prevent double sending
+  const sentEmails = new Set();
+
+  const queueEmail = (emailAddress, customSubject = subject) => {
+    const cleaned = typeof emailAddress === "string" ? emailAddress.trim() : "";
+    if (!cleaned) return;
+    const dedupeKey = cleaned.toLowerCase();
+    if (sentEmails.has(dedupeKey)) return;
+    sentEmails.add(dedupeKey);
+    emailPromises.push(
+      sendEmail(cleaned, customSubject, body, body, attachment, attachmentName).then((ok) => {
+        if (!ok) throw new Error(`Failed to send email to ${cleaned}`);
+        return ok;
+      })
+    );
+  };
 
   switch (form.formType) {
     case FormType.AwardPointsIEP:
@@ -304,19 +321,7 @@ export const emailGenerator = async (
 
       // Send to lead teacher if available (existing logic)
       if (leadTeacher) {
-        const leadTeacherSubject = `Hi, I have a feedback about ${student.name} from ${
-          !teacher.subject
-            ? `grade ${student.grade}.`
-            : `${teacher.subject} class.`
-        }`;
-        emailPromises.push(sendEmail(
-          leadTeacher.email,
-          leadTeacherSubject,
-          body,
-          body,
-          attachment,
-          attachmentName
-        ));
+        queueEmail(leadTeacher.email);
       }
       break;
     }
@@ -586,6 +591,7 @@ export const emailGenerator = async (
 
 
 
+
   if (
     (form.teacherEmail ||
       form.formType == FormType.DeductPoints ||
@@ -594,8 +600,7 @@ export const emailGenerator = async (
       form.formType == FormType.AwardPointsIEP) &&
     canSendToTeacher
   ) {
-
-    emailPromises.push(sendEmail(teacher.email, subject, body, body, attachment, attachmentName));
+    queueEmail(teacher.email);
   }
 
   const parentEmailRequired = form.parentEmail;
@@ -613,22 +618,13 @@ export const emailGenerator = async (
       shouldFallbackToStudent) &&
     student?.isStudentEmailVerified
   ) {
-
-    emailPromises.push(sendEmail(student.email, subject, body, body, attachment, attachmentName));
+    queueEmail(student.email);
   }
 
 
 
   if (form.schoolAdminEmail && schoolAdmin?.email) {
-
-    emailPromises.push(sendEmail(
-      schoolAdmin.email,
-      subject,
-      body,
-      body,
-      attachment,
-      attachmentName
-    ));
+    queueEmail(schoolAdmin.email);
   }
 
 
@@ -639,15 +635,7 @@ export const emailGenerator = async (
     student.sendNotifications &&
     student.isParentOneEmailVerified
   ) {
-
-    emailPromises.push(sendEmail(
-      student.parentEmail,
-      subject,
-      body,
-      body,
-      attachment,
-      attachmentName
-    ));
+    queueEmail(student.parentEmail);
   }
 
 
@@ -658,15 +646,7 @@ export const emailGenerator = async (
     student.sendNotifications &&
     student.isParentTwoEmailVerified
   ) {
-
-    emailPromises.push(sendEmail(
-      student.standard,
-      subject,
-      body,
-      body,
-      attachment,
-      attachmentName
-    ));
+    queueEmail(student.standard);
   }
 
 

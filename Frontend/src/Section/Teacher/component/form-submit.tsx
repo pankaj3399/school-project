@@ -238,6 +238,8 @@ export function FormSubmission({
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
 
+    if (isSubmitting) return;
+
     if (form.formType === FormType.Feedback) {
       const feedbackQuestion =
         form.questions && form.questions.length > 0 ? form.questions[0] : null;
@@ -690,7 +692,7 @@ export function FormSubmission({
               ))}
             </div>
           </ScrollArea>
-          <Button type="submit" disabled={!isFormValid}>
+          <Button type="submit" disabled={!isFormValid || isSubmitting}>
             {isSubmitting ? (
               <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
@@ -718,6 +720,7 @@ export function FormSubmission({
         title="Submit Form"
         description={description}
         callToAction="Submit"
+        confirmDisabled={isSubmitting}
       />
     </>
   );
