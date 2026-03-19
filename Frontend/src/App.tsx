@@ -12,6 +12,7 @@ import Teachers from "./Section/Teacher/Teacher";
 import FormBuilder from "./Section/School/form-builder";
 import ViewTeacherStudents from "./Section/Teacher/view-students";
 import { Navigate, Route, Routes } from "react-router-dom";
+
 import { useAuth } from "./authContext";
 import ViewForms from "./Section/School/view-forms";
 import ViewTeacherForms from "./Section/Teacher/view-teacher-forms";
@@ -101,7 +102,9 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
+          <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
         </Routes>
+
       </RootLayout>
     </div>
   );
