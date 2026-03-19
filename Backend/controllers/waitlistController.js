@@ -144,9 +144,7 @@ export const exportWaitlistData = async (req, res) => {
     const csvRows = [headers.join(',')];
 
     subscribers.forEach(sub => {
-      const email = `"${sub.email.replace(/"/g, '""')}"`;
-      const date = `"${new Date(sub.createdAt).toISOString()}"`;
-      csvRows.push(`${email},${date}`);
+      csvRows.push(`${sub.email},${new Date(sub.createdAt).toISOString()}`);
     });
 
     const csvContent = csvRows.join('\n');
