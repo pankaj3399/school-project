@@ -1004,14 +1004,26 @@ export const changePassword = async (data: any) => {
 };
 
 
-export async function completeTeacherRegistration({ token, name, password, subject }: { token: string, name: string, password: string, subject: string }) {
+export async function completeTeacherRegistration({ token, name, password, subject, termsAccepted }: { token: string, name: string, password: string, subject: string, termsAccepted?: boolean }) {
   const response = await fetch(`${API_URL}/teacher/complete-registration`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, name, password, subject })
+    body: JSON.stringify({ token, name, password, subject, termsAccepted }),
   });
   return response.json();
 }
+
+export const getSystemDashboardStats = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/dashboard`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {

@@ -1,4 +1,7 @@
 import RootLayout from "./layout";
+import TermsPage from "@/components/TermsPage";
+import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
+
 import LandingPage from "./Section/LandingPage";
 import { SignupForm } from "./components/SignupPage";
 import LoginForm from "./components/SigninPage";
@@ -101,7 +104,10 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
+          <Route path="/system-admin" element={<ProtectedRoute><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/terms" element={<TermsPage />} />
         </Routes>
+
       </RootLayout>
     </div>
   );
