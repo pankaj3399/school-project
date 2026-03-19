@@ -1004,14 +1004,41 @@ export const changePassword = async (data: any) => {
 };
 
 
-export async function completeTeacherRegistration({ token, name, password, subject }: { token: string, name: string, password: string, subject: string }) {
-  const response = await fetch(`${API_URL}/teacher/complete-registration`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, name, password, subject })
+export const createDistrict = async (data: any, token: string) => {
+  const response = await axios.post(`${API_URL}/districts`, data, {
+    headers: { token },
   });
-  return response.json();
-}
+  return response.data;
+};
+
+export const updateDistrict = async (id: string, data: any, token: string) => {
+  const response = await axios.put(`${API_URL}/districts/${id}`, data, {
+    headers: { token },
+  });
+  return response.data;
+};
+
+export const deleteDistrict = async (id: string, token: string) => {
+  const response = await axios.delete(`${API_URL}/districts/${id}`, {
+    headers: { token },
+  });
+  return response.data;
+};
+
+export const assignDistrictAdmin = async (id: string, data: any, token: string) => {
+  const response = await axios.post(`${API_URL}/districts/${id}/admins`, data, {
+    headers: { token },
+  });
+  return response.data;
+};
+
+export const addSchoolToDistrict = async (id: string, data: any, token: string) => {
+  const response = await axios.post(`${API_URL}/districts/${id}/schools`, data, {
+    headers: { token },
+  });
+  return response.data;
+};
+
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {
@@ -1045,60 +1072,3 @@ export const subscribeToWaitlist = async (email: string, confirmEmail: string) =
     };
   }
 };
-
-// District Management - Mutations
-export const createDistrict = async (data: any, token: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/districts`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const updateDistrict = async (id: string, data: any, token: string) => {
-  try {
-    const response = await axios.put(`${API_URL}/districts/${id}`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const deleteDistrict = async (id: string, token: string) => {
-  try {
-    const response = await axios.delete(`${API_URL}/districts/${id}`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const assignDistrictAdmin = async (id: string, data: any, token: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/districts/${id}/admins`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const addSchoolToDistrict = async (id: string, data: any, token: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/districts/${id}/schools`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-

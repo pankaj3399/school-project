@@ -1,4 +1,6 @@
 import RootLayout from "./layout";
+import AddDistrict from "./Section/SystemAdmin/districts/add-district";
+
 import LandingPage from "./Section/LandingPage";
 import { SignupForm } from "./components/SignupPage";
 import LoginForm from "./components/SigninPage";
@@ -101,7 +103,9 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
+          <Route path="/system-admin/districts/new" element={<ProtectedRoute><AddDistrict /></ProtectedRoute>} />
         </Routes>
+
       </RootLayout>
     </div>
   );
