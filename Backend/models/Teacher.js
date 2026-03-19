@@ -76,7 +76,11 @@ const teacherSchema = new mongoose.Schema({
   registrationToken: {
     type: String,
     default: null
-  }
+  },
+  // Terms of Use tracking
+  termsAcceptedAt: { type: Date },
+  termsVersion: { type: String },
+  termsAcceptedIp: { type: String }
 });
 
 teacherSchema.pre('save', function (next) {

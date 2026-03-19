@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema({
     ref: 'School', 
     default: null,
   },
+  districtId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'District', 
+    default: null,
+  },
+  // Terms of Use tracking
+  termsAcceptedAt: { type: Date },
+  termsVersion: { type: String },
   createdAt: {
     type: Date,
     default: Date.now,
