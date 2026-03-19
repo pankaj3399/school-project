@@ -1024,6 +1024,28 @@ export const getSystemDashboardStats = async (token: string) => {
   }
 };
 
+export const getStateAnalytics = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/analytics/states`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictAnalytics = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/analytics/districts`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {
