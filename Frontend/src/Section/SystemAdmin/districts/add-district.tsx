@@ -14,6 +14,7 @@ export default function AddDistrict() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [contactEmailError, setContactEmailError] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         code: '',
@@ -23,14 +24,34 @@ export default function AddDistrict() {
         contactEmail: ''
     });
 
+    const validateEmail = (email: string) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         const finalValue = name === 'code' ? value.toUpperCase() : value;
+        
+        if (name === 'contactEmail') {
+            if (value && !validateEmail(value)) {
+                setContactEmailError('Please enter a valid email address');
+            } else {
+                setContactEmailError('');
+            }
+        }
+        
         setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (formData.contactEmail && !validateEmail(formData.contactEmail)) {
+            setContactEmailError('Please enter a valid email address');
+            return;
+        }
+
         setLoading(true);
 
         const token = user?.token || localStorage.getItem('token');
@@ -45,6 +66,8 @@ export default function AddDistrict() {
         }
 
         try {
+            // Note: createDistrict returns { error } for API failures; 
+            // the catch block handles unexpected runtime/network exceptions.
             const response = await createDistrict(formData, token);
 
             if (response?.district) {
@@ -54,7 +77,11 @@ export default function AddDistrict() {
                 });
                 navigate('/system-admin/districts');
             } else {
-                const errorMessage = response?.error?.message || response?.message || "Failed to create district";
+                const errorMessage = 
+                    response?.error?.response?.data?.message || 
+                    response?.error?.message || 
+                    response?.message || 
+                    "Failed to create district";
                 toast({
                     title: "Error",
                     description: errorMessage,
@@ -161,7 +188,11 @@ export default function AddDistrict() {
                                     placeholder="admin@district.edu"
                                     value={formData.contactEmail}
                                     onChange={handleChange}
+                                    className={contactEmailError ? "border-red-500" : ""}
                                 />
+                                {contactEmailError && (
+                                    <p className="text-xs text-red-500 mt-1">{contactEmailError}</p>
+                                )}
                             </div>
                         </div>
 
@@ -169,7 +200,7 @@ export default function AddDistrict() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto bg-[#00a58c] hover:bg-[#008f7a] text-white"
-                                disabled={loading}
+                                disabled={loading || !!contactEmailError}
                             >
                                 {loading ? "Creating..." : (
                                     <span className="flex items-center">
