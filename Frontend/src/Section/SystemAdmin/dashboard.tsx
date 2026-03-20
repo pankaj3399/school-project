@@ -33,20 +33,29 @@ export default function SystemAdminDashboard() {
     const { user } = useAuth();
     const [stats, setStats] = useState<StatsType | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const isSystemAdmin = user?.role === 'SystemAdmin';
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
-            const token = user.token || localStorage.getItem('token');
-            if (token) {
+            setLoading(true);
+            setError(null);
+            try {
+                const token = user.token || localStorage.getItem('token') || "";
                 const data = await getSystemDashboardStats(token);
-                if (data.stats) {
+                if (data.error) {
+                    setError(data.error);
+                } else if (data.stats) {
                     setStats(data.stats);
                 }
+            } catch (err: any) {
+                console.error("Error fetching dashboard stats:", err);
+                setError(err.message || "Failed to fetch dashboard statistics");
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         fetchStats();
@@ -54,6 +63,21 @@ export default function SystemAdminDashboard() {
 
     if (user && !isSystemAdmin) {
         return <Navigate to="/home" replace />;
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+                <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                >
+                    Retry
+                </button>
+            </div>
+        );
     }
 
     const cards = [
