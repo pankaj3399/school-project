@@ -13,24 +13,35 @@ export default function ViewDistrict() {
     const { user } = useAuth();
     const [district, setDistrict] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchDistrict = async () => {
-            // @ts-ignore
-            const token = user?.token || localStorage.getItem('token');
-            if (token && id) {
-                const data = await getDistrictById(id, token);
-                if (data.district) {
-                    setDistrict(data); // Contains district, schools, adminCount
+            setDistrict(null);
+            setFetchError(null);
+            setLoading(true);
+            try {
+                const token = user?.token || localStorage.getItem('token');
+                if (token && id) {
+                    const data = await getDistrictById(id, token);
+                    if (data.error) {
+                        setFetchError(data.error.message || "Failed to fetch district details");
+                    } else if (data.district) {
+                        setDistrict(data); // Contains district, schools, adminCount
+                    }
                 }
+            } catch (err: any) {
+                setFetchError(err.message || "An unexpected error occurred");
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         fetchDistrict();
     }, [id, user]);
 
     if (loading) return <div className="p-8">Loading...</div>;
+    if (fetchError) return <div className="p-8 text-red-600 font-semibold">{fetchError}</div>;
     if (!district) return <div className="p-8">District not found</div>;
 
     return (
@@ -127,8 +138,8 @@ export default function ViewDistrict() {
                                 <div className="text-center py-8 text-gray-500">
                                     No schools registered in this district yet.
                                     <div className="mt-4">
-                                        <Button variant="outline" size="sm">Add School Manually</Button>
-                                        <Button variant="outline" size="sm" className="ml-2">Bulk Import</Button>
+                                        <Button variant="outline" size="sm" disabled aria-disabled="true">Add School Manually</Button>
+                                        <Button variant="outline" size="sm" className="ml-2" disabled aria-disabled="true">Bulk Import</Button>
                                     </div>
                                 </div>
                             )}

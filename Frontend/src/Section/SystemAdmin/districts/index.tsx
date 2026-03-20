@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,16 +38,35 @@ export default function DistrictsList() {
     const [districts, setDistricts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [districtsError, setDistrictsError] = useState<string | null>(null);
+    const currentRequestRef = useRef(0);
 
     const fetchDistricts = useCallback(async () => {
-        const token = user?.token || localStorage.getItem('token');
-        if (token) {
-            const data = await getDistricts(token, { search });
-            if (data && data.districts) {
-                setDistricts(data.districts);
+        const requestId = ++currentRequestRef.current;
+        setLoading(true);
+        setDistrictsError(null);
+
+        try {
+            const token = user?.token || localStorage.getItem('token');
+            if (token) {
+                const data = await getDistricts(token, { search });
+                if (requestId === currentRequestRef.current) {
+                    if (data.error) {
+                        setDistrictsError(data.error.message || "Failed to fetch districts");
+                    } else if (data.districts) {
+                        setDistricts(data.districts);
+                    }
+                }
+            }
+        } catch (err: any) {
+            if (requestId === currentRequestRef.current) {
+                setDistrictsError(err.message || "An unexpected error occurred");
+            }
+        } finally {
+            if (requestId === currentRequestRef.current) {
+                setLoading(false);
             }
         }
-        setLoading(false);
     }, [user?.token, search]);
 
     useEffect(() => {
@@ -112,7 +131,13 @@ export default function DistrictsList() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {districtsError ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-8 text-red-500 font-semibold">
+                                    {districtsError}
+                                </TableCell>
+                            </TableRow>
+                        ) : loading ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                                     Loading districts...
