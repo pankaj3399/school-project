@@ -177,6 +177,15 @@ export const addTeacher = async (
     return { error };
   }
 };
+
+export const completeTeacherRegistration = async (data: any) => {
+  try {
+    const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
 export const updateTeacher = async (
   data: Partial<{
     email: string;

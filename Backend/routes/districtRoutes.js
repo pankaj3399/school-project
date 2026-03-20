@@ -10,7 +10,8 @@ import {
   getDistrictSchools,
   assignDistrictAdmin
 } from '../controllers/districtController.js';
-import { authenticateToken, authorizeRoles } from '../middlewares/authMiddleware.js';
+import { authenticateToken } from '../middlewares/authMiddleware.js';
+import { authorizeRoles } from '../middlewares/roleMiddleware.js';
 import { Role } from '../enum.js';
 
 const router = express.Router();
