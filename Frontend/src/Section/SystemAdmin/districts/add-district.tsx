@@ -33,7 +33,16 @@ export default function AddDistrict() {
         e.preventDefault();
         setLoading(true);
 
-        const token = user?.token || localStorage.getItem('token') || '';
+        const token = user?.token || localStorage.getItem('token');
+        if (!token) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to create a district",
+                variant: "destructive"
+            });
+            setLoading(false);
+            return;
+        }
 
         try {
             const response = await createDistrict(formData, token);
