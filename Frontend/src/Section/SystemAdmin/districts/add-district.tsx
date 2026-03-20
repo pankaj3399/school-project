@@ -25,36 +25,38 @@ export default function AddDistrict() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const finalValue = name === 'code' ? value.toUpperCase() : value;
+        setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // @ts-ignore
-        const token = user?.token || localStorage.getItem('token');
+        const token = user?.token || localStorage.getItem('token') || '';
 
         try {
             const response = await createDistrict(formData, token);
 
-            if (response.district) {
+            if (response?.district) {
                 toast({
                     title: "Success",
                     description: "District created successfully",
                 });
                 navigate('/system-admin/districts');
             } else {
+                const errorMessage = response?.error?.message || response?.message || "Failed to create district";
                 toast({
                     title: "Error",
-                    description: response.message || "Failed to create district",
+                    description: errorMessage,
                     variant: "destructive"
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred";
             toast({
                 title: "Error",
-                description: "An unexpected error occurred",
+                description: errorMessage,
                 variant: "destructive"
             });
         } finally {
