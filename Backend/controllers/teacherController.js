@@ -2,6 +2,8 @@ import Student from "../models/Student.js";
 import School from "../models/School.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
+import TermsOfUse from "../models/TermsOfUse.js";
+import { generateTeacherToken, verifyRegistrationToken } from "../utils/tokenUtils.js";
 import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
@@ -178,8 +180,16 @@ export const completeTeacherRegistration = async (req, res) => {
     
     // Record terms acceptance
     teacher.termsAccepted = true;
-    // We can fetch the current version here if we want, but for now we'll just set it to true
-    // as passed from frontend
+    
+    // Fetch latest terms version
+    try {
+        const latestTerms = await TermsOfUse.findOne({ isActive: true }).sort({ createdAt: -1 });
+        if (latestTerms) {
+            teacher.termsAcceptedVersion = latestTerms.version;
+        }
+    } catch (err) {
+        console.error("Error fetching latest terms version:", err);
+    }
     
     await teacher.save();
     // Send onboarding email after registration is complete

@@ -36,10 +36,6 @@ export default function SystemAdminDashboard() {
 
     const isSystemAdmin = user?.role === 'SystemAdmin';
 
-    if (user && !isSystemAdmin) {
-        return <Navigate to="/home" replace />;
-    }
-
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
@@ -55,6 +51,10 @@ export default function SystemAdminDashboard() {
 
         fetchStats();
     }, [user]);
+
+    if (user && !isSystemAdmin) {
+        return <Navigate to="/home" replace />;
+    }
 
     const cards = [
         {

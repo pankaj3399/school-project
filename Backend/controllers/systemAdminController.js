@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Admin from '../models/Admin.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
@@ -16,7 +17,7 @@ export const getDashboardStats = async (req, res) => {
         const growth30d = "+12.5%"; 
         const totalTokensEarned = await Student.aggregate([
             { $group: { _id: null, total: { $sum: "$points" } } }
-        ]).then(res => res[0]?.total || 0);
+        ]).then(aggRes => aggRes[0]?.total || 0);
 
         res.status(200).json({
             stats: {
@@ -62,24 +63,29 @@ export const getCurrentTerms = async (req, res) => {
 };
 
 export const createTermsVersion = async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const { version, title, content, contentHtml, effectiveDate } = req.body;
         
-        // Deactivate old versions
-        await TermsOfUse.updateMany({}, { isActive: false });
-        
-        const newTerms = await TermsOfUse.create({
-            version,
-            title,
-            content,
-            contentHtml,
-            effectiveDate,
-            isActive: true
+        await session.withTransaction(async () => {
+            // Deactivate old versions
+            await TermsOfUse.updateMany({}, { isActive: false }, { session });
+            
+            await TermsOfUse.create([{
+                version,
+                title,
+                content,
+                contentHtml,
+                effectiveDate,
+                isActive: true
+            }], { session });
         });
         
-        res.status(201).json({ message: 'Terms version created successfully', terms: newTerms });
+        res.status(201).json({ message: 'Terms version created successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error creating terms version', error: error.message });
+    } finally {
+        session.endSession();
     }
 };
 
@@ -99,16 +105,26 @@ export const recordTermsAcceptance = async (req, res) => {
         const userRole = req.user.role;
 
         let user;
-        if (userRole === 'Teacher') {
-            user = await Teacher.findByIdAndUpdate(userId, {
-                termsAccepted: true,
-                termsAcceptedVersion: termsVersion
-            }, { new: true });
-        } else {
-            user = await Admin.findByIdAndUpdate(userId, {
-                termsAccepted: true,
-                termsAcceptedVersion: termsVersion
-            }, { new: true });
+        const updateData = {
+            termsAccepted: true,
+            termsAcceptedVersion: termsVersion
+        };
+        const updateOptions = { new: true, select: '-password -salt' };
+
+        switch (userRole) {
+            case 'Teacher':
+                user = await Teacher.findByIdAndUpdate(userId, updateData, updateOptions);
+                break;
+            case 'Admin':
+            case 'SchoolAdmin':
+            case 'SystemAdmin':
+                user = await Admin.findByIdAndUpdate(userId, updateData, updateOptions);
+                break;
+            case 'Student':
+                user = await Student.findByIdAndUpdate(userId, updateData, updateOptions);
+                break;
+            default:
+                return res.status(400).json({ message: 'Unknown user role' });
         }
 
         if (!user) {
