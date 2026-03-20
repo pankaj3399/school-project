@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getDistrictById } from '@/api';
 import { useAuth } from '@/authContext';
 import { ArrowLeft, Building2, School, Users, Settings } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -58,7 +58,7 @@ export default function ViewDistrict() {
                         • {district.district.state}, {district.district.country}
                     </p>
                 </div>
-                <Button variant="outline">Edit District</Button>
+                <Button variant="outline" disabled aria-disabled="true">Edit District</Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -119,7 +119,7 @@ export default function ViewDistrict() {
                                                 <h4 className="font-semibold">{school.name}</h4>
                                                 <p className="text-sm text-gray-500">{school.address || "No address provided"}</p>
                                             </div>
-                                            <Button variant="ghost" size="sm">View</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => navigate(`/schools/${school._id}`)}>View</Button>
                                         </div>
                                     ))}
                                 </div>
@@ -127,7 +127,7 @@ export default function ViewDistrict() {
                                 <div className="text-center py-8 text-gray-500">
                                     No schools registered in this district yet.
                                     <div className="mt-4">
-                                        <Button variant="outline" size="sm">Add School Manualy</Button>
+                                        <Button variant="outline" size="sm">Add School Manually</Button>
                                         <Button variant="outline" size="sm" className="ml-2">Bulk Import</Button>
                                     </div>
                                 </div>
@@ -139,6 +139,16 @@ export default function ViewDistrict() {
                     <Card>
                         <CardContent className="p-8 text-center text-gray-500">
                             Admin management coming soon.
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="settings" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>District Settings</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8 text-center text-gray-500">
+                            Settings and configuration options coming soon.
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -1004,33 +1004,49 @@ export const changePassword = async (data: any) => {
 };
 
 
-export const getDistricts = async (token: string, params?: any) => {
-  const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-  const response = await axios.get(`${API_URL}/districts${query}`, {
-    headers: { token },
-  });
-  return response.data;
+export const getDistricts = async (token: string, params?: Record<string, string | number | boolean>) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts`, {
+      headers: { token },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
 };
 
 export const getDistrictById = async (id: string, token: string) => {
-  const response = await axios.get(`${API_URL}/districts/${id}`, {
-    headers: { token },
-  });
-  return response.data;
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
 };
 
 export const getDistrictStats = async (id: string, token: string) => {
-  const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
-    headers: { token },
-  });
-  return response.data;
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
 };
 
 export const getDistrictSchools = async (id: string, token: string) => {
-  const response = await axios.get(`${API_URL}/districts/${id}/schools`, {
-    headers: { token },
-  });
-  return response.data;
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/schools`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
 };
 
 

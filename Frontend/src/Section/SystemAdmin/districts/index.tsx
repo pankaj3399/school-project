@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,7 +30,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../../components/ui/badge";
 
 export default function DistrictsList() {
     const navigate = useNavigate();
@@ -39,21 +39,20 @@ export default function DistrictsList() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
-    const fetchDistricts = async () => {
-        // @ts-ignore
+    const fetchDistricts = useCallback(async () => {
         const token = user?.token || localStorage.getItem('token');
         if (token) {
             const data = await getDistricts(token, { search });
-            if (data.districts) {
+            if (data && data.districts) {
                 setDistricts(data.districts);
             }
         }
         setLoading(false);
-    };
+    }, [user?.token, search]);
 
     useEffect(() => {
         fetchDistricts();
-    }, [user, search]);
+    }, [fetchDistricts]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -79,6 +78,8 @@ export default function DistrictsList() {
                 <Button
                     onClick={() => navigate('/system-admin/districts/new')}
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
+                    disabled
+                    aria-disabled="true"
                 >
                     <Plus className="mr-2 h-4 w-4" />
                     Add District
@@ -165,9 +166,9 @@ export default function DistrictsList() {
                                                 <DropdownMenuItem onClick={() => navigate(`/system-admin/districts/${district._id}`)}>
                                                     View Details
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem>Manage Schools</DropdownMenuItem>
+                                                <DropdownMenuItem disabled>Manage Schools</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-red-600">
+                                                <DropdownMenuItem className="text-red-600" disabled>
                                                     Suspend District
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
