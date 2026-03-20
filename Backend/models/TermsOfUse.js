@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import {Role} from '../enum.js';
 
 // Stores different versions of Terms of Use
 const TermsOfUseSchema = new mongoose.Schema({
@@ -9,7 +10,6 @@ const TermsOfUseSchema = new mongoose.Schema({
   },
   title: {
     type: String,
-    required: true,
     default: 'RADU E-Token™ Pilot Participation Agreement'
   },
   content: { 
@@ -56,7 +56,7 @@ const TermsAcceptanceSchema = new mongoose.Schema({
   },
   userType: { 
     type: String, 
-    enum: ['Teacher', 'Guardian', 'Student', 'SchoolAdmin', 'DistrictAdmin'],
+    enum: Object.values(Role),
     required: true
   },
   termsVersion: { 
@@ -82,6 +82,22 @@ const TermsAcceptanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'District'
   }
+});
+
+// Anonymize IP address on save
+TermsAcceptanceSchema.pre('save', function (next) {
+  if (this.ipAddress) {
+    if (this.ipAddress.includes('.')) {
+      this.ipAddress = this.ipAddress.replace(/\d+$/, '0');
+    } else if (this.ipAddress.includes(':')) {
+      const parts = this.ipAddress.split(':');
+      if (parts.length > 1) {
+        parts[parts.length - 1] = '0000';
+        this.ipAddress = parts.join(':');
+      }
+    }
+  }
+  next();
 });
 
 // Compound index for efficient lookups

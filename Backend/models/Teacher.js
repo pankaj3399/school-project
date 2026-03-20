@@ -91,6 +91,20 @@ teacherSchema.pre('save', function (next) {
     return next(new Error('Teacher must have either a password or a registration token'));
   }
 
+  // Anonymize IP address to protect privacy (PII)
+  if (this.termsAcceptedIp) {
+    // Truncate the last octet for IPv4 or mask for IPv6
+    if (this.termsAcceptedIp.includes('.')) {
+      this.termsAcceptedIp = this.termsAcceptedIp.replace(/\d+$/, '0');
+    } else if (this.termsAcceptedIp.includes(':')) {
+      const parts = this.termsAcceptedIp.split(':');
+      if (parts.length > 1) {
+        parts[parts.length - 1] = '0000';
+        this.termsAcceptedIp = parts.join(':');
+      }
+    }
+  }
+
   next();
 });
 

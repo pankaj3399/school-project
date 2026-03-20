@@ -23,8 +23,7 @@ const DistrictSchema = new mongoose.Schema({
   },
   state: { 
     type: String, 
-    required: true, 
-    index: true 
+    required: true 
   },
   zipCode: {
     type: String,
@@ -37,7 +36,13 @@ const DistrictSchema = new mongoose.Schema({
   contactEmail: { 
     type: String,
     lowercase: true,
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      },
+      message: 'Invalid email address format'
+    }
   },
   contactPhone: { 
     type: String 

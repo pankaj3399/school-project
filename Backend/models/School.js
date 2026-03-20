@@ -22,6 +22,11 @@ const SchoolSchema = new mongoose.Schema({
     updatedAt: {type: Date, default: Date.now}
 });
 
+SchoolSchema.pre('save', function (next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
 SchoolSchema.index({ createdBy: 1 });
 
 export default mongoose.model('School', SchoolSchema);

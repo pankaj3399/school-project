@@ -41,6 +41,7 @@ const userSchema = new mongoose.Schema({
   // Terms of Use tracking
   termsAcceptedAt: { type: Date },
   termsVersion: { type: String },
+  termsAcceptedIp: { type: String },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -60,5 +61,6 @@ userSchema.pre('save', function (next) {
 
 
 userSchema.index({ schoolId: 1 });
+userSchema.index({ districtId: 1 });
 
 export default mongoose.model('User', userSchema);
