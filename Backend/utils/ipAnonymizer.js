@@ -30,6 +30,12 @@ export const anonymizeIP = (ip) => {
 export const anonymizeUpdate = (update, fields) => {
   if (!update) return;
 
+  // Handle Array-style aggregation pipeline updates
+  if (Array.isArray(update)) {
+    update.forEach(stage => anonymizeUpdate(stage, fields));
+    return;
+  }
+
   // 1. Handle direct field assignments (non-operator fields)
   fields.forEach(field => {
     if (update[field]) {
@@ -39,13 +45,16 @@ export const anonymizeUpdate = (update, fields) => {
 
   // 2. Handle operators (e.g., $set, $setOnInsert, $push, etc.)
   Object.keys(update).forEach(key => {
-    if (key.startsWith('$') && typeof update[key] === 'object') {
+    if (key.startsWith('$')) {
       const operatorObj = update[key];
-      fields.forEach(field => {
-        if (operatorObj[field]) {
-          operatorObj[field] = anonymizeIP(operatorObj[field]);
-        }
-      });
+      // Null safety: ensure operatorObj is a non-null object
+      if (operatorObj && typeof operatorObj === 'object') {
+        fields.forEach(field => {
+          if (operatorObj[field] != null) {
+            operatorObj[field] = anonymizeIP(operatorObj[field]);
+          }
+        });
+      }
     }
   });
 };
