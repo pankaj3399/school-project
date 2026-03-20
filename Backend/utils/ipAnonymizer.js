@@ -51,7 +51,23 @@ export const anonymizeUpdate = (update, fields) => {
       if (operatorObj && typeof operatorObj === 'object') {
         fields.forEach(field => {
           if (operatorObj[field] != null) {
-            operatorObj[field] = anonymizeIP(operatorObj[field]);
+            const val = operatorObj[field];
+            if (typeof val === 'string') {
+              operatorObj[field] = anonymizeIP(val);
+            } else if (Array.isArray(val)) {
+              operatorObj[field] = val.map(v => typeof v === 'string' ? anonymizeIP(v) : v);
+            } else if (val && typeof val === 'object') {
+              if (val.$each && Array.isArray(val.$each)) {
+                val.$each = val.$each.map(v => typeof v === 'string' ? anonymizeIP(v) : v);
+              } else {
+                // Plain object: walk its values
+                Object.keys(val).forEach(k => {
+                  if (typeof val[k] === 'string') {
+                    val[k] = anonymizeIP(val[k]);
+                  }
+                });
+              }
+            }
           }
         });
       }
@@ -61,7 +77,7 @@ export const anonymizeUpdate = (update, fields) => {
 
 /**
  * Adds IP anonymization hooks to a Mongoose schema for specific fields.
- * Handles save, updateOne, findOneUpdate, and insertMany.
+ * Handles save, updateOne, findOneUpdate, updateMany, and insertMany.
  * @param {mongoose.Schema} schema - The Mongoose schema to modify.
  * @param {string[]} fields - The fields to anonymize.
  */
