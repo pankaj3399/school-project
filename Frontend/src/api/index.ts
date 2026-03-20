@@ -1082,3 +1082,19 @@ export const subscribeToWaitlist = async (email: string, confirmEmail: string) =
     };
   }
 };
+
+export const completeTeacherRegistration = async (data: any) => {
+  try {
+    const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
+    return response.data;
+  } catch (error: any) {
+    return {
+      error: {
+        message: error?.response?.data?.message || error?.message || "Registration failed",
+        response: {
+          data: error?.response?.data
+        }
+      }
+    };
+  }
+};
