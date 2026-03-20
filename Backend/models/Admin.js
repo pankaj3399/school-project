@@ -56,6 +56,20 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
+
+  // Best-effort anonymization: protect privacy (PII) by masking the last octet/hextet.
+  if (this.termsAcceptedIp) {
+    if (this.termsAcceptedIp.includes('.')) {
+      this.termsAcceptedIp = this.termsAcceptedIp.replace(/\d+$/, '0');
+    } else if (this.termsAcceptedIp.includes(':')) {
+      const parts = this.termsAcceptedIp.split(':');
+      if (parts.length > 1) {
+        parts[parts.length - 1] = '0000';
+        this.termsAcceptedIp = parts.join(':');
+      }
+    }
+  }
+
   next();
 });
 

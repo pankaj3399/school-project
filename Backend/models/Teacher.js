@@ -91,7 +91,8 @@ teacherSchema.pre('save', function (next) {
     return next(new Error('Teacher must have either a password or a registration token'));
   }
 
-  // Anonymize IP address to protect privacy (PII)
+  // Best-effort anonymization: protect privacy (PII) by masking the last octet/hextet.
+  // This is a string-based approach as a lightweight alternative to full IP parsing.
   if (this.termsAcceptedIp) {
     // Truncate the last octet for IPv4 or mask for IPv6
     if (this.termsAcceptedIp.includes('.')) {

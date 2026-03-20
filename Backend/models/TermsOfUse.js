@@ -46,8 +46,7 @@ const TermsOfUseSchema = new mongoose.Schema({
 const TermsAcceptanceSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    required: true,
-    index: true
+    required: true
   },
   userModel: {
     type: String,
@@ -84,7 +83,7 @@ const TermsAcceptanceSchema = new mongoose.Schema({
   }
 });
 
-// Anonymize IP address on save
+// Best-effort anonymization: protect privacy (PII) by masking the last octet/hextet.
 TermsAcceptanceSchema.pre('save', function (next) {
   if (this.ipAddress) {
     if (this.ipAddress.includes('.')) {
