@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
-import { anonymizeIP, anonymizeUpdate } from '../utils/ipAnonymizer.js';
+import { anonymizeIP, anonymizeUpdate, addIPAnonymizationMiddleware } from '../utils/ipAnonymizer.js';
 
-// Stores different versions of Terms of Use
-// Records are immutable to ensure historical auditability.
+// Stores different versions of Terms of Use.
+// Records are strictly immutable to ensure historical auditability.
+// Any material change (content, HTML, dates, etc.) MUST be implemented by creating a new version.
 const TermsOfUseSchema = new mongoose.Schema({
   version: { 
     type: String, 
@@ -102,31 +103,8 @@ const TermsAcceptanceSchema = new mongoose.Schema({
   }
 });
 
-// Best-effort anonymization: protect privacy (PII) by masking the last octet/hextet.
-TermsAcceptanceSchema.pre('save', function (next) {
-  if (this.ipAddress) {
-    this.ipAddress = anonymizeIP(this.ipAddress);
-  }
-  next();
-});
-
-// Query middleware to ensure ipAddress is masked for all persistence paths
-TermsAcceptanceSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
-  const update = this.getUpdate();
-  anonymizeUpdate(update, ['ipAddress']);
-  next();
-});
-
-TermsAcceptanceSchema.pre('insertMany', function (next, docs) {
-  if (Array.isArray(docs)) {
-    docs.forEach(doc => {
-      if (doc.ipAddress) {
-        doc.ipAddress = anonymizeIP(doc.ipAddress);
-      }
-    });
-  }
-  next();
-});
+// Apply IP anonymization middleware to protect ipAddress
+addIPAnonymizationMiddleware(TermsAcceptanceSchema, ['ipAddress']);
 
 // Compound index for efficient lookups
 TermsAcceptanceSchema.index({ userId: 1, termsVersion: 1 });

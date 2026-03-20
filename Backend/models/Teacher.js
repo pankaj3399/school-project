@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
-import { anonymizeIP, anonymizeUpdate } from '../utils/ipAnonymizer.js';
+import { anonymizeIP, anonymizeUpdate, addIPAnonymizationMiddleware } from '../utils/ipAnonymizer.js';
 
 const teacherSchema = new mongoose.Schema({
   name: {
@@ -92,32 +92,11 @@ teacherSchema.pre('save', function (next) {
     return next(new Error('Teacher must have either a password or a registration token'));
   }
 
-  // Best-effort anonymization: protect privacy (PII) by masking the last octet/hextet.
-  // This is a string-based approach as a lightweight alternative to full IP parsing.
-  if (this.termsAcceptedIp) {
-    this.termsAcceptedIp = anonymizeIP(this.termsAcceptedIp);
-  }
-
   next();
 });
 
-// Query middleware to ensure termsAcceptedIp is masked for all persistence paths
-teacherSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
-  const update = this.getUpdate();
-  anonymizeUpdate(update, ['termsAcceptedIp']);
-  next();
-});
-
-teacherSchema.pre('insertMany', function (next, docs) {
-  if (Array.isArray(docs)) {
-    docs.forEach(doc => {
-      if (doc.termsAcceptedIp) {
-        doc.termsAcceptedIp = anonymizeIP(doc.termsAcceptedIp);
-      }
-    });
-  }
-  next();
-});
+// Apply IP anonymization middleware to protect termsAcceptedIp
+addIPAnonymizationMiddleware(teacherSchema, ['termsAcceptedIp']);
 
 teacherSchema.index({ registrationToken: 1 });
 teacherSchema.index({ schoolId: 1, grade: 1, type: 1 });
