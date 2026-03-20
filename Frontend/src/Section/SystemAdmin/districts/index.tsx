@@ -22,6 +22,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDistricts } from '@/api';
 import { useAuth } from '@/authContext';
+import { District } from '@/lib/types';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,11 +36,20 @@ import { Badge } from "../../../components/ui/badge";
 export default function DistrictsList() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [districts, setDistricts] = useState<any[]>([]);
+    const [districts, setDistricts] = useState<District[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [districtsError, setDistrictsError] = useState<string | null>(null);
     const currentRequestRef = useRef(0);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [search]);
 
     const fetchDistricts = useCallback(async () => {
         const requestId = ++currentRequestRef.current;
@@ -49,7 +59,7 @@ export default function DistrictsList() {
         try {
             const token = user?.token || localStorage.getItem('token');
             if (token) {
-                const data = await getDistricts(token, { search });
+                const data = await getDistricts(token, { search: debouncedSearch });
                 if (requestId === currentRequestRef.current) {
                     if (data.error) {
                         setDistrictsError(data.error.message || "Failed to fetch districts");
@@ -67,7 +77,7 @@ export default function DistrictsList() {
                 setLoading(false);
             }
         }
-    }, [user?.token, search]);
+    }, [user?.token, debouncedSearch]);
 
     useEffect(() => {
         fetchDistricts();
@@ -85,6 +95,14 @@ export default function DistrictsList() {
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
+    };
+
+    const formatDistrictCreatedDate = (createdAt: string) => {
+        const created = new Date(createdAt);
+        if (isNaN(created.getTime())) {
+            return "Unknown";
+        }
+        return created.toLocaleDateString();
     };
 
     return (
@@ -159,7 +177,7 @@ export default function DistrictsList() {
                                             </div>
                                             <div>
                                                 <div className="font-semibold text-gray-900">{district.name}</div>
-                                                <div className="text-xs text-gray-500">Created {new Date(district.createdAt).toLocaleDateString()}</div>
+                                                <div className="text-xs text-gray-500">Created {formatDistrictCreatedDate(district.createdAt)}</div>
                                             </div>
                                         </div>
                                     </TableCell>
