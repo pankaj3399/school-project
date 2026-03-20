@@ -1004,14 +1004,51 @@ export const changePassword = async (data: any) => {
 };
 
 
-export async function completeTeacherRegistration({ token, name, password, subject }: { token: string, name: string, password: string, subject: string }) {
-  const response = await fetch(`${API_URL}/teacher/complete-registration`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, name, password, subject })
-  });
-  return response.json();
-}
+export const getDistricts = async (token: string, params?: Record<string, string | number | boolean>) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts`, {
+      headers: { token },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictById = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictStats = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictSchools = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/schools`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {
