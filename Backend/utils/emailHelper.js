@@ -645,9 +645,10 @@ export const emailGenerator = async (
     queueEmail(student.standard);
   }
 
-  if (leadTeacher) {
-    queueEmail(leadTeacher.email);
-  }
+  const leadTeachers = Array.isArray(leadTeacher) ? leadTeacher : [leadTeacher];
+  leadTeachers
+    .filter((lt) => lt?.email)
+    .forEach((lt) => queueEmail(lt.email));
 
 
   const results = await Promise.allSettled(emailPromises);
