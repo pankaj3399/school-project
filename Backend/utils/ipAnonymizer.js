@@ -30,14 +30,22 @@ export const anonymizeIP = (ip) => {
 export const anonymizeUpdate = (update, fields) => {
   if (!update) return;
 
+  // 1. Handle direct field assignments (non-operator fields)
   fields.forEach(field => {
-    // Direct field update e.g. { ipAddress: '...' }
     if (update[field]) {
       update[field] = anonymizeIP(update[field]);
     }
-    // $set update e.g. { $set: { ipAddress: '...' } }
-    if (update.$set && update.$set[field]) {
-      update.$set[field] = anonymizeIP(update.$set[field]);
+  });
+
+  // 2. Handle operators (e.g., $set, $setOnInsert, $push, etc.)
+  Object.keys(update).forEach(key => {
+    if (key.startsWith('$') && typeof update[key] === 'object') {
+      const operatorObj = update[key];
+      fields.forEach(field => {
+        if (operatorObj[field]) {
+          operatorObj[field] = anonymizeIP(operatorObj[field]);
+        }
+      });
     }
   });
 };
@@ -59,15 +67,15 @@ export const addIPAnonymizationMiddleware = (schema, fields) => {
     next();
   });
 
-  // Query middleware: handles updates
-  schema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+  // Query middleware: handles updates (including bulk updateMany)
+  schema.pre(['updateOne', 'findOneAndUpdate', 'updateMany'], function (next) {
     const update = this.getUpdate();
     anonymizeUpdate(update, fields);
     next();
   });
 
-  // Model middleware: handles Model.insertMany()
-  schema.pre('insertMany', function (next, docs) {
+  // Model middleware: handles Model.insertMany() - updated for Mongoose 8.x signature
+  schema.pre('insertMany', function (next, docs, options) {
     if (Array.isArray(docs)) {
       docs.forEach(doc => {
         fields.forEach(field => {
