@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DOMPurify from 'dompurify';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -45,7 +46,11 @@ export default function TermsPage() {
         effectiveDate: string;
     } | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    const safeHtml = useMemo(() => {
+        if (!terms?.contentHtml) return '';
+        return DOMPurify.sanitize(terms.contentHtml);
+    }, [terms?.contentHtml]);
 
     useEffect(() => {
         const fetchTerms = async () => {
@@ -100,7 +105,7 @@ export default function TermsPage() {
                                     {terms?.title || 'Terms & Conditions of Use'}
                                 </CardTitle>
                                 <p className="text-blue-100 text-sm mt-1">
-                                    Version: {terms?.version || '1.0'} |
+                                    Version: {terms?.version || '1.0'} | 
                                     Effective: {terms?.effectiveDate
                                         ? new Date(terms.effectiveDate).toLocaleDateString()
                                         : 'Current'}
@@ -112,7 +117,7 @@ export default function TermsPage() {
                         {terms?.contentHtml ? (
                             <div
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: terms.contentHtml }}
+                                dangerouslySetInnerHTML={{ __html: safeHtml }}
                             />
                         ) : (
                             <div className="prose prose-lg max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">

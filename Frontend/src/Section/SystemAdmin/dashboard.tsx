@@ -16,16 +16,33 @@ import { useNavigate } from 'react-router-dom';
 import { getSystemDashboardStats } from '@/api';
 import { useAuth } from '@/authContext';
 
+import { Navigate } from 'react-router-dom';
+
+interface StatsType {
+    totalDistricts: number;
+    activeDistricts: number;
+    totalSchools: number;
+    totalTeachers: number;
+    totalStudents: number;
+    totalTokensEarned: number;
+    growth30d: string;
+}
+
 export default function SystemAdminDashboard() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<StatsType | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const isSystemAdmin = user?.role === 'SystemAdmin';
+
+    if (user && !isSystemAdmin) {
+        return <Navigate to="/home" replace />;
+    }
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
-            // @ts-ignore
             const token = user.token || localStorage.getItem('token');
             if (token) {
                 const data = await getSystemDashboardStats(token);
@@ -111,7 +128,7 @@ export default function SystemAdminDashboard() {
                                 <div className={`p-3 rounded-xl ${card.bgColor} ${card.color}`}>
                                     <card.icon className="h-6 w-6" />
                                 </div>
-                                {card.total && (
+                                {card.total !== null && card.total !== undefined && (
                                     <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                         Total: {card.total}
                                     </span>
@@ -163,8 +180,8 @@ export default function SystemAdminDashboard() {
                             <div className="pt-4 border-t border-emerald-400/30">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-emerald-100 text-sm">Growth (30d)</span>
-                                    <span className="flex items-center text-white font-bold bg-white/20 px-2 py-0.5 rounded text-sm">
-                                        <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
+                                    <span className="flex items-center text-white font-bold bg-white/20 px-2 py-0.5 rounded text-sm" aria-label="growth-stat">
+                                        <TrendingUp className="h-3 w-3 mr-1" /> {stats?.growth30d || "N/A"}
                                     </span>
                                 </div>
                                 <div className="h-2 bg-emerald-900/20 rounded-full overflow-hidden">

@@ -13,3 +13,6 @@ export const authenticate = (req, res, next) => {
     }
 };
 
+export const authenticateToken = authenticate;
+
+

@@ -150,10 +150,16 @@ export const deleteTeacher = async (req, res) => {
 };
 
 export const completeTeacherRegistration = async (req, res) => {
-  const { token, name, password, subject } = req.body;
+  const { token, name, password, subject, termsAccepted } = req.body;
+  
   if (!token || !name || !password || !subject) {
     return res.status(400).json({ message: "All fields are required." });
   }
+
+  if (termsAccepted !== true) {
+    return res.status(400).json({ message: "You must accept the terms and conditions to complete registration." });
+  }
+
   try {
     const teacher = await Teacher.findOne({ registrationToken: token });
     if (!teacher) {
@@ -169,6 +175,12 @@ export const completeTeacherRegistration = async (req, res) => {
     teacher.registrationToken = null;
     teacher.isEmailVerified = true;
     teacher.isFirstLogin = true;
+    
+    // Record terms acceptance
+    teacher.termsAccepted = true;
+    // We can fetch the current version here if we want, but for now we'll just set it to true
+    // as passed from frontend
+    
     await teacher.save();
     // Send onboarding email after registration is complete
     await sendOnboardingEmail(teacher);

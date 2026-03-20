@@ -76,6 +76,14 @@ const teacherSchema = new mongoose.Schema({
   registrationToken: {
     type: String,
     default: null
+  },
+  termsAccepted: {
+    type: Boolean,
+    default: false
+  },
+  termsAcceptedVersion: {
+    type: String,
+    default: null
   }
 });
 

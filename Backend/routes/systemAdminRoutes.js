@@ -9,10 +9,14 @@ import {
   recordTermsAcceptance,
   getAllAdmins
 } from '../controllers/systemAdminController.js';
-import { authenticateToken, authorizeRoles } from '../middlewares/authMiddleware.js';
+import { authenticateToken } from '../middlewares/authMiddleware.js';
+import { authorizeRoles } from '../middlewares/roleMiddleware.js';
 import { Role } from '../enum.js';
 
 const router = express.Router();
+
+// Public routes
+router.get('/terms', getCurrentTerms); 
 
 // Route-level middleware
 router.use(authenticateToken);
@@ -24,7 +28,6 @@ router.get('/analytics/districts', authorizeRoles(Role.SystemAdmin), getDistrict
 router.get('/admins', authorizeRoles(Role.SystemAdmin), getAllAdmins);
 
 // Terms routes
-router.get('/terms', getCurrentTerms); 
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin), getAllTermsVersions);
 router.post('/terms', authorizeRoles(Role.SystemAdmin), createTermsVersion);
 router.post('/terms/accept', recordTermsAcceptance);
