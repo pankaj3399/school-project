@@ -1015,9 +1015,46 @@ export const createDistrict = async (data: any, token: string) => {
   }
 };
 
+export const completeTeacherRegistration = async (data: {
+  token: string;
+  name: string;
+  password: string;
+  subject: string;
+  termsAccepted?: boolean;
+}) => {
+  try {
+    const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getSystemDashboardStats = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/dashboard`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 export const updateDistrict = async (id: string, data: any, token: string) => {
   try {
     const response = await axios.put(`${API_URL}/districts/${id}`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getStateAnalytics = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/analytics/states`, {
       headers: { token },
     });
     return response.data;
@@ -1051,6 +1088,17 @@ export const assignDistrictAdmin = async (id: string, data: any, token: string) 
 export const addSchoolToDistrict = async (id: string, data: any, token: string) => {
   try {
     const response = await axios.post(`${API_URL}/districts/${id}/schools`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictAnalytics = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/analytics/districts`, {
       headers: { token },
     });
     return response.data;

@@ -40,6 +40,20 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+  termsAccepted: {
+    type: Boolean,
+    default: false
+  },
+  termsAcceptedVersion: {
+    type: String,
+    default: null,
+    validate: {
+      validator: function(v) {
+        return !this.termsAccepted || (v && v.trim().length > 0);
+      },
+      message: 'termsAcceptedVersion is required when termsAccepted is true'
+    }
   }
 });
 

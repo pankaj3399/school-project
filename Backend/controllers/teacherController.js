@@ -2,6 +2,7 @@ import Student from "../models/Student.js";
 import School from "../models/School.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
+import TermsOfUse from "../models/TermsOfUse.js";
 import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
@@ -150,10 +151,16 @@ export const deleteTeacher = async (req, res) => {
 };
 
 export const completeTeacherRegistration = async (req, res) => {
-  const { token, name, password, subject } = req.body;
+  const { token, name, password, subject, termsAccepted } = req.body;
+  
   if (!token || !name || !password || !subject) {
     return res.status(400).json({ message: "All fields are required." });
   }
+
+  if (termsAccepted !== true) {
+    return res.status(400).json({ message: "You must accept the terms and conditions to complete registration." });
+  }
+
   try {
     const teacher = await Teacher.findOne({ registrationToken: token });
     if (!teacher) {
@@ -169,7 +176,29 @@ export const completeTeacherRegistration = async (req, res) => {
     teacher.registrationToken = null;
     teacher.isEmailVerified = true;
     teacher.isFirstLogin = true;
-    await teacher.save();
+    // Fetch latest terms version
+    let latestTerms;
+    try {
+        latestTerms = await TermsOfUse.findOne({ isActive: true }).sort({ createdAt: -1 });
+    } catch (err) {
+        console.error("Error fetching latest terms version:", err);
+        return res.status(500).json({ message: "Error fetching terms of use", error: err.message });
+    }
+
+    if (!latestTerms) {
+        return res.status(400).json({ message: "No active terms of use found. Registration cannot be completed." });
+    }
+
+    // Record terms acceptance
+    teacher.termsAccepted = true;
+    teacher.termsAcceptedVersion = latestTerms.version;
+    
+    try {
+        await teacher.save();
+    } catch (err) {
+        console.error("Error saving teacher:", err);
+        return res.status(500).json({ message: "Error saving teacher registration", error: err.message });
+    }
     // Send onboarding email after registration is complete
     await sendOnboardingEmail(teacher);
     return res

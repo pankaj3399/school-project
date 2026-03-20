@@ -2,7 +2,8 @@ export const Role = Object.freeze({
     Admin: 'Admin',
     Teacher: 'Teacher',
     Student: 'Student',
-    SchoolAdmin: 'SchoolAdmin'
+    SchoolAdmin: 'SchoolAdmin',
+    SystemAdmin: 'SystemAdmin'
 });
 
 export const FormType = Object.freeze({
