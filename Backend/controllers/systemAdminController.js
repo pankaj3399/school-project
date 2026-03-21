@@ -4,7 +4,7 @@ import Admin from '../models/Admin.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
 import School from '../models/School.js';
-import TermsOfUse from '../models/TermsOfUse.js';
+import { TermsOfUse, TermsAcceptance } from '../models/TermsOfUse.js';
 
 export const getDashboardStats = async (req, res) => {
     try {
@@ -105,10 +105,26 @@ export const recordTermsAcceptance = async (req, res) => {
         const userId = req.user.id;
         const userRole = req.user.role;
 
+        // Look up server-authoritative active terms version
+        const activeTerms = await TermsOfUse.findOne({ isActive: true }).sort({ createdAt: -1 });
+        if (!activeTerms) {
+            return res.status(404).json({ message: 'No active terms version found' });
+        }
+
+        // Compare with client-supplied version and handle mismatches
+        if (termsVersion && termsVersion !== activeTerms.version) {
+            return res.status(400).json({ 
+                message: 'Terms version mismatch', 
+                clientVersion: termsVersion, 
+                activeVersion: activeTerms.version 
+            });
+        }
+
         let user;
         const updateData = {
             termsAccepted: true,
-            termsAcceptedVersion: termsVersion
+            termsAcceptedVersion: activeTerms.version,
+            termsAcceptedAt: new Date()
         };
         const updateOptions = { new: true, runValidators: true, select: '-password -salt' };
 
@@ -131,6 +147,17 @@ export const recordTermsAcceptance = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        // Create independent audit record in TermsAcceptance collection
+        await TermsAcceptance.create({
+            userId,
+            userModel: userRole === 'Teacher' ? 'Teacher' : (userRole === 'Student' ? 'Student' : 'User'),
+            userType: userRole,
+            termsAcceptedVersion: activeTerms.version,
+            acceptedAt: updateData.termsAcceptedAt,
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent')
+        });
 
         res.status(200).json({ message: 'Terms acceptance recorded successfully', user });
     } catch (error) {

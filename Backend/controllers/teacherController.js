@@ -2,7 +2,7 @@ import Student from "../models/Student.js";
 import School from "../models/School.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
-import TermsOfUse from "../models/TermsOfUse.js";
+import { TermsOfUse } from "../models/TermsOfUse.js";
 import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";

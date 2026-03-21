@@ -1017,11 +1017,14 @@ export const completeTeacherRegistration = async (data: {
   } catch (error: any) {
     return {
       error: {
-        message: error?.response?.data?.message || error?.message || "Registration failed",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Registration failed",
         response: {
-          data: error?.response?.data
-        }
-      }
+          data: error?.response?.data,
+        },
+      },
     };
   }
 };
@@ -1030,23 +1033,53 @@ export const bulkImportSchools = async (file: File, token: string) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await axios.post(`${API_URL}/system-admin/import/schools`, formData, {
-      headers: { 
-        token,
-      },
-    });
+    const response = await axios.post(
+      `${API_URL}/system-admin/import/schools`,
+      formData,
+      {
+        headers: {
+          token,
+        },
+      }
+    );
     return response.data;
   } catch (error: any) {
-    const message = error?.response?.data?.message || error?.message || "Unknown error";
+    const message =
+      error?.response?.data?.message || error?.message || "Unknown error";
     return { error: message };
   }
 };
 
-export const getDistricts = async (token: string, params?: Record<string, string | number | boolean>) => {
+export const createDistrict = async (data: any, token: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/districts`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistricts = async (
+  token: string,
+  params?: Record<string, string | number | boolean>
+) => {
   try {
     const response = await axios.get(`${API_URL}/districts`, {
       headers: { token },
       params,
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictById = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}`, {
+      headers: { token },
     });
     return response.data;
   } catch (error) {
@@ -1065,9 +1098,20 @@ export const getSystemDashboardStats = async (token: string) => {
   }
 };
 
-export const getDistrictById = async (id: string, token: string) => {
+export const getDistrictStats = async (id: string, token: string) => {
   try {
-    const response = await axios.get(`${API_URL}/districts/${id}`, {
+    const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const updateDistrict = async (id: string, data: any, token: string) => {
+  try {
+    const response = await axios.put(`${API_URL}/districts/${id}`, data, {
       headers: { token },
     });
     return response.data;
@@ -1087,11 +1131,49 @@ export const getStateAnalytics = async (token: string) => {
   }
 };
 
-export const getDistrictStats = async (id: string, token: string) => {
+export const deleteDistrict = async (id: string, token: string) => {
   try {
-    const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
+    const response = await axios.delete(`${API_URL}/districts/${id}`, {
       headers: { token },
     });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const assignDistrictAdmin = async (
+  id: string,
+  data: any,
+  token: string
+) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/districts/${id}/admins`,
+      data,
+      {
+        headers: { token },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const addSchoolToDistrict = async (
+  id: string,
+  data: any,
+  token: string
+) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/districts/${id}/schools`,
+      data,
+      {
+        headers: { token },
+      }
+    );
     return response.data;
   } catch (error) {
     return { error };

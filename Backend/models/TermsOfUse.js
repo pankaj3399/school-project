@@ -93,7 +93,7 @@ const TermsAcceptanceSchema = new mongoose.Schema({
     enum: Object.values(Role),
     required: true
   },
-  termsVersion: { 
+  termsAcceptedVersion: { 
     type: String, 
     required: true,
     index: true
@@ -122,7 +122,7 @@ const TermsAcceptanceSchema = new mongoose.Schema({
 addIPAnonymizationMiddleware(TermsAcceptanceSchema, ['ipAddress']);
 
 // Compound index for efficient lookups
-TermsAcceptanceSchema.index({ userId: 1, termsVersion: 1 });
+TermsAcceptanceSchema.index({ userId: 1, termsAcceptedVersion: 1 });
 
 export const TermsOfUse = mongoose.model('TermsOfUse', TermsOfUseSchema);
 export const TermsAcceptance = mongoose.model('TermsAcceptance', TermsAcceptanceSchema);

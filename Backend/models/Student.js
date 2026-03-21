@@ -102,6 +102,7 @@ const studentSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  termsAcceptedAt: { type: Date },
   termsAcceptedVersion: {
     type: String,
     default: null,
