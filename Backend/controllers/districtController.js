@@ -34,7 +34,7 @@ export const createDistrict = async (req, res) => {
       return res.status(400).json({ message: "District name is required and must be a non-empty string" });
     }
 
-    const normalizedCode = code.toUpperCase();
+    const normalizedCode = (code || '').trim().toUpperCase();
 
     // Check if district code already exists
     const existingDistrict = await District.findOne({ code: normalizedCode });

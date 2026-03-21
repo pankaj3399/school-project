@@ -60,7 +60,7 @@ const TermsOfUseSchema = new mongoose.Schema({
 const TermsAcceptanceSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User',
+    refPath: 'userModel',
     required: true
   },
   userModel: {
@@ -98,8 +98,8 @@ const TermsAcceptanceSchema = new mongoose.Schema({
   }
 });
 
-// Compound index for efficient lookups
-TermsAcceptanceSchema.index({ userId: 1, termsVersion: 1 });
+// Unique compound index to prevent duplicate acceptance rows
+TermsAcceptanceSchema.index({ userId: 1, termsVersion: 1 }, { unique: true });
 
 export const TermsOfUse = mongoose.model('TermsOfUse', TermsOfUseSchema);
 export const TermsAcceptance = mongoose.model('TermsAcceptance', TermsAcceptanceSchema);

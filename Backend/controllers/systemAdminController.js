@@ -4,8 +4,8 @@ import User from '../models/User.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
 import Admin from '../models/Admin.js';
-import TermsOfUse from '../models/TermsOfUse.js';
-import { TermsAcceptance } from "../models/TermsOfUse.js";
+import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
+import crypto from 'crypto';
 import { escapeRegExp } from '../utils/stringUtils.js';
 import { Role } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
@@ -382,6 +382,8 @@ export const recordTermsAcceptance = async (req, res) => {
       return res.status(403).json({ message: "Access denied. Cannot record acceptance for another user." });
     }
 
+    const hashedIp = crypto.createHash('sha256').update(req.ip || req.socket.remoteAddress || '').digest('hex');
+
     const acceptance = await TermsAcceptance.create({
       userId,
       userModel,
@@ -389,7 +391,7 @@ export const recordTermsAcceptance = async (req, res) => {
       termsVersion,
       schoolId,
       districtId,
-      ipAddress: req.ip || req.socket.remoteAddress,
+      ipAddress: hashedIp,
       userAgent: req.get('User-Agent')
     });
 
@@ -398,6 +400,9 @@ export const recordTermsAcceptance = async (req, res) => {
       acceptance
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(200).json({ message: "Terms already accepted for this version" });
+    }
     console.error("Error recording terms acceptance:", error);
     return res.status(500).json({ message: "Error recording acceptance", error: error.message });
   }

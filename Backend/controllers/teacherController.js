@@ -2,6 +2,7 @@ import Student from "../models/Student.js";
 import School from "../models/School.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
+import { TermsOfUse } from '../models/TermsOfUse.js';
 import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
@@ -173,8 +174,16 @@ export const completeTeacherRegistration = async (req, res) => {
     // Record terms acceptance if provided during registration
     if (req.body.termsAccepted) {
       // Record terms acceptance on the teacher record
-      teacher.termsAccepted = true;
-      teacher.termsVersion = req.body.termsVersion || '1.0';
+      // Resolve terms version
+      let termsVersion = req.body.termsVersion;
+      if (!termsVersion) {
+        const activeTerms = await TermsOfUse.findOne({ isActive: true });
+        if (!activeTerms) {
+          return res.status(400).json({ message: "No active terms version found. Please contact administrator." });
+        }
+        termsVersion = activeTerms.version;
+      }
+      teacher.termsVersion = termsVersion;
       teacher.termsAcceptedAt = new Date();
       
       // Normalize IP address handling
