@@ -28,7 +28,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         return;
       }
-      setUser(response.user);
+      if (response.user) {
+        setUser({ ...response.user, token });
+      } else {
+        setUser(null);
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       setUser(null); // Clear user on error
