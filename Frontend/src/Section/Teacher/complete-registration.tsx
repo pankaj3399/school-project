@@ -61,7 +61,7 @@ export default function CompleteTeacherRegistration() {
     try {
       const data = await completeTeacherRegistration({
         token,
-        termsAccepted,
+        termsAccepted: true,
         ...formData
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {

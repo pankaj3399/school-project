@@ -14,7 +14,6 @@ export default function AddDistrict() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [contactEmailError, setContactEmailError] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         code: '',
@@ -24,75 +23,38 @@ export default function AddDistrict() {
         contactEmail: ''
     });
 
-    const validateEmail = (email: string) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        const finalValue = name === 'code' ? value.toUpperCase() : value;
-        
-        if (name === 'contactEmail') {
-            if (value && !validateEmail(value)) {
-                setContactEmailError('Please enter a valid email address');
-            } else {
-                setContactEmailError('');
-            }
-        }
-        
-        setFormData(prev => ({ ...prev, [name]: finalValue }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (formData.contactEmail && !validateEmail(formData.contactEmail)) {
-            setContactEmailError('Please enter a valid email address');
-            return;
-        }
-
         setLoading(true);
 
+        // @ts-ignore
         const token = user?.token || localStorage.getItem('token');
-        if (!token) {
-            toast({
-                title: "Error",
-                description: "You must be logged in to create a district",
-                variant: "destructive"
-            });
-            setLoading(false);
-            return;
-        }
 
         try {
-            // Note: createDistrict returns { error } for API failures; 
-            // the catch block handles unexpected runtime/network exceptions.
             const response = await createDistrict(formData, token);
 
-            if (response?.district) {
+            if (response.district) {
                 toast({
                     title: "Success",
                     description: "District created successfully",
                 });
                 navigate('/system-admin/districts');
             } else {
-                const errorMessage = 
-                    response?.error?.response?.data?.message || 
-                    response?.error?.message || 
-                    response?.message || 
-                    "Failed to create district";
                 toast({
                     title: "Error",
-                    description: errorMessage,
+                    description: response.message || "Failed to create district",
                     variant: "destructive"
                 });
             }
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred";
+        } catch (error) {
             toast({
                 title: "Error",
-                description: errorMessage,
+                description: "An unexpected error occurred",
                 variant: "destructive"
             });
         } finally {
@@ -188,11 +150,7 @@ export default function AddDistrict() {
                                     placeholder="admin@district.edu"
                                     value={formData.contactEmail}
                                     onChange={handleChange}
-                                    className={contactEmailError ? "border-red-500" : ""}
                                 />
-                                {contactEmailError && (
-                                    <p className="text-xs text-red-500 mt-1">{contactEmailError}</p>
-                                )}
                             </div>
                         </div>
 
@@ -200,7 +158,7 @@ export default function AddDistrict() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto bg-[#00a58c] hover:bg-[#008f7a] text-white"
-                                disabled={loading || !!contactEmailError}
+                                disabled={loading}
                             >
                                 {loading ? "Creating..." : (
                                     <span className="flex items-center">

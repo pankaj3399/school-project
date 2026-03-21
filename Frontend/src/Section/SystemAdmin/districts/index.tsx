@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,7 +22,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDistricts } from '@/api';
 import { useAuth } from '@/authContext';
-import { District } from '@/lib/types';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,57 +30,30 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "../../../components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 export default function DistrictsList() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [districts, setDistricts] = useState<District[]>([]);
+    const [districts, setDistricts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [districtsError, setDistrictsError] = useState<string | null>(null);
-    const currentRequestRef = useRef(0);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [search]);
-
-    const fetchDistricts = useCallback(async () => {
-        const requestId = ++currentRequestRef.current;
-        setLoading(true);
-        setDistrictsError(null);
-
-        try {
-            const token = user?.token || localStorage.getItem('token');
-            if (token) {
-                const data = await getDistricts(token, { search: debouncedSearch });
-                if (requestId === currentRequestRef.current) {
-                    if (data.error) {
-                        setDistrictsError(data.error.message || "Failed to fetch districts");
-                    } else if (data.districts) {
-                        setDistricts(data.districts);
-                    }
-                }
-            }
-        } catch (err: any) {
-            if (requestId === currentRequestRef.current) {
-                setDistrictsError(err.message || "An unexpected error occurred");
-            }
-        } finally {
-            if (requestId === currentRequestRef.current) {
-                setLoading(false);
+    const fetchDistricts = async () => {
+        // @ts-ignore
+        const token = user?.token || localStorage.getItem('token');
+        if (token) {
+            const data = await getDistricts(token, { search });
+            if (data.districts) {
+                setDistricts(data.districts);
             }
         }
-    }, [user?.token, debouncedSearch]);
+        setLoading(false);
+    };
 
     useEffect(() => {
         fetchDistricts();
-    }, [fetchDistricts]);
+    }, [user, search]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -97,14 +69,6 @@ export default function DistrictsList() {
         }
     };
 
-    const formatDistrictCreatedDate = (createdAt: string) => {
-        const created = new Date(createdAt);
-        if (isNaN(created.getTime())) {
-            return "Unknown";
-        }
-        return created.toLocaleDateString();
-    };
-
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -115,8 +79,6 @@ export default function DistrictsList() {
                 <Button
                     onClick={() => navigate('/system-admin/districts/new')}
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
-                    disabled
-                    aria-disabled="true"
                 >
                     <Plus className="mr-2 h-4 w-4" />
                     Add District
@@ -149,13 +111,7 @@ export default function DistrictsList() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {districtsError ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-red-500 font-semibold">
-                                    {districtsError}
-                                </TableCell>
-                            </TableRow>
-                        ) : loading ? (
+                        {loading ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                                     Loading districts...
@@ -172,12 +128,12 @@ export default function DistrictsList() {
                                 <TableRow key={district._id} className="hover:bg-gray-50/50">
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold">
-                                                {district.code}
-                                            </div>
+                                        <div className="h-10 min-w-[40px] px-2 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm uppercase shrink-0">
+                                            {district.code}
+                                        </div>
                                             <div>
                                                 <div className="font-semibold text-gray-900">{district.name}</div>
-                                                <div className="text-xs text-gray-500">Created {formatDistrictCreatedDate(district.createdAt)}</div>
+                                                <div className="text-xs text-gray-500">Created {new Date(district.createdAt).toLocaleDateString()}</div>
                                             </div>
                                         </div>
                                     </TableCell>
@@ -209,9 +165,9 @@ export default function DistrictsList() {
                                                 <DropdownMenuItem onClick={() => navigate(`/system-admin/districts/${district._id}`)}>
                                                     View Details
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem disabled>Manage Schools</DropdownMenuItem>
+                                                <DropdownMenuItem>Manage Schools</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-red-600" disabled>
+                                                <DropdownMenuItem className="text-red-600">
                                                     Suspend District
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>

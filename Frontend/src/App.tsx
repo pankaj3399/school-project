@@ -1,11 +1,4 @@
 import RootLayout from "./layout";
-import AddDistrict from "./Section/SystemAdmin/districts/add-district";
-import BulkImportSchools from "./Section/SystemAdmin/schools/bulk-import";
-import DistrictsList from "./Section/SystemAdmin/districts";
-import ViewDistrict from "./Section/SystemAdmin/districts/view-district";
-import TermsPage from "@/components/TermsPage";
-import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
-
 import LandingPage from "./Section/LandingPage";
 import { SignupForm } from "./components/SignupPage";
 import LoginForm from "./components/SigninPage";
@@ -44,33 +37,20 @@ import SetupStudents from "./Section/School/setup-students";
 import SetupPage from "./Section/School/setup-page";
 // import FirstLogin from "./components/FirstLogin";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
+import TermsPage from "@/components/TermsPage";
+// System Admin Components (Placeholders for now)
+import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
+import DistrictsList from "@/Section/SystemAdmin/districts";
+import AddDistrict from "@/Section/SystemAdmin/districts/add-district";
+import ViewDistrict from "@/Section/SystemAdmin/districts/view-district";
+import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
 
 
 // Reusable ProtectedRoute component
-// Reusable ProtectedRoute component with RBAC support
-const ProtectedRoute: React.FC<{ 
-  children: React.ReactNode;
-  requiredRole?: string | string[];
-}> = ({ children, requiredRole }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/" />;
-  }
-
-  if (requiredRole) {
-    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    if (!roles.includes(user.role)) {
-      // If user is logged in but doesn't have the required role, 
-      // redirect to their default home page or a denied page
-      return <Navigate to="/home" replace />;
-    }
-  }
-
-  return <>{children}</>;
+  return user ? <>{children}</> : <Navigate to="/" />;
 };
-
-
 
 export default function App() {
   return (
@@ -128,16 +108,16 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
-          <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
-          <Route path="/system-admin" element={<ProtectedRoute requiredRole="SystemAdmin"><SystemAdminDashboard /></ProtectedRoute>} />
-          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRole="SystemAdmin"><BulkImportSchools /></ProtectedRoute>} />
-          <Route path="/system-admin/districts" element={<ProtectedRoute requiredRole="SystemAdmin"><DistrictsList /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRole="SystemAdmin"><AddDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRole="SystemAdmin"><ViewDistrict /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsPage />} />
-          <Route path="/schools/:id" element={<ProtectedRoute><div className="p-8">School details coming soon.</div></ProtectedRoute>} />
-        </Routes>
 
+          {/* System Admin Routes */}
+          <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
+          <Route path="/system-admin" element={<ProtectedRoute><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/system-admin/districts" element={<ProtectedRoute><DistrictsList /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/new" element={<ProtectedRoute><AddDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<ProtectedRoute><ViewDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/import" element={<ProtectedRoute><BulkImportSchools /></ProtectedRoute>} />
+        </Routes>
       </RootLayout>
     </div>
   );

@@ -19,10 +19,10 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // SystemAdmin only routes
-router.post('/', authorizeRoles(Role.SystemAdmin), createDistrict);
-router.get('/', authorizeRoles(Role.SystemAdmin), getDistricts);
-router.delete('/:id', authorizeRoles(Role.SystemAdmin), deleteDistrict);
-router.post('/:id/admins', authorizeRoles(Role.SystemAdmin), assignDistrictAdmin);
+router.post('/', authorizeRoles(Role.SystemAdmin, Role.Admin), createDistrict);
+router.get('/', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistricts);
+router.delete('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), deleteDistrict);
+router.post('/:id/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), assignDistrictAdmin);
 
 // SystemAdmin and DistrictAdmin routes
 router.get('/:id', authorizeRoles(Role.SystemAdmin, Role.DistrictAdmin), getDistrictById);

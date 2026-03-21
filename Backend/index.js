@@ -13,7 +13,9 @@ import schoolRoutes from './routes/schoolRoutes.js';
 import formRoutes from './routes/formRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import waitlistRoutes from './routes/waitlistRoutes.js';
+import districtRoutes from './routes/districtRoutes.js';
 import systemAdminRoutes from './routes/systemAdminRoutes.js';
+import { runMigration } from './migrateLegacySchools.js';
 import { authenticate } from './middlewares/authMiddleware.js';
 import { getCurrentUser } from './controllers/generalController.js';
 
@@ -33,7 +35,10 @@ app.use(bodyParser.json({limit: "50mb"}));
 
 
 
-connectDB().catch((error) => {
+connectDB().then(() => {
+  console.log('Database connected successfully');
+  runMigration();
+}).catch((error) => {
   console.error('Error connecting to database', error);
 });
 
@@ -47,6 +52,7 @@ app.use('/api/student', studentRoutes);
 app.get("/api/user", authenticate, getCurrentUser);
 app.use('/api/form', formRoutes);
 app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/districts', districtRoutes);
 app.use('/api/system-admin', systemAdminRoutes);
 
 app.get('/', (req, res) => {

@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
-import { anonymizeIP, anonymizeUpdate, addIPAnonymizationMiddleware } from '../utils/ipAnonymizer.js';
 
 const teacherSchema = new mongoose.Schema({
   name: {
@@ -79,20 +78,8 @@ const teacherSchema = new mongoose.Schema({
     default: null
   },
   // Terms of Use tracking
-  termsAccepted: {
-    type: Boolean,
-    default: false
-  },
   termsAcceptedAt: { type: Date },
-  termsAcceptedVersion: { 
-    type: String,
-    validate: {
-      validator: function(v) {
-        return typeof v === 'string' && v.trim().length > 0;
-      },
-      message: 'termsAcceptedVersion is required'
-    }
-  },
+  termsVersion: { type: String },
   termsAcceptedIp: { type: String }
 });
 
@@ -106,9 +93,6 @@ teacherSchema.pre('save', function (next) {
 
   next();
 });
-
-// Apply IP anonymization middleware to protect termsAcceptedIp
-addIPAnonymizationMiddleware(teacherSchema, ['termsAcceptedIp']);
 
 teacherSchema.index({ registrationToken: 1 });
 teacherSchema.index({ schoolId: 1, grade: 1, type: 1 });

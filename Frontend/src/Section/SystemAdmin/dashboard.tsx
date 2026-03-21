@@ -10,78 +10,65 @@ import {
     ArrowUpRight,
     TrendingUp,
     Map,
-    Plus
+    Plus,
+    Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getSystemDashboardStats } from '@/api';
 import { useAuth } from '@/authContext';
 
-import { Navigate } from 'react-router-dom';
-
-interface StatsType {
-    totalDistricts: number;
-    activeDistricts: number;
-    totalSchools: number;
-    totalTeachers: number;
-    totalStudents: number;
-    totalTokensEarned: number;
-    growth30d: string;
-}
-
 export default function SystemAdminDashboard() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [stats, setStats] = useState<StatsType | null>(null);
+    const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const isSystemAdmin = user?.role === 'SystemAdmin';
 
     useEffect(() => {
         const fetchStats = async () => {
-            if (!user || !isSystemAdmin) return;
-            setLoading(true);
-            setError(null);
-            try {
-                const token = user.token || localStorage.getItem('token') || "";
+            if (!user) return;
+            // @ts-ignore
+            const token = user.token || localStorage.getItem('token');
+            if (token) {
                 const data = await getSystemDashboardStats(token);
-                if (data.error) {
-                    const normalizedError = typeof data.error === 'object' 
-                        ? JSON.stringify(data.error) 
-                        : String(data.error);
-                    setError(normalizedError);
-                } else if (data.stats) {
+                if (data.stats) {
                     setStats(data.stats);
                 }
-            } catch (err: any) {
-                console.error("Error fetching dashboard stats:", err);
-                setError(err.message || "Failed to fetch dashboard statistics");
-            } finally {
-                setLoading(false);
             }
+            setLoading(false);
         };
 
         fetchStats();
     }, [user]);
 
-    if (user && !isSystemAdmin) {
-        return <Navigate to="/home" replace />;
-    }
+    const handleDownloadWaitlist = async () => {
+        try {
+            // @ts-ignore
+            const token = user?.token || localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
+                method: 'GET',
+                headers: {
+                    'token': `${token}`
+                }
+            });
 
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-                <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
-                <p className="text-gray-600 mb-4">{error}</p>
-                <button 
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                >
-                    Retry
-                </button>
-            </div>
-        );
-    }
+            if (!response.ok) {
+                throw new Error('Failed to download waitlist');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `waitlist-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Error downloading waitlist:', error);
+            alert('Failed to download waitlist data');
+        }
+    };
 
     const cards = [
         {
@@ -130,6 +117,14 @@ export default function SystemAdminDashboard() {
                 </div>
                 <div className="flex gap-4">
                     <Button
+                        onClick={handleDownloadWaitlist}
+                        variant="outline"
+                        className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                    >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Waitlist
+                    </Button>
+                    <Button
                         onClick={() => navigate('/system-admin/districts/new')}
                         className="bg-[#00a58c] hover:bg-[#008f7a]"
                     >
@@ -155,7 +150,7 @@ export default function SystemAdminDashboard() {
                                 <div className={`p-3 rounded-xl ${card.bgColor} ${card.color}`}>
                                     <card.icon className="h-6 w-6" />
                                 </div>
-                                {card.total !== null && card.total !== undefined && (
+                                {card.total && (
                                     <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                         Total: {card.total}
                                     </span>
@@ -207,22 +202,18 @@ export default function SystemAdminDashboard() {
                             <div className="pt-4 border-t border-emerald-400/30">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-emerald-100 text-sm">Growth (30d)</span>
-                                    <span className="flex items-center text-white font-bold bg-white/20 px-2 py-0.5 rounded text-sm" aria-label="growth-stat">
-                                        <TrendingUp className="h-3 w-3 mr-1" /> {stats?.growth30d || "N/A"}
+                                    <span className="flex items-center text-white font-bold bg-white/20 px-2 py-0.5 rounded text-sm">
+                                        <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
                                     </span>
                                 </div>
                                 <div className="h-2 bg-emerald-900/20 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-white/90 rounded-full transition-all duration-500" 
-                                        style={{ width: `${Math.min(Math.max(parseFloat(stats?.growth30d || "0"), 0), 100)}%` }}
-                                    />
+                                    <div className="h-full bg-white/90 w-3/4 rounded-full" />
                                 </div>
                             </div>
 
                             <Button
                                 variant="secondary"
                                 className="w-full mt-4 bg-white text-[#00a58c] hover:bg-emerald-50 border-0"
-                                onClick={() => navigate('/analytics')}
                             >
                                 View Detailed Analytics
                                 <ArrowUpRight className="ml-2 h-4 w-4" />

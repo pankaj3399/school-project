@@ -9,32 +9,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, FileUp, CheckCircle, AlertCircle, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-type PreviewRow = (string | number | boolean | null)[];
-
-interface SuccessItem {
-    schoolName: string;
-    districtName: string;
-    [key: string]: any;
-}
-
-interface ErrorItem {
-    row?: any;
-    error: string;
-    originalRow?: number;
-}
-
-interface ImportResult {
-    success: SuccessItem[];
-    errors: ErrorItem[];
-}
-
 export default function BulkImportSchools() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
-    const [preview, setPreview] = useState<PreviewRow[]>([]);
-    const [results, setResults] = useState<ImportResult | null>(null);
+    const [preview, setPreview] = useState<any[]>([]);
+    const [results, setResults] = useState<{
+        success: any[];
+        errors: any[];
+    } | null>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -44,46 +28,16 @@ export default function BulkImportSchools() {
 
             // Preview file content
             const reader = new FileReader();
-            reader.onerror = () => {
-                toast({
-                    title: "File Error",
-                    description: "Failed to read the selected file.",
-                    variant: "destructive"
-                });
-            };
             reader.onload = (evt) => {
-                try {
-                    const arrayBuffer = evt.target?.result as ArrayBuffer;
-                    if (!arrayBuffer) throw new Error("Failed to read file buffer");
-
-                    const wb = XLSX.read(arrayBuffer, { type: 'array' });
-                    if (!wb || !wb.SheetNames || wb.SheetNames.length === 0) {
-                        throw new Error("Invalid or empty Excel file");
-                    }
-
-                    const wsname = wb.SheetNames[0];
-                    const ws = wb.Sheets[wsname];
-                    const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                    
-                    if (!data || data.length === 0) {
-                        setPreview([]);
-                        return;
-                    }
-
-                    // Get first 5 rows for preview and ensure each row is an array
-                    const previewData = (data as any[]).slice(0, 6).map(row => Array.isArray(row) ? row : []);
-                    setPreview(previewData as PreviewRow[]);
-                } catch (error: any) {
-                    console.error("Excel parsing error:", error);
-                    setPreview([]);
-                    toast({
-                        title: "Parsing Error",
-                        description: error.message || "Failed to parse the Excel file. Ensure it's a valid .xlsx or .xls file.",
-                        variant: "destructive"
-                    });
-                }
+                const bstr = evt.target?.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                // Get first 5 rows for preview
+                setPreview(data.slice(0, 6));
             };
-            reader.readAsArrayBuffer(selectedFile);
+            reader.readAsBinaryString(selectedFile);
         }
     };
 
@@ -91,28 +45,13 @@ export default function BulkImportSchools() {
         if (!file) return;
 
         setLoading(true);
+        // @ts-ignore
         const token = user?.token || localStorage.getItem('token');
-
-        if (!token) {
-            toast({
-                title: "Authentication Error",
-                description: "Session expired. Please log in again.",
-                variant: "destructive"
-            });
-            setLoading(false);
-            return;
-        }
 
         try {
             const response = await bulkImportSchools(file, token);
 
-            if (response.error) {
-                toast({
-                    title: "Import Failed",
-                    description: response.error?.message || response.error || "Failed to import schools.",
-                    variant: "destructive"
-                });
-            } else if (response.results) {
+            if (response.results) {
                 setResults(response.results);
                 toast({
                     title: "Import Completed",
@@ -195,23 +134,17 @@ export default function BulkImportSchools() {
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="bg-gray-50">
-                                                {preview && Array.isArray(preview[0]) && preview[0].length > 0 ? (
-                                                    preview[0].map((header: any, i: number) => (
-                                                        <th key={i} className="px-4 py-2 text-left font-medium text-gray-600">{header}</th>
-                                                    ))
-                                                ) : (
-                                                    <th className="px-4 py-2 text-left font-medium text-gray-600">No data</th>
-                                                )}
+                                                {preview[0].map((header: any, i: number) => (
+                                                    <th key={i} className="px-4 py-2 text-left font-medium text-gray-600">{header}</th>
+                                                ))}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {preview.slice(1).map((row: any, i: number) => (
                                                 <tr key={i} className="border-t">
-                                                    {Array.isArray(row) ? row.map((cell: any, j: number) => (
+                                                    {row.map((cell: any, j: number) => (
                                                         <td key={j} className="px-4 py-2 text-gray-600">{cell}</td>
-                                                    )) : (
-                                                        <td colSpan={preview[0]?.length || 1} className="px-4 py-2 text-gray-400 italic">Invalid row data</td>
-                                                    )}
+                                                    ))}
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -259,8 +192,8 @@ export default function BulkImportSchools() {
                                         Errors ({results.errors.length})
                                     </div>
                                     <ul className="text-sm text-red-600 max-h-40 overflow-y-auto space-y-1">
-                                        {results.errors.map((item: ErrorItem, i: number) => (
-                                            <li key={i}>Row {item.originalRow || (results.success.length + i + 2)}: {item.error}</li>
+                                        {results.errors.map((item: any, i: number) => (
+                                            <li key={i}>Row {i + 1}: {item.error}</li>
                                         ))}
                                     </ul>
                                 </div>
