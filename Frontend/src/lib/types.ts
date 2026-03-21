@@ -78,3 +78,27 @@ export const GRADE_OPTIONS = [
 ]
 
 export type GoalType = typeof GoalTypes[number];
+
+export interface District {
+  _id: string;
+  name: string;
+  code: string;
+  state: string;
+  city?: string;
+  country: string;
+  subscriptionStatus: string;
+  createdAt: string;
+  schoolCount?: number;
+}
+
+export interface School {
+  _id: string;
+  name: string;
+  address?: string;
+}
+
+export interface DistrictDetailResponse {
+  district: District;
+  schools: School[];
+  adminCount: number;
+}

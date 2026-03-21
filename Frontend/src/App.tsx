@@ -2,6 +2,8 @@ import RootLayout from "./layout";
 import AddDistrict from "./Section/SystemAdmin/districts/add-district";
 import TermsPage from "@/components/TermsPage";
 import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
+import DistrictsList from "./Section/SystemAdmin/districts";
+import ViewDistrict from "./Section/SystemAdmin/districts/view-district";
 
 import LandingPage from "./Section/LandingPage";
 import { SignupForm } from "./components/SignupPage";
@@ -105,9 +107,12 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
-          <Route path="/system-admin/districts/new" element={<ProtectedRoute><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin" element={<ProtectedRoute><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/system-admin/districts" element={<ProtectedRoute><DistrictsList /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/new" element={<ProtectedRoute><AddDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<ProtectedRoute><ViewDistrict /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/schools/:id" element={<ProtectedRoute><div className="p-8">School details coming soon.</div></ProtectedRoute>} />
         </Routes>
 
       </RootLayout>

@@ -13,6 +13,5 @@ export const authenticate = (req, res, next) => {
     }
 };
 
+// Alias for authenticate (used in new routes)
 export const authenticateToken = authenticate;
-
-

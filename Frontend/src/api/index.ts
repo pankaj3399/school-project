@@ -1015,15 +1015,23 @@ export const createDistrict = async (data: any, token: string) => {
   }
 };
 
-export const completeTeacherRegistration = async (data: {
-  token: string;
-  name: string;
-  password: string;
-  subject: string;
-  termsAccepted?: boolean;
-}) => {
+export const getDistricts = async (token: string, params?: Record<string, string | number | boolean>) => {
   try {
-    const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
+    const response = await axios.get(`${API_URL}/districts`, {
+      headers: { token },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictById = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}`, {
+      headers: { token },
+    });
     return response.data;
   } catch (error) {
     return { error };
@@ -1033,6 +1041,17 @@ export const completeTeacherRegistration = async (data: {
 export const getSystemDashboardStats = async (token: string) => {
   try {
     const response = await axios.get(`${API_URL}/system-admin/dashboard`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictStats = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
       headers: { token },
     });
     return response.data;
@@ -1107,6 +1126,16 @@ export const getDistrictAnalytics = async (token: string) => {
   }
 };
 
+export const getDistrictSchools = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/schools`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {
@@ -1137,6 +1166,22 @@ export const subscribeToWaitlist = async (email: string, confirmEmail: string) =
     return {
       success: false,
       message: error?.response?.data?.message || "Something went wrong",
+    };
+  }
+};
+
+export const completeTeacherRegistration = async (data: any) => {
+  try {
+    const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
+    return response.data;
+  } catch (error: any) {
+    return {
+      error: {
+        message: error?.response?.data?.message || error?.message || "Registration failed",
+        response: {
+          data: error?.response?.data
+        }
+      }
     };
   }
 };

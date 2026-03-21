@@ -3,9 +3,10 @@
     "concurrently": "^9.1.0"
   },
   "scripts": {
-    "backend": "",
-    "frontend": "npm run start --prefix frontend",
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+    "backend": "npm run dev --prefix Backend",
+    "frontend": "npm run dev --prefix Frontend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "build": "npm run build --prefix Frontend"
   },
   "dependencies": {
     "node-fetch": "^2.7.0"
