@@ -9,16 +9,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, FileUp, CheckCircle, AlertCircle, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+type PreviewRow = (string | number | boolean | null)[];
+
+interface ImportResult {
+    success: any[];
+    errors: any[];
+}
+
 export default function BulkImportSchools() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
-    const [preview, setPreview] = useState<any[]>([]);
-    const [results, setResults] = useState<{
-        success: any[];
-        errors: any[];
-    } | null>(null);
+    const [preview, setPreview] = useState<PreviewRow[]>([]);
+    const [results, setResults] = useState<ImportResult | null>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -54,8 +58,9 @@ export default function BulkImportSchools() {
                         return;
                     }
 
-                    // Get first 5 rows for preview
-                    setPreview(data.slice(0, 6));
+                    // Get first 5 rows for preview and ensure each row is an array
+                    const previewData = (data as any[]).slice(0, 6).map(row => Array.isArray(row) ? row : []);
+                    setPreview(previewData as PreviewRow[]);
                 } catch (error: any) {
                     console.error("Excel parsing error:", error);
                     setPreview([]);
@@ -190,9 +195,11 @@ export default function BulkImportSchools() {
                                         <tbody>
                                             {preview.slice(1).map((row: any, i: number) => (
                                                 <tr key={i} className="border-t">
-                                                    {row.map((cell: any, j: number) => (
+                                                    {Array.isArray(row) ? row.map((cell: any, j: number) => (
                                                         <td key={j} className="px-4 py-2 text-gray-600">{cell}</td>
-                                                    ))}
+                                                    )) : (
+                                                        <td colSpan={preview[0]?.length || 1} className="px-4 py-2 text-gray-400 italic">Invalid row data</td>
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>

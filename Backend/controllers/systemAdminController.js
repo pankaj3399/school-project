@@ -1,6 +1,4 @@
 import XLSX from 'xlsx';
-import School from '../models/School.js';
-import District from '../models/District.js';
 
 /**
  * Bulk import schools and districts from an Excel file.
@@ -47,13 +45,16 @@ export const bulkImportSchools = async (req, res) => {
       errors: []
     };
 
-    // Process rows (minimal implementation since original logic was missing/deleted)
-    // In a real scenario, this would create Districts first, then Schools linked to them.
+    // Process rows and map headers to expected frontend keys
     for (const row of rows) {
       try {
-        // Placeholder for actual import logic
-        // We just return the rows for now to satisfy the frontend preview/integration
-        results.success.push(row);
+        // Map "School Name" -> schoolName and "District Name" -> districtName
+        const mappedRow = {
+          schoolName: row['School Name'] || row.schoolName,
+          districtName: row['District Name'] || row.districtName,
+          ...row
+        };
+        results.success.push(mappedRow);
       } catch (err) {
         results.errors.push({ row, error: err.message });
       }
@@ -67,7 +68,7 @@ export const bulkImportSchools = async (req, res) => {
   } catch (error) {
     console.error('Bulk import error:', error);
     return res.status(500).json({ 
-      error: 'Internal server error during bulk import processing: ' + error.message 
+      error: 'Internal server error during bulk import processing' 
     });
   }
 };

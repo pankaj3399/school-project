@@ -19,7 +19,8 @@ const upload = multer({
       'application/vnd.ms-excel'
     ];
     const allowedExtensions = ['.xlsx', '.xls'];
-    const extension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+    const idx = file.originalname.lastIndexOf('.');
+    const extension = idx === -1 ? '' : file.originalname.toLowerCase().substring(idx);
     
     if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(extension)) {
       cb(null, true);
