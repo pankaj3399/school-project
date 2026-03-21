@@ -79,6 +79,7 @@ const teacherSchema = new mongoose.Schema({
     default: null
   },
   // Terms of Use tracking
+  termsAccepted: { type: Boolean, default: false },
   termsAcceptedAt: { type: Date },
   termsVersion: { type: String },
   termsAcceptedIp: { type: String }

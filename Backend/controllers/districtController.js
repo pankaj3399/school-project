@@ -30,6 +30,10 @@ export const createDistrict = async (req, res) => {
       return res.status(400).json({ message: "District code is required and must be a string" });
     }
 
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ message: "District name is required and must be a non-empty string" });
+    }
+
     const normalizedCode = code.toUpperCase();
 
     // Check if district code already exists
@@ -315,6 +319,10 @@ export const addSchoolToDistrict = async (req, res) => {
     }
 
     // Check for duplicate school name in district
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ message: "School name is required and must be a non-empty string" });
+    }
+
     const escapedName = escapeRegExp(name);
     const existingSchool = await School.findOne({ 
         name: { $regex: new RegExp(`^${escapedName}$`, 'i') }, 
@@ -439,6 +447,14 @@ export const assignDistrictAdmin = async (req, res) => {
       role: Role.DistrictAdmin,
       districtId: id,
       approved: true
+    });
+
+    // Send registration email (non-blocking)
+    sendDistrictAdminRegistrationMail(admin.email, admin.name, {
+        districtName: district.name,
+        role: 'District Admin'
+    }).catch(err => {
+        console.error("Error sending district admin registration mail:", err);
     });
 
     return res.status(201).json({

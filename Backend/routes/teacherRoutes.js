@@ -5,7 +5,7 @@ import { completeTeacherRegistration } from '../controllers/teacherController.js
 import {Role} from '../enum.js';
 const router = express.Router();
 
-router.get('/dashboard', authenticateToken, authorizeRoles(Role.Teacher), (req, res) => {
+router.get('/dashboard', authenticate, authorizeRoles(Role.Teacher), async (req, res) => {
     res.json({ message:` Welcome Teacher: ${req.user.id}` });
 });
 

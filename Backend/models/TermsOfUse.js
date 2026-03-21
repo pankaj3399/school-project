@@ -46,6 +46,13 @@ const TermsOfUseSchema = new mongoose.Schema({
   createdBy: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 
+  },
+  deactivatedAt: {
+    type: Date
+  },
+  deactivatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 });
 

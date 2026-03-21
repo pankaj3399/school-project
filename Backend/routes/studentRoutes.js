@@ -5,7 +5,7 @@ import {Role} from '../enum.js';
 
 const router = express.Router();
 
-router.get('/dashboard', authenticateToken, authorizeRoles(Role.Student), (req, res) => {
+router.get('/dashboard', authenticate, authorizeRoles(Role.Student), async (req, res) => {
     res.json({ message: `Welcome School Student: ${req.user.id}` });
 });
 

@@ -178,8 +178,9 @@ export const completeTeacherRegistration = async (req, res) => {
       teacher.termsAcceptedAt = new Date();
       
       // Normalize IP address handling
-      const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-      teacher.termsAcceptedIp = Array.isArray(rawIp) ? rawIp[0] : (rawIp || '').split(',')[0].trim();
+      let rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      if (Array.isArray(rawIp)) rawIp = rawIp.join(',');
+      teacher.termsAcceptedIp = (rawIp || '').split(',')[0].trim();
     }
 
     await teacher.save();

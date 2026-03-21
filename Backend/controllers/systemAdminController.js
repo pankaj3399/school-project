@@ -331,14 +331,23 @@ export const createTermsVersion = async (req, res) => {
       content,
       contentHtml,
       effectiveDate: effectiveDate || new Date(),
-      isActive: true,
       applicableToDistricts: applicableToDistricts || [],
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      isActive: true
     });
 
+    await TermsOfUse.updateMany(
+      { _id: { $ne: newTerms._id }, isActive: true }, 
+      { 
+        isActive: false, 
+        deactivatedAt: new Date(),
+        deactivatedBy: req.user.id
+      }
+    );
+
     return res.status(201).json({
-      message: "Terms version created successfully",
-      terms
+      message: "New terms version created successfully",
+      terms: newTerms
     });
   } catch (error) {
     console.error("Error creating terms:", error);

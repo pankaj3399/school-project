@@ -9,7 +9,7 @@ export const ensureDistrictOwnership = (req, res, next) => {
   const { id: targetDistrictId } = req.params;
 
   if (role === Role.DistrictAdmin) {
-    if (userDistrictId !== targetDistrictId) {
+    if (userDistrictId.toString() !== targetDistrictId) {
       return res.status(403).json({ 
         message: "Access denied. You can only manage your own district." 
       });
