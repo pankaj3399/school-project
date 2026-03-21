@@ -28,14 +28,43 @@ export default function BulkImportSchools() {
 
             // Preview file content
             const reader = new FileReader();
+            reader.onerror = () => {
+                toast({
+                    title: "File Error",
+                    description: "Failed to read the selected file.",
+                    variant: "destructive"
+                });
+            };
             reader.onload = (evt) => {
-                const arrayBuffer = evt.target?.result as ArrayBuffer;
-                const wb = XLSX.read(arrayBuffer, { type: 'array' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                // Get first 5 rows for preview
-                setPreview(data.slice(0, 6));
+                try {
+                    const arrayBuffer = evt.target?.result as ArrayBuffer;
+                    if (!arrayBuffer) throw new Error("Failed to read file buffer");
+
+                    const wb = XLSX.read(arrayBuffer, { type: 'array' });
+                    if (!wb || !wb.SheetNames || wb.SheetNames.length === 0) {
+                        throw new Error("Invalid or empty Excel file");
+                    }
+
+                    const wsname = wb.SheetNames[0];
+                    const ws = wb.Sheets[wsname];
+                    const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                    
+                    if (!data || data.length === 0) {
+                        setPreview([]);
+                        return;
+                    }
+
+                    // Get first 5 rows for preview
+                    setPreview(data.slice(0, 6));
+                } catch (error: any) {
+                    console.error("Excel parsing error:", error);
+                    setPreview([]);
+                    toast({
+                        title: "Parsing Error",
+                        description: error.message || "Failed to parse the Excel file. Ensure it's a valid .xlsx or .xls file.",
+                        variant: "destructive"
+                    });
+                }
             };
             reader.readAsArrayBuffer(selectedFile);
         }
@@ -60,7 +89,13 @@ export default function BulkImportSchools() {
         try {
             const response = await bulkImportSchools(file, token);
 
-            if (response.results) {
+            if (response.error) {
+                toast({
+                    title: "Import Failed",
+                    description: response.error?.message || response.error || "Failed to import schools.",
+                    variant: "destructive"
+                });
+            } else if (response.results) {
                 setResults(response.results);
                 toast({
                     title: "Import Completed",

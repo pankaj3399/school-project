@@ -21,7 +21,7 @@ const upload = multer({
     const allowedExtensions = ['.xlsx', '.xls'];
     const extension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
     
-    if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(extension)) {
+    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(extension)) {
       cb(null, true);
     } else {
       cb(new Error('Only Excel files (.xlsx, .xls) are allowed'), false);
