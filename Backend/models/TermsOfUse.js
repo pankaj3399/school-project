@@ -44,6 +44,10 @@ const TermsOfUseSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
   createdBy: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 
@@ -52,13 +56,24 @@ const TermsOfUseSchema = new mongoose.Schema({
 
 // Enforce immutability: Any material change must create a new TermsOfUse version.
 TermsOfUseSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
   if (!this.isNew) {
+    // Allow updating isActive but nothing else
+    if (this.isModified('isActive') && !this.isModified('version') && !this.isModified('content') && !this.isModified('contentHtml')) {
+        return next();
+    }
     return next(new Error('TermsOfUse records are immutable. Any material change must create a new version.'));
   }
   next();
 });
 
 TermsOfUseSchema.pre(['updateOne', 'findOneAndUpdate', 'updateMany'], function (next) {
+  // Check if only isActive is being updated
+  const update = this.getUpdate();
+  const keys = Object.keys(update);
+  if (keys.length === 1 && keys[0] === 'isActive') {
+      return next();
+  }
   return next(new Error('TermsOfUse records are immutable. Any material change must create a new version.'));
 });
 

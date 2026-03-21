@@ -1,9 +1,10 @@
 import RootLayout from "./layout";
 import AddDistrict from "./Section/SystemAdmin/districts/add-district";
-import TermsPage from "@/components/TermsPage";
-import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
+import BulkImportSchools from "./Section/SystemAdmin/schools/bulk-import";
 import DistrictsList from "./Section/SystemAdmin/districts";
 import ViewDistrict from "./Section/SystemAdmin/districts/view-district";
+import TermsPage from "@/components/TermsPage";
+import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
 
 import LandingPage from "./Section/LandingPage";
 import { SignupForm } from "./components/SignupPage";
@@ -69,6 +70,8 @@ const ProtectedRoute: React.FC<{
   return <>{children}</>;
 };
 
+
+
 export default function App() {
   return (
     <div className="min-h-screen bg-white text-gray-800">
@@ -125,7 +128,9 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
+          <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
           <Route path="/system-admin" element={<ProtectedRoute requiredRole="SystemAdmin"><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRole="SystemAdmin"><BulkImportSchools /></ProtectedRoute>} />
           <Route path="/system-admin/districts" element={<ProtectedRoute requiredRole="SystemAdmin"><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRole="SystemAdmin"><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRole="SystemAdmin"><ViewDistrict /></ProtectedRoute>} />
