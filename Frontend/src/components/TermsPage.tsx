@@ -3,9 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import DOMPurify from 'dompurify';
+import { getCurrentTerms } from '@/api';
 
 // Default Terms content (fallback if API fails)
 const DEFAULT_TERMS_CONTENT = `
@@ -37,25 +36,20 @@ By participating in the pilot program, the Pilot Participant acknowledges and ag
 
 export default function TermsPage() {
     const navigate = useNavigate();
-    const [terms, setTerms] = useState<{
-        version: string;
-        title: string;
-        content: string;
-        contentHtml?: string;
-        effectiveDate: string;
-    } | null>(null);
+    const [terms, setTerms] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
 
     useEffect(() => {
         const fetchTerms = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/system-admin/terms`);
-                if (response.data.terms) {
-                    setTerms(response.data.terms);
+                const data = await getCurrentTerms();
+                if (data.terms) {
+                    setTerms(data.terms);
+                } else {
+                    throw new Error("No terms found");
                 }
-            } catch (err) {
-                console.error('Error fetching terms:', err);
+            } catch (error) {
+                console.error('Error fetching terms:', error);
                 // Use default terms if API fails
                 setTerms({
                     version: '1.0-pilot',
@@ -112,7 +106,7 @@ export default function TermsPage() {
                         {terms?.contentHtml ? (
                             <div
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: terms.contentHtml }}
+                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(terms.contentHtml) }}
                             />
                         ) : (
                             <div className="prose prose-lg max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">

@@ -171,7 +171,12 @@ export const completeTeacherRegistration = async (req, res) => {
     teacher.isFirstLogin = true;
     await teacher.save();
     // Send onboarding email after registration is complete
-    await sendOnboardingEmail(teacher);
+    try {
+      await sendOnboardingEmail(teacher);
+    } catch (emailError) {
+      console.error("Error sending onboarding email:", emailError);
+      // Continue to return success response even if email fails
+    }
     return res
       .status(200)
       .json({ message: "Registration completed successfully." });

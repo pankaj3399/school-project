@@ -5,6 +5,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { Role } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
+import bcrypt from 'bcryptjs';
 
 // Create a new district
 export const createDistrict = async (req, res) => {
@@ -23,15 +24,21 @@ export const createDistrict = async (req, res) => {
       settings
     } = req.body;
 
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ message: "District code is required and must be a string" });
+    }
+
+    const normalizedCode = code.toUpperCase();
+
     // Check if district code already exists
-    const existingDistrict = await District.findOne({ code: code.toUpperCase() });
+    const existingDistrict = await District.findOne({ code: normalizedCode });
     if (existingDistrict) {
       return res.status(400).json({ message: "District with this code already exists" });
     }
 
     const district = await District.create({
       name,
-      code: code.toUpperCase(),
+      code: normalizedCode,
       address,
       city,
       state,
@@ -152,16 +159,11 @@ export const getDistrictById = async (req, res) => {
 export const updateDistrict = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-
-    // Don't allow updating certain fields
-    delete updates.code;
-    delete updates.createdBy;
-    delete updates.createdAt;
+    const { code, createdBy, createdAt, ...allowedUpdates } = req.body;
 
     const district = await District.findByIdAndUpdate(
       id,
-      { ...updates, updatedAt: Date.now() },
+      { ...allowedUpdates, updatedAt: Date.now() },
       { new: true }
     );
 
@@ -364,7 +366,6 @@ export const assignDistrictAdmin = async (req, res) => {
       return res.status(400).json({ message: "User with this email already exists" });
     }
 
-    const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const admin = await User.create({

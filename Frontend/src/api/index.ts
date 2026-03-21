@@ -1005,12 +1005,20 @@ export const changePassword = async (data: any) => {
 
 
 export async function completeTeacherRegistration({ token, name, password, subject, termsAccepted }: { token: string, name: string, password: string, subject: string, termsAccepted?: boolean }) {
-  const response = await fetch(`${API_URL}/teacher/complete-registration`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, name, password, subject, termsAccepted }),
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${API_URL}/teacher/complete-registration`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, name, password, subject, termsAccepted }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { error: data.message || "Failed to complete registration" };
+    }
+    return data;
+  } catch (error) {
+    return { error: "Network error. Please try again later." };
+  }
 }
 
 export const verifyCurrentUserPassword = async (password: string) => {
@@ -1060,7 +1068,10 @@ export const getSystemDashboardStats = async (token: string) => {
 
 export const getDistricts = async (token: string, params?: any) => {
   try {
-    const query = new URLSearchParams(params).toString();
+    const filteredParams = params ? Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined)
+    ) : {};
+    const query = new URLSearchParams(filteredParams as any).toString();
     const response = await axios.get(`${API_URL}/districts?${query}`, {
       headers: { token },
     });
@@ -1132,8 +1143,7 @@ export const bulkImportSchools = async (file: File, token: string) => {
     
     const response = await axios.post(`${API_URL}/system-admin/import/schools`, formData, {
       headers: { 
-        token,
-        'Content-Type': 'multipart/form-data'
+        token
       },
     });
     return response.data;
@@ -1156,6 +1166,26 @@ export const getStateAnalytics = async (token: string) => {
 export const getDistrictAnalytics = async (token: string) => {
   try {
     const response = await axios.get(`${API_URL}/system-admin/analytics/districts`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getCurrentTerms = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/terms`);
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const updateTerms = async (data: any, token: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/system-admin/terms`, data, {
       headers: { token },
     });
     return response.data;

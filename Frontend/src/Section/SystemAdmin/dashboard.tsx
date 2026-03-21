@@ -26,15 +26,20 @@ export default function SystemAdminDashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
-            // @ts-ignore
-            const token = user.token || localStorage.getItem('token');
-            if (token) {
-                const data = await getSystemDashboardStats(token);
-                if (data.stats) {
-                    setStats(data.stats);
+            try {
+                // @ts-ignore
+                const token = user.token || localStorage.getItem('token');
+                if (token) {
+                    const data = await getSystemDashboardStats(token);
+                    if (data.stats) {
+                        setStats(data.stats);
+                    }
                 }
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         fetchStats();
@@ -150,7 +155,7 @@ export default function SystemAdminDashboard() {
                                 <div className={`p-3 rounded-xl ${card.bgColor} ${card.color}`}>
                                     <card.icon className="h-6 w-6" />
                                 </div>
-                                {card.total && (
+                                {card.total !== undefined && (
                                     <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                         Total: {card.total}
                                     </span>
@@ -207,7 +212,10 @@ export default function SystemAdminDashboard() {
                                     </span>
                                 </div>
                                 <div className="h-2 bg-emerald-900/20 rounded-full overflow-hidden">
-                                    <div className="h-full bg-white/90 w-3/4 rounded-full" />
+                                    <div 
+                                        className="h-full bg-white/90 rounded-full transition-all duration-500" 
+                                        style={{ width: `${(stats?.totalDistricts ? (stats.activeDistricts / stats.totalDistricts) * 100 : 0)}%` }}
+                                    />
                                 </div>
                             </div>
 

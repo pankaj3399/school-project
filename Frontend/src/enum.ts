@@ -1,4 +1,4 @@
-export const Role = Object.freeze({
+export const Role = {
     Admin: 'Admin',
     SystemAdmin: 'SystemAdmin',
     DistrictAdmin: 'DistrictAdmin',
@@ -6,18 +6,20 @@ export const Role = Object.freeze({
     Student: 'Student',
     SchoolAdmin: 'SchoolAdmin',
     Guardian: 'Guardian'
-});
+} as const;
 
-export const FormType = Object.freeze({
+export type RoleType = typeof Role[keyof typeof Role];
+
+export const FormType = {
     AwardPoints: 'AwardPoints',
     Feedback: 'Feedback',
     PointWithdraw: 'PointWithdraw',
     DeductPoints: 'DeductPoints',
     AwardPointsIEP: 'AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)'
-});
-//hello
-export const QuestionType = Object.freeze({
+} as const;
+
+export const QuestionType = {
     Text: 'text',
     Select: 'select',
     Number: 'number'
-});
+} as const;

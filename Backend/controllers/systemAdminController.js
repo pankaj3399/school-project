@@ -111,38 +111,54 @@ export const getStateLevelStats = async (req, res) => {
 // Get district comparison analytics
 export const getDistrictComparison = async (req, res) => {
   try {
-    const districts = await District.find({ subscriptionStatus: 'active' })
-      .select('name code state');
-
-    const districtStats = await Promise.all(
-      districts.map(async (district) => {
-        const schools = await School.find({ districtId: district._id });
-        const schoolIds = schools.map(s => s._id);
-
-        const [teacherCount, studentCount, totalPoints] = await Promise.all([
-          Teacher.countDocuments({ schoolId: { $in: schoolIds } }),
-          Student.countDocuments({ schoolId: { $in: schoolIds } }),
-          PointsHistory.aggregate([
-            { $match: { schoolId: { $in: schoolIds } } },
-            { $group: { _id: null, total: { $sum: "$awarded" } } }
-          ])
-        ]);
-
-        return {
-          districtId: district._id,
-          name: district.name,
-          code: district.code,
-          state: district.state,
-          schoolCount: schools.length,
-          teacherCount,
-          studentCount,
-          totalTokens: totalPoints[0]?.total || 0
-        };
-      })
-    );
-
-    // Sort by total tokens
-    districtStats.sort((a, b) => b.totalTokens - a.totalTokens);
+    const districtStats = await District.aggregate([
+      { $match: { subscriptionStatus: 'active' } },
+      {
+        $lookup: {
+          from: 'schools',
+          localField: '_id',
+          foreignField: 'districtId',
+          as: 'schools'
+        }
+      },
+      {
+        $lookup: {
+          from: 'teachers',
+          localField: 'schools._id',
+          foreignField: 'schoolId',
+          as: 'teachers'
+        }
+      },
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'schools._id',
+          foreignField: 'schoolId',
+          as: 'students'
+        }
+      },
+      {
+        $lookup: {
+          from: 'pointshistories',
+          localField: 'schools._id',
+          foreignField: 'schoolId',
+          as: 'pointsHistory'
+        }
+      },
+      {
+        $project: {
+          districtId: '$_id',
+          name: 1,
+          code: 1,
+          state: 1,
+          schoolCount: { $size: '$schools' },
+          teacherCount: { $size: '$teachers' },
+          studentCount: { $size: '$students' },
+          totalTokens: { $sum: '$pointsHistory.awarded' }
+        }
+      },
+      { $sort: { totalTokens: -1 } }
+    ]);
 
     return res.status(200).json({ districtStats });
   } catch (error) {
@@ -270,7 +286,7 @@ export const cloneFromTemplate = async (req, res) => {
     // Create new district with template settings
     const newDistrict = await District.create({
       ...newDistrictData,
-      code: newDistrictData.code.toUpperCase(),
+      code: newDistrictData.code?.toUpperCase(),
       settings: template.settings,
       templateSourceId: templateDistrictId,
       createdBy: req.user.id,
@@ -350,6 +366,11 @@ export const recordTermsAcceptance = async (req, res) => {
   try {
     const { userId, userModel, userType, termsVersion, schoolId, districtId } = req.body;
 
+    // Validate that the request is for the authenticated user
+    if (userId !== req.user?.id) {
+      return res.status(403).json({ message: "Access denied. Cannot record acceptance for another user." });
+    }
+
     const acceptance = await TermsAcceptance.create({
       userId,
       userModel,
@@ -357,7 +378,7 @@ export const recordTermsAcceptance = async (req, res) => {
       termsVersion,
       schoolId,
       districtId,
-      ipAddress: req.ip || req.connection.remoteAddress,
+      ipAddress: req.ip || req.socket.remoteAddress,
       userAgent: req.get('User-Agent')
     });
 

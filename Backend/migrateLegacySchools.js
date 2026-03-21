@@ -1,15 +1,46 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import School from './models/School.js';
 import District from './models/District.js';
-import Admin from './models/Admin.js';
+import School from './models/School.js';
+import User from './models/Admin.js';
+import Migration from './models/Migration.js';
 import { Role } from './enum.js';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 export const runMigration = async () => {
+  const migrationName = 'migrate-legacy-schools-to-district';
+  
   try {
-    // 1. Find all schools without districtId
+    // Check if migration already ran
+    const existingMigration = await Migration.findOne({ name: migrationName });
+    if (existingMigration) {
+      console.log(`Migration "${migrationName}" already ran. Skipping.`);
+      return;
+    }
+
+    console.log('Running legacy school migration...');
+
+    // Find or create the legacy district
+    let legacyDistrict = await District.findOne({ code: 'LEG' });
+    
+    if (!legacyDistrict) {
+      console.log('[Migration] Creating legacy district...');
+      // Find a system admin to be the creator
+      const systemAdmin = await User.findOne({ role: Role.SystemAdmin });
+      
+      legacyDistrict = await District.create({
+        name: 'Legacy Schools District',
+        code: 'LEG',
+        state: 'N/A',
+        country: 'USA',
+        subscriptionStatus: 'active',
+        createdBy: systemAdmin ? systemAdmin._id : null
+      });
+      console.log('[Migration] Created legacy district:', legacyDistrict.name);
+    }
+
+    // Find schools without a districtId
     const orphanedSchools = await School.find({ 
       $or: [
         { districtId: { $exists: false } },
@@ -17,49 +48,47 @@ export const runMigration = async () => {
       ]
     });
 
-    if (orphanedSchools.length === 0) {
-      return;
-    }
-
-    console.log(`[Migration] Found ${orphanedSchools.length} orphaned schools.`);
-
-    // 2. Find or create a "Legacy Schools" district
-    let legacyDistrict = await District.findOne({ code: 'LEG' });
-    
-    if (!legacyDistrict) {
-      console.log('[Migration] Creating legacy district...');
-      // Use the first system admin as creator if possible
-      const admin = await Admin.findOne({ role: Role.Admin });
+    if (orphanedSchools.length > 0) {
+      const schoolIds = orphanedSchools.map(s => s._id);
       
-      legacyDistrict = await District.create({
-        name: "Legacy Schools (Unassigned)",
-        code: "LEG",
-        state: "N/A",
-        country: "USA",
-        subscriptionStatus: 'active',
-        createdBy: admin?._id
-      });
-      console.log('[Migration] Created legacy district:', legacyDistrict.name);
+      // Bulk update schools
+      await School.updateMany(
+        { _id: { $in: schoolIds } },
+        { 
+          $set: { 
+            districtId: legacyDistrict._id,
+            district: legacyDistrict.name
+          } 
+        }
+      );
+      
+      console.log(`Successfully migrated ${orphanedSchools.length} schools to legacy district.`);
+    } else {
+      console.log('No orphaned schools found to migrate.');
     }
 
-    // 3. Assign schools to this district
-    let updatedCount = 0;
-    for (const school of orphanedSchools) {
-      school.districtId = legacyDistrict._id;
-      school.district = legacyDistrict.name; // Maintain legacy field if needed
-      await school.save();
-      updatedCount++;
-    }
+    // Record migration success
+    await Migration.create({ name: migrationName });
+    console.log('Migration completed successfully.');
 
-    console.log(`[Migration] Migration completed. ${updatedCount} schools assigned to district: ${legacyDistrict.name}`);
-  } catch (err) {
-    console.error('[Migration] Migration failed:', err);
+  } catch (error) {
+    console.error('Migration error:', error);
+    throw error;
   }
 };
 
-// Only run immediately if this file is executed directly (not imported)
-if (process.argv[1] && process.argv[1].endsWith('migrateLegacySchools.js')) {
-  mongoose.connect(process.env.MONGO_URI).then(() => {
-    runMigration().then(() => mongoose.disconnect());
-  });
+// Standalone execution
+if (import.meta.url === `file://${process.argv[1]}`) {
+  mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI)
+    .then(async () => {
+      await runMigration();
+      await mongoose.disconnect();
+    })
+    .catch(async (err) => {
+      console.error('Standalone migration failed:', err);
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
+      }
+      process.exit(1);
+    });
 }

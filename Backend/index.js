@@ -65,6 +65,24 @@ app.use((err, req, res, next) => {
 });
 
 
+// Connect to Database
+connectDB()
+  .then(async () => {
+    console.log("Database connected successfully");
+    
+    // Run initial migrations
+    try {
+      await runMigration();
+    } catch (migError) {
+      console.error("Migration failed:", migError);
+    }
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Database connection failed:", err);
+    process.exit(1);
+  });

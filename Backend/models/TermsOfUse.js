@@ -46,8 +46,8 @@ const TermsOfUseSchema = new mongoose.Schema({
 const TermsAcceptanceSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    required: true,
-    index: true
+    ref: 'User',
+    required: true
   },
   userModel: {
     type: String,

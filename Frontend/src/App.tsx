@@ -32,24 +32,32 @@ import AddStudentTeacher from "./Section/Teacher/add-student";
 import Analytics from "./Section/Teacher/analytics";
 import Finalize from "./Section/School/finalize";
 import VerifyEmail from "./components/VerifyEmail";
+import SetupPage from "./Section/School/setup-page";
 import Setup from "./Section/School/setup";
 import SetupStudents from "./Section/School/setup-students";
-import SetupPage from "./Section/School/setup-page";
-// import FirstLogin from "./components/FirstLogin";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
 import TermsPage from "@/components/TermsPage";
-// System Admin Components (Placeholders for now)
+import { Role } from "./enum";
+
+// System Admin Components
 import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
 import DistrictsList from "@/Section/SystemAdmin/districts";
 import AddDistrict from "@/Section/SystemAdmin/districts/add-district";
 import ViewDistrict from "@/Section/SystemAdmin/districts/view-district";
 import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
-
+import TermsManagement from "./Section/SystemAdmin/terms"; // Assuming this exists or will be added
 
 // Reusable ProtectedRoute component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  return user ? <>{children}</> : <Navigate to="/" />;
+const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode, requiredRoles?: string[] }) => {
+    const { user, loading } = useAuth();
+    if (loading) return <div>Loading...</div>;
+    if (!user) return <Navigate to="/login" />;
+    
+    if (requiredRoles && !requiredRoles.includes(user.role)) {
+        return <Navigate to="/unauthorized" />;
+    }
+    
+    return <>{children}</>;
 };
 
 export default function App() {
@@ -57,7 +65,6 @@ export default function App() {
     <div className="min-h-screen bg-white text-gray-800">
       <RootLayout>
         <Routes>
-
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
@@ -65,6 +72,7 @@ export default function App() {
           <Route path="/verify" element={<OtpVerificationPage />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
 
+          {/* Authenticated Routes */}
           <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
@@ -76,7 +84,6 @@ export default function App() {
           <Route path="/createform" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
           <Route path="/editform/:id" element={<ProtectedRoute><EditForm /></ProtectedRoute>} />
           <Route path="/schoolAdmin/submitform/:id" element={<ProtectedRoute><FormPageAdmin /></ProtectedRoute>} />
-
 
           <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
           <Route path="/teachers/createform" element={<ProtectedRoute><FormBuilderTeacher /></ProtectedRoute>} />
@@ -96,13 +103,10 @@ export default function App() {
           <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
-
           <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
           <Route path="/teachers/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
 
-          <Route path="/verifyemail" element={<VerifyEmail />}>
-          </Route>
-
+          <Route path="/verifyemail" element={<VerifyEmail />} />
           <Route path="/setup" element={<ProtectedRoute><SetupPage /></ProtectedRoute>} />
           <Route path="/setup-teachers" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
@@ -112,11 +116,15 @@ export default function App() {
 
           {/* System Admin Routes */}
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
-          <Route path="/system-admin" element={<ProtectedRoute><SystemAdminDashboard /></ProtectedRoute>} />
-          <Route path="/system-admin/districts" element={<ProtectedRoute><DistrictsList /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/new" element={<ProtectedRoute><AddDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/:id" element={<ProtectedRoute><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/schools/import" element={<ProtectedRoute><BulkImportSchools /></ProtectedRoute>} />
+          <Route path="/system-admin" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin]}><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin]}><DistrictsList /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin]}><AddDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin]}><ViewDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin]}><BulkImportSchools /></ProtectedRoute>} />
+          <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin]}><TermsManagement /></ProtectedRoute>} />
+
+          <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </RootLayout>
     </div>

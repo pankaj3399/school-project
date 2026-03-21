@@ -32,10 +32,13 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// All routes require authentication
+// Public routes (no authentication required)
+router.get('/terms', getCurrentTerms);
+
+// All routes below this point require authentication
 router.use(authenticateToken);
 
-// SystemAdmin only routes
+// SystemAdmin and Admin routes
 router.get('/dashboard', authorizeRoles(Role.SystemAdmin, Role.Admin), getDashboardStats);
 router.get('/analytics/states', authorizeRoles(Role.SystemAdmin, Role.Admin), getStateLevelStats);
 router.get('/analytics/districts', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistrictComparison);
@@ -43,8 +46,7 @@ router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), upl
 router.post('/clone-district', authorizeRoles(Role.SystemAdmin, Role.Admin), cloneFromTemplate);
 router.get('/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllAdmins);
 
-// Terms management routes
-router.get('/terms', getCurrentTerms); // Public for registration flow
+// Terms management routes (authenticated)
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllTermsVersions);
 router.post('/terms', authorizeRoles(Role.SystemAdmin, Role.Admin), createTermsVersion);
 router.post('/terms/accept', recordTermsAcceptance); // Used during registration

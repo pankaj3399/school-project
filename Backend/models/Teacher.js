@@ -94,6 +94,16 @@ teacherSchema.pre('save', function (next) {
   next();
 });
 
+teacherSchema.pre('save', function (next) {
+    if (this.isModified('termsAcceptedIp') && this.termsAcceptedIp) {
+        const parts = this.termsAcceptedIp.split('.');
+        if (parts.length === 4) {
+            this.termsAcceptedIp = `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+        }
+    }
+    next();
+});
+
 teacherSchema.index({ registrationToken: 1 });
 teacherSchema.index({ schoolId: 1, grade: 1, type: 1 });
 
