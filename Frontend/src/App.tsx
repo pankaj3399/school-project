@@ -49,6 +49,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return user ? <>{children}</> : <Navigate to="/" />;
 };
 
+const SystemAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/signin" />;
+  if (user.role !== 'SystemAdmin') return <Navigate to="/home" />;
+  return <>{children}</>;
+};
+
 export default function App() {
   return (
     <div className="min-h-screen bg-white text-gray-800">
@@ -106,10 +113,11 @@ export default function App() {
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
-          <Route path="/system-admin/schools/import" element={<ProtectedRoute><BulkImportSchools /></ProtectedRoute>} />
-          <Route path="/system-admin/districts" element={<ProtectedRoute><DistrictsList /></ProtectedRoute>} />
+          <Route path="/system-admin" element={<Navigate to="/system-admin/schools/import" replace />} />
+          <Route path="/system-admin/schools/import" element={<SystemAdminRoute><BulkImportSchools /></SystemAdminRoute>} />
+          <Route path="/system-admin/districts" element={<SystemAdminRoute><DistrictsList /></SystemAdminRoute>} />
           <Route path="/system-admin/districts/new" element={<Navigate to="/system-admin/districts" replace />} />
-          <Route path="/system-admin/districts/:id" element={<ProtectedRoute><ViewDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<SystemAdminRoute><ViewDistrict /></SystemAdminRoute>} />
           <Route path="/schools/:id" element={<ProtectedRoute><div className="p-8">School details coming soon.</div></ProtectedRoute>} />
         </Routes>
 

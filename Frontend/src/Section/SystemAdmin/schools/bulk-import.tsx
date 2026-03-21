@@ -29,15 +29,15 @@ export default function BulkImportSchools() {
             // Preview file content
             const reader = new FileReader();
             reader.onload = (evt) => {
-                const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
+                const arrayBuffer = evt.target?.result as ArrayBuffer;
+                const wb = XLSX.read(arrayBuffer, { type: 'array' });
                 const wsname = wb.SheetNames[0];
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
                 // Get first 5 rows for preview
                 setPreview(data.slice(0, 6));
             };
-            reader.readAsBinaryString(selectedFile);
+            reader.readAsArrayBuffer(selectedFile);
         }
     };
 
@@ -45,7 +45,6 @@ export default function BulkImportSchools() {
         if (!file) return;
 
         setLoading(true);
-        // @ts-ignore
         const token = user?.token || localStorage.getItem('token');
 
         if (!token) {
@@ -144,9 +143,13 @@ export default function BulkImportSchools() {
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="bg-gray-50">
-                                                {preview[0].map((header: any, i: number) => (
-                                                    <th key={i} className="px-4 py-2 text-left font-medium text-gray-600">{header}</th>
-                                                ))}
+                                                {preview && Array.isArray(preview[0]) && preview[0].length > 0 ? (
+                                                    preview[0].map((header: any, i: number) => (
+                                                        <th key={i} className="px-4 py-2 text-left font-medium text-gray-600">{header}</th>
+                                                    ))
+                                                ) : (
+                                                    <th className="px-4 py-2 text-left font-medium text-gray-600">No data</th>
+                                                )}
                                             </tr>
                                         </thead>
                                         <tbody>

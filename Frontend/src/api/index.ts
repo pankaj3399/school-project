@@ -1011,12 +1011,12 @@ export const bulkImportSchools = async (file: File, token: string) => {
     const response = await axios.post(`${API_URL}/system-admin/import/schools`, formData, {
       headers: { 
         token,
-        "Content-Type": "multipart/form-data"
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.message || "Unknown error";
+    return { error: message };
   }
 };
 
