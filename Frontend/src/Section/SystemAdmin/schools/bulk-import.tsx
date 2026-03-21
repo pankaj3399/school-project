@@ -48,6 +48,16 @@ export default function BulkImportSchools() {
         // @ts-ignore
         const token = user?.token || localStorage.getItem('token');
 
+        if (!token) {
+            toast({
+                title: "Authentication Error",
+                description: "Session expired. Please log in again.",
+                variant: "destructive"
+            });
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await bulkImportSchools(file, token);
 
