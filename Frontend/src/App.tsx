@@ -1,4 +1,5 @@
 import RootLayout from "./layout";
+import BulkImportSchools from "./Section/SystemAdmin/schools/bulk-import";
 import DistrictsList from "./Section/SystemAdmin/districts";
 import ViewDistrict from "./Section/SystemAdmin/districts/view-district";
 import TermsPage from "@/components/TermsPage";
@@ -48,6 +49,13 @@ import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   return user ? <>{children}</> : <Navigate to="/" />;
+};
+
+const SystemAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/signin" />;
+  if (user.role !== 'SystemAdmin') return <Navigate to="/home" />;
+  return <>{children}</>;
 };
 
 export default function App() {
@@ -106,10 +114,12 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
-          <Route path="/system-admin" element={<ProtectedRoute><SystemAdminDashboard /></ProtectedRoute>} />
-          <Route path="/system-admin/districts" element={<ProtectedRoute><DistrictsList /></ProtectedRoute>} />
+          <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
+          <Route path="/system-admin" element={<SystemAdminRoute><SystemAdminDashboard /></SystemAdminRoute>} />
+          <Route path="/system-admin/schools/import" element={<SystemAdminRoute><BulkImportSchools /></SystemAdminRoute>} />
+          <Route path="/system-admin/districts" element={<SystemAdminRoute><DistrictsList /></SystemAdminRoute>} />
           <Route path="/system-admin/districts/new" element={<Navigate to="/system-admin/districts" replace />} />
-          <Route path="/system-admin/districts/:id" element={<ProtectedRoute><ViewDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<SystemAdminRoute><ViewDistrict /></SystemAdminRoute>} />
           <Route path="/schools/:id" element={<ProtectedRoute><div className="p-8">School details coming soon.</div></ProtectedRoute>} />
           <Route path="/terms" element={<TermsPage />} />
         </Routes>

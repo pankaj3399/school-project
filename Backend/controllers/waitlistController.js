@@ -1,3 +1,4 @@
+import { Parser } from 'json2csv';
 import Waitlist from '../models/Waitlist.js';
 import { sendEmail } from '../services/nodemailer.js';
 
@@ -140,16 +141,19 @@ export const exportWaitlistData = async (req, res) => {
   try {
     const subscribers = await Waitlist.find({}).sort({ createdAt: -1 });
 
-    const headers = ['Email', 'Joined At'];
-    const csvRows = [headers.join(',')];
+    const fields = [
+      {
+        label: 'Email',
+        value: 'email'
+      },
+      {
+        label: 'Joined At',
+        value: (row) => new Date(row.createdAt).toISOString()
+      }
+    ];
 
-    subscribers.forEach(sub => {
-      const email = `"${sub.email.replace(/"/g, '""')}"`;
-      const date = `"${new Date(sub.createdAt).toISOString()}"`;
-      csvRows.push(`${email},${date}`);
-    });
-
-    const csvContent = csvRows.join('\n');
+    const json2csvParser = new Parser({ fields });
+    const csvContent = json2csvParser.parse(subscribers);
 
     res.header('Content-Type', 'text/csv');
     res.header('Content-Disposition', 'attachment; filename=waitlist.csv');

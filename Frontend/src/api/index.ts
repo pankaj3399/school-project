@@ -1026,6 +1026,22 @@ export const completeTeacherRegistration = async (data: {
   }
 };
 
+export const bulkImportSchools = async (file: File, token: string) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await axios.post(`${API_URL}/system-admin/import/schools`, formData, {
+      headers: { 
+        token,
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.message || "Unknown error";
+    return { error: message };
+  }
+};
+
 export const getDistricts = async (token: string, params?: Record<string, string | number | boolean>) => {
   try {
     const response = await axios.get(`${API_URL}/districts`, {
