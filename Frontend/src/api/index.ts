@@ -1004,22 +1004,204 @@ export const changePassword = async (data: any) => {
 };
 
 
-export async function completeTeacherRegistration({ token, name, password, subject, termsAccepted }: { token: string, name: string, password: string, subject: string, termsAccepted?: boolean }) {
+export const completeTeacherRegistration = async (data: {
+  token: string;
+  name: string;
+  password: string;
+  subject: string;
+  termsAccepted?: boolean;
+}) => {
   try {
-    const response = await fetch(`${API_URL}/teacher/complete-registration`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, name, password, subject, termsAccepted }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      return { error: data.message || "Failed to complete registration" };
-    }
-    return data;
-  } catch (error) {
-    return { error: "Network error. Please try again later." };
+    const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
+    return response.data;
+  } catch (error: any) {
+    return {
+      error: {
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Registration failed",
+        response: {
+          data: error?.response?.data,
+        },
+      },
+    };
   }
-}
+};
+
+export const bulkImportSchools = async (file: File, token: string) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await axios.post(
+      `${API_URL}/system-admin/import/schools`,
+      formData,
+      {
+        headers: {
+          token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error?.message || "Unknown error";
+    return { error: message };
+  }
+};
+
+export const createDistrict = async (data: any, token: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/districts`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistricts = async (
+  token: string,
+  params?: Record<string, string | number | boolean>
+) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts`, {
+      headers: { token },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictById = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getSystemDashboardStats = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/dashboard`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictStats = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/stats`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const updateDistrict = async (id: string, data: any, token: string) => {
+  try {
+    const response = await axios.put(`${API_URL}/districts/${id}`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getStateAnalytics = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/analytics/states`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const deleteDistrict = async (id: string, token: string) => {
+  try {
+    const response = await axios.delete(`${API_URL}/districts/${id}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const assignDistrictAdmin = async (
+  id: string,
+  data: any,
+  token: string
+) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/districts/${id}/admins`,
+      data,
+      {
+        headers: { token },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const addSchoolToDistrict = async (
+  id: string,
+  data: any,
+  token: string
+) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/districts/${id}/schools`,
+      data,
+      {
+        headers: { token },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictAnalytics = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/system-admin/analytics/districts`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
+export const getDistrictSchools = async (id: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/districts/${id}/schools`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+};
+
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {
@@ -1051,145 +1233,5 @@ export const subscribeToWaitlist = async (email: string, confirmEmail: string) =
       success: false,
       message: error?.response?.data?.message || "Something went wrong",
     };
-  }
-};
-
-// System Admin APIs
-export const getSystemDashboardStats = async (token: string) => {
-  try {
-    const response = await axios.get(`${API_URL}/system-admin/dashboard`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const getDistricts = async (token: string, params?: any) => {
-  try {
-    const filteredParams = params ? Object.fromEntries(
-      Object.entries(params).filter(([_, v]) => v !== undefined)
-    ) : {};
-    const query = new URLSearchParams(filteredParams as any).toString();
-    const response = await axios.get(`${API_URL}/districts?${query}`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const createDistrict = async (data: any, token: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/districts`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const getDistrictById = async (id: string, token: string) => {
-  try {
-    const response = await axios.get(`${API_URL}/districts/${id}`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const updateDistrict = async (id: string, data: any, token: string) => {
-  try {
-    const response = await axios.put(`${API_URL}/districts/${id}`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const deleteDistrict = async (id: string, token: string) => {
-  try {
-    const response = await axios.delete(`${API_URL}/districts/${id}`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const assignDistrictAdmin = async (id: string, data: any, token: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/districts/${id}/admins`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const bulkImportSchools = async (file: File, token: string) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await axios.post(`${API_URL}/system-admin/import/schools`, formData, {
-      headers: { 
-        token
-      },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const getStateAnalytics = async (token: string) => {
-  try {
-    const response = await axios.get(`${API_URL}/system-admin/analytics/states`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const getDistrictAnalytics = async (token: string) => {
-  try {
-    const response = await axios.get(`${API_URL}/system-admin/analytics/districts`, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const getCurrentTerms = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/system-admin/terms`);
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const updateTerms = async (data: any, token: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/system-admin/terms`, data, {
-      headers: { token },
-    });
-    return response.data;
-  } catch (error) {
-    return { error };
   }
 };
