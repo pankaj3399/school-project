@@ -107,9 +107,9 @@ const studentSchema = new mongoose.Schema({
     default: null,
     validate: {
       validator: function(v) {
-        return !this.termsAccepted || (v && v.trim().length > 0);
+        return typeof v === 'string' && v.trim().length > 0;
       },
-      message: 'termsAcceptedVersion is required when termsAccepted is true'
+      message: 'termsAcceptedVersion is required'
     }
   }
 });

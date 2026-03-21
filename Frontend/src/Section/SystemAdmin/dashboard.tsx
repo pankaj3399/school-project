@@ -39,7 +39,7 @@ export default function SystemAdminDashboard() {
 
     useEffect(() => {
         const fetchStats = async () => {
-            if (!user) return;
+            if (!user || !isSystemAdmin) return;
             setLoading(true);
             setError(null);
             try {
@@ -209,13 +209,17 @@ export default function SystemAdminDashboard() {
                                     </span>
                                 </div>
                                 <div className="h-2 bg-emerald-900/20 rounded-full overflow-hidden">
-                                    <div className="h-full bg-white/90 w-3/4 rounded-full" />
+                                    <div 
+                                        className="h-full bg-white/90 rounded-full transition-all duration-500" 
+                                        style={{ width: `${Math.min(Math.max(parseFloat(stats?.growth30d || "0"), 0), 100)}%` }}
+                                    />
                                 </div>
                             </div>
 
                             <Button
                                 variant="secondary"
                                 className="w-full mt-4 bg-white text-[#00a58c] hover:bg-emerald-50 border-0"
+                                onClick={() => navigate('/analytics')}
                             >
                                 View Detailed Analytics
                                 <ArrowUpRight className="ml-2 h-4 w-4" />

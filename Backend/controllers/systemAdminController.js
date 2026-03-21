@@ -109,7 +109,7 @@ export const recordTermsAcceptance = async (req, res) => {
             termsAccepted: true,
             termsAcceptedVersion: termsVersion
         };
-        const updateOptions = { new: true, select: '-password -salt' };
+        const updateOptions = { new: true, runValidators: true, select: '-password -salt' };
 
         switch (userRole) {
             case 'Teacher':
