@@ -47,17 +47,13 @@ export const bulkImportSchools = async (req, res) => {
 
     // Process rows and map headers to expected frontend keys
     for (const row of rows) {
-      try {
-        // Map "School Name" -> schoolName and "District Name" -> districtName
-        const mappedRow = {
-          schoolName: row['School Name'] || row.schoolName,
-          districtName: row['District Name'] || row.districtName,
-          ...row
-        };
-        results.success.push(mappedRow);
-      } catch (err) {
-        results.errors.push({ row, error: err.message });
-      }
+      // Map "School Name" -> schoolName and "District Name" -> districtName
+      const mappedRow = {
+        schoolName: row['School Name'] || row.schoolName,
+        districtName: row['District Name'] || row.districtName,
+        ...row
+      };
+      results.success.push(mappedRow);
     }
 
     return res.status(200).json({ 

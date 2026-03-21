@@ -25,7 +25,9 @@ const upload = multer({
     if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(extension)) {
       cb(null, true);
     } else {
-      cb(new Error('Only Excel files (.xlsx, .xls) are allowed'), false);
+      const error = new Error('Only Excel files (.xlsx, .xls) are allowed');
+      error.code = 'INVALID_FILE_TYPE';
+      cb(error, false);
     }
   }
 });
@@ -43,7 +45,7 @@ router.use((err, req, res, next) => {
     }
     return res.status(400).json({ message: err.message });
   }
-  if (err.message === 'Only Excel files (.xlsx, .xls) are allowed') {
+  if (err.code === 'INVALID_FILE_TYPE') {
     return res.status(400).json({ message: err.message });
   }
   next(err);

@@ -11,9 +11,21 @@ import * as XLSX from 'xlsx';
 
 type PreviewRow = (string | number | boolean | null)[];
 
+interface SuccessItem {
+    schoolName: string;
+    districtName: string;
+    [key: string]: any;
+}
+
+interface ErrorItem {
+    row?: any;
+    error: string;
+    originalRow?: number;
+}
+
 interface ImportResult {
-    success: any[];
-    errors: any[];
+    success: SuccessItem[];
+    errors: ErrorItem[];
 }
 
 export default function BulkImportSchools() {
@@ -247,8 +259,8 @@ export default function BulkImportSchools() {
                                         Errors ({results.errors.length})
                                     </div>
                                     <ul className="text-sm text-red-600 max-h-40 overflow-y-auto space-y-1">
-                                        {results.errors.map((item: any, i: number) => (
-                                            <li key={i}>Row {i + 1}: {item.error}</li>
+                                        {results.errors.map((item: ErrorItem, i: number) => (
+                                            <li key={i}>Row {item.originalRow || (results.success.length + i + 2)}: {item.error}</li>
                                         ))}
                                     </ul>
                                 </div>
