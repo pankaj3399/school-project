@@ -32,6 +32,11 @@ export default function BulkImportSchools() {
     const [preview, setPreview] = useState<any[]>([]);
     const [results, setResults] = useState<ImportResults | null>(null);
 
+    const getAuthToken = () => {
+        // @ts-ignore
+        return user?.token || localStorage.getItem('token');
+    };
+
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
@@ -55,8 +60,7 @@ export default function BulkImportSchools() {
         if (!file) return;
 
         setLoading(true);
-        // @ts-ignore
-        const token = user?.token || localStorage.getItem('token');
+        const token = getAuthToken();
 
         try {
             const response = await bulkImportSchools(file, token);
@@ -210,9 +214,11 @@ export default function BulkImportSchools() {
                                     </div>
                                     {results.errors.length > 0 ? (
                                         <ul className="text-sm text-red-700 max-h-48 overflow-y-auto space-y-2 pr-2">
-                                            {results.errors.map((item, i) => (
+                                            {results.errors.map((item: any, i) => (
                                                 <li key={i} className="p-2 bg-white/50 rounded-lg border border-red-100">
-                                                    <span className="font-bold mr-2 text-red-900">Row {item.row || i + 1}:</span>
+                                                    <span className="font-bold mr-2 text-red-900">
+                                                        Row {typeof item.row === 'object' ? (item.row['School Name'] || i + 1) : (item.row || i + 1)}:
+                                                    </span>
                                                     {item.error}
                                                 </li>
                                             ))}

@@ -35,14 +35,6 @@ app.use(bodyParser.json({limit: "50mb"}));
 
 
 
-connectDB().then(() => {
-  console.log('Database connected successfully');
-  runMigration();
-}).catch((error) => {
-  console.error('Error connecting to database', error);
-});
-
-
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);

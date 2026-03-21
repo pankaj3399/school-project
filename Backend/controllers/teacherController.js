@@ -169,6 +169,15 @@ export const completeTeacherRegistration = async (req, res) => {
     teacher.registrationToken = null;
     teacher.isEmailVerified = true;
     teacher.isFirstLogin = true;
+    
+    // Record terms acceptance if provided during registration
+    if (req.body.termsAccepted) {
+      teacher.termsAccepted = true;
+      teacher.termsVersion = req.body.termsVersion || '1.0';
+      teacher.termsAcceptedAt = new Date();
+      teacher.termsAcceptedIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    }
+
     await teacher.save();
     // Send onboarding email after registration is complete
     try {

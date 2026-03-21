@@ -23,8 +23,7 @@ const DistrictSchema = new mongoose.Schema({
   },
   state: { 
     type: String, 
-    required: true, 
-    index: true 
+    required: true
   },
   zipCode: {
     type: String,
@@ -38,7 +37,7 @@ const DistrictSchema = new mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
+    match: [/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/, 'Please fill a valid email address']
   },
   contactPhone: { 
     type: String 

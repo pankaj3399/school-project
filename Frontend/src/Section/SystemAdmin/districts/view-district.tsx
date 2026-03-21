@@ -20,10 +20,14 @@ export default function ViewDistrict() {
     const [saving, setSaving] = useState(false);
     const [editData, setEditData] = useState<any>(null);
 
+    const getAuthToken = () => {
+        // @ts-ignore
+        return user?.token || localStorage.getItem('token');
+    };
+
     useEffect(() => {
         const fetchDistrict = async () => {
-            // @ts-ignore
-            const token = user?.token || localStorage.getItem('token');
+            const token = getAuthToken();
             if (token && id) {
                 try {
                     const response = await getDistrictById(id, token);
@@ -35,9 +39,20 @@ export default function ViewDistrict() {
                             contactPhone: response.district.contactPhone,
                             subscriptionStatus: response.district.subscriptionStatus
                         });
+                    } else if (response.error) {
+                        toast({
+                            title: "Error",
+                            description: response.error.message || "Failed to load district data.",
+                            variant: "destructive"
+                        });
                     }
                 } catch (error) {
                     console.error('Error fetching district:', error);
+                    toast({
+                        title: "Error",
+                        description: "Network error while fetching district.",
+                        variant: "destructive"
+                    });
                 }
             }
             setLoading(false);
@@ -50,8 +65,7 @@ export default function ViewDistrict() {
         if (!id) return;
         setSaving(true);
         try {
-            // @ts-ignore
-            const token = user?.token || localStorage.getItem('token');
+            const token = getAuthToken();
             const response = await updateDistrict(id, editData, token || '');
             if (response.district) {
                 setData({ ...data, district: response.district });
@@ -124,7 +138,18 @@ export default function ViewDistrict() {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => window.open(district.website, '_blank')} disabled={!district.website}>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => {
+                            if (!district.website) return;
+                            let url = district.website;
+                            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                url = 'https://' + url;
+                            }
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        }} 
+                        disabled={!district.website}
+                    >
                         <Globe className="h-4 w-4 mr-2" />
                         Website
                     </Button>
@@ -205,7 +230,7 @@ export default function ViewDistrict() {
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm"
-                                                onClick={() => navigate(`/school/${school._id}`)}
+                                                onClick={() => navigate(`/system-admin/schools/${school._id}`)}
                                                 className="hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
                                             >
                                                 View

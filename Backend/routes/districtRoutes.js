@@ -18,15 +18,17 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// SystemAdmin only routes
-router.post('/', authorizeRoles(Role.SystemAdmin, Role.Admin), createDistrict);
+// District Registration & Management (System Admin / Admin)
 router.get('/', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistricts);
+router.post('/', authorizeRoles(Role.SystemAdmin, Role.Admin), createDistrict);
+router.get('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistrictById);
+router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), updateDistrict);
 router.delete('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), deleteDistrict);
 router.post('/:id/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), assignDistrictAdmin);
 
-// SystemAdmin and DistrictAdmin routes
-router.get('/:id', authorizeRoles(Role.SystemAdmin, Role.DistrictAdmin, Role.Admin), getDistrictById);
-router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.DistrictAdmin, Role.Admin), updateDistrict);
+// School Operations within Districts (Admin/DistrictAdmin)
+
+// District-specific operations (SystemAdmin, DistrictAdmin, Admin)
 router.get('/:id/stats', authorizeRoles(Role.SystemAdmin, Role.DistrictAdmin, Role.Admin), getDistrictStats);
 router.post('/:id/schools', authorizeRoles(Role.SystemAdmin, Role.DistrictAdmin, Role.Admin), addSchoolToDistrict);
 router.get('/:id/schools', authorizeRoles(Role.SystemAdmin, Role.DistrictAdmin, Role.Admin), getDistrictSchools);

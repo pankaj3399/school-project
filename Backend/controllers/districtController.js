@@ -5,6 +5,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import { Role } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
+import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.js";
 import bcrypt from 'bcryptjs';
 
 // Create a new district
@@ -101,10 +102,56 @@ export const getDistricts = async (req, res) => {
       return acc;
     }, {});
 
-    const districtsWithCounts = districts.map(d => ({
-      ...d.toObject(),
-      schoolCount: schoolCountMap[d._id.toString()] || 0
-    }));
+    // Get teacher and student counts for each district
+    const schoolsInDistricts = await School.find({ districtId: { $in: districtIds } }).select('_id districtId');
+    const schoolIdToDistrictIdMap = schoolsInDistricts.reduce((acc, school) => {
+      if (!acc[school.districtId.toString()]) {
+        acc[school.districtId.toString()] = [];
+      }
+      acc[school.districtId.toString()].push(school._id);
+      return acc;
+    }, {});
+
+    const allSchoolIds = schoolsInDistricts.map(s => s._id);
+
+    const [teacherCountsAgg, studentCountsAgg] = await Promise.all([
+      Teacher.aggregate([
+        { $match: { schoolId: { $in: allSchoolIds } } },
+        { $group: { _id: "$schoolId", count: { $sum: 1 } } }
+      ]),
+      Student.aggregate([
+        { $match: { schoolId: { $in: allSchoolIds } } },
+        { $group: { _id: "$schoolId", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const teacherCountMap = teacherCountsAgg.reduce((acc, item) => {
+      acc[item._id.toString()] = item.count;
+      return acc;
+    }, {});
+
+    const studentCountMap = studentCountsAgg.reduce((acc, item) => {
+      acc[item._id.toString()] = item.count;
+      return acc;
+    }, {});
+
+    const districtsWithCounts = districts.map(d => {
+      const districtSchools = schoolIdToDistrictIdMap[d._id.toString()] || [];
+      let totalTeachers = 0;
+      let totalStudents = 0;
+
+      districtSchools.forEach(schoolId => {
+        totalTeachers += teacherCountMap[schoolId.toString()] || 0;
+        totalStudents += studentCountMap[schoolId.toString()] || 0;
+      });
+
+      return {
+        ...d.toObject(),
+        schoolCount: schoolCountMap[d._id.toString()] || 0,
+        teacherCount: totalTeachers,
+        studentCount: totalStudents
+      };
+    });
 
     return res.status(200).json({
       districts: districtsWithCounts,
@@ -265,6 +312,16 @@ export const addSchoolToDistrict = async (req, res) => {
       return res.status(404).json({ message: "District not found" });
     }
 
+    // Check for duplicate school name in district
+    const existingSchool = await School.findOne({ 
+        name: { $regex: new RegExp(`^${name}$`, 'i') }, 
+        districtId: district._id 
+    });
+
+    if (existingSchool) {
+        return res.status(400).json({ message: `School with name "${name}" already exists in this district.` });
+    }
+
     const school = await School.create({
       name,
       address,
@@ -352,8 +409,12 @@ export const getDistrictSchools = async (req, res) => {
 // Assign District Admin
 export const assignDistrictAdmin = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // District ID from URL params
     const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: "Name, email, and password are required for admin registration." });
+    }
 
     const district = await District.findById(id);
     if (!district) {

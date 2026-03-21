@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
+import net from 'net';
 
 const teacherSchema = new mongoose.Schema({
   name: {
@@ -96,9 +97,17 @@ teacherSchema.pre('save', function (next) {
 
 teacherSchema.pre('save', function (next) {
     if (this.isModified('termsAcceptedIp') && this.termsAcceptedIp) {
-        const parts = this.termsAcceptedIp.split('.');
-        if (parts.length === 4) {
-            this.termsAcceptedIp = `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+        if (net.isIPv4(this.termsAcceptedIp)) {
+            const parts = this.termsAcceptedIp.split('.');
+            if (parts.length === 4) {
+                this.termsAcceptedIp = `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+            }
+        } else if (net.isIPv6(this.termsAcceptedIp)) {
+            // Anonymize IPv6 by zeroing out the last 64 bits (4 hextets)
+            const parts = this.termsAcceptedIp.split(':');
+            if (parts.length >= 4) {
+                this.termsAcceptedIp = parts.slice(0, 4).join(':') + ':0000:0000:0000:0000';
+            }
         }
     }
     next();

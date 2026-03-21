@@ -23,6 +23,11 @@ export default function AddDistrict() {
         contactEmail: ''
     });
 
+    const getAuthToken = () => {
+        // @ts-ignore
+        return user?.token || localStorage.getItem('token');
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -30,11 +35,22 @@ export default function AddDistrict() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (formData.contactEmail && !emailRegex.test(formData.contactEmail)) {
+            toast({
+                title: "Invalid Email",
+                description: "Please enter a valid email address.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         setLoading(true);
 
         // Consistent token retrieval
-        // @ts-ignore
-        const token = user?.token || localStorage.getItem('token');
+        const token = getAuthToken();
 
         try {
             const response = await createDistrict(formData, token || '');

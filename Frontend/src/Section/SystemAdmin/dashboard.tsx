@@ -11,7 +11,8 @@ import {
     TrendingUp,
     Map,
     Plus,
-    Download
+    Download,
+    AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getSystemDashboardStats } from '@/api';
@@ -22,21 +23,29 @@ export default function SystemAdminDashboard() {
     const { user } = useAuth();
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const getAuthToken = () => {
+        // @ts-ignore
+        return user?.token || localStorage.getItem('token');
+    };
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
             try {
-                // @ts-ignore
-                const token = user.token || localStorage.getItem('token');
+                const token = getAuthToken();
                 if (token) {
                     const data = await getSystemDashboardStats(token);
                     if (data.stats) {
                         setStats(data.stats);
+                    } else if (data.error) {
+                        setError("Failed to load dashboard metrics");
                     }
                 }
             } catch (error) {
                 console.error("Error fetching dashboard stats:", error);
+                setError("Network error occurred while fetching stats");
             } finally {
                 setLoading(false);
             }
@@ -141,6 +150,13 @@ export default function SystemAdminDashboard() {
                     </Button>
                 </div>
             </div>
+
+            {error && (
+                <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-xl flex items-center gap-3">
+                    <AlertCircle className="h-5 w-5" />
+                    {error}
+                </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

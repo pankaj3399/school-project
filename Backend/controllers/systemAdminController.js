@@ -187,13 +187,16 @@ export const bulkImportSchools = async (req, res) => {
     for (const row of data) {
       try {
         const {
-          'District ID': districtCode,
+          'District ID': districtCodeRaw,
           'District Name': districtName,
           'School Name': schoolName,
           'Address': address,
           'State': state,
           'Country': country
         } = row;
+
+        // Safely normalize districtCode
+        const districtCode = String(districtCodeRaw || '').trim().toUpperCase();
 
         if (!districtCode || !schoolName) {
           results.errors.push({
@@ -204,12 +207,12 @@ export const bulkImportSchools = async (req, res) => {
         }
 
         // Find or create district
-        let district = await District.findOne({ code: districtCode.toUpperCase() });
+        let district = await District.findOne({ code: districtCode });
         
         if (!district && districtName) {
           district = await District.create({
             name: districtName,
-            code: districtCode.toUpperCase(),
+            code: districtCode,
             state: state || '',
             country: country || 'USA',
             createdBy: req.user.id,
@@ -366,8 +369,12 @@ export const recordTermsAcceptance = async (req, res) => {
   try {
     const { userId, userModel, userType, termsVersion, schoolId, districtId } = req.body;
 
-    // Validate that the request is for the authenticated user
-    if (userId !== req.user?.id) {
+    if (!userId || !termsVersion) {
+        return res.status(400).json({ message: 'User ID and terms version are required' });
+    }
+
+    // Validate that the request is for the authenticated user or a SystemAdmin
+    if (req.user.id !== userId && req.user.role !== Role.SystemAdmin) {
       return res.status(403).json({ message: "Access denied. Cannot record acceptance for another user." });
     }
 
@@ -397,9 +404,18 @@ export const getAllAdmins = async (req, res) => {
   try {
     const { role, page = 1, limit = 20 } = req.query;
     
-    const query = {};
-    if (role) query.role = role;
-    else query.role = { $in: [Role.SystemAdmin, Role.DistrictAdmin, Role.SchoolAdmin] };
+    let query = {};
+    // Whitelist accepted roles to prevent arbitrary role filtering
+    const allowedRoles = [Role.SystemAdmin, Role.DistrictAdmin, Role.SchoolAdmin];
+    if (role && allowedRoles.includes(role)) {
+        query.role = role;
+    } else if (role) {
+        // If an invalid role is provided, return an error
+        return res.status(400).json({ message: "Invalid role specified for filtering." });
+    } else {
+        // If no role is specified, default to all allowed admin roles
+        query.role = { $in: allowedRoles };
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 

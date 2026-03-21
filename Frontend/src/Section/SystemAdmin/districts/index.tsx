@@ -19,7 +19,7 @@ import {
     Trash2,
     Eye,
     Edit,
-    Suspended
+    Loader2
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -53,13 +53,17 @@ export default function DistrictsList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
 
+    const getAuthToken = () => {
+        // @ts-ignore
+        return user?.token || localStorage.getItem('token');
+    };
+
     const fetchDistricts = async (search = '') => {
         if (!user) return;
         setLoading(true);
         setError(null);
         try {
-            // @ts-ignore
-            const token = user.token || localStorage.getItem('token');
+            const token = getAuthToken();
             const data = await getDistricts(token, { search });
             if (data.error) {
                 setError("Failed to fetch districts");
@@ -87,13 +91,15 @@ export default function DistrictsList() {
         }
 
         try {
-            // @ts-ignore
-            const token = user?.token || localStorage.getItem('token');
+            const token = getAuthToken();
             const data = await deleteDistrict(id, token);
             if (data.error) {
                 alert("Failed to delete district");
             } else {
-                setDistricts(districts.filter(d => d._id !== id));
+                // Update state to reflect expired status instead of removal
+                setDistricts(districts.map(d => 
+                    d._id === id ? { ...d, subscriptionStatus: 'expired' as any } : d
+                ));
             }
         } catch (err) {
             alert("Error deleting district");

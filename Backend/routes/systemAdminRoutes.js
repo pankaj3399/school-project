@@ -49,6 +49,6 @@ router.get('/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllAdmins
 // Terms management routes (authenticated)
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllTermsVersions);
 router.post('/terms', authorizeRoles(Role.SystemAdmin, Role.Admin), createTermsVersion);
-router.post('/terms/accept', recordTermsAcceptance); // Used during registration
+router.post('/terms/accept', authenticateToken, recordTermsAcceptance); // Used during registration
 
 export default router;

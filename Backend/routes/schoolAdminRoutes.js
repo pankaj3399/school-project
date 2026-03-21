@@ -1,6 +1,5 @@
 import { addSchool, addStudent,  getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetStudentRoster, sendReport, genreport, teacherRoster, studentRoster, sendResetOtp, verifyResetOtp } from "../controllers/schoolAdminController.js";
-import { authenticate } from "../middlewares/authMiddleware.js";
-import { authorizeRoles } from "../middlewares/roleMiddleware.js";
+import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware.js";
 import express from 'express';
 import {Role} from '../enum.js';
 import { createForm, editForm, deleteForm } from "../controllers/formController.js";

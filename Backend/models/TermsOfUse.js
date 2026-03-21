@@ -5,7 +5,8 @@ const TermsOfUseSchema = new mongoose.Schema({
   version: { 
     type: String, 
     required: true, 
-    unique: true 
+    unique: true,
+    immutable: true
   },
   title: {
     type: String,
@@ -14,24 +15,30 @@ const TermsOfUseSchema = new mongoose.Schema({
   },
   content: { 
     type: String, 
-    required: true 
+    required: true,
+    immutable: true
   },
   contentHtml: { 
-    type: String 
+    type: String,
+    immutable: true
   },
   effectiveDate: { 
     type: Date, 
-    required: true 
+    required: true,
+    immutable: true
   },
   isActive: { 
     type: Boolean, 
     default: true 
   },
   // Which districts/schools this version applies to (empty = all)
-  applicableToDistricts: [{ 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'District' 
-  }],
+  applicableToDistricts: {
+    type: [{ 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'District' 
+    }],
+    immutable: true
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 

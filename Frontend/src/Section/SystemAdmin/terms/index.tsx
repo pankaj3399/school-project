@@ -16,12 +16,17 @@ import { useAuth } from '@/authContext';
 
 export default function TermsManagement() {
     const { user } = useAuth();
-    const [terms, setTerms] = useState({
+    const [terms, setTerms] = useState<any>({
         title: '',
         content: '',
         version: '',
         isActive: true
     });
+
+    const getAuthToken = () => {
+        // @ts-ignore
+        return user?.token || localStorage.getItem('token');
+    };
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -52,17 +57,17 @@ export default function TermsManagement() {
         setSaving(true);
         setMessage(null);
         try {
-            // @ts-ignore
-            const token = user?.token || localStorage.getItem('token');
+            const token = getAuthToken();
             const response = await updateTerms(terms, token || '');
 
             if (!response.error) {
                 setMessage({ type: 'success', text: 'Terms updated successfully' });
             } else {
-                throw new Error(response.error.message || 'Failed to update terms');
+                const errorMsg = response.error?.response?.data?.message || response.error?.message || 'Failed to update terms';
+                throw new Error(errorMsg);
             }
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Error saving terms. Please try again.' });
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || 'Error saving terms. Please try again.' });
         } finally {
             setSaving(false);
         }
