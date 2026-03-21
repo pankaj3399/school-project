@@ -2,7 +2,7 @@ import Student from "../models/Student.js";
 import School from "../models/School.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
-import { TermsOfUse } from "../models/TermsOfUse.js";
+import { TermsOfUse } from '../models/TermsOfUse.js';
 import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
@@ -151,20 +151,10 @@ export const deleteTeacher = async (req, res) => {
 };
 
 export const completeTeacherRegistration = async (req, res) => {
-  const { token, name, password, subject, termsAccepted, termsVersion } = req.body;
-  
+  const { token, name, password, subject } = req.body;
   if (!token || !name || !password || !subject) {
     return res.status(400).json({ message: "All fields are required." });
   }
-
-  if (termsAccepted !== true) {
-    return res.status(400).json({ message: "You must accept the terms and conditions to complete registration." });
-  }
-
-  if (!termsVersion) {
-    return res.status(400).json({ message: "Terms version is required when terms are accepted." });
-  }
-
   try {
     const teacher = await Teacher.findOne({ registrationToken: token });
     if (!teacher) {
@@ -172,13 +162,6 @@ export const completeTeacherRegistration = async (req, res) => {
         .status(400)
         .json({ message: "Invalid or expired registration token." });
     }
-
-    // Verify the terms version exists
-    const termsRecord = await TermsOfUse.findOne({ version: termsVersion });
-    if (!termsRecord) {
-        return res.status(400).json({ message: `Terms version ${termsVersion} not found.` });
-    }
-
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
     teacher.name = name;
@@ -188,27 +171,35 @@ export const completeTeacherRegistration = async (req, res) => {
     teacher.isEmailVerified = true;
     teacher.isFirstLogin = true;
     
-    // Record terms acceptance
-    teacher.termsAccepted = true;
-    teacher.termsAcceptedVersion = termsVersion;
-    teacher.termsAcceptedAt = new Date();
-    
-    try {
-        await teacher.save();
-    } catch (err) {
-        console.error("Error saving teacher:", err);
-        return res.status(500).json({ message: "Error saving teacher registration", error: err.message });
+    // Record terms acceptance if provided during registration
+    if (req.body.termsAccepted) {
+      // Record terms acceptance on the teacher record
+      // Resolve terms version
+      let termsVersion = req.body.termsVersion;
+      if (!termsVersion) {
+        const activeTerms = await TermsOfUse.findOne({ isActive: true });
+        if (!activeTerms) {
+          return res.status(400).json({ message: "No active terms version found. Please contact administrator." });
+        }
+        termsVersion = activeTerms.version;
+      }
+      teacher.termsVersion = termsVersion;
+      teacher.termsAcceptedAt = new Date();
+      
+      // Normalize IP address handling
+      let rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      if (Array.isArray(rawIp)) rawIp = rawIp.join(',');
+      teacher.termsAcceptedIp = (rawIp || '').split(',')[0].trim();
     }
 
+    await teacher.save();
     // Send onboarding email after registration is complete
-    // Wrapped in its own try-catch so it doesn't fail the registration if email fails
     try {
-        await sendOnboardingEmail(teacher);
+      await sendOnboardingEmail(teacher);
     } catch (emailError) {
-        console.error("Failed to send onboarding email:", emailError);
-        // We still return 200 because the registration was successful
+      console.error("Error sending onboarding email:", emailError);
+      // Continue to return success response even if email fails
     }
-
     return res
       .status(200)
       .json({ message: "Registration completed successfully." });

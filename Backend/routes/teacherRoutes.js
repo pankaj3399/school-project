@@ -1,12 +1,11 @@
 import express from 'express';
-import { authenticate } from '../middlewares/authMiddleware.js';
-import { authorizeRoles } from '../middlewares/roleMiddleware.js';
+import { authenticateToken as authenticate, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { addTeacher,updateTeacher,deleteTeacher } from '../controllers/teacherController.js';
 import { completeTeacherRegistration } from '../controllers/teacherController.js';
 import {Role} from '../enum.js';
 const router = express.Router();
 
-router.get('/dashboard', authenticate, authorizeRoles(Role.Teacher), (req, res) => {
+router.get('/dashboard', authenticate, authorizeRoles(Role.Teacher), async (req, res) => {
     res.json({ message:` Welcome Teacher: ${req.user.id}` });
 });
 

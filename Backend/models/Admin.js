@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
-import { anonymizeIP, anonymizeUpdate, addIPAnonymizationMiddleware } from '../utils/ipAnonymizer.js';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -37,14 +36,11 @@ const userSchema = new mongoose.Schema({
   districtId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'District', 
-    required: [
-      function() { return this.role === Role.DistrictAdmin; },
-      'District ID is required for accounts with DistrictAdmin role'
-    ]
+    default: null,
   },
   // Terms of Use tracking
   termsAcceptedAt: { type: Date },
-  termsAcceptedIp: { type: String },
+  termsVersion: { type: String },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -52,20 +48,6 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
-  },
-  termsAccepted: {
-    type: Boolean,
-    default: false
-  },
-  termsAcceptedVersion: {
-    type: String,
-    default: null,
-    validate: {
-      validator: function(v) {
-        return typeof v === 'string' && v.trim().length > 0;
-      },
-      message: 'termsAcceptedVersion is required'
-    }
   }
 });
 
@@ -76,11 +58,7 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// Apply IP anonymization middleware to protect termsAcceptedIp
-addIPAnonymizationMiddleware(userSchema, ['termsAcceptedIp']);
-
 
 userSchema.index({ schoolId: 1 });
-userSchema.index({ districtId: 1 });
 
 export default mongoose.model('User', userSchema);

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
-import { anonymizeIP, anonymizeUpdate, addIPAnonymizationMiddleware } from '../utils/ipAnonymizer.js';
+import net from 'net';
 
 const teacherSchema = new mongoose.Schema({
   name: {
@@ -79,20 +79,9 @@ const teacherSchema = new mongoose.Schema({
     default: null
   },
   // Terms of Use tracking
-  termsAccepted: {
-    type: Boolean,
-    default: false
-  },
+  termsAccepted: { type: Boolean, default: false },
   termsAcceptedAt: { type: Date },
-  termsAcceptedVersion: { 
-    type: String,
-    validate: {
-      validator: function(v) {
-        return typeof v === 'string' && v.trim().length > 0;
-      },
-      message: 'termsAcceptedVersion is required'
-    }
-  },
+  termsVersion: { type: String },
   termsAcceptedIp: { type: String }
 });
 
@@ -107,8 +96,23 @@ teacherSchema.pre('save', function (next) {
   next();
 });
 
-// Apply IP anonymization middleware to protect termsAcceptedIp
-addIPAnonymizationMiddleware(teacherSchema, ['termsAcceptedIp']);
+teacherSchema.pre('save', function (next) {
+    if (this.isModified('termsAcceptedIp') && this.termsAcceptedIp) {
+        if (net.isIPv4(this.termsAcceptedIp)) {
+            const parts = this.termsAcceptedIp.split('.');
+            if (parts.length === 4) {
+                this.termsAcceptedIp = `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+            }
+        } else if (net.isIPv6(this.termsAcceptedIp)) {
+            // Anonymize IPv6 by zeroing out the last 64 bits (4 hextets)
+            const parts = this.termsAcceptedIp.split(':');
+            if (parts.length >= 4) {
+                this.termsAcceptedIp = parts.slice(0, 4).join(':') + ':0000:0000:0000:0000';
+            }
+        }
+    }
+    next();
+});
 
 teacherSchema.index({ registrationToken: 1 });
 teacherSchema.index({ schoolId: 1, grade: 1, type: 1 });
