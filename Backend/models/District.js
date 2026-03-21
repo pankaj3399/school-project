@@ -66,7 +66,7 @@ const DistrictSchema = new mongoose.Schema({
   
   // Terms of Use
   termsAcceptedAt: { type: Date },
-  termsVersion: { type: String },
+  termsAcceptedVersion: { type: String },
   termsAcceptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   
   // Settings (clone from templates)

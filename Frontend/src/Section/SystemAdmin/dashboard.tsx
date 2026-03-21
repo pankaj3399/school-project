@@ -46,7 +46,10 @@ export default function SystemAdminDashboard() {
                 const token = user.token || localStorage.getItem('token') || "";
                 const data = await getSystemDashboardStats(token);
                 if (data.error) {
-                    setError(data.error);
+                    const normalizedError = typeof data.error === 'object' 
+                        ? JSON.stringify(data.error) 
+                        : String(data.error);
+                    setError(normalizedError);
                 } else if (data.stats) {
                     setStats(data.stats);
                 }

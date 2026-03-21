@@ -84,13 +84,13 @@ const teacherSchema = new mongoose.Schema({
     default: false
   },
   termsAcceptedAt: { type: Date },
-  termsVersion: { 
+  termsAcceptedVersion: { 
     type: String,
     validate: {
       validator: function(v) {
         return !this.termsAccepted || (v && v.trim().length > 0);
       },
-      message: 'termsVersion is required when termsAccepted is true'
+      message: 'termsAcceptedVersion is required when termsAccepted is true'
     }
   },
   termsAcceptedIp: { type: String }

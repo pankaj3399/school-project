@@ -44,7 +44,6 @@ const userSchema = new mongoose.Schema({
   },
   // Terms of Use tracking
   termsAcceptedAt: { type: Date },
-  termsVersion: { type: String },
   termsAcceptedIp: { type: String },
   createdAt: {
     type: Date,

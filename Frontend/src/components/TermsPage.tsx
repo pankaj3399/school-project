@@ -55,7 +55,7 @@ export default function TermsPage() {
     useEffect(() => {
         const fetchTerms = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/system-admin/terms`);
+                const response = await axios.get(`${API_URL}/system-admin/terms`);
                 if (response.data.terms) {
                     setTerms(response.data.terms);
                 }
