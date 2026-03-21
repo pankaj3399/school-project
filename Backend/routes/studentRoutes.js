@@ -1,5 +1,5 @@
 import { addStudent,updateStudent,deleteStudent } from "../controllers/studentController.js";
-import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware.js";
+import { authenticateToken as authenticate, authorizeRoles } from "../middlewares/authMiddleware.js";
 import express from 'express';
 import {Role} from '../enum.js';
 

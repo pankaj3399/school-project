@@ -42,7 +42,21 @@ router.use(authenticateToken);
 router.get('/dashboard', authorizeRoles(Role.SystemAdmin, Role.Admin), getDashboardStats);
 router.get('/analytics/states', authorizeRoles(Role.SystemAdmin, Role.Admin), getStateLevelStats);
 router.get('/analytics/districts', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistrictComparison);
-router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), upload.single('file'), bulkImportSchools);
+
+// Bulk import with customized error handling for Multer
+router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading (e.g. file too large)
+      return res.status(400).json({ message: `Upload error: ${err.message}` });
+    } else if (err) {
+      // An unknown error occurred when uploading (e.g. invalid file type from fileFilter)
+      return res.status(400).json({ message: err.message });
+    }
+    // Everything went fine, proceed to controller
+    next();
+  });
+}, bulkImportSchools);
 router.post('/clone-district', authorizeRoles(Role.SystemAdmin, Role.Admin), cloneFromTemplate);
 router.get('/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllAdmins);
 

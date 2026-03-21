@@ -49,16 +49,16 @@ import TermsManagement from "./Section/SystemAdmin/terms"; // Assuming this exis
 
 // Reusable ProtectedRoute component
 const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode, requiredRoles?: string[] }) => {
-    const { user, loading } = useAuth();
-    if (loading) return <div>Loading...</div>;
-    if (!user) {
-        return <Navigate to="/signin" replace />;
-    }
-    if (requiredRoles && !requiredRoles.includes(user.role)) {
-        return <Navigate to="/unauthorized" />;
-    }
-    
-    return <>{children}</>;
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (!user) {
+    return <Navigate to="/signin" replace />;
+  }
+  if (requiredRoles && !requiredRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" />;
+  }
+  
+  return <>{children}</>;
 };
 
 export default function App() {

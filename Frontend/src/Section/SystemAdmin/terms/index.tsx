@@ -42,9 +42,12 @@ export default function TermsManagement() {
                         version: data.terms.version || '',
                         isActive: data.terms.isActive ?? true
                     });
+                } else if (data.error) {
+                    setMessage({ type: 'error', text: data.error.message || 'Failed to load terms' });
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching terms:', error);
+                setMessage({ type: 'error', text: 'Network error while loading terms' });
             } finally {
                 setLoading(false);
             }

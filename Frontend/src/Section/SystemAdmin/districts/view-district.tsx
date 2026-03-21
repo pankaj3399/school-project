@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDistrictById, updateDistrict } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,8 @@ export default function ViewDistrict() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { toast } = useToast();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'schools';
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -198,7 +200,11 @@ export default function ViewDistrict() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="schools" className="w-full">
+            <Tabs 
+                value={activeTab} 
+                onValueChange={(value) => setSearchParams({ tab: value })} 
+                className="w-full"
+            >
                 <TabsList className="bg-gray-100/50 p-1 rounded-xl">
                     <TabsTrigger value="schools" className="rounded-lg px-6">Schools</TabsTrigger>
                     <TabsTrigger value="admins" className="rounded-lg px-6">Admins</TabsTrigger>

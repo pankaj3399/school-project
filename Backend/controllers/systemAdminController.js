@@ -1,9 +1,12 @@
-import District from "../models/District.js";
-import School from "../models/School.js";
-import User from "../models/Admin.js";
-import Teacher from "../models/Teacher.js";
-import Student from "../models/Student.js";
-import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
+import District from '../models/District.js';
+import School from '../models/School.js';
+import User from '../models/User.js';
+import Teacher from '../models/Teacher.js';
+import Student from '../models/Student.js';
+import Admin from '../models/Admin.js';
+import TermsOfUse from '../models/TermsOfUse.js';
+import { TermsAcceptance } from "../models/TermsOfUse.js";
+import { escapeRegExp } from '../utils/stringUtils.js';
 import { Role } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
@@ -11,23 +14,16 @@ import xlsx from 'xlsx';
 // Get top-level dashboard stats
 export const getDashboardStats = async (req, res) => {
   try {
-    const [
-      totalDistricts,
-      activeDistricts,
-      totalSchools,
-      totalTeachers,
-      totalStudents,
-      totalPoints
-    ] = await Promise.all([
-      District.countDocuments(),
-      District.countDocuments({ subscriptionStatus: 'active' }),
-      School.countDocuments(),
-      Teacher.countDocuments(),
-      Student.countDocuments(),
-      PointsHistory.aggregate([
-        { $group: { _id: null, total: { $sum: "$awarded" } } }
-      ])
+    const totalDistricts = await District.countDocuments();
+    const activeDistricts = await District.countDocuments({ subscriptionStatus: 'active' });
+    const pendingDistricts = await District.countDocuments({ subscriptionStatus: 'pending' });
+    const totalSchools = await School.countDocuments();
+    const totalTeachers = await Teacher.countDocuments();
+    const totalStudents = await Student.countDocuments();
+    const totalPointsResult = await PointsHistory.aggregate([
+      { $group: { _id: null, total: { $sum: "$awarded" } } }
     ]);
+    const totalPoints = totalPointsResult[0]?.total || 0;
 
     // Get recent activity
     const recentDistricts = await District.find()
@@ -39,11 +35,11 @@ export const getDashboardStats = async (req, res) => {
       stats: {
         totalDistricts,
         activeDistricts,
-        pendingDistricts: totalDistricts - activeDistricts,
+        pendingDistricts,
         totalSchools,
         totalTeachers,
         totalStudents,
-        totalTokensEarned: totalPoints[0]?.total || 0
+        totalTokensEarned: totalPoints
       },
       recentDistricts
     });
@@ -229,9 +225,10 @@ export const bulkImportSchools = async (req, res) => {
         }
 
         // Check if school already exists
-        const existingSchool = await School.findOne({
-          name: schoolName,
-          districtId: district._id
+        const escapedName = escapeRegExp(schoolName);
+        const existingSchool = await School.findOne({ 
+          name: { $regex: new RegExp(`^${escapedName}$`, 'i') }, 
+          districtId: district._id 
         });
 
         if (existingSchool) {
@@ -327,10 +324,8 @@ export const createTermsVersion = async (req, res) => {
   try {
     const { version, title, content, contentHtml, effectiveDate, applicableToDistricts } = req.body;
 
-    // Deactivate all previous versions
-    await TermsOfUse.updateMany({}, { isActive: false });
-
-    const terms = await TermsOfUse.create({
+    // Create new terms first, then deactivate others (to avoid "no active terms" state if create fails)
+    const newTerms = await TermsOfUse.create({
       version,
       title: title || 'RADU E-Token™ Pilot Participation Agreement',
       content,

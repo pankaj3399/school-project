@@ -7,6 +7,7 @@ import { Role } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
 import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.js";
 import bcrypt from 'bcryptjs';
+import { escapeRegExp } from "../utils/stringUtils.js";
 
 // Create a new district
 export const createDistrict = async (req, res) => {
@@ -73,9 +74,10 @@ export const getDistricts = async (req, res) => {
     if (state) query.state = state;
     if (status) query.subscriptionStatus = status;
     if (search) {
+      const escapedSearch = escapeRegExp(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { code: { $regex: search, $options: 'i' } }
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { code: { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 
@@ -211,7 +213,7 @@ export const updateDistrict = async (req, res) => {
     const district = await District.findByIdAndUpdate(
       id,
       { ...allowedUpdates, updatedAt: Date.now() },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!district) {
@@ -244,7 +246,7 @@ export const deleteDistrict = async (req, res) => {
     const district = await District.findByIdAndUpdate(
       id,
       { subscriptionStatus: 'expired', updatedAt: Date.now() },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!district) {
@@ -313,8 +315,9 @@ export const addSchoolToDistrict = async (req, res) => {
     }
 
     // Check for duplicate school name in district
+    const escapedName = escapeRegExp(name);
     const existingSchool = await School.findOne({ 
-        name: { $regex: new RegExp(`^${name}$`, 'i') }, 
+        name: { $regex: new RegExp(`^${escapedName}$`, 'i') }, 
         districtId: district._id 
     });
 

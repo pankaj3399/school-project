@@ -55,9 +55,9 @@ export default function SystemAdminDashboard() {
     }, [user]);
 
     const handleDownloadWaitlist = async () => {
+        let url: string | null = null;
         try {
-            // @ts-ignore
-            const token = user?.token || localStorage.getItem('token');
+            const token = getAuthToken();
             const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
                 method: 'GET',
                 headers: {
@@ -70,17 +70,20 @@ export default function SystemAdminDashboard() {
             }
 
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
+            url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `waitlist-${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
             console.error('Error downloading waitlist:', error);
             alert('Failed to download waitlist data');
+        } finally {
+            if (url) {
+                window.URL.revokeObjectURL(url);
+            }
         }
     };
 

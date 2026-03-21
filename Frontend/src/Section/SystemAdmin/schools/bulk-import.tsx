@@ -15,7 +15,7 @@ interface SuccessItem {
 }
 
 interface ErrorItem {
-    row: number;
+    row: number | any;
     error: string;
 }
 
@@ -45,14 +45,14 @@ export default function BulkImportSchools() {
 
             const reader = new FileReader();
             reader.onload = (evt) => {
-                const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
+                const data = evt.target?.result;
+                const wb = XLSX.read(data, { type: 'array' });
                 const wsname = wb.SheetNames[0];
                 const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                setPreview(data.slice(0, 6));
+                const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                setPreview(jsonData.slice(0, 6));
             };
-            reader.readAsBinaryString(selectedFile);
+            reader.readAsArrayBuffer(selectedFile);
         }
     };
 
@@ -214,10 +214,10 @@ export default function BulkImportSchools() {
                                     </div>
                                     {results.errors.length > 0 ? (
                                         <ul className="text-sm text-red-700 max-h-48 overflow-y-auto space-y-2 pr-2">
-                                            {results.errors.map((item: any, i) => (
+                                            {results.errors.map((item, i) => (
                                                 <li key={i} className="p-2 bg-white/50 rounded-lg border border-red-100">
                                                     <span className="font-bold mr-2 text-red-900">
-                                                        Row {typeof item.row === 'object' ? (item.row['School Name'] || i + 1) : (item.row || i + 1)}:
+                                                        Row {typeof item.row === 'object' ? (item.row['School Name'] || item.row['schoolName'] || i + 1) : (item.row || i + 1)}:
                                                     </span>
                                                     {item.error}
                                                 </li>

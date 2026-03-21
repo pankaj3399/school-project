@@ -172,10 +172,14 @@ export const completeTeacherRegistration = async (req, res) => {
     
     // Record terms acceptance if provided during registration
     if (req.body.termsAccepted) {
+      // Record terms acceptance on the teacher record
       teacher.termsAccepted = true;
       teacher.termsVersion = req.body.termsVersion || '1.0';
       teacher.termsAcceptedAt = new Date();
-      teacher.termsAcceptedIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      
+      // Normalize IP address handling
+      const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      teacher.termsAcceptedIp = Array.isArray(rawIp) ? rawIp[0] : (rawIp || '').split(',')[0].trim();
     }
 
     await teacher.save();

@@ -1,6 +1,6 @@
 import express from 'express';
 import { getAllSchools, getStudents, getTeachers,getCurrentSchool,updateSchool,deleteSchool, promote } from '../controllers/schoolController.js';
-import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware.js";
+import { authenticateToken as authenticate, authorizeRoles } from "../middlewares/authMiddleware.js";
 import {Role} from '../enum.js';
 import upload from '../middlewares/multer.js';
 import { getWeekPointsHistory, getYearPointsHistory, getHistoricalPointsData, getYearPointsHistoryByStudent, getWeekPointsHistoryByStudent, getHistoricalPointsDataByStudentId, getAnalyticsData } from '../controllers/pointhistoryController.js';

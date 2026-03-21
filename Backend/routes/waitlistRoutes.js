@@ -1,7 +1,7 @@
 import express from 'express';
 import { subscribeToWaitlist, exportWaitlistData } from '../controllers/waitlistController.js';
 
-import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware.js";
+import { authenticateToken as authenticate, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { Role } from '../enum.js';
 
 const router = express.Router();
