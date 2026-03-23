@@ -9,6 +9,9 @@ import Admin from "../models/Admin.js";
 import crypto from 'crypto';
 
 export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
+    if (!user) {
+        return res.status(404).json({ message: "User Not Found" });
+    }
     try {
         const { url } = req.body;
         // Point guardians to the registration page, but keep student links as is
@@ -16,10 +19,6 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         const registrationUrl = (url?.includes('verifyemail') && isGuardianInvitation)
             ? url.replace('verifyemail', 'guardian/complete-registration')
             : url;
-
-        if (!user) {
-            return res.status(404).json({ message: "User Not Found" });
-        }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
@@ -42,8 +41,8 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         // console.log(signatue);
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, user.email, user.parentEmail, false, tempPass, schoolLogo);
-        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, user.email, user.standard, false, null, schoolLogo);
+        const emailHTML = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, (isGuardianInvitation ? user.parentEmail : user.email), user.parentEmail, false, tempPass, schoolLogo);
+        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, (isGuardianInvitation ? user.standard : user.email), user.standard, false, null, schoolLogo);
         const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, registrationUrl, user.email, null, isStudent, null, schoolLogo);
 
         if (isStudent) {

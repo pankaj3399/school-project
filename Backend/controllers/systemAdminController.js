@@ -2,7 +2,7 @@ import District from '../models/District.js';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
-import User from '../models/Admin.js';
+import Admin from '../models/Admin.js';
 import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
 import crypto from 'crypto';
 import { escapeRegExp } from '../utils/stringUtils.js';
@@ -428,14 +428,14 @@ export const getAllAdmins = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const [admins, total] = await Promise.all([
-      User.find(query)
+      Admin.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
         .populate('schoolId', 'name')
         .populate('districtId', 'name code')
         .select('-password'),
-      User.countDocuments(query)
+      Admin.countDocuments(query)
     ]);
 
     return res.status(200).json({

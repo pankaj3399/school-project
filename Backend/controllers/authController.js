@@ -622,18 +622,28 @@ export const completeVerification = async (req, res) => {
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
 
     let user = null;
-    const registrationToken = token || emailVerificationCode;
 
     switch (userRole) {
       case Role.Teacher: {
-        // Find teacher with matching verification code or registration token
-        user = await Teacher.findOne({ 
-          $or: [
-            { emailVerificationCode: registrationToken },
-            { registrationToken: registrationToken }
-          ]
-        });
+        if (token) {
+          // High-entropy registration token lookup
+          user = await Teacher.findOne({ registrationToken: token });
+        } else if (email && emailVerificationCode) {
+          // 6-digit OTP scoped by email
+          user = await Teacher.findOne({ email, emailVerificationCode });
+        } else {
+          return res.status(400).json({ 
+            message: "A valid registration token or email with verification code is required." 
+          });
+        }
+
         if (user) {
+          // Check for expiry (if applicable)
+          if (user.registrationTokenExpires && user.registrationTokenExpires < new Date()) {
+            return res.status(400).json({ 
+              message: "Registration link has expired. Please contact the school to resend the invitation." 
+            });
+          }
           if (user.isEmailVerified && user.password) {
             return res.status(200).json({
               message: "This account is already verified and set up.",
@@ -654,16 +664,20 @@ export const completeVerification = async (req, res) => {
             return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
           }
 
+          const activeTerms = await TermsOfUse.findOne({ isActive: true });
+          const currentTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+
+          if (termsVersion && termsVersion !== currentTermsVersion) {
+            return res.status(400).json({ 
+              message: "The Terms of Use have been updated. Please refresh the page to review and accept the latest version.",
+              error: "version_mismatch"
+            });
+          }
+
           user.termsAccepted = true;
           user.termsAcceptedAt = new Date();
           user.termsAcceptedIp = req.ip || req.headers['x-forwarded-for'] || "0.0.0.0";
-          
-          if (termsVersion) {
-            user.termsAcceptedVersion = termsVersion;
-          } else {
-            const activeTerms = await TermsOfUse.findOne({ isActive: true });
-            user.termsAcceptedVersion = activeTerms ? activeTerms.version : "1.0-pilot";
-          }
+          user.termsAcceptedVersion = currentTermsVersion;
 
           user.isEmailVerified = true;
           user.emailVerificationCode = null; // Clear the code

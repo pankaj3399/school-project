@@ -35,10 +35,14 @@ export default function CompleteGuardianRegistration() {
   const fetchTerms = async () => {
     setTermsError(false);
     try {
-      const terms = await getCurrentTerms();
-      if (terms && terms.terms?.version) {
-        setTermsVersion(terms.terms.version);
-        setFetchedTerms(terms.terms);
+      const response = await getCurrentTerms();
+      if (response && response.error) {
+        setTermsError(true);
+        setTermsVersion("");
+      } else if (response && response.terms?.version) {
+        setTermsVersion(response.terms.version);
+        setFetchedTerms(response.terms);
+        setTermsError(false);
       }
     } catch (error) {
       console.error("Error fetching terms:", error);
