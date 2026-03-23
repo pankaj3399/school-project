@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { completeTeacherRegistration } from "@/api";
 import { FileText, ArrowRight, CheckCircle } from "lucide-react";
+import { completeTeacherRegistration, getCurrentTerms } from "@/api";
 
 export default function CompleteTeacherRegistration() {
   const [searchParams] = useSearchParams();
@@ -59,9 +59,12 @@ export default function CompleteTeacherRegistration() {
     }
     setLoading(true);
     try {
+      const termsData = await getCurrentTerms();
+      const termsVersion = termsData?.terms?.version;
       const data = await completeTeacherRegistration({
         token,
-        termsAccepted: true,
+        termsAccepted,
+        termsVersion,
         ...formData
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {

@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { getDistricts, deleteDistrict } from '@/api';
 import { useAuth } from '@/authContext';
+import { getAuthToken } from '@/lib/auth';
 
 interface District {
     _id: string;
@@ -53,17 +54,14 @@ export default function DistrictsList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    const getAuthToken = () => {
-        // @ts-ignore
-        return user?.token || localStorage.getItem('token');
-    };
 
     const fetchDistricts = async (search = '') => {
         if (!user) return;
         setLoading(true);
         setError(null);
         try {
-            const token = getAuthToken();
+            const token = getAuthToken(user);
+            if (!token) return;
             const data = await getDistricts(token, { search });
             if (data.error) {
                 setError("Failed to fetch districts");
@@ -91,7 +89,11 @@ export default function DistrictsList() {
         }
 
         try {
-            const token = getAuthToken();
+            const token = getAuthToken(user);
+            if (!token) {
+                alert("Authentication required. Please sign in again.");
+                return;
+            }
             const data = await deleteDistrict(id, token);
             if (data.error) {
                 alert("Failed to delete district");
@@ -112,6 +114,8 @@ export default function DistrictsList() {
                 return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Active</Badge>;
             case 'suspended':
                 return <Badge variant="destructive" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0">Suspended</Badge>;
+            case 'expired':
+                return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">Expired</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }

@@ -8,6 +8,7 @@ import { createDistrict } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { getAuthToken } from '@/lib/auth';
 
 export default function AddDistrict() {
     const navigate = useNavigate();
@@ -23,10 +24,6 @@ export default function AddDistrict() {
         contactEmail: ''
     });
 
-    const getAuthToken = () => {
-        // @ts-ignore
-        return user?.token || localStorage.getItem('token');
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -50,7 +47,7 @@ export default function AddDistrict() {
         setLoading(true);
 
         // Consistent token retrieval
-        const token = getAuthToken();
+        const token = getAuthToken(user);
 
         try {
             const response = await createDistrict(formData, token || '');

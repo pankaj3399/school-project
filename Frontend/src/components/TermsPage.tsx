@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { getCurrentTerms } from '@/api';
+
+interface Terms {
+    title: string;
+    content: string;
+    contentHtml?: string;
+    version: string;
+    effectiveDate: string;
+}
 
 // Default Terms content (fallback if API fails)
 const DEFAULT_TERMS_CONTENT = `
@@ -36,7 +44,7 @@ By participating in the pilot program, the Pilot Participant acknowledges and ag
 
 export default function TermsPage() {
     const navigate = useNavigate();
-    const [terms, setTerms] = useState<any>(null);
+    const [terms, setTerms] = useState<Terms | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -64,6 +72,13 @@ export default function TermsPage() {
 
         fetchTerms();
     }, []);
+
+    const sanitizedHtml = useMemo(() => {
+        if (terms?.contentHtml) {
+            return DOMPurify.sanitize(terms.contentHtml);
+        }
+        return '';
+    }, [terms?.contentHtml]);
 
     if (loading) {
         return (
@@ -106,7 +121,7 @@ export default function TermsPage() {
                         {terms?.contentHtml ? (
                             <div
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(terms.contentHtml) }}
+                                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
                             />
                         ) : (
                             <div className="prose prose-lg max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">

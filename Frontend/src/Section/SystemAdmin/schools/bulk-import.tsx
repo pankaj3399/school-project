@@ -8,6 +8,7 @@ import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileUp, CheckCircle, AlertCircle, Download, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { getAuthToken } from '@/lib/auth';
 
 interface SuccessItem {
     schoolName: string;
@@ -15,7 +16,8 @@ interface SuccessItem {
 }
 
 interface ErrorItem {
-    row: number | any;
+    row: number | Record<string, unknown>;
+    rowIndex?: number;
     error: string;
 }
 
@@ -32,10 +34,6 @@ export default function BulkImportSchools() {
     const [preview, setPreview] = useState<any[]>([]);
     const [results, setResults] = useState<ImportResults | null>(null);
 
-    const getAuthToken = () => {
-        // @ts-ignore
-        return user?.token || localStorage.getItem('token');
-    };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -45,12 +43,29 @@ export default function BulkImportSchools() {
 
             const reader = new FileReader();
             reader.onload = (evt) => {
-                const data = evt.target?.result;
-                const wb = XLSX.read(data, { type: 'array' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                setPreview(jsonData.slice(0, 6));
+                try {
+                    const data = evt.target?.result;
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const wsname = wb.SheetNames[0];
+                    const ws = wb.Sheets[wsname];
+                    const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                    setPreview(jsonData.slice(0, 6));
+                } catch (err) {
+                    console.error("Error parsing Excel file:", err);
+                    toast({
+                        title: "Parsing Error",
+                        description: "Could not read the Excel file. Please ensure it's a valid .xlsx file.",
+                        variant: "destructive"
+                    });
+                }
+            };
+            reader.onerror = (err) => {
+                console.error("FileReader error:", err);
+                toast({
+                    title: "File Error",
+                    description: "Failed to read the file.",
+                    variant: "destructive"
+                });
             };
             reader.readAsArrayBuffer(selectedFile);
         }
@@ -60,7 +75,16 @@ export default function BulkImportSchools() {
         if (!file) return;
 
         setLoading(true);
-        const token = getAuthToken();
+        const token = getAuthToken(user);
+        if (!token) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be signed in to perform bulk import.",
+                variant: "destructive"
+            });
+            setLoading(false);
+            return;
+        }
 
         try {
             const response = await bulkImportSchools(file, token);
@@ -217,7 +241,7 @@ export default function BulkImportSchools() {
                                             {results.errors.map((item, i) => (
                                                 <li key={i} className="p-2 bg-white/50 rounded-lg border border-red-100">
                                                     <span className="font-bold mr-2 text-red-900">
-                                                        Row {typeof item.row === 'object' ? (item.row['School Name'] || item.row['schoolName'] || i + 1) : (item.row || i + 1)}:
+                                                        Row {item.rowIndex || (typeof item.row === 'number' ? item.row : i + 1)}:
                                                     </span>
                                                     {item.error}
                                                 </li>

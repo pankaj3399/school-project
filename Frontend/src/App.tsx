@@ -45,7 +45,9 @@ import DistrictsList from "@/Section/SystemAdmin/districts";
 import AddDistrict from "@/Section/SystemAdmin/districts/add-district";
 import ViewDistrict from "@/Section/SystemAdmin/districts/view-district";
 import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
-import TermsManagement from "./Section/SystemAdmin/terms"; // Assuming this exists or will be added
+import TermsManagement from "./Section/SystemAdmin/terms";
+
+const systemAdminRoles = [Role.SystemAdmin, Role.Admin];
 
 // Reusable ProtectedRoute component
 const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode, requiredRoles?: string[] }) => {
@@ -55,7 +57,7 @@ const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode
     return <Navigate to="/signin" replace />;
   }
   if (requiredRoles && !requiredRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" />;
+    return <Navigate to="/unauthorized" replace />;
   }
   
   return <>{children}</>;
@@ -117,12 +119,12 @@ export default function App() {
 
           {/* System Admin Routes */}
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
-          <Route path="/system-admin" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin]}><SystemAdminDashboard /></ProtectedRoute>} />
-          <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin]}><DistrictsList /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin]}><AddDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin]}><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin]}><BulkImportSchools /></ProtectedRoute>} />
-          <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin]}><TermsManagement /></ProtectedRoute>} />
+          <Route path="/system-admin" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictsList /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRoles={systemAdminRoles}><BulkImportSchools /></ProtectedRoute>} />
+          <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={systemAdminRoles}><TermsManagement /></ProtectedRoute>} />
 
           <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
           <Route path="*" element={<Navigate to="/" replace />} />

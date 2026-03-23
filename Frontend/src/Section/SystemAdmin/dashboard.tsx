@@ -17,6 +17,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getSystemDashboardStats } from '@/api';
 import { useAuth } from '@/authContext';
+import { useToast } from '@/hooks/use-toast';
+import { getAuthToken } from '@/lib/auth';
 
 export default function SystemAdminDashboard() {
     const navigate = useNavigate();
@@ -25,16 +27,13 @@ export default function SystemAdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const getAuthToken = () => {
-        // @ts-ignore
-        return user?.token || localStorage.getItem('token');
-    };
+    const { toast } = useToast();
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
             try {
-                const token = getAuthToken();
+                const token = getAuthToken(user);
                 if (token) {
                     const data = await getSystemDashboardStats(token);
                     if (data.stats) {
@@ -57,7 +56,7 @@ export default function SystemAdminDashboard() {
     const handleDownloadWaitlist = async () => {
         let url: string | null = null;
         try {
-            const token = getAuthToken();
+            const token = getAuthToken(user);
             const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
                 method: 'GET',
                 headers: {
@@ -79,7 +78,11 @@ export default function SystemAdminDashboard() {
             document.body.removeChild(a);
         } catch (error) {
             console.error('Error downloading waitlist:', error);
-            alert('Failed to download waitlist data');
+            toast({
+                title: "Error",
+                description: "Failed to download waitlist data",
+                variant: "destructive"
+            });
         } finally {
             if (url) {
                 window.URL.revokeObjectURL(url);
@@ -227,7 +230,7 @@ export default function SystemAdminDashboard() {
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-emerald-100 text-sm">Growth (30d)</span>
                                     <span className="flex items-center text-white font-bold bg-white/20 px-2 py-0.5 rounded text-sm">
-                                        <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
+                                        <TrendingUp className="h-3 w-3 mr-1" /> {stats?.growth30d ? `${stats.growth30d}%` : "N/A"}
                                     </span>
                                 </div>
                                 <div className="h-2 bg-emerald-900/20 rounded-full overflow-hidden">

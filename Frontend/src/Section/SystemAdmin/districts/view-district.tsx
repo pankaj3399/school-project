@@ -6,6 +6,7 @@ import { getDistrictById, updateDistrict } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2 } from 'lucide-react';
+import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,14 +23,10 @@ export default function ViewDistrict() {
     const [saving, setSaving] = useState(false);
     const [editData, setEditData] = useState<any>(null);
 
-    const getAuthToken = () => {
-        // @ts-ignore
-        return user?.token || localStorage.getItem('token');
-    };
 
     useEffect(() => {
         const fetchDistrict = async () => {
-            const token = getAuthToken();
+            const token = getAuthToken(user);
             if (token && id) {
                 try {
                     const response = await getDistrictById(id, token);
@@ -67,8 +64,17 @@ export default function ViewDistrict() {
         if (!id) return;
         setSaving(true);
         try {
-            const token = getAuthToken();
-            const response = await updateDistrict(id, editData, token || '');
+            const token = getAuthToken(user);
+            if (!token) {
+                toast({
+                    title: "Authentication Error",
+                    description: "You must be signed in to update district settings.",
+                    variant: "destructive"
+                });
+                setSaving(false);
+                return;
+            }
+            const response = await updateDistrict(id, editData, token);
             if (response.district) {
                 setData({ ...data, district: response.district });
                 toast({
@@ -155,9 +161,14 @@ export default function ViewDistrict() {
                         <Globe className="h-4 w-4 mr-2" />
                         Website
                     </Button>
-                    <Button className="bg-[#00a58c] hover:bg-[#008f7a]">
-                        Manage Admins
-                    </Button>
+                                <Button 
+                                    className="bg-[#00a58c] hover:bg-[#008f7a] opacity-50 cursor-not-allowed" 
+                                    disabled 
+                                    aria-disabled="true"
+                                    title="Coming soon"
+                                >
+                                    Manage Admins
+                                </Button>
                 </div>
             </div>
 
@@ -249,8 +260,8 @@ export default function ViewDistrict() {
                                     <School className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                                     <p className="font-medium">No schools registered in this district yet.</p>
                                     <div className="mt-6 flex justify-center gap-3">
-                                        <Button variant="outline" size="sm">Add School Manually</Button>
-                                        <Button variant="outline" size="sm" className="bg-white">Bulk Import</Button>
+                                        <Button variant="outline" size="sm" onClick={() => navigate(`/system-admin/schools/new?districtId=${id}`)}>Add School Manually</Button>
+                                        <Button variant="outline" size="sm" className="bg-white" onClick={() => navigate('/system-admin/schools/import')}>Bulk Import</Button>
                                     </div>
                                 </div>
                             )}

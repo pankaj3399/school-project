@@ -13,20 +13,24 @@ import {
 } from 'lucide-react';
 import { getCurrentTerms, updateTerms } from '@/api';
 import { useAuth } from '@/authContext';
+import { getAuthToken } from '@/lib/auth';
+
+interface TermsData {
+    title: string;
+    content: string;
+    version: string;
+    isActive: boolean;
+}
 
 export default function TermsManagement() {
     const { user } = useAuth();
-    const [terms, setTerms] = useState<any>({
+    const [terms, setTerms] = useState<TermsData>({
         title: '',
         content: '',
         version: '',
         isActive: true
     });
 
-    const getAuthToken = () => {
-        // @ts-ignore
-        return user?.token || localStorage.getItem('token');
-    };
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -60,8 +64,13 @@ export default function TermsManagement() {
         setSaving(true);
         setMessage(null);
         try {
-            const token = getAuthToken();
-            const response = await updateTerms(terms, token || '');
+            const token = getAuthToken(user);
+            if (!token) {
+                setMessage({ type: 'error', text: 'Authentication required' });
+                setSaving(false);
+                return;
+            }
+            const response = await updateTerms(terms, token);
 
             if (!response.error) {
                 setMessage({ type: 'success', text: 'Terms updated successfully' });

@@ -1004,20 +1004,20 @@ export const changePassword = async (data: any) => {
 };
 
 
-export async function completeTeacherRegistration({ token, name, password, subject, termsAccepted }: { token: string, name: string, password: string, subject: string, termsAccepted?: boolean }) {
+export async function completeTeacherRegistration({ token, name, password, subject, termsAccepted, termsVersion }: { token: string, name: string, password: string, subject: string, termsAccepted?: boolean, termsVersion?: string }) {
   try {
-    const response = await fetch(`${API_URL}/teacher/complete-registration`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, name, password, subject, termsAccepted }),
+    const response = await axios.post(`${API_URL}/teacher/complete-registration`, {
+      token,
+      name,
+      password,
+      subject,
+      termsAccepted,
+      termsVersion
     });
-    const data = await response.json();
-    if (!response.ok) {
-      return { error: data.message || "Failed to complete registration" };
-    }
-    return data;
-  } catch (error) {
-    return { error: "Network error. Please try again later." };
+    return response.data;
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.message || "Failed to complete registration";
+    return { error: message };
   }
 }
 
@@ -1047,10 +1047,8 @@ export const subscribeToWaitlist = async (email: string, confirmEmail: string) =
     });
     return response.data;
   } catch (error: any) {
-    return {
-      success: false,
-      message: error?.response?.data?.message || "Something went wrong",
-    };
+    const message = error?.response?.data?.message || "Something went wrong";
+    return { error: message };
   }
 };
 
