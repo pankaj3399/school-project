@@ -14,6 +14,7 @@ import { sendSupportEmail } from "../services/supportRequestEmail.js";
 import School from "../models/School.js";
 import PendingTokens from "../models/PendingTokens.js";
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
+import TermsOfUse from "../models/TermsOfUse.js";
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -616,24 +617,55 @@ export const sendVerifyEmail = async (req, res) => {
 
 export const completeVerification = async (req, res) => {
   try {
-    const { emailVerificationCode, role, email, isStudent, toVerify } =
+    const { emailVerificationCode, role, email, isStudent, toVerify, token, name, password, subject, termsAccepted, termsVersion } =
       req.body;
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
 
     let user = null;
+    const registrationToken = token || emailVerificationCode;
+
     switch (userRole) {
       case Role.Teacher: {
-        // Find teacher with matching verification code
-        user = await Teacher.findOne({ emailVerificationCode });
+        // Find teacher with matching verification code or registration token
+        user = await Teacher.findOne({ 
+          $or: [
+            { emailVerificationCode: registrationToken },
+            { registrationToken: registrationToken }
+          ]
+        });
         if (user) {
-          if (user.isEmailVerified) {
+          if (user.isEmailVerified && user.password) {
             return res.status(200).json({
-              message: "This email was already verified. No update needed.",
+              message: "This account is already verified and set up.",
               alreadyVerified: true
             });
           }
+
+          // Update registration data if provided
+          if (name) user.name = name;
+          if (subject) user.subject = subject;
+          if (password) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+          }
+
+          // Handle Terms of Use
+          if (termsAccepted) {
+            user.termsAccepted = true;
+            user.termsAcceptedAt = new Date();
+            user.termsAcceptedIp = req.ip || req.headers['x-forwarded-for'];
+            
+            if (termsVersion) {
+              user.termsAcceptedVersion = termsVersion;
+            } else {
+              const activeTerms = await TermsOfUse.findOne({ isActive: true });
+              user.termsAcceptedVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+            }
+          }
+
           user.isEmailVerified = true;
           user.emailVerificationCode = null; // Clear the code
+          user.registrationToken = null; // Clear the token
           await user.save();
         }
         sendOnboardingEmail(user);
@@ -865,6 +897,76 @@ export const createSupportTicket = async (req, res) => {
   }
 };
 
+export const completeGuardianRegistration = async (req, res) => {
+  const { otp, name, password, email, termsAccepted, termsVersion } = req.body;
+
+  if (!otp || !name || !password || !email) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // 1. Verify OTP
+    const student = await Student.findOne({ 
+      $or: [
+        { emailVerificationCode: otp, parentEmail: email },
+        { emailVerificationCode: otp, standard: email } // standard is parent 2 email
+      ]
+    });
+
+    if (!student) {
+      return res.status(400).json({ message: "Invalid or expired verification code." });
+    }
+
+    // 2. Hash Password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // 3. Create User record with role: Guardian
+    let finalTermsVersion = termsVersion;
+    if (termsAccepted && !finalTermsVersion) {
+      const activeTerms = await TermsOfUse.findOne({ isActive: true });
+      finalTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+    }
+
+    const newUser = await Admin.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: Role.Guardian,
+      schoolId: student.schoolId,
+      approved: true, // Auto-approve as they were invited
+      termsAccepted: !!termsAccepted,
+      termsAcceptedAt: termsAccepted ? new Date() : null,
+      termsAcceptedVersion: finalTermsVersion || "1.0-pilot",
+      termsAcceptedIp: req.ip || req.headers['x-forwarded-for']
+    });
+
+    // 4. Update Student record(s) verification status
+    if (student.parentEmail === email) {
+      student.isParentOneEmailVerified = true;
+    } else if (student.standard === email) {
+      student.isParentTwoEmailVerified = true;
+    }
+    
+    // Clear the verification code
+    student.emailVerificationCode = null;
+    await student.save();
+
+    return res.status(200).json({
+      message: "Guardian registration completed successfully.",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role
+      }
+    });
+
+  } catch (error) {
+    console.error("Guardian registration error:", error);
+    return res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
 export const changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const userId = req.user.id; // Assuming you have the user ID from the auth middleware
@@ -933,6 +1035,26 @@ export const verifyPassword = async (req, res) => {
     }
 
     res.status(200).json({ message: "Password verified successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+export const getTerms = async (req, res) => {
+  try {
+    const terms = await TermsOfUse.findOne({ isActive: true });
+    if (!terms) {
+      // Return a default version if nothing is found in DB yet
+      return res.status(200).json({
+        terms: {
+          version: "1.0-pilot",
+          title: "RADU E-Token™ Pilot Participation Agreement",
+          content: "RADU E-Token™ Pilot Participation Agreement\n\nThis Pilot Participation Agreement (the \"Agreement\") is entered into between the participating teacher/school (\"Pilot Participant\") and Affective Academy LLC (\"Provider\"), regarding the use of the RADU E-Token™ System (\"System\") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below...",
+          effectiveDate: new Date().toISOString()
+        }
+      });
+    }
+    res.status(200).json({ terms });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

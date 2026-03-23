@@ -10,6 +10,10 @@ import Admin from "../models/Admin.js";
 export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
     try {
         const { url } = req.body;
+        // Point guardians to the registration page
+        const registrationUrl = url?.includes('verifyemail') 
+            ? url.replace('verifyemail', 'guardian/complete-registration')
+            : url;
 
         if (!user) {
             return res.status(404).json({ message: "User Not Found" });
@@ -30,9 +34,9 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         // console.log(signatue);
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.parentEmail, false, tempPass, schoolLogo);
-        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.standard, false, null, schoolLogo);
-        const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, url, user.email, null, isStudent, null, schoolLogo);
+        const emailHTML = await getVerificationEmailTemplate(signature, user.role, otp, registrationUrl, user.email, user.parentEmail, false, tempPass, schoolLogo);
+        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, otp, registrationUrl, user.email, user.standard, false, null, schoolLogo);
+        const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, registrationUrl, user.email, null, isStudent, null, schoolLogo);
 
         if (isStudent) {
             await sendEmail(

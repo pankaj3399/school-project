@@ -3,7 +3,6 @@ import AddDistrict from "./Section/SystemAdmin/districts/add-district";
 import BulkImportSchools from "./Section/SystemAdmin/schools/bulk-import";
 import DistrictsList from "./Section/SystemAdmin/districts";
 import ViewDistrict from "./Section/SystemAdmin/districts/view-district";
-import TermsPage from "@/components/TermsPage";
 import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
 
 import LandingPage from "./Section/LandingPage";
@@ -44,6 +43,8 @@ import SetupStudents from "./Section/School/setup-students";
 import SetupPage from "./Section/School/setup-page";
 // import FirstLogin from "./components/FirstLogin";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
+import CompleteGuardianRegistration from "@/Section/Guardian/complete-registration";
+import TermsPage from "@/components/TermsPage";
 
 
 // Reusable ProtectedRoute component
@@ -128,13 +129,16 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
+          <Route path="/guardian/complete-registration" element={<CompleteGuardianRegistration />} />
+          <Route path="/terms" element={<TermsPage />} />
+
+          {/* System Admin Routes */}
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
           <Route path="/system-admin" element={<ProtectedRoute requiredRole="SystemAdmin"><SystemAdminDashboard /></ProtectedRoute>} />
           <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRole="SystemAdmin"><BulkImportSchools /></ProtectedRoute>} />
           <Route path="/system-admin/districts" element={<ProtectedRoute requiredRole="SystemAdmin"><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRole="SystemAdmin"><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRole="SystemAdmin"><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/terms" element={<TermsPage />} />
           <Route path="/schools/:id" element={<ProtectedRoute><div className="p-8">School details coming soon.</div></ProtectedRoute>} />
         </Routes>
 

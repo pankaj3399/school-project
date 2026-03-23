@@ -1010,6 +1010,7 @@ export const completeTeacherRegistration = async (data: {
   password: string;
   subject: string;
   termsAccepted?: boolean;
+  termsVersion?: string;
 }) => {
   try {
     const response = await axios.post(`${API_URL}/teacher/complete-registration`, data);
@@ -1202,6 +1203,32 @@ export const getDistrictSchools = async (id: string, token: string) => {
   }
 };
 
+
+export async function completeGuardianRegistration({ otp, name, password, email, termsAccepted, termsVersion }: { otp: string, name: string, password: string, email: string, termsAccepted?: boolean, termsVersion?: string }) {
+  try {
+    const response = await axios.post(`${API_URL}/auth/guardian-complete-registration`, {
+      otp,
+      name,
+      password,
+      email,
+      termsAccepted,
+      termsVersion
+    });
+    return response.data;
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.message || "Failed to complete registration";
+    return { error: message };
+  }
+}
+
+export const getCurrentTerms = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/auth/get-terms`);
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+}
 
 export const verifyCurrentUserPassword = async (password: string) => {
   try {

@@ -36,7 +36,7 @@ This Agreement shall be effective for the duration of the pilot program, unless 
 By participating in the pilot program, the Pilot Participant acknowledges and agrees to abide by the terms of this Agreement.
 `;
 
-export default function TermsPage() {
+export default function TermsPage({ isRegistration = false }: { isRegistration?: boolean }) {
     const navigate = useNavigate();
     const [terms, setTerms] = useState<{
         version: string;
@@ -78,8 +78,22 @@ export default function TermsPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <div className={`flex items-center justify-center ${isRegistration ? 'p-8' : 'min-h-screen bg-gray-50'}`}>
+                <Loader2 className="h-8 w-8 animate-spin text-[#00a58c]" />
+            </div>
+        );
+    }
+
+    if (isRegistration) {
+        return (
+            <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                {terms?.contentHtml ? (
+                    <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                ) : (
+                    <div className="whitespace-pre-wrap">
+                        {terms?.content || DEFAULT_TERMS_CONTENT}
+                    </div>
+                )}
             </div>
         );
     }
@@ -97,7 +111,7 @@ export default function TermsPage() {
                 </Button>
 
                 <Card className="shadow-lg border-0">
-                    <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+                    <CardHeader className="bg-gradient-to-r from-[#00a58c] to-[#007a68] text-white rounded-t-lg">
                         <div className="flex items-center gap-3">
                             <FileText className="h-8 w-8" />
                             <div>
