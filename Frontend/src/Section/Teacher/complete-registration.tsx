@@ -60,6 +60,16 @@ export default function CompleteTeacherRegistration() {
     setLoading(true);
     try {
       const termsData = await getCurrentTerms();
+      if (termsData.error) {
+        console.error("Error fetching terms version:", termsData.error);
+        toast({
+          title: "Setup Error",
+          description: "Could not retrieve the current terms version. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
       const termsVersion = termsData?.terms?.version;
       const data = await completeTeacherRegistration({
         token,

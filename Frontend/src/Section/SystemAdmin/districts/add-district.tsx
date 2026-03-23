@@ -48,9 +48,18 @@ export default function AddDistrict() {
 
         // Consistent token retrieval
         const token = getAuthToken(user);
+        if (!token) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be signed in to register a new district.",
+                variant: "destructive"
+            });
+            setLoading(false);
+            return;
+        }
 
         try {
-            const response = await createDistrict(formData, token || '');
+            const response = await createDistrict(formData, token);
 
             if (response.district) {
                 toast({

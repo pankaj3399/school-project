@@ -277,7 +277,13 @@ export default function ViewDistrict() {
                                 <h4 className="font-bold text-gray-900 mb-1">Admin Management</h4>
                                 <p className="text-sm">Manage district-level administrators and their permissions here.</p>
                             </div>
-                            <Button variant="outline" className="mt-4">
+                            <Button 
+                                variant="outline" 
+                                className="mt-4 opacity-50 cursor-not-allowed"
+                                disabled
+                                aria-disabled="true"
+                                title="Coming soon"
+                            >
                                 Invite Administrator
                             </Button>
                         </CardContent>

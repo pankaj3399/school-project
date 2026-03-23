@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { 
     Table, 
     TableBody, 
@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { getDistricts, deleteDistrict } from '@/api';
 import { useAuth } from '@/authContext';
+import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
 
 interface District {
@@ -53,9 +54,10 @@ export default function DistrictsList() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
 
 
-    const fetchDistricts = async (search = '') => {
+    const fetchDistricts = useCallback(async (search = '') => {
         if (!user) return;
         setLoading(true);
         setError(null);
@@ -73,7 +75,7 @@ export default function DistrictsList() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -81,7 +83,7 @@ export default function DistrictsList() {
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, user]);
+    }, [searchTerm, fetchDistricts]);
 
     const handleDelete = async (id: string, name: string) => {
         if (!window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
@@ -233,7 +235,9 @@ export default function DistrictsList() {
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem 
                                                         className="text-amber-600"
-                                                        onClick={() => alert("Suspend functionality to be implemented")}
+                                                        onClick={() => toast({
+                                                            description: "Suspend district functionality coming soon",
+                                                        })}
                                                     >
                                                         <Loader2 className="mr-2 h-4 w-4" /> Suspend District
                                                     </DropdownMenuItem>

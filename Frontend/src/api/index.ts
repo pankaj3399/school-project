@@ -1070,7 +1070,8 @@ export const getDistricts = async (token: string, params?: any) => {
       Object.entries(params).filter(([_, v]) => v !== undefined)
     ) : {};
     const query = new URLSearchParams(filteredParams as any).toString();
-    const response = await axios.get(`${API_URL}/districts?${query}`, {
+    const url = `${API_URL}/districts${query ? `?${query}` : ''}`;
+    const response = await axios.get(url, {
       headers: { token },
     });
     return response.data;

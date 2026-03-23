@@ -28,11 +28,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         return;
       }
-      const userData = response.user;
-      if (userData && !userData.token) {
-        userData.token = token;
+      const sanitizedUser = response.user ?? null;
+      if (sanitizedUser && !sanitizedUser.token) {
+        sanitizedUser.token = token;
       }
-      setUser(userData);
+      setUser(sanitizedUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       setUser(null); // Clear user on error
