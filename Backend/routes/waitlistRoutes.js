@@ -1,8 +1,7 @@
 import express from 'express';
 import { subscribeToWaitlist, exportWaitlistData } from '../controllers/waitlistController.js';
 
-import { authenticate } from '../middlewares/authMiddleware.js';
-import { authorizeRoles } from '../middlewares/roleMiddleware.js';
+import { authenticateToken as authenticate, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { Role } from '../enum.js';
 
 const router = express.Router();
@@ -11,6 +10,6 @@ const router = express.Router();
 router.post('/', subscribeToWaitlist);
 
 // Admin route - download waitlist csv
-router.get('/export', authenticate, authorizeRoles(Role.Admin, Role.SchoolAdmin), exportWaitlistData);
+router.get('/export', authenticate, authorizeRoles(Role.Admin), exportWaitlistData);
 
 export default router;

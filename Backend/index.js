@@ -13,7 +13,9 @@ import schoolRoutes from './routes/schoolRoutes.js';
 import formRoutes from './routes/formRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import waitlistRoutes from './routes/waitlistRoutes.js';
+import districtRoutes from './routes/districtRoutes.js';
 import systemAdminRoutes from './routes/systemAdminRoutes.js';
+import { runMigration } from './migrateLegacySchools.js';
 import { authenticate } from './middlewares/authMiddleware.js';
 import { getCurrentUser } from './controllers/generalController.js';
 
@@ -33,11 +35,6 @@ app.use(bodyParser.json({limit: "50mb"}));
 
 
 
-connectDB().catch((error) => {
-  console.error('Error connecting to database', error);
-});
-
-
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
@@ -47,6 +44,7 @@ app.use('/api/student', studentRoutes);
 app.get("/api/user", authenticate, getCurrentUser);
 app.use('/api/form', formRoutes);
 app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/districts', districtRoutes);
 app.use('/api/system-admin', systemAdminRoutes);
 
 app.get('/', (req, res) => {
@@ -59,6 +57,24 @@ app.use((err, req, res, next) => {
 });
 
 
+// Connect to Database
+connectDB()
+  .then(async () => {
+    console.log("Database connected successfully");
+    
+    // Run initial migrations
+    try {
+      await runMigration();
+    } catch (migError) {
+      console.error("Migration failed:", migError);
+    }
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Database connection failed:", err);
+    process.exit(1);
+  });
