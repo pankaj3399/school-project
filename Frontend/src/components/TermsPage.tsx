@@ -42,12 +42,18 @@ This Agreement shall be effective for the duration of the pilot program, unless 
 By participating in the pilot program, the Pilot Participant acknowledges and agrees to abide by the terms of this Agreement.
 `;
 
-export default function TermsPage() {
+export default function TermsPage({ isRegistration = false, terms: propTerms }: { isRegistration?: boolean, terms?: Terms | null }) {
     const navigate = useNavigate();
-    const [terms, setTerms] = useState<Terms | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [terms, setTerms] = useState<Terms | null>(propTerms || null);
+    const [loading, setLoading] = useState(!propTerms);
 
     useEffect(() => {
+        if (propTerms) {
+            setTerms(propTerms);
+            setLoading(false);
+            return;
+        }
+
         const fetchTerms = async () => {
             try {
                 const data = await getCurrentTerms();
@@ -71,9 +77,9 @@ export default function TermsPage() {
         };
 
         fetchTerms();
-    }, []);
+    }, [propTerms]);
 
-    const sanitizedHtml = useMemo(() => {
+    const safeHtml = useMemo(() => {
         if (terms?.contentHtml) {
             return DOMPurify.sanitize(terms.contentHtml);
         }
@@ -82,8 +88,22 @@ export default function TermsPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <div className={`flex items-center justify-center ${isRegistration ? 'p-8' : 'min-h-screen bg-gray-50'}`}>
+                <Loader2 className="h-8 w-8 animate-spin text-[#00a58c]" />
+            </div>
+        );
+    }
+
+    if (isRegistration) {
+        return (
+            <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                {terms?.contentHtml ? (
+                    <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
+                ) : (
+                    <div className="whitespace-pre-wrap">
+                        {terms?.content || DEFAULT_TERMS_CONTENT}
+                    </div>
+                )}
             </div>
         );
     }
@@ -101,14 +121,14 @@ export default function TermsPage() {
                 </Button>
 
                 <Card className="shadow-lg border-0">
-                    <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+                    <CardHeader className="bg-gradient-to-r from-[#00a58c] to-[#007a68] text-white rounded-t-lg">
                         <div className="flex items-center gap-3">
                             <FileText className="h-8 w-8" />
                             <div>
                                 <CardTitle className="text-2xl">
                                     {terms?.title || 'Terms & Conditions of Use'}
                                 </CardTitle>
-                                <p className="text-blue-100 text-sm mt-1">
+                                <p className="text-teal-100 text-sm mt-1">
                                     Version: {terms?.version || '1.0'} |
                                     Effective: {terms?.effectiveDate
                                         ? new Date(terms.effectiveDate).toLocaleDateString()
@@ -121,7 +141,7 @@ export default function TermsPage() {
                         {terms?.contentHtml ? (
                             <div
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+                                dangerouslySetInnerHTML={{ __html: safeHtml }}
                             />
                         ) : (
                             <div className="prose prose-lg max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">

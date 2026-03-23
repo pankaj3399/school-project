@@ -6,19 +6,30 @@ import fs from 'fs';
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 import School from "../models/School.js";
 import Admin from "../models/Admin.js";
+import crypto from 'crypto';
 
 export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
+    if (!user) {
+        return res.status(404).json({ message: "User Not Found" });
+    }
     try {
         const { url } = req.body;
-
-        if (!user) {
-            return res.status(404).json({ message: "User Not Found" });
-        }
+        // Point guardians to the registration page, but keep student links as is
+        const isGuardianInvitation = user.role === Role.Student && !isStudent;
+        const registrationUrl = (url?.includes('verifyemail') && isGuardianInvitation)
+            ? url.replace('verifyemail', 'guardian/complete-registration')
+            : url;
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
 
-        user.emailVerificationCode = otp;
+        if (isGuardianInvitation) {
+            user.guardianRegistrationToken = crypto.randomBytes(32).toString('hex');
+            user.guardianRegistrationTokenExpires = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+        } else {
+            user.emailVerificationCode = otp;
+        }
+
         if (isStudent) {
             user.studentEmailVerificationCode = otp2;
         }
@@ -30,9 +41,9 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         // console.log(signatue);
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.parentEmail, false, tempPass, schoolLogo);
-        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, otp, url, user.email, user.standard, false, null, schoolLogo);
-        const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, url, user.email, null, isStudent, null, schoolLogo);
+        const emailHTML = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, (isGuardianInvitation ? user.parentEmail : user.email), user.parentEmail, false, tempPass, schoolLogo);
+        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, (isGuardianInvitation ? user.standard : user.email), user.standard, false, null, schoolLogo);
+        const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, registrationUrl, user.email, null, isStudent, null, schoolLogo);
 
         if (isStudent) {
             await sendEmail(
@@ -298,6 +309,32 @@ export const sendTeacherRegistrationMail = async ({ email, url, registrationToke
     await sendEmail(
         email,
         'Complete Your Teacher Registration',
+        emailHTML,
+        emailHTML
+    );
+};
+
+export const sendDistrictAdminRegistrationMail = async (email, name, { districtName, role }) => {
+    const registrationUrl = `${process.env.FRONTEND_URL}/login`;
+
+    const emailHTML = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2>Welcome to The RADU E-Token System</h2>
+            <p>Dear ${name},</p>
+            <p>You have been assigned as a <strong>${role}</strong> for <strong>${districtName}</strong>.</p>
+            <p>Your account has been created and approved. You can now log in to the system using your credentials.</p>
+            <div style="margin: 20px 0;">
+                <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Log In Now</a>
+            </div>
+            <p>If the button above does not work, copy and paste this link into your browser:<br>
+            <a href="${registrationUrl}" style="color: #00a58c;">${registrationUrl}</a></p>
+            <p>Best regards,<br>The RADU Team</p>
+        </div>
+    `;
+
+    await sendEmail(
+        email,
+        `Welcome to RADU - ${role} Account Created`,
         emailHTML,
         emailHTML
     );

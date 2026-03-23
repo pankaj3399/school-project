@@ -42,6 +42,7 @@ export const addTeacher = async (req, res) => {
       type,
       grade,
       registrationToken,
+      registrationTokenExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
       isEmailVerified: false,
       isFirstLogin: false,
     });

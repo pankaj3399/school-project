@@ -1,5 +1,5 @@
 import express from 'express';
-import { login,resetPassword,sendOtp,signup, verifyOtp, completeVerification, sendVerifyEmail, createSupportTicket, changePassword, verifyLoginOtp, requestLoginOtp, verifyPassword } from '../controllers/authController.js';
+import { login,resetPassword,sendOtp,signup, verifyOtp, completeVerification, sendVerifyEmail, createSupportTicket, changePassword, verifyLoginOtp, requestLoginOtp, verifyPassword, completeGuardianRegistration, getTerms } from '../controllers/authController.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
@@ -9,6 +9,8 @@ router.post('/sendotp', sendOtp);
 router.post('/verify', verifyOtp);
 router.post('/sendVerificationMail', sendVerifyEmail);
 router.post('/completeVerification', completeVerification);
+router.get('/get-terms', getTerms);
+router.post('/guardian-complete-registration', completeGuardianRegistration);
 router.post('/resetpassword', resetPassword);
 router.post('/changePassword', authenticate, changePassword);
 router.post('/support-request',authenticate, createSupportTicket);

@@ -36,6 +36,7 @@ import SetupPage from "./Section/School/setup-page";
 import Setup from "./Section/School/setup";
 import SetupStudents from "./Section/School/setup-students";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
+import CompleteGuardianRegistration from "@/Section/Guardian/complete-registration";
 import TermsPage from "@/components/TermsPage";
 import { Role } from "./enum";
 
@@ -100,7 +101,7 @@ export default function App() {
           <Route path="/teachers/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
-          {/*Dashboards*/}
+          {/* Dashboards */}
           <Route path="/home" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
@@ -115,15 +116,16 @@ export default function App() {
           <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
+          <Route path="/guardian/complete-registration" element={<CompleteGuardianRegistration />} />
           <Route path="/terms" element={<TermsPage />} />
 
           {/* System Admin Routes */}
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
           <Route path="/system-admin" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SystemAdminDashboard /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRoles={systemAdminRoles}><BulkImportSchools /></ProtectedRoute>} />
           <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRoles={systemAdminRoles}><BulkImportSchools /></ProtectedRoute>} />
           <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={systemAdminRoles}><TermsManagement /></ProtectedRoute>} />
 
           <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />

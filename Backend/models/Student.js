@@ -78,6 +78,14 @@ const studentSchema = new mongoose.Schema({
     type:String,
     default: null
   },
+  guardianRegistrationToken: {
+    type: String,
+    default: null
+  },
+  guardianRegistrationTokenExpires: {
+    type: Date,
+    default: null
+  },
   studentEmailVerificationCode:{
     type:String,
     default: null
@@ -106,6 +114,7 @@ studentSchema.pre('save', function (next) {
 });
 
 
+studentSchema.index({ guardianRegistrationToken: 1 });
 studentSchema.index({ schoolId: 1, grade: 1 });
 
 export default mongoose.model('Student', studentSchema);

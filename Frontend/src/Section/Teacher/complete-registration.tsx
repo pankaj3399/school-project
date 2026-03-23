@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, ArrowRight, CheckCircle } from "lucide-react";
+import { FileText, CheckCircle2, ChevronRight } from "lucide-react";
 import { completeTeacherRegistration, getCurrentTerms } from "@/api";
+import Loading from "../Loading";
+import TermsPage from "@/components/TermsPage";
 
 export default function CompleteTeacherRegistration() {
   const [searchParams] = useSearchParams();
@@ -19,24 +22,54 @@ export default function CompleteTeacherRegistration() {
     subject: ""
   });
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [termsVersion, setTermsVersion] = useState("");
+  const [termsLoaded, setTermsLoaded] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchTerms() {
+      try {
+        const response = await getCurrentTerms();
+        if (response.error || !response.terms?.version) {
+          setTermsError(true);
+        } else {
+          setTermsVersion(response.terms.version);
+          setFetchedTerms(response.terms);
+          setTermsLoaded(true);
+        }
+      } catch (error) {
+        setTermsError(true);
+        console.error("Error fetching terms:", error);
+      } finally {
+        setInitialLoading(false);
+      }
+    }
+    fetchTerms();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) return "Password must be at least 8 characters long.";
+    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter.";
+    if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter.";
+    if (!/[0-9]/.test(pass)) return "Password must contain at least one number.";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character.";
+    return "";
+  };
+
   const handleProceed = () => {
-    if (!termsAccepted) {
-      toast({
-        title: "Terms Required",
-        description: "Please accept the Terms & Conditions to proceed.",
-        variant: "destructive",
-      });
-      return;
+    if (termsAccepted && termsLoaded && !termsError) {
+      setShowForm(true);
     }
-    setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,32 +82,22 @@ export default function CompleteTeacherRegistration() {
       });
       return;
     }
-    if (!termsAccepted) {
-      toast({
-        title: "Error",
-        description: "You must accept the Terms & Conditions.",
-        variant: "destructive",
-      });
-      return;
-    }
+    
     setLoading(true);
     try {
-      const termsData = await getCurrentTerms();
-      if (termsData.error) {
-        console.error("Error fetching terms version:", termsData.error);
+      if (!termsVersion) {
         toast({
           title: "Setup Error",
-          description: "Could not retrieve the current terms version. Please try again.",
+          description: "Could not retrieve the current terms version. Please refresh and try again.",
           variant: "destructive"
         });
         setLoading(false);
         return;
       }
-      const termsVersion = termsData?.terms?.version;
       const data = await completeTeacherRegistration({
         token,
         termsAccepted,
-        termsVersion,
+        termsVersion: termsVersion,
         ...formData
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
@@ -86,7 +109,7 @@ export default function CompleteTeacherRegistration() {
       } else {
         toast({
           title: "Error",
-          description: data.message || "Registration failed.",
+          description: data.error || data.error?.message || data.message || "Registration failed.",
           variant: "destructive",
         });
       }
@@ -101,126 +124,154 @@ export default function CompleteTeacherRegistration() {
     }
   };
 
+  if (initialLoading) return <Loading />;
+
+  if (!token) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent mb-4">
+          Invalid Registration Link
+        </h1>
+        <p className="text-gray-600 mb-6 max-w-md">
+          This registration link appears to be invalid or expired. Please check your email or contact your administrator.
+        </p>
+        <Button onClick={() => navigate("/signin")} className="bg-[#00a58c] hover:bg-[#007a68] text-white">
+          Go to Sign In
+        </Button>
+      </div>
+    );
+  }
+
   // Show Terms acceptance screen first
   if (!showForm) {
     return (
-      <div className="grid place-items-center w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-        <div className="bg-white shadow-xl p-8 w-full max-w-md rounded-xl">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <FileText className="h-8 w-8 text-blue-600" />
+      <div className="container mx-auto p-6 max-w-4xl min-h-[80vh] flex flex-col items-center justify-center">
+        <Card className="w-full border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-sm">
+          <div className="h-2 bg-gradient-to-r from-[#00a58c] to-[#007a68]" />
+          <CardHeader className="text-center pt-8">
+            <div className="mx-auto w-16 h-16 bg-[#e6f6f4] rounded-full flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-[#00a58c]" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome to RADU E-Token™</h1>
-            <p className="text-gray-600 mt-2">
-              Before completing your registration, please review and accept our Terms & Conditions.
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
+              Welcome to RADU E-Token™
+            </CardTitle>
+            <p className="text-gray-500 mt-2">
+              Before completing your registration, please review and accept our Terms of Use.
             </p>
-          </div>
-
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="terms"
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="max-h-[400px] overflow-y-auto mb-8 p-4 border rounded-xl bg-gray-50/50 scrollbar-thin scrollbar-thumb-[#00a58c]">
+              <TermsPage isRegistration={true} terms={fetchedTerms} />
+            </div>
+            
+            <div className="flex items-start space-x-3 mb-8 p-4 bg-[#f8fdfc] rounded-lg border border-[#e6f6f4]">
+              <Checkbox 
+                id="terms" 
                 checked={termsAccepted}
-                onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-                className="mt-1"
+                onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
               />
-              <label
-                htmlFor="terms"
-                className="text-sm text-gray-700 leading-relaxed cursor-pointer"
-              >
-                I agree that I have read and accept the{" "}
-                <a
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline font-medium"
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="terms"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  Terms & Conditions of Use
-                </a>
-              </label>
+                  I Agree that I read and accept the{" "}
+                  <a 
+                    href="/terms" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[#00a58c] font-bold hover:underline"
+                  >
+                    Terms & conditions of use
+                  </a>
+                </Label>
+              </div>
             </div>
-          </div>
 
-          <Button
-            onClick={handleProceed}
-            disabled={!termsAccepted}
-            className="w-full bg-[#00a58c] hover:bg-[#008f7a] text-white py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="flex items-center justify-center gap-2">
-              Proceed to Registration
-              <ArrowRight className="h-4 w-4" />
-            </span>
-          </Button>
-
-          {termsAccepted && (
-            <div className="flex items-center justify-center gap-2 mt-4 text-green-600 text-sm">
-              <CheckCircle className="h-4 w-4" />
-              <span>Terms accepted</span>
-            </div>
-          )}
-        </div>
+            <Button
+              onClick={handleProceed}
+              disabled={!termsAccepted || !termsLoaded || termsError}
+              className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 group"
+            >
+              {termsError ? "Terms Loading Error" : !termsLoaded ? "Loading Terms..." : "Proceed to Registration"}
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   // Show registration form after terms are accepted
   return (
-    <div className="grid place-items-center w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="bg-white shadow-xl p-8 w-full max-w-md rounded-xl">
-        <div className="flex items-center gap-2 text-green-600 text-sm mb-4 bg-green-50 p-3 rounded-lg">
-          <CheckCircle className="h-4 w-4" />
-          <span>Terms & Conditions accepted</span>
-        </div>
-
-        <h1 className="text-2xl font-bold mb-6 text-gray-900">Complete Your Registration</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <Label htmlFor="name" className="text-gray-700 font-medium">Full Name</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              className="mt-1"
-              required
-            />
+    <div className="container mx-auto p-6 max-w-4xl min-h-[80vh] flex flex-col items-center justify-center">
+      <Card className="w-full max-w-lg border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-sm">
+        <div className="h-2 bg-gradient-to-r from-[#00a58c] to-[#007a68]" />
+        <CardHeader className="text-center pt-8">
+          <div className="mx-auto w-16 h-16 bg-[#e6f6f4] rounded-full flex items-center justify-center mb-4">
+            <CheckCircle2 className="w-8 h-8 text-[#00a58c]" />
           </div>
-          <div>
-            <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Create a secure password"
-              className="mt-1"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="subject" className="text-gray-700 font-medium">Subject</Label>
-            <Input
-              id="subject"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              placeholder="Enter your subject area"
-              className="mt-1"
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full bg-[#00a58c] hover:bg-[#008f7a] text-white py-3 font-medium transition-all duration-200"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : "Complete Registration"}
-          </Button>
-        </form>
-      </div>
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
+            Complete Your Registration
+          </CardTitle>
+          <p className="text-gray-500 mt-2">Set up your teacher profile</p>
+        </CardHeader>
+        <CardContent className="p-8 pt-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-gray-600 ml-1">Full Name</Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-gray-600 ml-1">Create Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => {
+                  handleChange(e);
+                  setPasswordError(validatePassword(e.target.value));
+                }}
+                required
+                className={`rounded-xl py-6 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
+                aria-invalid={!!passwordError}
+              />
+              {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subject" className="text-gray-600 ml-1">Subject Area</Label>
+              <Input
+                id="subject"
+                name="subject"
+                placeholder="e.g. Mathematics, Science"
+                value={formData.subject}
+                onChange={handleChange}
+                required
+                className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl mt-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+              disabled={loading}
+            >
+              {loading ? "Creating Account..." : "Finish Registration"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
-} 
+}
+ 

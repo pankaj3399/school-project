@@ -1021,6 +1021,32 @@ export async function completeTeacherRegistration({ token, name, password, subje
   }
 }
 
+export async function completeGuardianRegistration({ token, name, password, email, termsAccepted, termsVersion }: { token: string, name: string, password: string, email: string, termsAccepted?: boolean, termsVersion?: string }) {
+  try {
+    const response = await axios.post(`${API_URL}/auth/guardian-complete-registration`, {
+      token,
+      name,
+      password,
+      email,
+      termsAccepted,
+      termsVersion
+    });
+    return response.data;
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.message || "Failed to complete registration";
+    return { error: message };
+  }
+}
+
+export const getCurrentTerms = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/auth/get-terms`);
+    return response.data;
+  } catch (error) {
+    return { error };
+  }
+}
+
 export const verifyCurrentUserPassword = async (password: string) => {
   try {
     const token = getToken();
@@ -1167,15 +1193,6 @@ export const getDistrictAnalytics = async (token: string) => {
     const response = await axios.get(`${API_URL}/system-admin/analytics/districts`, {
       headers: { token },
     });
-    return response.data;
-  } catch (error) {
-    return { error };
-  }
-};
-
-export const getCurrentTerms = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/system-admin/terms`);
     return response.data;
   } catch (error) {
     return { error };

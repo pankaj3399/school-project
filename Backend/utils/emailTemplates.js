@@ -98,7 +98,7 @@ export const getVerificationEmailTemplate = (signature, role, otp, url, email, t
         ${(role === Role.Teacher && tempPass) ? `<p style="margin-bottom: 20px;">Your temporary password is: <strong>${tempPass}</strong></p>` : ""}
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${url}?otp=${otp}&role=${role}&email=${email}&isStudent=${isStudent}&toVerify=${toVerify ?? ""}" 
+          <a href="${url}?${(role === Role.Student && !isStudent) ? `token=${otp}` : `otp=${otp}`}&role=${role}&email=${email}&isStudent=${isStudent}&toVerify=${toVerify ?? ""}" 
              style="background-color: #00a58c; 
                     color: white; 
                     padding: 12px 24px; 

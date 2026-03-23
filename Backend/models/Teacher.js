@@ -78,6 +78,10 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  registrationTokenExpires: {
+    type: Date,
+    default: null
+  },
   // Terms of Use tracking
   termsAccepted: { type: Boolean, default: false },
   termsAcceptedAt: { type: Date },

@@ -685,6 +685,7 @@ export const teacherRoster = async (req, res) => {
             type: teacher.type,
             grade: teacher.grade,
             registrationToken,
+            registrationTokenExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
             isEmailVerified: false,
             isFirstLogin: false,
             // name: teacher.name, // Not used in new structure
