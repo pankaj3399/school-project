@@ -934,7 +934,7 @@ export const completeGuardianRegistration = async (req, res) => {
       return res.status(404).json({ message: "Invalid registration token or email." });
     }
 
-    if (student.guardianRegistrationTokenExpires < new Date()) {
+    if (!student.guardianRegistrationTokenExpires || student.guardianRegistrationTokenExpires < new Date()) {
       return res.status(400).json({ message: "Registration link has expired. Please contact the school to resend the invitation." });
     }
 

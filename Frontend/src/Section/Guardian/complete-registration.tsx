@@ -95,11 +95,7 @@ export default function CompleteGuardianRegistration() {
       });
       return;
     }
-    // The instruction had an unclosed `if (!token) {` block here.
-    // Assuming the intent was to ensure token exists before proceeding,
-    // but the initial check `if (!token || !email)` already handles this.
-    // If a separate check was intended here, it needs a proper block.
-    // For now, I'm integrating the password mismatch check as it was.
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
