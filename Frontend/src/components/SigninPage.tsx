@@ -193,7 +193,7 @@ export default function LoginForm() {
 
   const navigateBasedOnRole = (role: string) => {
     if (role === "Admin") {
-      navigate("/super-admin");
+      navigate("/system-admin");
     } else if (role === "SchoolAdmin") {
       navigate("/analytics");
     } else if (role === "SpecialTeacher") {

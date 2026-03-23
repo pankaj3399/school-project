@@ -23,7 +23,7 @@ const DistrictSchema = new mongoose.Schema({
   },
   state: { 
     type: String, 
-    required: true 
+    required: true
   },
   zipCode: {
     type: String,
@@ -37,12 +37,7 @@ const DistrictSchema = new mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
-    validate: {
-      validator: function(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      },
-      message: 'Invalid email address format'
-    }
+    match: [/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/, 'Please fill a valid email address']
   },
   contactPhone: { 
     type: String 
@@ -66,7 +61,7 @@ const DistrictSchema = new mongoose.Schema({
   
   // Terms of Use
   termsAcceptedAt: { type: Date },
-  termsAcceptedVersion: { type: String },
+  termsVersion: { type: String },
   termsAcceptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   
   // Settings (clone from templates)

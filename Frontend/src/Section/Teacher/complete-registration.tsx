@@ -16,7 +16,6 @@ export default function CompleteTeacherRegistration() {
   const token = searchParams.get("token");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [termsVersion, setTermsVersion] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     password: "",
@@ -29,10 +28,7 @@ export default function CompleteTeacherRegistration() {
   useEffect(() => {
     async function fetchTerms() {
       try {
-        const terms = await getCurrentTerms();
-        if (terms && terms.terms?.version) {
-          setTermsVersion(terms.terms.version);
-        }
+        await getCurrentTerms();
       } catch (error) {
         console.error("Error fetching terms:", error);
       }
@@ -64,10 +60,22 @@ export default function CompleteTeacherRegistration() {
     
     setLoading(true);
     try {
+      const termsData = await getCurrentTerms();
+      if (termsData.error) {
+        console.error("Error fetching terms version:", termsData.error);
+        toast({
+          title: "Setup Error",
+          description: "Could not retrieve the current terms version. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      const currentTermsVersion = termsData?.terms?.version;
       const data = await completeTeacherRegistration({
         token,
         termsAccepted,
-        termsVersion,
+        termsVersion: currentTermsVersion,
         ...formData
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
