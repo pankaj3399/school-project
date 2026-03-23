@@ -14,7 +14,7 @@ import { sendSupportEmail } from "../services/supportRequestEmail.js";
 import School from "../models/School.js";
 import PendingTokens from "../models/PendingTokens.js";
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
-import TermsOfUse from "../models/TermsOfUse.js";
+import { TermsOfUse } from "../models/TermsOfUse.js";
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });

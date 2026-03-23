@@ -1,9 +1,8 @@
 import District from '../models/District.js';
 import School from '../models/School.js';
-import User from '../models/User.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
-import Admin from '../models/Admin.js';
+import User from '../models/Admin.js';
 import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
 import crypto from 'crypto';
 import { escapeRegExp } from '../utils/stringUtils.js';

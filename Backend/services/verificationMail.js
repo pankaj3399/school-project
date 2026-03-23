@@ -6,6 +6,7 @@ import fs from 'fs';
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 import School from "../models/School.js";
 import Admin from "../models/Admin.js";
+import crypto from 'crypto';
 
 export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
     try {
@@ -24,7 +25,6 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
 
         if (isGuardianInvitation) {
-            const crypto = await import('crypto');
             user.guardianRegistrationToken = crypto.randomBytes(32).toString('hex');
             user.guardianRegistrationTokenExpires = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
         } else {
@@ -310,6 +310,32 @@ export const sendTeacherRegistrationMail = async ({ email, url, registrationToke
     await sendEmail(
         email,
         'Complete Your Teacher Registration',
+        emailHTML,
+        emailHTML
+    );
+};
+
+export const sendDistrictAdminRegistrationMail = async (email, name, { districtName, role }) => {
+    const registrationUrl = `${process.env.FRONTEND_URL}/login`;
+
+    const emailHTML = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2>Welcome to The RADU E-Token System</h2>
+            <p>Dear ${name},</p>
+            <p>You have been assigned as a <strong>${role}</strong> for <strong>${districtName}</strong>.</p>
+            <p>Your account has been created and approved. You can now log in to the system using your credentials.</p>
+            <div style="margin: 20px 0;">
+                <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Log In Now</a>
+            </div>
+            <p>If the button above does not work, copy and paste this link into your browser:<br>
+            <a href="${registrationUrl}" style="color: #00a58c;">${registrationUrl}</a></p>
+            <p>Best regards,<br>The RADU Team</p>
+        </div>
+    `;
+
+    await sendEmail(
+        email,
+        `Welcome to RADU - ${role} Account Created`,
         emailHTML,
         emailHTML
     );

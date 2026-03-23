@@ -24,6 +24,7 @@ export default function CompleteGuardianRegistration() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsVersion, setTermsVersion] = useState("");
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
+  const [termsError, setTermsError] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -31,18 +32,21 @@ export default function CompleteGuardianRegistration() {
     confirmPassword: "",
   });
 
-  useEffect(() => {
-    async function fetchTerms() {
-      try {
-        const terms = await getCurrentTerms();
-        if (terms && terms.terms?.version) {
-          setTermsVersion(terms.terms.version);
-          setFetchedTerms(terms.terms);
-        }
-      } catch (error) {
-        console.error("Error fetching terms:", error);
+  const fetchTerms = async () => {
+    setTermsError(false);
+    try {
+      const terms = await getCurrentTerms();
+      if (terms && terms.terms?.version) {
+        setTermsVersion(terms.terms.version);
+        setFetchedTerms(terms.terms);
       }
+    } catch (error) {
+      console.error("Error fetching terms:", error);
+      setTermsError(true);
     }
+  };
+
+  useEffect(() => {
     fetchTerms();
   }, []);
 
@@ -115,7 +119,7 @@ export default function CompleteGuardianRegistration() {
       if (result.error) {
         toast({
           title: "Registration Failed",
-          description: result.error || result.error?.message || result.message || "Registration failed.",
+          description: result.error || result.message || "Registration failed.",
           variant: "destructive",
         });
       } else {
@@ -184,9 +188,23 @@ export default function CompleteGuardianRegistration() {
               </div>
             </div>
 
+            {termsError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
+                <p className="text-sm text-red-600 font-medium">Failed to load terms of use.</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchTerms}
+                  className="bg-white hover:bg-red-50 border-red-200 text-red-600"
+                >
+                  Retry
+                </Button>
+              </div>
+            )}
+
             <Button
               onClick={handleProceed}
-              disabled={!termsAccepted}
+              disabled={!termsAccepted || !termsVersion || termsError}
               className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 group"
             >
               Proceed to Registration
