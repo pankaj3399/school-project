@@ -1021,10 +1021,10 @@ export async function completeTeacherRegistration({ token, name, password, subje
   }
 }
 
-export async function completeGuardianRegistration({ otp, name, password, email, termsAccepted, termsVersion }: { otp: string, name: string, password: string, email: string, termsAccepted?: boolean, termsVersion?: string }) {
+export async function completeGuardianRegistration({ token, name, password, email, termsAccepted, termsVersion }: { token: string, name: string, password: string, email: string, termsAccepted?: boolean, termsVersion?: string }) {
   try {
     const response = await axios.post(`${API_URL}/auth/guardian-complete-registration`, {
-      otp,
+      token,
       name,
       password,
       email,

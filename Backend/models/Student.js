@@ -78,6 +78,14 @@ const studentSchema = new mongoose.Schema({
     type:String,
     default: null
   },
+  guardianRegistrationToken: {
+    type: String,
+    default: null
+  },
+  guardianRegistrationTokenExpires: {
+    type: Date,
+    default: null
+  },
   studentEmailVerificationCode:{
     type:String,
     default: null

@@ -42,12 +42,18 @@ This Agreement shall be effective for the duration of the pilot program, unless 
 By participating in the pilot program, the Pilot Participant acknowledges and agrees to abide by the terms of this Agreement.
 `;
 
-export default function TermsPage({ isRegistration = false }: { isRegistration?: boolean }) {
+export default function TermsPage({ isRegistration = false, terms: propTerms }: { isRegistration?: boolean, terms?: Terms | null }) {
     const navigate = useNavigate();
-    const [terms, setTerms] = useState<Terms | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [terms, setTerms] = useState<Terms | null>(propTerms || null);
+    const [loading, setLoading] = useState(!propTerms);
 
     useEffect(() => {
+        if (propTerms) {
+            setTerms(propTerms);
+            setLoading(false);
+            return;
+        }
+
         const fetchTerms = async () => {
             try {
                 const data = await getCurrentTerms();
@@ -71,7 +77,7 @@ export default function TermsPage({ isRegistration = false }: { isRegistration?:
         };
 
         fetchTerms();
-    }, []);
+    }, [propTerms]);
 
     const safeHtml = useMemo(() => {
         if (terms?.contentHtml) {
@@ -122,7 +128,7 @@ export default function TermsPage({ isRegistration = false }: { isRegistration?:
                                 <CardTitle className="text-2xl">
                                     {terms?.title || 'Terms & Conditions of Use'}
                                 </CardTitle>
-                                <p className="text-blue-100 text-sm mt-1">
+                                <p className="text-teal-100 text-sm mt-1">
                                     Version: {terms?.version || '1.0'} |
                                     Effective: {terms?.effectiveDate
                                         ? new Date(terms.effectiveDate).toLocaleDateString()

@@ -26,6 +26,8 @@ export default function CompleteTeacherRegistration() {
   const [termsVersion, setTermsVersion] = useState("");
   const [termsLoaded, setTermsLoaded] = useState(false);
   const [termsError, setTermsError] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -37,6 +39,7 @@ export default function CompleteTeacherRegistration() {
           setTermsError(true);
         } else {
           setTermsVersion(response.terms.version);
+          setFetchedTerms(response.terms);
           setTermsLoaded(true);
         }
       } catch (error) {
@@ -52,6 +55,15 @@ export default function CompleteTeacherRegistration() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) return "Password must be at least 8 characters long.";
+    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter.";
+    if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter.";
+    if (!/[0-9]/.test(pass)) return "Password must contain at least one number.";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character.";
+    return "";
   };
 
   const handleProceed = () => {
@@ -97,7 +109,7 @@ export default function CompleteTeacherRegistration() {
       } else {
         toast({
           title: "Error",
-          description: data.error?.message || data.message || "Registration failed.",
+          description: data.error || data.error?.message || data.message || "Registration failed.",
           variant: "destructive",
         });
       }
@@ -149,7 +161,7 @@ export default function CompleteTeacherRegistration() {
           </CardHeader>
           <CardContent className="p-8">
             <div className="max-h-[400px] overflow-y-auto mb-8 p-4 border rounded-xl bg-gray-50/50 scrollbar-thin scrollbar-thumb-[#00a58c]">
-              <TermsPage isRegistration={true} />
+              <TermsPage isRegistration={true} terms={fetchedTerms} />
             </div>
             
             <div className="flex items-start space-x-3 mb-8 p-4 bg-[#f8fdfc] rounded-lg border border-[#e6f6f4]">
@@ -227,10 +239,15 @@ export default function CompleteTeacherRegistration() {
                 type="password"
                 placeholder="••••••••"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  setPasswordError(validatePassword(e.target.value));
+                }}
                 required
-                className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
+                className={`rounded-xl py-6 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
+                aria-invalid={!!passwordError}
               />
+              {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="subject" className="text-gray-600 ml-1">Subject Area</Label>

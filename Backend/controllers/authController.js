@@ -649,18 +649,20 @@ export const completeVerification = async (req, res) => {
             user.password = await bcrypt.hash(password, salt);
           }
 
-          // Handle Terms of Use
-          if (termsAccepted) {
-            user.termsAccepted = true;
-            user.termsAcceptedAt = new Date();
-            user.termsAcceptedIp = req.ip || req.headers['x-forwarded-for'];
-            
-            if (termsVersion) {
-              user.termsAcceptedVersion = termsVersion;
-            } else {
-              const activeTerms = await TermsOfUse.findOne({ isActive: true });
-              user.termsAcceptedVersion = activeTerms ? activeTerms.version : "1.0-pilot";
-            }
+          // Handle Terms of Use - REQUIRED
+          if (!termsAccepted) {
+            return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
+          }
+
+          user.termsAccepted = true;
+          user.termsAcceptedAt = new Date();
+          user.termsAcceptedIp = req.ip || req.headers['x-forwarded-for'] || "0.0.0.0";
+          
+          if (termsVersion) {
+            user.termsAcceptedVersion = termsVersion;
+          } else {
+            const activeTerms = await TermsOfUse.findOne({ isActive: true });
+            user.termsAcceptedVersion = activeTerms ? activeTerms.version : "1.0-pilot";
           }
 
           user.isEmailVerified = true;
@@ -898,35 +900,37 @@ export const createSupportTicket = async (req, res) => {
 };
 
 export const completeGuardianRegistration = async (req, res) => {
-  const { otp, name, password, email, termsAccepted, termsVersion } = req.body;
+  const { token, email, name, password, termsAccepted, termsVersion } = req.body;
 
-  if (!otp || !name || !password || !email) {
+  if (!token || !name || !password || !email) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
   try {
-    // 1. Verify OTP
-    const student = await Student.findOne({ 
+    // 1. Validate the registration token
+    const student = await Student.findOne({
       $or: [
-        { emailVerificationCode: otp, parentEmail: email },
-        { emailVerificationCode: otp, standard: email } // standard is parent 2 email
-      ]
+        { parentEmail: email },
+        { standard: email } // parentEmail2
+      ],
+      guardianRegistrationToken: token
     });
 
     if (!student) {
-      return res.status(400).json({ message: "Invalid or expired verification code." });
+      return res.status(404).json({ message: "Invalid registration token or email." });
     }
 
-    // 2. Hash Password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    if (student.guardianRegistrationTokenExpires < new Date()) {
+      return res.status(400).json({ message: "Registration link has expired. Please contact the school to resend the invitation." });
+    }
 
-    // 3. Strict Terms of Use Validation
+    // 2. Terms of Use validation
     if (!termsAccepted) {
-      return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
+      return res.status(400).json({ message: "You must accept the Terms of Use." });
     }
 
-    const activeTerms = await TermsOfUse.findOne({ isActive: true });
-    const currentTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+    const currentTerms = await TermsOfUse.findOne({ isActive: true });
+    const currentTermsVersion = currentTerms ? currentTerms.version : "1.0-pilot";
 
     if (termsVersion !== currentTermsVersion) {
       return res.status(400).json({ 
@@ -935,21 +939,38 @@ export const completeGuardianRegistration = async (req, res) => {
       });
     }
 
-    // 4. Create User record with role: Guardian
-    const newUser = await Admin.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: Role.Guardian,
-      schoolId: student.schoolId,
-      approved: true, // Auto-approve as they were invited
-      termsAccepted: true,
-      termsAcceptedAt: new Date(),
-      termsAcceptedVersion: termsVersion,
-      termsAcceptedIp: req.ip || req.headers['x-forwarded-for'] || "0.0.0.0"
-    });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 5. Update Student record(s) verification status
+    // 3. Check for existing guardian to maintain idempotency
+    let existingUser = await Admin.findOne({ email, role: Role.Guardian });
+    
+    if (!existingUser) {
+      try {
+        existingUser = await Admin.create({
+          name,
+          email,
+          password: hashedPassword,
+          role: Role.Guardian,
+          schoolId: student.schoolId,
+          approved: true,
+          termsAccepted: true,
+          termsAcceptedAt: new Date(),
+          termsAcceptedVersion: termsVersion,
+          termsAcceptedIp: req.ip || req.headers['x-forwarded-for'] || "0.0.0.0"
+        });
+      } catch (error) {
+        if (error.code === 11000) {
+          // Handle race condition: user was created between findOne and create
+          existingUser = await Admin.findOne({ email, role: Role.Guardian });
+          if (!existingUser) throw error; // Not a guardian duplicate
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // 4. Update Student record(s) verification status
     if (student.parentEmail === email) {
       student.isParentOneEmailVerified = true;
     } else if (student.standard === email) {
@@ -957,11 +978,12 @@ export const completeGuardianRegistration = async (req, res) => {
     }
     
     // Clear the verification code only after both guardians (if applicable) have verified
-    // If standard (Parent 2) is not set, we can clear it after Parent 1 verifies
     const isBothVerified = student.isParentOneEmailVerified && (!student.standard || student.isParentTwoEmailVerified);
 
     if (isBothVerified) {
       student.emailVerificationCode = null;
+      student.guardianRegistrationToken = null;
+      student.guardianRegistrationTokenExpires = null;
     }
     
     await student.save();
@@ -969,10 +991,10 @@ export const completeGuardianRegistration = async (req, res) => {
     return res.status(200).json({
       message: "Guardian registration completed successfully.",
       user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
+        id: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: existingUser.role
       }
     });
 

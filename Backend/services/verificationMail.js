@@ -23,7 +23,14 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
 
-        user.emailVerificationCode = otp;
+        if (isGuardianInvitation) {
+            const crypto = await import('crypto');
+            user.guardianRegistrationToken = crypto.randomBytes(32).toString('hex');
+            user.guardianRegistrationTokenExpires = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+        } else {
+            user.emailVerificationCode = otp;
+        }
+
         if (isStudent) {
             user.studentEmailVerificationCode = otp2;
         }
@@ -35,8 +42,8 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
         // console.log(signatue);
 
         // Wait for the template to be generated
-        const emailHTML = await getVerificationEmailTemplate(signature, user.role, otp, registrationUrl, user.email, user.parentEmail, false, tempPass, schoolLogo);
-        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, otp, registrationUrl, user.email, user.standard, false, null, schoolLogo);
+        const emailHTML = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, user.email, user.parentEmail, false, tempPass, schoolLogo);
+        const emailHTMLP2 = await getVerificationEmailTemplate(signature, user.role, (isGuardianInvitation ? user.guardianRegistrationToken : otp), registrationUrl, user.email, user.standard, false, null, schoolLogo);
         const emailHTML2 = await getVerificationEmailTemplate(signature, user.role, otp2, registrationUrl, user.email, null, isStudent, null, schoolLogo);
 
         if (isStudent) {

@@ -16,13 +16,15 @@ export default function CompleteGuardianRegistration() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const otp = searchParams.get("otp");
+  const token = searchParams.get("token");
   const email = searchParams.get("email");
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsVersion, setTermsVersion] = useState("");
+  const [fetchedTerms, setFetchedTerms] = useState<any>(null);
+  const [passwordError, setPasswordError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     password: "",
@@ -35,6 +37,7 @@ export default function CompleteGuardianRegistration() {
         const terms = await getCurrentTerms();
         if (terms && terms.terms?.version) {
           setTermsVersion(terms.terms.version);
+          setFetchedTerms(terms.terms);
         }
       } catch (error) {
         console.error("Error fetching terms:", error);
@@ -43,7 +46,7 @@ export default function CompleteGuardianRegistration() {
     fetchTerms();
   }, []);
 
-  if (!otp || !email) {
+  if (!token || !email) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent mb-4">
@@ -59,6 +62,15 @@ export default function CompleteGuardianRegistration() {
     );
   }
 
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) return "Password must be at least 8 characters long.";
+    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter.";
+    if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter.";
+    if (!/[0-9]/.test(pass)) return "Password must contain at least one number.";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character.";
+    return "";
+  };
+
   const handleProceed = () => {
     if (termsAccepted) {
       setStep(2);
@@ -67,7 +79,19 @@ export default function CompleteGuardianRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (passwordError) {
+      toast({
+        title: "Validation Error",
+        description: passwordError,
+        variant: "destructive",
+      });
+      return;
+    }
+    // The instruction had an unclosed `if (!token) {` block here.
+    // Assuming the intent was to ensure token exists before proceeding,
+    // but the initial check `if (!token || !email)` already handles this.
+    // If a separate check was intended here, it needs a proper block.
+    // For now, I'm integrating the password mismatch check as it was.
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
@@ -80,7 +104,7 @@ export default function CompleteGuardianRegistration() {
     setLoading(true);
     try {
       const result = await completeGuardianRegistration({
-        otp,
+        token,
         email,
         name: formData.name,
         password: formData.password,
@@ -91,7 +115,7 @@ export default function CompleteGuardianRegistration() {
       if (result.error) {
         toast({
           title: "Registration Failed",
-          description: result.error,
+          description: result.error || result.error?.message || result.message || "Registration failed.",
           variant: "destructive",
         });
       } else {
@@ -132,7 +156,7 @@ export default function CompleteGuardianRegistration() {
           </CardHeader>
           <CardContent className="p-8">
             <div className="max-h-[400px] overflow-y-auto mb-8 p-4 border rounded-xl bg-gray-50/50 scrollbar-thin scrollbar-thumb-[#00a58c]">
-              <TermsPage isRegistration={true} />
+              <TermsPage isRegistration={true} terms={fetchedTerms} />
             </div>
             
             <div className="flex items-start space-x-3 mb-8 p-4 bg-[#f8fdfc] rounded-lg border border-[#e6f6f4]">
@@ -211,10 +235,15 @@ export default function CompleteGuardianRegistration() {
                   type="password"
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    setPasswordError(validatePassword(e.target.value));
+                  }}
                   required
-                  className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
+                  className={`rounded-xl py-6 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
+                  aria-invalid={!!passwordError}
                 />
+                {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-gray-600 ml-1">Confirm Password</Label>
