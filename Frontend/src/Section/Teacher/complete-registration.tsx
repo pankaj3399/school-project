@@ -22,15 +22,28 @@ export default function CompleteTeacherRegistration() {
     subject: ""
   });
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [termsVersion, setTermsVersion] = useState("");
+  const [termsLoaded, setTermsLoaded] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchTerms() {
       try {
-        await getCurrentTerms();
+        const response = await getCurrentTerms();
+        if (response.error || !response.terms?.version) {
+          setTermsError(true);
+        } else {
+          setTermsVersion(response.terms.version);
+          setTermsLoaded(true);
+        }
       } catch (error) {
+        setTermsError(true);
         console.error("Error fetching terms:", error);
+      } finally {
+        setInitialLoading(false);
       }
     }
     fetchTerms();
@@ -42,7 +55,7 @@ export default function CompleteTeacherRegistration() {
   };
 
   const handleProceed = () => {
-    if (termsAccepted) {
+    if (termsAccepted && termsLoaded && !termsError) {
       setShowForm(true);
     }
   };
@@ -60,22 +73,19 @@ export default function CompleteTeacherRegistration() {
     
     setLoading(true);
     try {
-      const termsData = await getCurrentTerms();
-      if (termsData.error) {
-        console.error("Error fetching terms version:", termsData.error);
+      if (!termsVersion) {
         toast({
           title: "Setup Error",
-          description: "Could not retrieve the current terms version. Please try again.",
+          description: "Could not retrieve the current terms version. Please refresh and try again.",
           variant: "destructive"
         });
         setLoading(false);
         return;
       }
-      const currentTermsVersion = termsData?.terms?.version;
       const data = await completeTeacherRegistration({
         token,
         termsAccepted,
-        termsVersion: currentTermsVersion,
+        termsVersion: termsVersion,
         ...formData
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
@@ -87,7 +97,7 @@ export default function CompleteTeacherRegistration() {
       } else {
         toast({
           title: "Error",
-          description: data.message || "Registration failed.",
+          description: data.error?.message || data.message || "Registration failed.",
           variant: "destructive",
         });
       }
@@ -102,7 +112,7 @@ export default function CompleteTeacherRegistration() {
     }
   };
 
-  if (loading) return <Loading />;
+  if (initialLoading) return <Loading />;
 
   if (!token) {
     return (
@@ -169,10 +179,10 @@ export default function CompleteTeacherRegistration() {
 
             <Button
               onClick={handleProceed}
-              disabled={!termsAccepted}
+              disabled={!termsAccepted || !termsLoaded || termsError}
               className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 group"
             >
-              Proceed to Registration
+              {termsError ? "Terms Loading Error" : !termsLoaded ? "Loading Terms..." : "Proceed to Registration"}
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </CardContent>

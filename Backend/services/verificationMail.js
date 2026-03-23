@@ -10,8 +10,9 @@ import Admin from "../models/Admin.js";
 export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, tempPass, schoolLogo = null) => {
     try {
         const { url } = req.body;
-        // Point guardians to the registration page
-        const registrationUrl = url?.includes('verifyemail') 
+        // Point guardians to the registration page, but keep student links as is
+        const isGuardianInvitation = user.role === Role.Student && !isStudent;
+        const registrationUrl = (url?.includes('verifyemail') && isGuardianInvitation)
             ? url.replace('verifyemail', 'guardian/complete-registration')
             : url;
 

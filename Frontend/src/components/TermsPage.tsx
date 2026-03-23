@@ -73,7 +73,7 @@ export default function TermsPage({ isRegistration = false }: { isRegistration?:
         fetchTerms();
     }, []);
 
-    const sanitizedHtml = useMemo(() => {
+    const safeHtml = useMemo(() => {
         if (terms?.contentHtml) {
             return DOMPurify.sanitize(terms.contentHtml);
         }
@@ -92,7 +92,7 @@ export default function TermsPage({ isRegistration = false }: { isRegistration?:
         return (
             <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
                 {terms?.contentHtml ? (
-                    <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                    <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
                 ) : (
                     <div className="whitespace-pre-wrap">
                         {terms?.content || DEFAULT_TERMS_CONTENT}
@@ -135,7 +135,7 @@ export default function TermsPage({ isRegistration = false }: { isRegistration?:
                         {terms?.contentHtml ? (
                             <div
                                 className="prose prose-lg max-w-none"
-                                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+                                dangerouslySetInnerHTML={{ __html: safeHtml }}
                             />
                         ) : (
                             <div className="prose prose-lg max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">

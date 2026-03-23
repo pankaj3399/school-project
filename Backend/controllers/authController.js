@@ -920,13 +920,22 @@ export const completeGuardianRegistration = async (req, res) => {
     // 2. Hash Password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // 3. Create User record with role: Guardian
-    let finalTermsVersion = termsVersion;
-    if (termsAccepted && !finalTermsVersion) {
-      const activeTerms = await TermsOfUse.findOne({ isActive: true });
-      finalTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+    // 3. Strict Terms of Use Validation
+    if (!termsAccepted) {
+      return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
     }
 
+    const activeTerms = await TermsOfUse.findOne({ isActive: true });
+    const currentTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+
+    if (termsVersion !== currentTermsVersion) {
+      return res.status(400).json({ 
+        message: "The Terms of Use have been updated. Please refresh the page to review and accept the latest version.",
+        error: "version_mismatch"
+      });
+    }
+
+    // 4. Create User record with role: Guardian
     const newUser = await Admin.create({
       name,
       email,
@@ -934,21 +943,27 @@ export const completeGuardianRegistration = async (req, res) => {
       role: Role.Guardian,
       schoolId: student.schoolId,
       approved: true, // Auto-approve as they were invited
-      termsAccepted: !!termsAccepted,
-      termsAcceptedAt: termsAccepted ? new Date() : null,
-      termsAcceptedVersion: finalTermsVersion || "1.0-pilot",
-      termsAcceptedIp: req.ip || req.headers['x-forwarded-for']
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
+      termsAcceptedVersion: termsVersion,
+      termsAcceptedIp: req.ip || req.headers['x-forwarded-for'] || "0.0.0.0"
     });
 
-    // 4. Update Student record(s) verification status
+    // 5. Update Student record(s) verification status
     if (student.parentEmail === email) {
       student.isParentOneEmailVerified = true;
     } else if (student.standard === email) {
       student.isParentTwoEmailVerified = true;
     }
     
-    // Clear the verification code
-    student.emailVerificationCode = null;
+    // Clear the verification code only after both guardians (if applicable) have verified
+    // If standard (Parent 2) is not set, we can clear it after Parent 1 verifies
+    const isBothVerified = student.isParentOneEmailVerified && (!student.standard || student.isParentTwoEmailVerified);
+
+    if (isBothVerified) {
+      student.emailVerificationCode = null;
+    }
+    
     await student.save();
 
     return res.status(200).json({
