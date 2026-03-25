@@ -27,8 +27,25 @@ export const awardPoints = async (req, res) => {
 
 export const addTeacher = async (req, res) => {
   const { email, recieveMails, type, grade } = req.body;
+  const { schoolId: querySchoolId } = req.query;
+  const { schoolId: bodySchoolId } = req.body;
 
-  const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+  let schoolId, schoolAdminName;
+
+  if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+    schoolId = querySchoolId || bodySchoolId;
+    if (!schoolId) {
+      return res.status(400).json({ message: "School ID is required for System Administrators" });
+    }
+    schoolAdminName = "System Manager";
+  } else {
+    const schoolAdmin = await Admin.findById(req.user.id).select("schoolId name");
+    if (!schoolAdmin || !schoolAdmin.schoolId) {
+      return res.status(403).json({ message: "Admin not associated with a school" });
+    }
+    schoolId = schoolAdmin.schoolId;
+    schoolAdminName = schoolAdmin.name;
+  }
 
   try {
     // Generate a registration token
@@ -38,7 +55,7 @@ export const addTeacher = async (req, res) => {
       email,
       recieveMails: recieveMails || false,
       role: Role.Teacher,
-      schoolId: schoolAdmin.schoolId,
+      schoolId: schoolId,
       type,
       grade,
       registrationToken,
@@ -48,7 +65,7 @@ export const addTeacher = async (req, res) => {
     });
     await School.findOneAndUpdate(
       {
-        _id: schoolAdmin.schoolId,
+        _id: schoolId,
       },
       {
         $push: {
@@ -56,17 +73,16 @@ export const addTeacher = async (req, res) => {
         },
       }
     );
-    console.log("teacher", teacher);
-    console.log('schoolAdmin', schoolAdmin)
+
     // Fetch school to get logo
-    const school = await School.findById(schoolAdmin.schoolId);
-    console.log("school", school);
+    const school = await School.findById(schoolId);
+    
     // Send registration email
     await sendTeacherRegistrationMail({
       email,
       url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
       registrationToken,
-      schoolId: schoolAdmin.schoolId,
+      schoolId: schoolId,
       schoolLogo: school?.logo,
     });
     return res.status(200).json({
@@ -95,6 +111,19 @@ export const updateTeacher = async (req, res) => {
       grade,
       type,
     });
+
+    const teacherToUpdate = await Teacher.findById(teacherId);
+    if (!teacherToUpdate) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Ownership check
+    if (req.user.role === Role.SchoolAdmin) {
+      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+      if (!schoolAdmin || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
+        return res.status(403).json({ message: "You do not have permission to update this teacher" });
+      }
+    }
 
     // Build update object carefully to handle boolean values
     const updateData = {};
@@ -130,6 +159,19 @@ export const deleteTeacher = async (req, res) => {
   const teacherId = req.params.id;
 
   try {
+    const teacherToDelete = await Teacher.findById(teacherId);
+    if (!teacherToDelete) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Ownership check
+    if (req.user.role === Role.SchoolAdmin) {
+      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+      if (!schoolAdmin || schoolAdmin.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
+        return res.status(403).json({ message: "You do not have permission to delete this teacher" });
+      }
+    }
+
     const deletedTeacher = await Teacher.findByIdAndDelete(teacherId);
 
     if (!deletedTeacher) {

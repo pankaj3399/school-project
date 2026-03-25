@@ -58,11 +58,6 @@ export function TopNav() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              onClick={() => {
-                if (user?.role === 'Admin') {
-                  navigate('/system-admin');
-                }
-              }}
               className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === 'Admin' ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
             >
               {getUserLabel()}

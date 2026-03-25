@@ -16,7 +16,7 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Sys
 router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),upload.single('logo'),addSchool)
 
 router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),addTeacher)
-router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),addStudent)
+router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
 
 router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),createForm)
 router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),editForm)
@@ -32,14 +32,14 @@ router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.
 
 router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getCombinedStudentPointsHistory);
 router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getStudentPointsHistory);
-router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), resetStudentRoster);
+router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
 
 // OTP routes for reset confirmation
-router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), sendResetOtp);
-router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), verifyResetOtp);
+router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), sendResetOtp);
+router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), verifyResetOtp);
 router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), sendReport);
 router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), genreport);
-router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), teacherRoster);
-router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), studentRoster);
+router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin), teacherRoster);
+router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), studentRoster);
 
 export default router;

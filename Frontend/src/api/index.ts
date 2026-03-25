@@ -255,7 +255,7 @@ export const getCurrrentSchool = async (token: string, schoolId?: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    throw error;
   }
 };
 

@@ -86,7 +86,9 @@ export default function SchoolPage() {
         if (data.school) {
           setSchoolName(data.school.name);
           setAddress(data.school.address);
-          setDistrict(data.school.district);
+          if (!districtIdFromQuery) {
+            setDistrict(data.school.district);
+          }
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
           setTimezone(data.school.timezone || "UTC-5");

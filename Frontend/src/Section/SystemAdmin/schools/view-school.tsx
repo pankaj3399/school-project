@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { getCurrrentSchool, getStats } from '@/api'
 import CurrentWeekCharts from '../../School/component/current-week-charts'
@@ -12,6 +12,7 @@ const ViewSchool = () => {
   const [school, setSchool] = useState<any>(null)
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const requestRef = useRef(0)
 
   useEffect(() => {
     if (id) {
@@ -20,22 +21,30 @@ const ViewSchool = () => {
   }, [id])
 
   const fetchData = async () => {
+    const requestId = ++requestRef.current
     try {
       setLoading(true)
+      setSchool(null)
+      setStats(null)
       const token = localStorage.getItem('token') || ''
       const [schoolRes, statsRes] = await Promise.all([
         getCurrrentSchool(token, id),
         getStats(id)
       ])
 
+      if (requestId !== requestRef.current) return
+
       if (schoolRes.school) {
         setSchool(schoolRes.school)
       }
       setStats(statsRes)
     } catch (error) {
+      if (requestId !== requestRef.current) return
       console.error('Error fetching school data:', error)
     } finally {
-      setLoading(false)
+      if (requestId === requestRef.current) {
+        setLoading(false)
+      }
     }
   }
 

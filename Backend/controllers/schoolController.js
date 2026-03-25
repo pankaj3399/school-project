@@ -3,6 +3,7 @@ import School from "../models/School.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
+import Admin from "../models/Admin.js";
 export const getAllSchools = async (req, res) => {
     try {
       const schools = await School.find();
@@ -114,13 +115,12 @@ export const getCurrentSchool = async (req, res) => {
                 break;
             case Role.SystemAdmin:
             case Role.Admin:
-                // For system admins, look for schoolId in query or return the first available school as a fallback
-                const { schoolId } = req.query;
-                if (schoolId) {
-                    sch = await School.findById(schoolId).populate('createdBy');
-                } else {
-                    sch = await School.findOne().populate('createdBy');
+                // For system admins, look for schoolId in query
+                const { schoolId: querySchoolId } = req.query;
+                if (!querySchoolId) {
+                    return res.status(400).json({ message: 'School ID is required for System Administrators' });
                 }
+                sch = await School.findById(querySchoolId).populate('createdBy');
                 break;
         }
 
@@ -189,7 +189,13 @@ export const promote = async (req, res) => {
       let school;
       
       // Get school based on user role
-      if(req.user.role === Role.Teacher) {
+      if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+          const { schoolId } = req.query.schoolId ? req.query : req.body;
+          if (!schoolId) {
+              return res.status(400).json({ message: 'School ID is required for System Administrators' });
+          }
+          school = await School.findById(schoolId);
+      } else if(req.user.role === Role.Teacher) {
           const user = await Teacher.findById(id);
           school = await School.findById(user.schoolId);
       } else {

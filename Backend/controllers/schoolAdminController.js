@@ -1,5 +1,4 @@
 import School from "../models/School.js";
-import User from "../models/Admin.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
@@ -57,7 +56,7 @@ export const addSchool = async (req, res) => {
       domain,
     });
 
-    await User.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
+    await Admin.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
 
     res
       .status(201)
@@ -304,20 +303,28 @@ export const getPointsGivenPerMonth = async (req, res) => {
     }
 
     let schoolId = adminUser.schoolId;
-    if ((req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) && req.query.schoolId) {
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
         schoolId = req.query.schoolId;
     }
 
+    let match = {};
+    if (schoolId) {
+        match.schoolId = new mongoose.Types.ObjectId(schoolId);
+    }
+
     // Aggregate points given by the teacher per month
-    const pointsData = await PointsHistory.aggregate([
-      { $match: { schoolId: new mongoose.Types.ObjectId(schoolId) } },
-      {
-        $group: {
-          _id: { $month: "$submittedAt" },
-          totalPoints: { $sum: "$points" },
-        },
+    const pipeline = [];
+    if (Object.keys(match).length > 0) {
+      pipeline.push({ $match: match });
+    }
+    pipeline.push({
+      $group: {
+        _id: { $month: "$submittedAt" },
+        totalPoints: { $sum: "$points" },
       },
-    ]);
+    });
+
+    const pointsData = await PointsHistory.aggregate(pipeline);
 
     // Create an array of 12 months with default 0 points
     const monthlyPoints = Array(12).fill(0);
@@ -379,19 +386,28 @@ export const getFormsSubmittedPerMonth = async (req, res) => {
     }
 
     let schoolId = adminUser.schoolId;
-    if ((req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) && req.query.schoolId) {
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
         schoolId = req.query.schoolId;
     }
+
+    let match = {};
+    if (schoolId) {
+        match.schoolId = new mongoose.Types.ObjectId(schoolId);
+    }
+
     // Aggregate form submissions by the teacher per month
-    const formsData = await PointsHistory.aggregate([
-      { $match: { schoolId: new mongoose.Types.ObjectId(schoolId) } },
-      {
-        $group: {
-          _id: { $month: "$submittedAt" }, // Group by month
-          formCount: { $count: {} }, // Count the number of submissions
-        },
+    const pipeline = [];
+    if (Object.keys(match).length > 0) {
+      pipeline.push({ $match: match });
+    }
+    pipeline.push({
+      $group: {
+        _id: { $month: "$submittedAt" }, // Group by month
+        formCount: { $count: {} }, // Count the number of submissions
       },
-    ]);
+    });
+
+    const formsData = await PointsHistory.aggregate(pipeline);
 
     // Create an array of 12 months with default 0 counts
     const monthlyForms = Array(12).fill(0);

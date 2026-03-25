@@ -26,6 +26,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
   const [detailData, setDetailData] = useState<any>(null)
 
   useEffect(() => {
+    setSelectedStudent("")
     fetchWeekData()
     fetchStudents()
   }, [studentId, schoolId])
@@ -33,7 +34,9 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
   const fetchStudents = async () => {
     const token = localStorage.getItem("token")
     const res = await getStudents(token ?? "", schoolId)
-    setStudents(res.students || [])
+    // Normalize response from getStudents
+    const studentsArray = Array.isArray(res) ? res : (res?.students || []);
+    setStudents(studentsArray)
   }
 
   const fetchWeekData = async () => {
@@ -88,7 +91,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
     if (detailView) {
       fetchDetailData()
     }
-  }, [period, selectedStudent, detailView])
+  }, [period, selectedStudent, detailView, schoolId])
 
   const fetchDetailData = async () => {
     if (!detailView) return

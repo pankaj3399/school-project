@@ -33,7 +33,6 @@ export default function ViewTeacherStudents() {
         }
 
         const data = await getStudents(token)
-        console.log("Teacher getStudents API response:", data);
 
         if (data.error) {
           toast({
@@ -45,14 +44,8 @@ export default function ViewTeacherStudents() {
           return
         }
 
-        let studentsArray = [];
-        if (data && Array.isArray(data.students)) {
-          studentsArray = data.students;
-        } else if (Array.isArray(data)) {
-          studentsArray = data;
-        }
-
-        const sortedStudents = studentsArray.sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
+        const studentsArray = Array.isArray(data?.students) ? data.students : [];
+        const sortedStudents = [...studentsArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
         setStudents(sortedStudents)
         setLoading(false)
       } catch (error) {

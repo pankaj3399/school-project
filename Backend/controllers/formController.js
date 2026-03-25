@@ -269,30 +269,30 @@ export const getForms = async (req, res) => {
   const id = req.user.id;
   let user;
 
-  switch (req.user.role) {
-    case Role.SchoolAdmin:
-      user = await Admin.findById(id);
-      break;
-    case Role.Teacher:
-      user = await Teacher.findById(id);
-      break;
-    case Role.SystemAdmin:
-    case Role.Admin:
-      // SystemAdmin/Admin can see all forms or forms for a specific school
-      const { schoolId } = req.query;
-      const filter = schoolId ? { schoolId } : {};
-      const allForms = await Form.find(filter);
-      return res.status(200).json({
-        message: "Forms Fetched Successfully",
-        forms: allForms,
-      });
-    default:
-      return res.status(403).json({ message: "Forbidden" });
-  }
-
-  const schoolId = user.schoolId;
-
   try {
+    switch (req.user.role) {
+      case Role.SchoolAdmin:
+        user = await Admin.findById(id);
+        break;
+      case Role.Teacher:
+        user = await Teacher.findById(id);
+        break;
+      case Role.SystemAdmin:
+      case Role.Admin:
+        // SystemAdmin/Admin can see all forms or forms for a specific school
+        const { schoolId: querySchoolId } = req.query;
+        const filter = querySchoolId ? { schoolId: querySchoolId } : {};
+        const allForms = await Form.find(filter);
+        return res.status(200).json({
+          message: "Forms Fetched Successfully",
+          forms: allForms,
+        });
+      default:
+        return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const schoolId = user.schoolId;
+
     let forms = await Form.find({ schoolId });
     if (req.user.role == Role.Teacher) {
       if (user.type == "Special") {
@@ -479,11 +479,33 @@ export const submitFormTeacher = async (req, res) => {
 
 export const submitFormAdmin = async (req, res) => {
   const formId = req.params.formId;
-  const { submittedFor, answers, submittedAt } = req.body;
+  const { submittedFor, answers, submittedAt, schoolId: bodySchoolId } = req.body;
+  const { schoolId: querySchoolId } = req.query;
+  
   const form = await Form.findById(formId);
   const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
-  const schoolAdmin = await Admin.findById(req.user.id);
-  const school = await School.findById(schoolAdmin.schoolId);
+
+  let schoolId, schoolAdmin, school;
+
+  if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+    schoolId = querySchoolId || bodySchoolId;
+    if (!schoolId) {
+      return res.status(400).json({ message: "School ID is required for System Administrators" });
+    }
+    schoolAdmin = await Admin.findById(req.user.id) || { _id: req.user.id, name: "System Admin" };
+    school = await School.findById(schoolId);
+  } else {
+    schoolAdmin = await Admin.findById(req.user.id);
+    if (!schoolAdmin || !schoolAdmin.schoolId) {
+        return res.status(403).json({ message: "Admin not associated with a school" });
+    }
+    schoolId = schoolAdmin.schoolId;
+    school = await School.findById(schoolId);
+  }
+
+  if (!school) {
+    return res.status(404).json({ message: "School not found" });
+  }
 
   try {
     // Check if student is eligible for form submission
@@ -751,9 +773,22 @@ export const getFilteredPointHistory = async (req, res) => {
     let query = {};
 
     switch (req.user.role) {
+      case Role.Admin:
+      case Role.SystemAdmin:
       case Role.SchoolAdmin:
-        user = await Admin.findById(id);
-        query = { schoolId: user.schoolId, submittedForId: studentId };
+        let schoolId;
+        if (req.user.role === Role.SchoolAdmin) {
+          user = await Admin.findById(id);
+          if (!user) return res.status(404).json({ message: "Admin user not found" });
+          schoolId = user.schoolId;
+        } else {
+          schoolId = req.query.schoolId;
+        }
+
+        query = { submittedForId: studentId };
+        if (schoolId) {
+          query.schoolId = schoolId;
+        }
 
         const adminPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")

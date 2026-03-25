@@ -38,7 +38,6 @@ export default function ViewStudents() {
         }
 
         const data = await getStudents(token)
-        console.log("getStudents API response:", data);
 
         if (data.error) {
           toast({

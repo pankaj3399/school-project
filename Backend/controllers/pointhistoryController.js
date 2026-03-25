@@ -7,7 +7,7 @@ import Admin from "../models/Admin.js";
 import FormSubmissions from "../models/FormSubmissions.js";
 import Feedback from "../models/Feedback.js";
 import { LuxonTimezoneManager } from "../utils/luxon.js";
-import { FormType } from "../enum.js";
+import { FormType, Role } from "../enum.js";
 
 // Create timezone manager instance
 const timezoneManager = new LuxonTimezoneManager();
@@ -82,7 +82,10 @@ const getSchoolIdFromUser = async (req) => {
   // If system admin, allow picking schoolId from query or body
   if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
     const schoolId = req.query.schoolId || req.body.schoolId;
-    if (schoolId) return schoolId;
+    if (!schoolId) {
+        throw new Error("School ID is required for System Administrators");
+    }
+    return schoolId;
   }
 
   // Try finding user as admin first
