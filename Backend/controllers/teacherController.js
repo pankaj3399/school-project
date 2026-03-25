@@ -7,6 +7,7 @@ import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import { sendOnboardingEmail } from "../services/verificationMail.js";
+import mongoose from "mongoose";
 
 export const awardPoints = async (req, res) => {
   const { studentId, points } = req.body;
@@ -47,11 +48,22 @@ export const addTeacher = async (req, res) => {
     schoolAdminName = schoolAdmin.name;
   }
 
+  // Validate school existence first
+  const school = await School.findById(schoolId);
+  if (!school) {
+    return res.status(404).json({ message: "School not found" });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Generate a registration token
     const registrationToken =
       Math.random().toString(36).substr(2) + Date.now().toString(36);
-    const teacher = await Teacher.create({
+    
+    // Teacher.create with session returns an array of documents
+    const teacherResult = await Teacher.create([{
       email,
       recieveMails: recieveMails || false,
       role: Role.Teacher,
@@ -62,7 +74,10 @@ export const addTeacher = async (req, res) => {
       registrationTokenExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
       isEmailVerified: false,
       isFirstLogin: false,
-    });
+    }], { session });
+
+    const teacher = teacherResult[0];
+
     await School.findOneAndUpdate(
       {
         _id: schoolId,
@@ -71,12 +86,13 @@ export const addTeacher = async (req, res) => {
         $push: {
           teachers: teacher._id,
         },
-      }
+      },
+      { session }
     );
 
-    // Fetch school to get logo
-    const school = await School.findById(schoolId);
-    
+    await session.commitTransaction();
+    session.endSession();
+
     // Send registration email
     await sendTeacherRegistrationMail({
       email,
@@ -91,6 +107,8 @@ export const addTeacher = async (req, res) => {
       registrationToken,
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     return res
       .status(500)
       .json({ message: "Server Error in teacherController.js", error: error.message });
@@ -120,7 +138,7 @@ export const updateTeacher = async (req, res) => {
     // Ownership check
     if (req.user.role === Role.SchoolAdmin) {
       const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
-      if (!schoolAdmin || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
+      if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToUpdate.schoolId || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
         return res.status(403).json({ message: "You do not have permission to update this teacher" });
       }
     }
@@ -167,7 +185,7 @@ export const deleteTeacher = async (req, res) => {
     // Ownership check
     if (req.user.role === Role.SchoolAdmin) {
       const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
-      if (!schoolAdmin || schoolAdmin.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
+      if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToDelete.schoolId || schoolAdmin.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
         return res.status(403).json({ message: "You do not have permission to delete this teacher" });
       }
     }

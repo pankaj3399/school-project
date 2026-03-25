@@ -40,6 +40,6 @@ router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), v
 router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), sendReport);
 router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), genreport);
 router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin), teacherRoster);
-router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), studentRoster);
+router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), studentRoster);
 
 export default router;

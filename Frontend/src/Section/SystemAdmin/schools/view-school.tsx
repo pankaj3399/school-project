@@ -12,6 +12,7 @@ const ViewSchool = () => {
   const [school, setSchool] = useState<any>(null)
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<Error | null>(null)
   const requestRef = useRef(0)
 
   useEffect(() => {
@@ -26,6 +27,7 @@ const ViewSchool = () => {
       setLoading(true)
       setSchool(null)
       setStats(null)
+      setFetchError(null)
       const token = localStorage.getItem('token') || ''
       const [schoolRes, statsRes] = await Promise.all([
         getCurrrentSchool(token, id),
@@ -36,11 +38,21 @@ const ViewSchool = () => {
 
       if (schoolRes.school) {
         setSchool(schoolRes.school)
+      } else {
+        // Specific case where 200 OK but school is somehow missing from response
+        setSchool(null)
       }
       setStats(statsRes)
-    } catch (error) {
+    } catch (error: any) {
       if (requestId !== requestRef.current) return
       console.error('Error fetching school data:', error)
+      
+      // Axios error handling: 404 is "confirmed not found", others are generic errors
+      if (error.response?.status === 404) {
+        setSchool(null)
+      } else {
+        setFetchError(error)
+      }
     } finally {
       if (requestId === requestRef.current) {
         setLoading(false)
@@ -49,11 +61,44 @@ const ViewSchool = () => {
   }
 
   if (loading) {
-    return <div className="p-8">Loading school data...</div>
+    return (
+      <div className="p-8 flex items-center gap-3 text-neutral-500">
+        <div className="w-5 h-5 border-2 border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
+        Loading school data...
+      </div>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center gap-4 text-center">
+        <IconAlertCircle className="w-12 h-12 text-red-500" />
+        <div>
+          <h2 className="text-xl font-semibold text-neutral-800">Connection Error</h2>
+          <p className="text-neutral-500 max-w-md">
+            Failed to fetch school data. Please check your connection and try again.
+            <br />
+            <span className="text-sm">({fetchError.message})</span>
+          </p>
+        </div>
+        <button 
+          onClick={() => fetchData()}
+          className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    )
   }
 
   if (!school) {
-    return <div className="p-8 text-red-500">School not found</div>
+    return (
+      <div className="p-8 flex flex-col items-center justify-center gap-2 text-center text-neutral-500">
+        <IconAlertCircle className="w-12 h-12 text-neutral-300" />
+        <p className="text-xl font-medium">School not found</p>
+        <p>The school you are looking for does not exist or has been removed.</p>
+      </div>
+    )
   }
 
   return (

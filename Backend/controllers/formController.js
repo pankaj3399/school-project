@@ -12,6 +12,7 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../services/mail.js";
 import { checkStudentFormEligibility } from "../utils/studentVerification.js";
 import { emailGenerator } from "../utils/emailHelper.js";
+import mongoose from "mongoose";
 
 const getGradeFromUser = async (userId) => {
   // Try finding user as admin first
@@ -559,7 +560,7 @@ export const submitFormAdmin = async (req, res) => {
           submittedForId: submittedFor,
           submittedForName: submittedForStudent.name,
           points: points,
-          schoolId: schoolAdmin.schoolId,
+          schoolId: schoolId,
           submittedAt,
           goal: goal,
         });
@@ -577,7 +578,7 @@ export const submitFormAdmin = async (req, res) => {
         submittedForId: submittedFor,
         submittedForName: submittedForStudent.name,
         points: totalPoints,
-        schoolId: schoolAdmin.schoolId,
+        schoolId: schoolId,
         submittedAt,
         goal: null,
       });
@@ -586,7 +587,7 @@ export const submitFormAdmin = async (req, res) => {
     if (form.formType == FormType.Feedback) {
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
       await Feedback.create({
-        schoolId: schoolAdmin.schoolId,
+        schoolId: schoolId,
         submittedById: schoolAdmin._id,
         submittedByName: schoolAdmin.name,
         submittedForId: submittedFor,
@@ -720,11 +721,13 @@ export const getPointHistory = async (req, res) => {
           }
         });
 
-      case Role.SystemAdmin:
       case Role.Admin:
         // SystemAdmin/Admin see everything or filtered by schoolId
         const { schoolId } = req.query;
-        query = schoolId ? { schoolId } : {};
+        if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+          return res.status(400).json({ message: "Invalid schoolId format" });
+        }
+        query = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
         
         const systemAggregationResult = await PointsHistory.aggregate(
           buildPointHistoryPipeline(query, { skip, limit, includeAddFields: true })

@@ -16,8 +16,18 @@ import Otp from "../models/Otp.js";
 import { sendEmail } from "../services/mail.js";
 import ParentVerification from "../models/ParentVerification.js";
 
-const getSchoolIdFromUser = async (userId) => {
-  // Try finding user as admin first
+const getSchoolIdFromUser = async (req) => {
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
+    const schoolId = req.query.schoolId || req.body.schoolId;
+    if (!schoolId) {
+      throw new Error("School ID is required for System Administrators");
+    }
+    return schoolId;
+  }
+
   const admin = await Admin.findById(userId);
   if (admin) {
     return admin.schoolId;
@@ -56,8 +66,6 @@ export const addSchool = async (req, res) => {
       domain,
     });
 
-    await Admin.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
-
     res
       .status(201)
       .json({ message: "School created successfully", school: newSchool });
@@ -69,6 +77,7 @@ export const addTeacher = async (req, res) => {
   const { name, password, email, subject, grade, type } = req.body;
 
   try {
+    const schoolId = await getSchoolIdFromUser(req);
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const teacher = await Teacher.create({
@@ -77,12 +86,13 @@ export const addTeacher = async (req, res) => {
       password: hashedPassword,
       subject,
       role: Role.Teacher,
+      schoolId: schoolId,
       grade,
       type,
     });
     await School.findOneAndUpdate(
       {
-        createdBy: req.user.id,
+        _id: schoolId,
       },
       {
         $push: {
@@ -107,8 +117,7 @@ export const addStudent = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Get the school ID
-    const admin = await Admin.findById(req.user.id);
-    const schoolId = admin.schoolId;
+    const schoolId = await getSchoolIdFromUser(req);
 
     // Check if there's existing parent verification for this student email
     const existingVerification = await ParentVerification.findOne({
@@ -141,7 +150,7 @@ export const addStudent = async (req, res) => {
     });
     await School.findOneAndUpdate(
       {
-        createdBy: req.user.id,
+        _id: schoolId,
       },
       {
         $push: {
@@ -164,18 +173,11 @@ export const getStats = async (req, res) => {
     const id = req.user.id;
 
     const adminUser = await Admin.findById(id);
-    if (!adminUser) {
+    if (!adminUser && req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin) {
       return res.status(404).json({ message: "Admin user not found" });
     }
 
-    let schoolId = adminUser.schoolId;
-    
-    // System admin can specify schoolId in query
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
-        if (req.query.schoolId) {
-            schoolId = req.query.schoolId;
-        }
-    }
+    const schoolId = await getSchoolIdFromUser(req);
 
     if (schoolId == null) {
       // If still no schoolId and not a system admin, return zeros

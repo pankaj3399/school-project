@@ -50,6 +50,12 @@ export default function SchoolPage() {
   })
 
   useEffect(() => {
+    if (districtIdFromQuery) {
+      setDistrict(districtIdFromQuery);
+    }
+  }, [districtIdFromQuery])
+
+  useEffect(() => {
     const fetchStats = async () => {
       const res = await getStats()
       setStats({
@@ -61,11 +67,8 @@ export default function SchoolPage() {
         feedbacks: res.totalFeedbackCount
       })
     }
-    if (districtIdFromQuery) {
-      setDistrict(districtIdFromQuery);
-    }
     fetchStats()
-  }, [districtIdFromQuery])
+  }, [])
 
   useEffect(() => {
     const fetchSchool = async () => {

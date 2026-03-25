@@ -56,7 +56,7 @@ export default function ViewStudents() {
           studentsArray = data;
         }
 
-        const sortedStudents = studentsArray.sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
+        const sortedStudents = [...studentsArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
         setStudents(sortedStudents)
         setFilteredStudents(sortedStudents)
         setLoading(false)
