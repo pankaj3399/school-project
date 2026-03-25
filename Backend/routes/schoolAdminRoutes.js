@@ -18,7 +18,7 @@ router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Syst
 router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),addTeacher)
 router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
 
-router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),createForm)
+router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),createForm)
 router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),editForm)
 router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),deleteForm)
 

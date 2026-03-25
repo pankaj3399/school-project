@@ -22,10 +22,7 @@ const getSchoolIdFromUser = async (req) => {
 
   if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
     const schoolId = req.query.schoolId || req.body.schoolId;
-    if (!schoolId) {
-      throw new Error("School ID is required for System Administrators");
-    }
-    return schoolId;
+    return schoolId || undefined;
   }
 
   const admin = await Admin.findById(userId);
@@ -470,9 +467,11 @@ export const getMonthlyStats = async (req, res) => {
       return res.status(404).json({ message: "Admin user not found" });
     }
 
-    let schoolId = adminUser.schoolId;
-    if ((req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) && req.query.schoolId) {
-        schoolId = req.query.schoolId;
+    let schoolId;
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      schoolId = req.query.schoolId;
+    } else {
+      schoolId = adminUser.schoolId;
     }
     const monthlyStats = await PointsHistory.aggregate([
       {
@@ -592,7 +591,7 @@ export const verifyResetOtp = async (req, res) => {
 
     await Otp.deleteOne({ _id: storedOtp._id });
 
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     await PointsHistory.deleteMany({
       schoolId,
     });
@@ -612,7 +611,7 @@ export const verifyResetOtp = async (req, res) => {
 
 export const resetStudentRoster = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     await PointsHistory.deleteMany({
       schoolId,
     });
@@ -700,7 +699,7 @@ export const teacherRoster = async (req, res) => {
   try {
     const { teachers } = req.body;
     const user = req.user;
-    const schoolId = await getSchoolIdFromUser(user.id);
+    const schoolId = await getSchoolIdFromUser(req);
 
     const school = await School.findById(schoolId);
     const teacherIds = [...school.teachers];
@@ -774,7 +773,7 @@ export const studentRoster = async (req, res) => {
   try {
     const { students, url } = req.body;
     const user = req.user;
-    const schoolId = await getSchoolIdFromUser(user.id);
+    const schoolId = await getSchoolIdFromUser(req);
 
     const school = await School.findById(schoolId);
     const studentIds = [...school.students];

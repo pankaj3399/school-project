@@ -49,12 +49,7 @@ export default function ViewStudents() {
           return
         }
 
-        let studentsArray = [];
-        if (data && Array.isArray(data.students)) {
-          studentsArray = data.students;
-        } else if (Array.isArray(data)) {
-          studentsArray = data;
-        }
+        const studentsArray = Array.isArray(data?.students) ? data.students : [];
 
         const sortedStudents = [...studentsArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
         setStudents(sortedStudents)

@@ -31,39 +31,38 @@ export const addTeacher = async (req, res) => {
   const { schoolId: querySchoolId } = req.query;
   const { schoolId: bodySchoolId } = req.body;
 
-  let schoolId, schoolAdminName;
-
-  if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
-    schoolId = querySchoolId || bodySchoolId;
-    if (!schoolId) {
-      return res.status(400).json({ message: "School ID is required for System Administrators" });
-    }
-    schoolAdminName = "System Manager";
-  } else {
-    const schoolAdmin = await Admin.findById(req.user.id).select("schoolId name");
-    if (!schoolAdmin || !schoolAdmin.schoolId) {
-      return res.status(403).json({ message: "Admin not associated with a school" });
-    }
-    schoolId = schoolAdmin.schoolId;
-    schoolAdminName = schoolAdmin.name;
-  }
-
-  // Validate school existence first
-  const school = await School.findById(schoolId);
-  if (!school) {
-    return res.status(404).json({ message: "School not found" });
-  }
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      schoolId = querySchoolId || bodySchoolId;
+      if (!schoolId) {
+        return res.status(400).json({ message: "School ID is required for System Administrators" });
+      }
+      schoolAdminName = "System Manager";
+    } else {
+      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId name");
+      if (!schoolAdmin || !schoolAdmin.schoolId) {
+        return res.status(403).json({ message: "Admin not associated with a school" });
+      }
+      schoolId = schoolAdmin.schoolId;
+      schoolAdminName = schoolAdmin.name;
+    }
+
+    // Validate schoolId format
+    if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+      return res.status(400).json({ message: "Invalid School ID format" });
+    }
+
+    // Validate school existence
+    const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
     // Generate a registration token
     const registrationToken =
       Math.random().toString(36).substr(2) + Date.now().toString(36);
     
-    // Teacher.create with session returns an array of documents
-    const teacherResult = await Teacher.create([{
+    const teacher = await Teacher.create({
       email,
       recieveMails: recieveMails || false,
       role: Role.Teacher,
@@ -74,9 +73,7 @@ export const addTeacher = async (req, res) => {
       registrationTokenExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
       isEmailVerified: false,
       isFirstLogin: false,
-    }], { session });
-
-    const teacher = teacherResult[0];
+    });
 
     await School.findOneAndUpdate(
       {
@@ -86,29 +83,34 @@ export const addTeacher = async (req, res) => {
         $push: {
           teachers: teacher._id,
         },
-      },
-      { session }
+      }
     );
 
-    await session.commitTransaction();
-    session.endSession();
+    // Send registration email in a separate try/catch to avoid failing the whole request
+    try {
+      await sendTeacherRegistrationMail({
+        email,
+        url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
+        registrationToken,
+        schoolId: schoolId,
+        schoolLogo: school?.logo,
+      });
+    } catch (emailError) {
+      console.error("Email delivery failed for teacher invite:", emailError);
+      return res.status(200).json({
+        message: "Teacher invite created successfully, but email delivery failed.",
+        teacher,
+        registrationToken,
+        emailError: true
+      });
+    }
 
-    // Send registration email
-    await sendTeacherRegistrationMail({
-      email,
-      url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
-      registrationToken,
-      schoolId: schoolId,
-      schoolLogo: school?.logo,
-    });
     return res.status(200).json({
       message: "Teacher invite created successfully",
       teacher,
       registrationToken,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     return res
       .status(500)
       .json({ message: "Server Error in teacherController.js", error: error.message });

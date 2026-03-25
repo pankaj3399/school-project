@@ -483,32 +483,38 @@ export const submitFormAdmin = async (req, res) => {
   const { submittedFor, answers, submittedAt, schoolId: bodySchoolId } = req.body;
   const { schoolId: querySchoolId } = req.query;
   
-  const form = await Form.findById(formId);
-  const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
-
-  let schoolId, schoolAdmin, school;
-
-  if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
-    schoolId = querySchoolId || bodySchoolId;
-    if (!schoolId) {
-      return res.status(400).json({ message: "School ID is required for System Administrators" });
-    }
-    schoolAdmin = await Admin.findById(req.user.id) || { _id: req.user.id, name: "System Admin" };
-    school = await School.findById(schoolId);
-  } else {
-    schoolAdmin = await Admin.findById(req.user.id);
-    if (!schoolAdmin || !schoolAdmin.schoolId) {
-        return res.status(403).json({ message: "Admin not associated with a school" });
-    }
-    schoolId = schoolAdmin.schoolId;
-    school = await School.findById(schoolId);
-  }
-
-  if (!school) {
-    return res.status(404).json({ message: "School not found" });
-  }
-
   try {
+    let schoolId, schoolAdmin, school;
+
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      schoolId = querySchoolId || bodySchoolId;
+      if (!schoolId) {
+        return res.status(400).json({ message: "School ID is required for System Administrators" });
+      }
+      if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+        return res.status(400).json({ message: "Invalid School ID format" });
+      }
+      schoolAdmin = await Admin.findById(req.user.id) || { _id: req.user.id, name: "System Admin" };
+      school = await School.findById(schoolId);
+    } else {
+      schoolAdmin = await Admin.findById(req.user.id);
+      if (!schoolAdmin || !schoolAdmin.schoolId) {
+        return res.status(403).json({ message: "Admin not associated with a school" });
+      }
+      schoolId = schoolAdmin.schoolId;
+      school = await School.findById(schoolId);
+    }
+
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+    const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
+
     // Check if student is eligible for form submission
     const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
     if (!eligibilityCheck.eligible) {
@@ -601,7 +607,7 @@ export const submitFormAdmin = async (req, res) => {
     if (school && submittedForStudent) {
       const leadTeacher = await Teacher.find({
         grade: submittedForStudent.grade,
-        schoolId: schoolAdmin.schoolId,
+        schoolId: schoolId,
       })
       await emailGenerator(form, {
         points: totalPoints,
