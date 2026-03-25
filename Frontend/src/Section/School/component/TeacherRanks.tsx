@@ -13,7 +13,7 @@ interface Teacher {
   awardedBy?: string,
 }
 
-const TeacherRanks = ({ studentId }: { studentId: string }) => {
+const TeacherRanks = ({ studentId, schoolId }: { studentId: string, schoolId?: string }) => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -50,12 +50,15 @@ const TeacherRanks = ({ studentId }: { studentId: string }) => {
 
   useEffect(() => {
     fetchData();
-  }, [studentId]);
+  }, [studentId, schoolId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await getAnalyticsData({ period: "1W" });
+      const data = await getAnalyticsData({ 
+        period: "1W",
+        ...(schoolId && { schoolId })
+      });
 
       if (data.success) {
         if(studentId === "") setTeachers(data.data.teacherRankings || []);

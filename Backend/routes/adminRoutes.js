@@ -3,7 +3,7 @@ import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware
 import {Role} from '../enum.js';
 const router = express.Router();
 
-router.get('/dashboard', authenticateToken, authorizeRoles(Role.Admin), (req, res) => {
+router.get('/dashboard', authenticateToken, authorizeRoles(), (req, res) => {
     res.json({ message:` Welcome System Admin: ${req.user.id} `});
 });
 

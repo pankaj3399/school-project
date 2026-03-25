@@ -7,19 +7,19 @@ import { getWeekPointsHistory, getYearPointsHistory, getHistoricalPointsData, ge
 const router = express.Router();
 
 router.get('/',getAllSchools);
-router.get('/students',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getStudents);
-router.get('/teachers',authenticate,authorizeRoles(Role.SchoolAdmin),getTeachers);
-router.get('/school',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getCurrentSchool);
-router.put('/updateSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin),upload.single('logo'),updateSchool);
-router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin),deleteSchool);
-router.post('/getYearPointsHistory',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getYearPointsHistory);
-router.post('/getYearPointsHistory/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getYearPointsHistoryByStudent);
-router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getWeekPointsHistory);
-router.post('/getCurrentWeekPoints/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getWeekPointsHistoryByStudent);
-router.post('/getHistoryByTime',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getHistoricalPointsData);
-router.post('/getHistoryByTimeById',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getHistoricalPointsDataByStudentId);
-router.post('/analytics',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),getAnalyticsData);
-router.put('/promote',authenticate,authorizeRoles(Role.SchoolAdmin),promote);
+router.get('/students',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getStudents);
+router.get('/teachers',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),getTeachers);
+router.get('/school',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getCurrentSchool);
+router.put('/updateSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),upload.single('logo'),updateSchool);
+router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),deleteSchool);
+router.post('/getYearPointsHistory',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getYearPointsHistory);
+router.post('/getYearPointsHistory/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getYearPointsHistoryByStudent);
+router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getWeekPointsHistory);
+router.post('/getCurrentWeekPoints/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getWeekPointsHistoryByStudent);
+router.post('/getHistoryByTime',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getHistoricalPointsData);
+router.post('/getHistoryByTimeById',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getHistoricalPointsDataByStudentId);
+router.post('/analytics',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getAnalyticsData);
+router.put('/promote',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),promote);
 
 
 

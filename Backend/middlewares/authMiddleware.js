@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { Role } from '../enum.js';
 
 export const authenticate = (req, res, next) => {
     const token = req.headers.token;
@@ -25,6 +26,12 @@ export const authorizeRoles = (...allowedRoles) => {
 
         if (!req.user.role) {
             return res.status(403).json({ message: 'User role not found' });
+        }
+
+        // SystemAdmin and Admin have global access ("access everywhere")
+        const globalRoles = [Role.SystemAdmin, Role.Admin];
+        if (globalRoles.includes(req.user.role)) {
+            return next();
         }
 
         if (!allowedRoles.includes(req.user.role)) {

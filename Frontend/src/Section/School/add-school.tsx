@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
@@ -33,6 +33,9 @@ export default function SchoolPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const districtIdFromQuery = searchParams.get("districtId");
+
   const [state, setState] = useState("AL");
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState("UTC-5"); // Default to Eastern Time
@@ -45,6 +48,12 @@ export default function SchoolPage() {
     feedbacks: 0,
     withdrawals: 0
   })
+
+  useEffect(() => {
+    if (districtIdFromQuery) {
+      setDistrict(districtIdFromQuery);
+    }
+  }, [districtIdFromQuery])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -80,7 +89,9 @@ export default function SchoolPage() {
         if (data.school) {
           setSchoolName(data.school.name);
           setAddress(data.school.address);
-          setDistrict(data.school.district);
+          if (!districtIdFromQuery) {
+            setDistrict(data.school.district);
+          }
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
           setTimezone(data.school.timezone || "UTC-5");

@@ -26,7 +26,7 @@ export function TopNav() {
 
   const getUserLabel = () => {
     if (!user) return "";
-    if (user.role === 'Admin') return 'Super Admin';
+    if (user.role === 'Admin') return 'System Admin';
 
     let label = user.name || "";
     if (user.role === 'SchoolAdmin') {
@@ -64,16 +64,33 @@ export function TopNav() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col  space-y-1">
-                <p className="text-sm font-medium  leading-none ">{user?.name}</p>
-                <p className="text-xs leading-none text-muted-foreground ">
-                  {user?.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+            {user?.role === 'Admin' ? (
+              <>
+                <DropdownMenuItem onClick={() => navigate('/system-admin')} className="cursor-pointer font-medium">
+                  System Admin Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="font-normal">
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            ) : (
+              <>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

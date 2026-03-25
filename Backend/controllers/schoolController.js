@@ -3,6 +3,7 @@ import School from "../models/School.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
+import Admin from "../models/Admin.js";
 export const getAllSchools = async (req, res) => {
     try {
       const schools = await School.find();
@@ -22,6 +23,9 @@ export const getAllSchools = async (req, res) => {
       if(req.user.role === Role.Teacher) {
         const teacher = await Teacher.findById(req.user.id);
         console.log("Teacher found:", teacher);
+        if(!teacher) {
+          return res.status(404).json({ error: "Teacher record not found" });
+        }
         if(teacher.type === 'Lead') {
           console.log("Lead teacher - filtering by grade:", teacher.grade);
           // Lead teachers only see their grade's students
@@ -34,15 +38,27 @@ export const getAllSchools = async (req, res) => {
           // Special teachers see all students
           students = await Student.find({ schoolId: teacher.schoolId });
         }
-      } else {
+      } else if (req.user.role === Role.SchoolAdmin) {
         console.log("School admin - all students");
         // School admin sees all students
         const school = await School.findOne({ createdBy: req.user.id });
-        if(school)
-        students = await Student.find({ schoolId: school._id });
+        if(school) {
+          students = await Student.find({ schoolId: school._id });
+        } else {
+          // Fallback if school not found by createdBy, maybe check Admin record
+          const adminUser = await Admin.findById(req.user.id);
+          if (adminUser && adminUser.schoolId) {
+            students = await Student.find({ schoolId: adminUser.schoolId });
+          }
+        }
+      } else if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+        console.log("System admin - all students (optionally filtered by schoolId query)");
+        // System admin can see all students or filter by schoolId if provided in query
+        const { schoolId } = req.query;
+        const filter = schoolId ? { schoolId } : {};
+        students = await Student.find(filter);
       }
       console.log("Students found:", students.length);
-      console.log("Students list:", students.map(s => ({ id: s._id, name: s.name, grade: s.grade })));
       return res.status(200).json({ students });
     } catch (err) {
       console.error("Error in getStudents:", err);
@@ -54,10 +70,30 @@ export const getAllSchools = async (req, res) => {
 export const getTeachers = async (req, res) => {
     try {
         let teachers = [];
-        const school = await School.findOne({ createdBy: req.user.id });
-        if(school)
-        teachers = await Teacher.find({ schoolId: school._id });
+        let schoolId = null; // Declare schoolId here
+        if (req.user.role === Role.Teacher) {
+            const teacher = await Teacher.findById(req.user.id);
+            if (!teacher) {
+                return res.status(404).json({ error: "Teacher record not found" });
+            }
+            schoolId = teacher.schoolId;
+        } else if (req.user.role === Role.SchoolAdmin) {
+            const schoolAdmin = await Admin.findById(req.user.id); // Changed to Admin.findById
+            if (!schoolAdmin) {
+                return res.status(404).json({ error: "Admin record not found" });
+            }
+            schoolId = schoolAdmin.schoolId;
+        } else if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+            const { schoolId: querySchoolId } = req.query; // Rename to avoid conflict
+            const filter = querySchoolId ? { schoolId: querySchoolId } : {};
+            teachers = await Teacher.find(filter);
+        }
         
+        // If schoolId was determined for Teacher or SchoolAdmin, find teachers
+        if (schoolId) {
+            teachers = await Teacher.find({ schoolId: schoolId });
+        }
+
         return res.status(200).json({ teachers: teachers });
     } catch (err) {
         console.error(err);
@@ -76,6 +112,16 @@ export const getCurrentSchool = async (req, res) => {
                 break;
             case Role.SchoolAdmin:
                 sch = await School.findOne({ createdBy: req.user.id }).populate('createdBy');
+                break;
+            case Role.SystemAdmin:
+            case Role.Admin:
+                // For system admins, look for schoolId in query
+                const { schoolId: querySchoolId } = req.query;
+                if (!querySchoolId) {
+                    return res.status(400).json({ message: 'School ID is required for System Administrators' });
+                }
+                sch = await School.findById(querySchoolId).populate('createdBy');
+                break;
         }
 
         if (!sch) {
@@ -143,7 +189,13 @@ export const promote = async (req, res) => {
       let school;
       
       // Get school based on user role
-      if(req.user.role === Role.Teacher) {
+      if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+          const { schoolId } = req.query.schoolId ? req.query : req.body;
+          if (!schoolId) {
+              return res.status(400).json({ message: 'School ID is required for System Administrators' });
+          }
+          school = await School.findById(schoolId);
+      } else if(req.user.role === Role.Teacher) {
           const user = await Teacher.findById(id);
           school = await School.findById(user.schoolId);
       } else {

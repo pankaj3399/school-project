@@ -12,6 +12,7 @@ import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../services/mail.js";
 import { checkStudentFormEligibility } from "../utils/studentVerification.js";
 import { emailGenerator } from "../utils/emailHelper.js";
+import mongoose from "mongoose";
 
 const getGradeFromUser = async (userId) => {
   // Try finding user as admin first
@@ -269,20 +270,30 @@ export const getForms = async (req, res) => {
   const id = req.user.id;
   let user;
 
-  switch (req.user.role) {
-    case Role.SchoolAdmin:
-      user = await Admin.findById(id);
-      break;
-    case Role.Teacher:
-      user = await Teacher.findById(id);
-      break;
-    default:
-      return res.status(403).json({ message: "Forbidden" });
-  }
-
-  const schoolId = user.schoolId;
-
   try {
+    switch (req.user.role) {
+      case Role.SchoolAdmin:
+        user = await Admin.findById(id);
+        break;
+      case Role.Teacher:
+        user = await Teacher.findById(id);
+        break;
+      case Role.SystemAdmin:
+      case Role.Admin:
+        // SystemAdmin/Admin can see all forms or forms for a specific school
+        const { schoolId: querySchoolId } = req.query;
+        const filter = querySchoolId ? { schoolId: querySchoolId } : {};
+        const allForms = await Form.find(filter);
+        return res.status(200).json({
+          message: "Forms Fetched Successfully",
+          forms: allForms,
+        });
+      default:
+        return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const schoolId = user.schoolId;
+
     let forms = await Form.find({ schoolId });
     if (req.user.role == Role.Teacher) {
       if (user.type == "Special") {
@@ -469,13 +480,41 @@ export const submitFormTeacher = async (req, res) => {
 
 export const submitFormAdmin = async (req, res) => {
   const formId = req.params.formId;
-  const { submittedFor, answers, submittedAt } = req.body;
-  const form = await Form.findById(formId);
-  const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
-  const schoolAdmin = await Admin.findById(req.user.id);
-  const school = await School.findById(schoolAdmin.schoolId);
-
+  const { submittedFor, answers, submittedAt, schoolId: bodySchoolId } = req.body;
+  const { schoolId: querySchoolId } = req.query;
+  
   try {
+    let schoolId, schoolAdmin, school;
+
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      schoolId = querySchoolId || bodySchoolId;
+      if (!schoolId) {
+        return res.status(400).json({ message: "School ID is required for System Administrators" });
+      }
+      if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+        return res.status(400).json({ message: "Invalid School ID format" });
+      }
+      schoolAdmin = await Admin.findById(req.user.id) || { _id: req.user.id, name: "System Admin" };
+      school = await School.findById(schoolId);
+    } else {
+      schoolAdmin = await Admin.findById(req.user.id);
+      if (!schoolAdmin || !schoolAdmin.schoolId) {
+        return res.status(403).json({ message: "Admin not associated with a school" });
+      }
+      schoolId = schoolAdmin.schoolId;
+      school = await School.findById(schoolId);
+    }
+
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
+    const form = await Form.findOne({ _id: formId, schoolId: schoolId });
+    if (!form) {
+      return res.status(404).json({ message: "Form not found or does not belong to this school" });
+    }
+    const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
+
     // Check if student is eligible for form submission
     const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
     if (!eligibilityCheck.eligible) {
@@ -527,7 +566,7 @@ export const submitFormAdmin = async (req, res) => {
           submittedForId: submittedFor,
           submittedForName: submittedForStudent.name,
           points: points,
-          schoolId: schoolAdmin.schoolId,
+          schoolId: schoolId,
           submittedAt,
           goal: goal,
         });
@@ -545,7 +584,7 @@ export const submitFormAdmin = async (req, res) => {
         submittedForId: submittedFor,
         submittedForName: submittedForStudent.name,
         points: totalPoints,
-        schoolId: schoolAdmin.schoolId,
+        schoolId: schoolId,
         submittedAt,
         goal: null,
       });
@@ -554,7 +593,7 @@ export const submitFormAdmin = async (req, res) => {
     if (form.formType == FormType.Feedback) {
       const feedback = answers.reduce((acc, curr) => acc + curr.answer, "");
       await Feedback.create({
-        schoolId: schoolAdmin.schoolId,
+        schoolId: schoolId,
         submittedById: schoolAdmin._id,
         submittedByName: schoolAdmin.name,
         submittedForId: submittedFor,
@@ -568,7 +607,7 @@ export const submitFormAdmin = async (req, res) => {
     if (school && submittedForStudent) {
       const leadTeacher = await Teacher.find({
         grade: submittedForStudent.grade,
-        schoolId: schoolAdmin.schoolId,
+        schoolId: schoolId,
       })
       await emailGenerator(form, {
         points: totalPoints,
@@ -688,6 +727,34 @@ export const getPointHistory = async (req, res) => {
           }
         });
 
+      case Role.Admin:
+        // SystemAdmin/Admin see everything or filtered by schoolId
+        const { schoolId } = req.query;
+        if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+          return res.status(400).json({ message: "Invalid schoolId format" });
+        }
+        query = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+        
+        const systemAggregationResult = await PointsHistory.aggregate(
+          buildPointHistoryPipeline(query, { skip, limit, includeAddFields: true })
+        );
+        
+        const systemPointHistoryRaw = systemAggregationResult[0]?.data || [];
+        const systemTotalCountResult = systemAggregationResult[0]?.totalCount[0];
+        totalCount = systemTotalCountResult ? systemTotalCountResult.count : 0;
+        
+        const systemPointHistory = formatAggregationResult(systemPointHistoryRaw);
+        
+        return res.status(200).json({
+          pointHistory: systemPointHistory,
+          pagination: {
+            totalItems: totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            itemsPerPage: limit
+          }
+        });
+
       default:
         return res.status(403).json({ message: "Forbidden" });
     }
@@ -715,9 +782,25 @@ export const getFilteredPointHistory = async (req, res) => {
     let query = {};
 
     switch (req.user.role) {
+      case Role.Admin:
+      case Role.SystemAdmin:
       case Role.SchoolAdmin:
-        user = await Admin.findById(id);
-        query = { schoolId: user.schoolId, submittedForId: studentId };
+        let schoolId;
+        if (req.user.role === Role.SchoolAdmin) {
+          user = await Admin.findById(id);
+          if (!user) return res.status(404).json({ message: "Admin user not found" });
+          if (!user.schoolId) {
+            return res.status(403).json({ message: "Forbidden: Admin not associated with a school" });
+          }
+          schoolId = user.schoolId;
+        } else {
+          schoolId = req.query.schoolId;
+        }
+
+        query = { submittedForId: studentId };
+        if (schoolId) {
+          query.schoolId = schoolId;
+        }
 
         const adminPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")

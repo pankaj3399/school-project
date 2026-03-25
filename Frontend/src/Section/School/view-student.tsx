@@ -38,14 +38,28 @@ export default function ViewStudents() {
         }
 
         const data = await getStudents(token)
-        const sortedStudents = data.students.sort((a: any, b: any) => a.name.localeCompare(b.name))
+
+        if (data.error) {
+          toast({
+            title: "Error",
+            description: data.error,
+            variant: "destructive",
+          })
+          setLoading(false)
+          return
+        }
+
+        const studentsArray = Array.isArray(data?.students) ? data.students : [];
+
+        const sortedStudents = [...studentsArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
         setStudents(sortedStudents)
         setFilteredStudents(sortedStudents)
         setLoading(false)
       } catch (error) {
+        console.error("Unexpected error fetching student data (local/runtime error):", error)
         toast({
-          title: "Error",
-          description: "Failed to fetch student data.",
+          title: "Runtime Error",
+          description: "An unexpected error occurred while processing student data (local error).",
           variant: "destructive",
         })
         setLoading(false)

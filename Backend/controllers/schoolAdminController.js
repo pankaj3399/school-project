@@ -1,5 +1,4 @@
 import School from "../models/School.js";
-import User from "../models/Admin.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
@@ -17,11 +16,22 @@ import Otp from "../models/Otp.js";
 import { sendEmail } from "../services/mail.js";
 import ParentVerification from "../models/ParentVerification.js";
 
-const getSchoolIdFromUser = async (userId) => {
-  // Try finding user as admin first
+const getSchoolIdFromUser = async (req) => {
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
+    const schoolId = req.query.schoolId || req.body.schoolId;
+    return schoolId || undefined;
+  }
+
   const admin = await Admin.findById(userId);
-  if (admin) {
+  if (admin && admin.schoolId) {
     return admin.schoolId;
+  }
+
+  if (userRole === Role.SchoolAdmin) {
+    return req.query.schoolId || req.body.schoolId || undefined;
   }
 
   // If not admin, try finding as teacher
@@ -57,8 +67,6 @@ export const addSchool = async (req, res) => {
       domain,
     });
 
-    await User.findByIdAndUpdate(req.user.id, { schoolId: newSchool._id });
-
     res
       .status(201)
       .json({ message: "School created successfully", school: newSchool });
@@ -70,6 +78,7 @@ export const addTeacher = async (req, res) => {
   const { name, password, email, subject, grade, type } = req.body;
 
   try {
+    const schoolId = await getSchoolIdFromUser(req);
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const teacher = await Teacher.create({
@@ -78,12 +87,13 @@ export const addTeacher = async (req, res) => {
       password: hashedPassword,
       subject,
       role: Role.Teacher,
+      schoolId: schoolId,
       grade,
       type,
     });
     await School.findOneAndUpdate(
       {
-        createdBy: req.user.id,
+        _id: schoolId,
       },
       {
         $push: {
@@ -108,8 +118,7 @@ export const addStudent = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Get the school ID
-    const admin = await Admin.findById(req.user.id);
-    const schoolId = admin.schoolId;
+    const schoolId = await getSchoolIdFromUser(req);
 
     // Check if there's existing parent verification for this student email
     const existingVerification = await ParentVerification.findOne({
@@ -142,7 +151,7 @@ export const addStudent = async (req, res) => {
     });
     await School.findOneAndUpdate(
       {
-        createdBy: req.user.id,
+        _id: schoolId,
       },
       {
         $push: {
@@ -164,31 +173,43 @@ export const getStats = async (req, res) => {
   try {
     const id = req.user.id;
 
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser && req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
+    const schoolId = await getSchoolIdFromUser(req);
 
     if (schoolId == null) {
-      return res.status(200).json({
-        totalTeachers: 0,
-        totalStudents: 0,
-        totalPoints: 0,
-        totalWithdrawPoints: 0,
-        totalDeductPoints: 0,
-        totalFeedbackCount: 0,
-      });
+      // If still no schoolId and not a system admin, return zeros
+      if (req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin) {
+          return res.status(200).json({
+            totalTeachers: 0,
+            totalStudents: 0,
+            totalPoints: 0,
+            totalWithdrawPoints: 0,
+            totalDeductPoints: 0,
+            totalFeedbackCount: 0,
+          });
+      }
+      // System admin with no schoolId filter sees global stats
     }
 
-    const totalTeachers = await Teacher.countDocuments({ schoolId });
-    const totalStudents = await Student.countDocuments({ schoolId });
+    if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+      return res.status(400).json({ message: "Invalid School ID format" });
+    }
+
+    const teacherFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+    const studentFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+    const pointsFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+
+    const totalTeachers = await Teacher.countDocuments(teacherFilter);
+    const totalStudents = await Student.countDocuments(studentFilter);
 
     // Modified aggregation to separate by form types
     const pointsAggregation = await PointsHistory.aggregate([
       {
-        $match: { schoolId },
+        $match: pointsFilter,
       },
       {
         $group: {
@@ -283,23 +304,34 @@ export const getPointsGivenPerMonth = async (req, res) => {
     const id = req.user.id; // Get the authenticated user's ID
 
     // Find the school admin by ID to extract the schoolId
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
+    let schoolId = adminUser.schoolId;
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+        schoolId = req.query.schoolId;
+    }
+
+    let match = {};
+    if (schoolId) {
+        match.schoolId = new mongoose.Types.ObjectId(schoolId);
+    }
 
     // Aggregate points given by the teacher per month
-    const pointsData = await PointsHistory.aggregate([
-      { $match: { schoolId: new mongoose.Types.ObjectId(schoolId) } },
-      {
-        $group: {
-          _id: { $month: "$submittedAt" },
-          totalPoints: { $sum: "$points" },
-        },
+    const pipeline = [];
+    if (Object.keys(match).length > 0) {
+      pipeline.push({ $match: match });
+    }
+    pipeline.push({
+      $group: {
+        _id: { $month: "$submittedAt" },
+        totalPoints: { $sum: "$points" },
       },
-    ]);
+    });
+
+    const pointsData = await PointsHistory.aggregate(pipeline);
 
     // Create an array of 12 months with default 0 points
     const monthlyPoints = Array(12).fill(0);
@@ -355,22 +387,34 @@ export const getFormsSubmittedPerMonth = async (req, res) => {
     const id = req.user.id; // Get the authenticated user's ID
 
     // Find the school admin by ID to extract the schoolId
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
+    let schoolId = adminUser.schoolId;
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+        schoolId = req.query.schoolId;
+    }
+
+    let match = {};
+    if (schoolId) {
+        match.schoolId = new mongoose.Types.ObjectId(schoolId);
+    }
+
     // Aggregate form submissions by the teacher per month
-    const formsData = await PointsHistory.aggregate([
-      { $match: { schoolId: new mongoose.Types.ObjectId(schoolId) } },
-      {
-        $group: {
-          _id: { $month: "$submittedAt" }, // Group by month
-          formCount: { $count: {} }, // Count the number of submissions
-        },
+    const pipeline = [];
+    if (Object.keys(match).length > 0) {
+      pipeline.push({ $match: match });
+    }
+    pipeline.push({
+      $group: {
+        _id: { $month: "$submittedAt" }, // Group by month
+        formCount: { $count: {} }, // Count the number of submissions
       },
-    ]);
+    });
+
+    const formsData = await PointsHistory.aggregate(pipeline);
 
     // Create an array of 12 months with default 0 counts
     const monthlyForms = Array(12).fill(0);
@@ -426,17 +470,20 @@ export const getMonthlyStats = async (req, res) => {
     const id = req.user.id; // Get the authenticated user's ID
 
     // Find the school admin by ID to extract the schoolId
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
-
-    // Calculate monthly stats from the PointHistory model
+    let schoolId;
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      schoolId = req.query.schoolId;
+    } else {
+      schoolId = adminUser.schoolId;
+    }
     const monthlyStats = await PointsHistory.aggregate([
       {
-        $match: { schoolId }, // Filter by schoolId
+        $match: schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {}, // Filter by schoolId if provided
       },
       {
         $group: {
@@ -552,7 +599,7 @@ export const verifyResetOtp = async (req, res) => {
 
     await Otp.deleteOne({ _id: storedOtp._id });
 
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     await PointsHistory.deleteMany({
       schoolId,
     });
@@ -572,7 +619,7 @@ export const verifyResetOtp = async (req, res) => {
 
 export const resetStudentRoster = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     await PointsHistory.deleteMany({
       schoolId,
     });
@@ -660,9 +707,12 @@ export const teacherRoster = async (req, res) => {
   try {
     const { teachers } = req.body;
     const user = req.user;
-    const schoolId = await getSchoolIdFromUser(user.id);
+    const schoolId = await getSchoolIdFromUser(req);
 
     const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
     const teacherIds = [...school.teachers];
 
     if (!teachers || teachers.length === 0) {
@@ -734,9 +784,12 @@ export const studentRoster = async (req, res) => {
   try {
     const { students, url } = req.body;
     const user = req.user;
-    const schoolId = await getSchoolIdFromUser(user.id);
+    const schoolId = await getSchoolIdFromUser(req);
 
     const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
     const studentIds = [...school.students];
 
     if (!students || students.length === 0) {

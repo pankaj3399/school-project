@@ -7,6 +7,7 @@ import { Role } from "../enum.js";
 import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import { sendOnboardingEmail } from "../services/verificationMail.js";
+import mongoose from "mongoose";
 
 export const awardPoints = async (req, res) => {
   const { studentId, points } = req.body;
@@ -27,18 +28,44 @@ export const awardPoints = async (req, res) => {
 
 export const addTeacher = async (req, res) => {
   const { email, recieveMails, type, grade } = req.body;
-
-  const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+  const { schoolId: querySchoolId } = req.query;
+  const { schoolId: bodySchoolId } = req.body;
 
   try {
+    let schoolId;
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      schoolId = querySchoolId || bodySchoolId;
+      if (!schoolId) {
+        return res.status(400).json({ message: "School ID is required for System Administrators" });
+      }
+    } else {
+      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+      if (!schoolAdmin || !schoolAdmin.schoolId) {
+        return res.status(403).json({ message: "Admin not associated with a school" });
+      }
+      schoolId = schoolAdmin.schoolId;
+    }
+
+    // Validate schoolId format
+    if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+      return res.status(400).json({ message: "Invalid School ID format" });
+    }
+
+    // Validate school existence
+    const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
     // Generate a registration token
     const registrationToken =
       Math.random().toString(36).substr(2) + Date.now().toString(36);
+    
     const teacher = await Teacher.create({
       email,
       recieveMails: recieveMails || false,
       role: Role.Teacher,
-      schoolId: schoolAdmin.schoolId,
+      schoolId: schoolId,
       type,
       grade,
       registrationToken,
@@ -46,9 +73,10 @@ export const addTeacher = async (req, res) => {
       isEmailVerified: false,
       isFirstLogin: false,
     });
+
     await School.findOneAndUpdate(
       {
-        _id: schoolAdmin.schoolId,
+        _id: schoolId,
       },
       {
         $push: {
@@ -56,19 +84,26 @@ export const addTeacher = async (req, res) => {
         },
       }
     );
-    console.log("teacher", teacher);
-    console.log('schoolAdmin', schoolAdmin)
-    // Fetch school to get logo
-    const school = await School.findById(schoolAdmin.schoolId);
-    console.log("school", school);
-    // Send registration email
-    await sendTeacherRegistrationMail({
-      email,
-      url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
-      registrationToken,
-      schoolId: schoolAdmin.schoolId,
-      schoolLogo: school?.logo,
-    });
+
+    // Send registration email in a separate try/catch to avoid failing the whole request
+    try {
+      await sendTeacherRegistrationMail({
+        email,
+        url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
+        registrationToken,
+        schoolId: schoolId,
+        schoolLogo: school?.logo,
+      });
+    } catch (emailError) {
+      console.error("Email delivery failed for teacher invite:", emailError);
+      return res.status(200).json({
+        message: "Teacher invite created successfully, but email delivery failed.",
+        teacher,
+        registrationToken,
+        emailError: true
+      });
+    }
+
     return res.status(200).json({
       message: "Teacher invite created successfully",
       teacher,
@@ -95,6 +130,28 @@ export const updateTeacher = async (req, res) => {
       grade,
       type,
     });
+
+    const teacherToUpdate = await Teacher.findById(teacherId);
+    if (!teacherToUpdate) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Role handling and ownership check
+    switch (req.user.role) {
+      case Role.SchoolAdmin:
+        const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+        if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToUpdate.schoolId || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
+          return res.status(403).json({ message: "You do not have permission to update this teacher" });
+        }
+        break;
+      case Role.SystemAdmin:
+      case Role.Admin:
+        // Elevated roles can update teachers in any school
+        break;
+      default:
+        // Basic users or unrecognized roles
+        return res.status(403).json({ message: "Access denied: Unauthorized role" });
+    }
 
     // Build update object carefully to handle boolean values
     const updateData = {};
@@ -130,6 +187,19 @@ export const deleteTeacher = async (req, res) => {
   const teacherId = req.params.id;
 
   try {
+    const teacherToDelete = await Teacher.findById(teacherId);
+    if (!teacherToDelete) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Ownership check
+    if (req.user.role === Role.SchoolAdmin) {
+      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+      if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToDelete.schoolId || schoolAdmin.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
+        return res.status(403).json({ message: "You do not have permission to delete this teacher" });
+      }
+    }
+
     const deletedTeacher = await Teacher.findByIdAndDelete(teacherId);
 
     if (!deletedTeacher) {
