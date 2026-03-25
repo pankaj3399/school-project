@@ -509,9 +509,9 @@ export const submitFormAdmin = async (req, res) => {
       return res.status(404).json({ message: "School not found" });
     }
 
-    const form = await Form.findById(formId);
+    const form = await Form.findOne({ _id: formId, schoolId: schoolId });
     if (!form) {
-      return res.status(404).json({ message: "Form not found" });
+      return res.status(404).json({ message: "Form not found or does not belong to this school" });
     }
     const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
 
@@ -789,6 +789,9 @@ export const getFilteredPointHistory = async (req, res) => {
         if (req.user.role === Role.SchoolAdmin) {
           user = await Admin.findById(id);
           if (!user) return res.status(404).json({ message: "Admin user not found" });
+          if (!user.schoolId) {
+            return res.status(403).json({ message: "Forbidden: Admin not associated with a school" });
+          }
           schoolId = user.schoolId;
         } else {
           schoolId = req.query.schoolId;

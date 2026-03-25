@@ -56,10 +56,10 @@ export default function ViewStudents() {
         setFilteredStudents(sortedStudents)
         setLoading(false)
       } catch (error) {
-        console.error("fetchStudents catch error:", error)
+        console.error("Unexpected error fetching student data (local/runtime error):", error)
         toast({
-          title: "Error",
-          description: "An unexpected error occurred while fetching student data.",
+          title: "Runtime Error",
+          description: "An unexpected error occurred while processing student data (local error).",
           variant: "destructive",
         })
         setLoading(false)

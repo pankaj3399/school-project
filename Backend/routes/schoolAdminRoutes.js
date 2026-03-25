@@ -10,7 +10,8 @@ import { addTeacher } from "../controllers/teacherController.js";
 const router = express.Router();
 
 router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), (req, res) => {
-    res.json({ message:` Welcome School Admin: ${req.user.id} `});
+    const roleLabel = req.user.role === Role.SystemAdmin ? "System Admin" : req.user.role === Role.Admin ? "Admin" : "School Admin";
+    res.json({ message:` Welcome ${roleLabel}: ${req.user.id} `});
 });
 
 router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),upload.single('logo'),addSchool)

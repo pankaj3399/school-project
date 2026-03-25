@@ -32,19 +32,18 @@ export const addTeacher = async (req, res) => {
   const { schoolId: bodySchoolId } = req.body;
 
   try {
+    let schoolId;
     if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
       schoolId = querySchoolId || bodySchoolId;
       if (!schoolId) {
         return res.status(400).json({ message: "School ID is required for System Administrators" });
       }
-      schoolAdminName = "System Manager";
     } else {
-      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId name");
+      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
       if (!schoolAdmin || !schoolAdmin.schoolId) {
         return res.status(403).json({ message: "Admin not associated with a school" });
       }
       schoolId = schoolAdmin.schoolId;
-      schoolAdminName = schoolAdmin.name;
     }
 
     // Validate schoolId format

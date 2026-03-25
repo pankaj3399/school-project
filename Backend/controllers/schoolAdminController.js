@@ -191,6 +191,10 @@ export const getStats = async (req, res) => {
       // System admin with no schoolId filter sees global stats
     }
 
+    if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+      return res.status(400).json({ message: "Invalid School ID format" });
+    }
+
     const teacherFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
     const studentFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
     const pointsFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
@@ -702,6 +706,9 @@ export const teacherRoster = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req);
 
     const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
     const teacherIds = [...school.teachers];
 
     if (!teachers || teachers.length === 0) {
@@ -776,6 +783,9 @@ export const studentRoster = async (req, res) => {
     const schoolId = await getSchoolIdFromUser(req);
 
     const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
     const studentIds = [...school.students];
 
     if (!students || students.length === 0) {
