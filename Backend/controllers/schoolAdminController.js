@@ -26,8 +26,12 @@ const getSchoolIdFromUser = async (req) => {
   }
 
   const admin = await Admin.findById(userId);
-  if (admin) {
+  if (admin && admin.schoolId) {
     return admin.schoolId;
+  }
+
+  if (userRole === Role.SchoolAdmin) {
+    return req.query.schoolId || req.body.schoolId || undefined;
   }
 
   // If not admin, try finding as teacher

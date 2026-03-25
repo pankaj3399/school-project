@@ -136,12 +136,21 @@ export const updateTeacher = async (req, res) => {
       return res.status(404).json({ message: "Teacher not found" });
     }
 
-    // Ownership check
-    if (req.user.role === Role.SchoolAdmin) {
-      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
-      if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToUpdate.schoolId || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
-        return res.status(403).json({ message: "You do not have permission to update this teacher" });
-      }
+    // Role handling and ownership check
+    switch (req.user.role) {
+      case Role.SchoolAdmin:
+        const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
+        if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToUpdate.schoolId || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
+          return res.status(403).json({ message: "You do not have permission to update this teacher" });
+        }
+        break;
+      case Role.SystemAdmin:
+      case Role.Admin:
+        // Elevated roles can update teachers in any school
+        break;
+      default:
+        // Basic users or unrecognized roles
+        return res.status(403).json({ message: "Access denied: Unauthorized role" });
     }
 
     // Build update object carefully to handle boolean values
