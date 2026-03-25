@@ -9,37 +9,37 @@ import { addTeacher } from "../controllers/teacherController.js";
 
 const router = express.Router();
 
-router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin), (req, res) => {
+router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), (req, res) => {
     res.json({ message:` Welcome School Admin: ${req.user.id} `});
 });
 
-router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin),upload.single('logo'),addSchool)
+router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),upload.single('logo'),addSchool)
 
-router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin),addTeacher)
-router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
+router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),addTeacher)
+router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),addStudent)
 
-router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),createForm)
-router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),editForm)
-router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher),deleteForm)
+router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),createForm)
+router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),editForm)
+router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),deleteForm)
 
-router.get('/stats', authenticate, authorizeRoles(Role.SchoolAdmin), getStats);
-router.get('/stats/monthly', authenticate, authorizeRoles(Role.SchoolAdmin), getMonthlyStats);
-router.get('/stats/pointsgiven', authenticate, authorizeRoles(Role.SchoolAdmin), getPointsGivenPerMonth);
-router.get('/stats/pointsgiven/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getPointsGivenPerMonthPerTeacher);
-router.get('/stats/pointsreceived/:studentId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Student), getPointsReceivedPerMonth);
-router.get('/stats/formsubmitted', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getFormsSubmittedPerMonth);
-router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getFormsSubmittedPerMonthPerTeacher);
+router.get('/stats', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), getStats);
+router.get('/stats/monthly', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), getMonthlyStats);
+router.get('/stats/pointsgiven', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), getPointsGivenPerMonth);
+router.get('/stats/pointsgiven/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getPointsGivenPerMonthPerTeacher);
+router.get('/stats/pointsreceived/:studentId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Student, Role.SystemAdmin, Role.Admin), getPointsReceivedPerMonth);
+router.get('/stats/formsubmitted', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getFormsSubmittedPerMonth);
+router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getFormsSubmittedPerMonthPerTeacher);
 
-router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getCombinedStudentPointsHistory);
-router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher), getStudentPointsHistory);
-router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
+router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getCombinedStudentPointsHistory);
+router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), getStudentPointsHistory);
+router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), resetStudentRoster);
 
 // OTP routes for reset confirmation
-router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), sendResetOtp);
-router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), verifyResetOtp);
-router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin), upload.single('file'), sendReport);
-router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin), upload.single('file'), genreport);
-router.post('/teacher-roster', authenticate,authorizeRoles(Role.SchoolAdmin), teacherRoster);
-router.post('/student-roster', authenticate, studentRoster);
+router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), sendResetOtp);
+router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), verifyResetOtp);
+router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), sendReport);
+router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), genreport);
+router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), teacherRoster);
+router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), studentRoster);
 
 export default router;

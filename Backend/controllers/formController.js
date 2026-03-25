@@ -276,6 +276,16 @@ export const getForms = async (req, res) => {
     case Role.Teacher:
       user = await Teacher.findById(id);
       break;
+    case Role.SystemAdmin:
+    case Role.Admin:
+      // SystemAdmin/Admin can see all forms or forms for a specific school
+      const { schoolId } = req.query;
+      const filter = schoolId ? { schoolId } : {};
+      const allForms = await Form.find(filter);
+      return res.status(200).json({
+        message: "Forms Fetched Successfully",
+        forms: allForms,
+      });
     default:
       return res.status(403).json({ message: "Forbidden" });
   }
@@ -680,6 +690,32 @@ export const getPointHistory = async (req, res) => {
 
         return res.status(200).json({
           pointHistory: teacherPointHistory,
+          pagination: {
+            totalItems: totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            itemsPerPage: limit
+          }
+        });
+
+      case Role.SystemAdmin:
+      case Role.Admin:
+        // SystemAdmin/Admin see everything or filtered by schoolId
+        const { schoolId } = req.query;
+        query = schoolId ? { schoolId } : {};
+        
+        const systemAggregationResult = await PointsHistory.aggregate(
+          buildPointHistoryPipeline(query, { skip, limit, includeAddFields: true })
+        );
+        
+        const systemPointHistoryRaw = systemAggregationResult[0]?.data || [];
+        const systemTotalCountResult = systemAggregationResult[0]?.totalCount[0];
+        totalCount = systemTotalCountResult ? systemTotalCountResult.count : 0;
+        
+        const systemPointHistory = formatAggregationResult(systemPointHistoryRaw);
+        
+        return res.status(200).json({
+          pointHistory: systemPointHistory,
           pagination: {
             totalItems: totalCount,
             totalPages: Math.ceil(totalCount / limit),

@@ -24,8 +24,8 @@ export const signUp = async (data: {
   try {
     const response = await axios.post(`${API_URL}/auth/signup`, data);
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -69,8 +69,8 @@ export const verifyLoginOtp = async ({ otp, email, role }: { otp: string; email:
   try {
     const response = await axios.post(`${API_URL}/auth/verify-login-otp`, { otp, email, role });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -92,8 +92,8 @@ export const addStudent = async (
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -119,8 +119,8 @@ export const updateStudent = async (
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -135,8 +135,8 @@ export const deleteStudent = async (id: string, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -152,8 +152,8 @@ export const addSchool = async (data: FormData, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -173,8 +173,8 @@ export const addTeacher = async (
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const updateTeacher = async (
@@ -199,8 +199,8 @@ export const updateTeacher = async (
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const deleteTeacher = async (id: string, token: string) => {
@@ -214,8 +214,8 @@ export const deleteTeacher = async (id: string, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -227,33 +227,35 @@ export const getAllSchools = async (token: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
-export const getStudents = async (token: string) => {
+export const getStudents = async (token: string, schoolId?: string) => {
   try {
-    const response = await axios.get(`${API_URL}/school/students`, {
+    const url = schoolId ? `${API_URL}/school/students?schoolId=${schoolId}` : `${API_URL}/school/students`;
+    const response = await axios.get(url, {
       headers: {
         token,
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
-export const getCurrrentSchool = async (token: string) => {
+export const getCurrrentSchool = async (token: string, schoolId?: string) => {
   try {
-    const response = await axios.get(`${API_URL}/school/school`, {
+    const url = schoolId ? `${API_URL}/school/school?schoolId=${schoolId}` : `${API_URL}/school/school`;
+    const response = await axios.get(url, {
       headers: {
         token,
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -266,8 +268,8 @@ export const getCurrentUser = async (token?: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -287,8 +289,8 @@ export const updateSchool = async (
       },
     );
     return response;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -300,8 +302,8 @@ export const getForms = async (token: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -315,8 +317,8 @@ export const createForm = async (data: any, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const editForm = async (id: string, data: any, token: string) => {
@@ -329,8 +331,8 @@ export const editForm = async (id: string, data: any, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -343,8 +345,8 @@ export const deleteForm = async (id: string, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -356,8 +358,8 @@ export const getFormById = async (id: string, token: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const submitFormTeacher = async (
@@ -464,8 +466,8 @@ export const getPointHistory = async (token: string, page: number, limit: number
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -475,31 +477,33 @@ export const getFilteredPointHistory = async (token: string, studentId: string) 
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
-export const getStats = async () => {
+export const getStats = async (schoolId?: string) => {
   try {
     const token = getToken();
-    const response = await axios.get(`${API_URL}/schoolAdmin/stats`, {
+    const url = schoolId ? `${API_URL}/schoolAdmin/stats?schoolId=${schoolId}` : `${API_URL}/schoolAdmin/stats`;
+    const response = await axios.get(url, {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
-export const getMonthlyStats = async () => {
+export const getMonthlyStats = async (schoolId?: string) => {
   try {
     const token = getToken();
-    const response = await axios.get(`${API_URL}/schoolAdmin/stats/monthly`, {
+    const url = schoolId ? `${API_URL}/schoolAdmin/stats/monthly?schoolId=${schoolId}` : `${API_URL}/schoolAdmin/stats/monthly`;
+    const response = await axios.get(url, {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const getPointsGivenPerMonth = async () => {
@@ -510,8 +514,8 @@ export const getPointsGivenPerMonth = async () => {
       { headers: { token } },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const getPointsGivenPerMonthPerTeacher = async (id: string) => {
@@ -522,8 +526,8 @@ export const getPointsGivenPerMonthPerTeacher = async (id: string) => {
       { headers: { token } },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -535,8 +539,8 @@ export const getPointsReceivedPerMonth = async (id: string) => {
       { headers: { token } },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const getFormsSubmittedPerMonth = async () => {
@@ -547,8 +551,8 @@ export const getFormsSubmittedPerMonth = async () => {
       { headers: { token } },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -560,22 +564,23 @@ export const getFormsSubmittedPerMonthPerTeacher = async (id: string) => {
       { headers: { token } },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
-export const getTeachers = async () => {
+export const getTeachers = async (schoolId?: string) => {
   try {
     const token = getToken();
-    const response = await axios.get(`${API_URL}/school/teachers`, {
+    const url = schoolId ? `${API_URL}/school/teachers?schoolId=${schoolId}` : `${API_URL}/school/teachers`;
+    const response = await axios.get(url, {
       headers: {
         token,
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -592,8 +597,8 @@ export const sendOtp = async ({
       role,
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -613,8 +618,8 @@ export const verifyOtp = async ({
       role,
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -624,17 +629,17 @@ export const resetPassword = async (data: any) => {
       ...data,
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
-export const getHistoryOfYear = async () => {
+export const getHistoryOfYear = async (schoolId?: string) => {
   try {
     const token = getToken();
     const response = await axios.post(
       `${API_URL}/school/getYearPointsHistory`,
-      {},
+      { schoolId },
       {
         headers: {
           token,
@@ -642,8 +647,8 @@ export const getHistoryOfYear = async () => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -660,8 +665,8 @@ export const getHistoryOfYearByStudent = async (id: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -680,8 +685,8 @@ export const getReportDataStudentCombined = async (grades: string[]) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -700,8 +705,8 @@ export const getReportDataStudent = async (id: string, grade: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -718,8 +723,8 @@ export const getHistoryOfCurrentWeek = async (data: any) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -739,8 +744,8 @@ export const getHistoryOfCurrentWeekByStudent = async (
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const getHistoryByTime = async (data: any) => {
@@ -765,12 +770,12 @@ export const getHistoryByTime = async (data: any) => {
       });
     }
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
-export const getAnalyticsData = async (data: { period: string; studentId?: string }) => {
+export const getAnalyticsData = async (data: { period: string; studentId?: string, schoolId?: string }) => {
   try {
     const token = getToken();
     const response = await axios.post(
@@ -802,8 +807,8 @@ export const promote = async () => {
       },
     );
     return { success: true };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -821,8 +826,8 @@ export const sendReport = async (data: FormData, email: string) => {
       },
     );
     return { success: true, data: response.data };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 export const sendReportImage = async (data: FormData, email: string) => {
@@ -839,8 +844,8 @@ export const sendReportImage = async (data: FormData, email: string) => {
       },
     );
     return { success: true, data: response.data };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -853,8 +858,8 @@ export const sendVerificationMail = async (data: any) => {
       },
     });
     return { success: true, data: response.data };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -867,8 +872,8 @@ export const sendConfirmation = async (data: any) => {
       },
     });
     return { success: true };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -885,8 +890,8 @@ export const sendResetOtp = async () => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -903,8 +908,8 @@ export const verifyResetOtp = async (otp: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -921,8 +926,8 @@ export const resetStudentRoster = async () => {
       },
     );
     return { success: true };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -943,8 +948,8 @@ export const teacherRoster = async (data: any) => {
       },
     );
     return { success: true };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -966,8 +971,8 @@ export const studentRoster = async (data: any) => {
       },
     );
     return { success: true };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -980,8 +985,8 @@ export const sendSupportEmail = async (data: any) => {
       },
     });
     return { success: true };
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1042,8 +1047,8 @@ export const getCurrentTerms = async () => {
   try {
     const response = await axios.get(`${API_URL}/auth/get-terms`);
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 }
 
@@ -1060,8 +1065,8 @@ export const verifyCurrentUserPassword = async (password: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1085,8 +1090,8 @@ export const getSystemDashboardStats = async (token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1101,8 +1106,8 @@ export const getDistricts = async (token: string, params?: any) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1112,8 +1117,8 @@ export const createDistrict = async (data: any, token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1123,8 +1128,8 @@ export const getDistrictById = async (id: string, token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1134,8 +1139,8 @@ export const updateDistrict = async (id: string, data: any, token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1145,8 +1150,8 @@ export const deleteDistrict = async (id: string, token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1156,8 +1161,8 @@ export const assignDistrictAdmin = async (id: string, data: any, token: string) 
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1172,8 +1177,8 @@ export const bulkImportSchools = async (file: File, token: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1183,8 +1188,8 @@ export const getStateAnalytics = async (token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1194,8 +1199,8 @@ export const getDistrictAnalytics = async (token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
@@ -1205,7 +1210,7 @@ export const updateTerms = async (data: any, token: string) => {
       headers: { token },
     });
     return response.data;
-  } catch (error) {
-    return { error };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };

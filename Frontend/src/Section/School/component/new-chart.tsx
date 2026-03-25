@@ -16,10 +16,10 @@ import {
 // Months in the US educational year
 const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
-const generateData = async (month: string | null = null, studentId: string | null = null) => {
+const generateData = async (month: string | null = null, studentId: string | null = null, schoolId?: string) => {
   let data: any[] = [];
   try {
-    let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId) : await getHistoryOfYear();
+    let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId) : await getHistoryOfYear(schoolId);
 
 
     if (!month) {
@@ -124,9 +124,10 @@ const generateData = async (month: string | null = null, studentId: string | nul
   }
 }
 
-const EducationYearChart = ({ studentId, slimLines }: {
+const EducationYearChart = ({ studentId, slimLines, schoolId }: {
   studentId: string,
-  slimLines?: boolean
+  slimLines?: boolean,
+  schoolId?: string
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -137,12 +138,12 @@ const EducationYearChart = ({ studentId, slimLines }: {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await generateData(selectedMonth, studentId);
+      const data = await generateData(selectedMonth, studentId, schoolId);
       setChartData(data);
     }
 
     fetchData();
-  }, [selectedMonth, studentId])
+  }, [selectedMonth, studentId, schoolId])
 
 
   return (

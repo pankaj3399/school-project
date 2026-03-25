@@ -5,11 +5,11 @@ import { getFilteredPointHistory, getFormById, getForms, getPointHistory, submit
 
 const router = express.Router();
 
-router.get('/getForms',authenticate,authorizeRoles(Role.SchoolAdmin,Role.Teacher, Role.Student),getForms)
-router.get('/getFormById/:id',authenticate,authorizeRoles(Role.SchoolAdmin,Role.Teacher, Role.Student),getFormById)
+router.get('/getForms',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Student, Role.SystemAdmin, Role.Admin),getForms)
+router.get('/getFormById/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Student, Role.SystemAdmin, Role.Admin),getFormById)
 router.post('/submitFormTeacher/:formId',authenticate,authorizeRoles(Role.Teacher),submitFormTeacher)
-router.post('/submitFormAdmin/:formId',authenticate,authorizeRoles(Role.SchoolAdmin),submitFormAdmin)
-router.get('/getPointHistory',authenticate,authorizeRoles(Role.SchoolAdmin,Role.Teacher),getPointHistory)
-router.get('/getFilteredPointHistory',authenticate,authorizeRoles(Role.SchoolAdmin,Role.Teacher),getFilteredPointHistory)
+router.post('/submitFormAdmin/:formId',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),submitFormAdmin)
+router.get('/getPointHistory',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getPointHistory)
+router.get('/getFilteredPointHistory',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getFilteredPointHistory)
 
 export default router;

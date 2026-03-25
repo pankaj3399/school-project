@@ -27,6 +27,12 @@ export const authorizeRoles = (...allowedRoles) => {
             return res.status(403).json({ message: 'User role not found' });
         }
 
+        // SystemAdmin and Admin have global access ("access everywhere")
+        const globalRoles = ['SystemAdmin', 'Admin'];
+        if (globalRoles.includes(req.user.role)) {
+            return next();
+        }
+
         if (!allowedRoles.includes(req.user.role)) {
             return res.status(403).json({
                 message: "Access denied. You do not have the required permissions.",

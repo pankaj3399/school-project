@@ -8,10 +8,11 @@ import { X } from "lucide-react"
 import { getStudents, getAnalyticsData } from "@/api"
 
 interface CurrentWeekChartsProps {
-  studentId: string
+  studentId: string;
+  schoolId?: string;
 }
 
-const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
+const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
   const [weekData, setWeekData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [detailView, setDetailView] = useState<{
@@ -27,11 +28,11 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
   useEffect(() => {
     fetchWeekData()
     fetchStudents()
-  }, [studentId])
+  }, [studentId, schoolId])
 
   const fetchStudents = async () => {
     const token = localStorage.getItem("token")
-    const res = await getStudents(token ?? "")
+    const res = await getStudents(token ?? "", schoolId)
     setStudents(res.students || [])
   }
 
@@ -42,7 +43,8 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
 
       const data = await getAnalyticsData({
         period: '1W',
-        ...(studentId && { studentId })
+        ...(studentId && { studentId }),
+        ...(schoolId && { schoolId })
       })
 
       console.log('📊 MAIN CHARTS: Received data:', data)
@@ -96,7 +98,8 @@ const CurrentWeekCharts = ({ studentId }: CurrentWeekChartsProps) => {
     try {
       const data = await getAnalyticsData({
         period,
-        ...(selectedStudent && { studentId: selectedStudent })
+        ...(selectedStudent && { studentId: selectedStudent }),
+        ...(schoolId && { schoolId })
       })
 
       console.log('Analytics data received:', data)

@@ -75,7 +75,16 @@ const getEducationalYearStart = async (schoolId) => {
 };
 
 // Helper function to get school ID from user
-const getSchoolIdFromUser = async (userId) => {
+const getSchoolIdFromUser = async (req) => {
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  // If system admin, allow picking schoolId from query or body
+  if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
+    const schoolId = req.query.schoolId || req.body.schoolId;
+    if (schoolId) return schoolId;
+  }
+
   // Try finding user as admin first
   const admin = await Admin.findById(userId);
   if (admin) {
@@ -125,7 +134,7 @@ const getGradeFromUser = async (userId) => {
 // 1. Whole Year Points History Controller
 export const getYearPointsHistory = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const teacherData = await getGradeFromUser(req.user.id);
 
     const yearStart = await getEducationalYearStart(schoolId);
@@ -385,7 +394,7 @@ export const getYearPointsHistory = async (req, res) => {
 
 export const getYearPointsHistoryByStudent = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const teacherData = await getGradeFromUser(req.user.id);
     const studentId = req.params.id;
 
@@ -524,7 +533,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
 
 export const getWeekPointsHistory = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
 
@@ -699,7 +708,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     console.log("User ID:", req.user.id);
     console.log("Requested student ID:", req.params.id);
 
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     console.log("School ID:", schoolId);
 
     const teacherData = await getGradeFromUser(req.user.id);
@@ -815,7 +824,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
 
 export const getHistoricalPointsData = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const { period, formType } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
@@ -985,7 +994,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     console.log("Request body:", req.body);
     console.log("Request params:", req.params);
 
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     console.log("School ID:", schoolId);
 
     const { period, formType, studentId } = req.body;
@@ -1227,7 +1236,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
 // New comprehensive analytics API
 export const getAnalyticsData = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const { period, studentId } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
@@ -1515,7 +1524,7 @@ export const getAnalyticsData = async (req, res) => {
 
 export const getCombinedStudentPointsHistory = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
     const { grades } = req.body; // grades is now an array of strings
@@ -1616,7 +1625,7 @@ export const getCombinedStudentPointsHistory = async (req, res) => {
 
 export const getStudentPointsHistory = async (req, res) => {
   try {
-    const schoolId = await getSchoolIdFromUser(req.user.id);
+    const schoolId = await getSchoolIdFromUser(req);
     const studentId = req.params.id;
     const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();

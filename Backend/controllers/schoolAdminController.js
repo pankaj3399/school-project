@@ -164,31 +164,46 @@ export const getStats = async (req, res) => {
   try {
     const id = req.user.id;
 
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
+    let schoolId = adminUser.schoolId;
+    
+    // System admin can specify schoolId in query
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+        if (req.query.schoolId) {
+            schoolId = req.query.schoolId;
+        }
+    }
 
     if (schoolId == null) {
-      return res.status(200).json({
-        totalTeachers: 0,
-        totalStudents: 0,
-        totalPoints: 0,
-        totalWithdrawPoints: 0,
-        totalDeductPoints: 0,
-        totalFeedbackCount: 0,
-      });
+      // If still no schoolId and not a system admin, return zeros
+      if (req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin) {
+          return res.status(200).json({
+            totalTeachers: 0,
+            totalStudents: 0,
+            totalPoints: 0,
+            totalWithdrawPoints: 0,
+            totalDeductPoints: 0,
+            totalFeedbackCount: 0,
+          });
+      }
+      // System admin with no schoolId filter sees global stats
     }
 
-    const totalTeachers = await Teacher.countDocuments({ schoolId });
-    const totalStudents = await Student.countDocuments({ schoolId });
+    const teacherFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+    const studentFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+    const pointsFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
+
+    const totalTeachers = await Teacher.countDocuments(teacherFilter);
+    const totalStudents = await Student.countDocuments(studentFilter);
 
     // Modified aggregation to separate by form types
     const pointsAggregation = await PointsHistory.aggregate([
       {
-        $match: { schoolId },
+        $match: pointsFilter,
       },
       {
         $group: {
@@ -283,12 +298,15 @@ export const getPointsGivenPerMonth = async (req, res) => {
     const id = req.user.id; // Get the authenticated user's ID
 
     // Find the school admin by ID to extract the schoolId
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
+    let schoolId = adminUser.schoolId;
+    if ((req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) && req.query.schoolId) {
+        schoolId = req.query.schoolId;
+    }
 
     // Aggregate points given by the teacher per month
     const pointsData = await PointsHistory.aggregate([
@@ -355,12 +373,15 @@ export const getFormsSubmittedPerMonth = async (req, res) => {
     const id = req.user.id; // Get the authenticated user's ID
 
     // Find the school admin by ID to extract the schoolId
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
+    let schoolId = adminUser.schoolId;
+    if ((req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) && req.query.schoolId) {
+        schoolId = req.query.schoolId;
+    }
     // Aggregate form submissions by the teacher per month
     const formsData = await PointsHistory.aggregate([
       { $match: { schoolId: new mongoose.Types.ObjectId(schoolId) } },
@@ -426,17 +447,18 @@ export const getMonthlyStats = async (req, res) => {
     const id = req.user.id; // Get the authenticated user's ID
 
     // Find the school admin by ID to extract the schoolId
-    const schoolAdmin = await Admin.findById(id);
-    if (!schoolAdmin) {
-      return res.status(404).json({ message: "School admin not found" });
+    const adminUser = await Admin.findById(id);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
     }
 
-    const schoolId = schoolAdmin.schoolId;
-
-    // Calculate monthly stats from the PointHistory model
+    let schoolId = adminUser.schoolId;
+    if ((req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) && req.query.schoolId) {
+        schoolId = req.query.schoolId;
+    }
     const monthlyStats = await PointsHistory.aggregate([
       {
-        $match: { schoolId }, // Filter by schoolId
+        $match: schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {}, // Filter by schoolId if provided
       },
       {
         $group: {

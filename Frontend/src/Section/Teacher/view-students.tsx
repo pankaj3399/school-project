@@ -33,12 +33,33 @@ export default function ViewTeacherStudents() {
         }
 
         const data = await getStudents(token)
-        setStudents(data.students.sort((a: any, b: any) => a.name.localeCompare(b.name)))
+        console.log("Teacher getStudents API response:", data);
+
+        if (data.error) {
+          toast({
+            title: "Error",
+            description: data.error,
+            variant: "destructive",
+          })
+          setLoading(false)
+          return
+        }
+
+        let studentsArray = [];
+        if (data && Array.isArray(data.students)) {
+          studentsArray = data.students;
+        } else if (Array.isArray(data)) {
+          studentsArray = data;
+        }
+
+        const sortedStudents = studentsArray.sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
+        setStudents(sortedStudents)
         setLoading(false)
       } catch (error) {
+        console.error("Teacher fetchStudents catch error:", error)
         toast({
           title: "Error",
-          description: "Failed to fetch student data.",
+          description: "An unexpected error occurred while fetching student data.",
           variant: "destructive",
         })
         setLoading(false)

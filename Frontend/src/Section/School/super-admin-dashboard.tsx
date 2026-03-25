@@ -42,7 +42,7 @@ const SuperAdminDashboard = () => {
     return (
         <div className='p-6 bg-gray-50 min-h-screen'>
             <div className='w-full bg-white rounded-lg shadow p-6'>
-                <h1 className='text-2xl font-bold mb-6 text-gray-800'>Super Admin Controls</h1>
+                <h1 className='text-2xl font-bold mb-6 text-gray-800'>System Admin Controls</h1>
                 <div className='flex justify-start'>
                     <button
                         onClick={handleDownloadWaitlist}
