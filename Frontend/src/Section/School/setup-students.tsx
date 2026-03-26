@@ -62,7 +62,7 @@ export default function SetupStudents() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { selectedSchoolId } = useSchool();
+  const { selectedSchoolId, selectedSchool } = useSchool();
 
   const downloadTemplate = () => {
     // Create a link element to download the existing template file
@@ -265,7 +265,7 @@ export default function SetupStudents() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">
-        Student Roster Setup {user?.schoolId?.name ? `for ${user.schoolId.name}` : ""}
+        Student Roster Setup {selectedSchool?.name ? `for ${selectedSchool.name}` : user?.schoolId?.name ? `for ${user.schoolId.name}` : ""}
       </h1>
 
       <div className="mb-6">

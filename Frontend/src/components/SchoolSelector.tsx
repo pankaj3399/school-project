@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Check, ChevronsUpDown, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,28 +16,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSchool } from "../context/SchoolContext";
-import { getAllSchools } from "../api";
 
 export function SchoolSelector() {
   const [open, setOpen] = useState(false);
-  const [schools, setSchools] = useState<any[]>([]);
-  const { selectedSchoolId, setSelectedSchoolId } = useSchool();
-
-  useEffect(() => {
-    const fetchSchools = async () => {
-      try {
-        const token = localStorage.getItem('token') || '';
-        const data = await getAllSchools(token);
-        if (data.schools) {
-          setSchools(data.schools);
-        }
-      } catch (error) {
-        console.error("Error fetching schools:", error);
-      }
-    };
-
-    fetchSchools();
-  }, []);
+  const { selectedSchoolId, setSelectedSchoolId, schools } = useSchool();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

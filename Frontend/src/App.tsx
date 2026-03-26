@@ -84,6 +84,9 @@ const HomeRedirect = () => {
   if (user?.role === Role.Student) {
     return <Navigate to="/student" replace />;
   }
+  if (user?.role === Role.Teacher) {
+    return <Navigate to="/analytics" replace />;
+  }
   return <Navigate to="/analytics" replace />;
 };
 

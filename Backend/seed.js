@@ -51,6 +51,12 @@ const generateRandomDate = (start, end) => {
 
 // Create a seed function that creates all the data
 const seed = async () => {
+  // Validate environment variables first
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    console.error("ADMIN_EMAIL and ADMIN_PASSWORD must be set in environment");
+    process.exit(1);
+  }
+
   try {
     if (!process.env.MONGO_URI) {
       throw Error("No MONGO_URI specified in environment variables");
@@ -74,10 +80,6 @@ const seed = async () => {
 
     const systemAdminEmail = process.env.ADMIN_EMAIL;
     const commonPassword = process.env.ADMIN_PASSWORD;
-
-    if (!systemAdminEmail || !commonPassword) {
-      throw Error("ADMIN_EMAIL or ADMIN_PASSWORD is not specified in environment variables");
-    }
 
     const hashedPwd = await bcrypt.hash(commonPassword, 12);
 

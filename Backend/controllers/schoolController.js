@@ -9,12 +9,14 @@ export const getAllSchools = async (req, res) => {
       let filter = {};
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
-        if (adminUser && adminUser.role === Role.SystemAdmin) {
+        if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
+          return res.status(403).json({ message: "Access denied. You are not assigned to a district." });
+        }
+
+        if (adminUser.role === Role.SystemAdmin) {
           filter = {};
-        } else if (adminUser && adminUser.districtId) {
-          filter = { districtId: adminUser.districtId };
         } else {
-          return res.status(200).json({ message: "No district assigned or access denied.", schools: [] });
+          filter = { districtId: adminUser.districtId };
         }
       }
       const schools = await School.find(filter);
@@ -157,6 +159,9 @@ export const getCurrentSchool = async (req, res) => {
                 break;
             case Role.SchoolAdmin:
                 const schoolAdmin = await Admin.findById(req.user.id);
+                if (!schoolAdmin || !schoolAdmin.schoolId) {
+                  return res.status(403).json({ message: "Access denied. No school assigned or admin not found." });
+                }
                 sch = await School.findById(schoolAdmin.schoolId).populate('createdBy');
                 break;
             case Role.SystemAdmin:
@@ -205,7 +210,7 @@ export const updateSchool = async (req, res) => {
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
-        if (!school || school.districtId.toString() !== (adminUser.districtId || "").toString()) {
+        if (!adminUser || !school || school.districtId.toString() !== (adminUser.districtId || "").toString()) {
           return res.status(403).json({ message: "Access denied. School is outside your district." });
         }
       } else if (req.user.role === Role.SchoolAdmin) {
@@ -264,8 +269,11 @@ export const deleteSchool = async (req, res) => {
         } else if (req.user.role === Role.SchoolAdmin) {
             const adminUser = await Admin.findById(req.user.id);
             const school = await School.findById(schoolId);
-            if (!school || school.createdBy.toString() !== req.user.id) {
-                return res.status(403).json({ message: "Access denied. You can only delete schools you created." });
+            const isCreator = school && school.createdBy && school.createdBy.toString() === req.user.id;
+            const isAssigned = adminUser && adminUser.schoolId && adminUser.schoolId.toString() === schoolId;
+            
+            if (!isCreator && !isAssigned) {
+                return res.status(403).json({ message: "Access denied. You can only delete schools you created or are assigned to." });
             }
         }
 

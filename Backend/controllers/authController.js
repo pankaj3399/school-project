@@ -487,7 +487,8 @@ export const verifyOtp = async (req, res) => {
     const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
     
     if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email });
+      user = await Admin.findOne({ email, role: Role.SystemAdmin });
+      if (!user) return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
       userRole = Role.SystemAdmin;
     } else {
       switch (userRole) {
@@ -843,7 +844,8 @@ export const resetPassword = async (req, res) => {
     const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
     
     if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email });
+      user = await Admin.findOne({ email, role: Role.SystemAdmin });
+      if (!user) return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
       userRole = Role.SystemAdmin;
     } else {
       switch (userRole) {

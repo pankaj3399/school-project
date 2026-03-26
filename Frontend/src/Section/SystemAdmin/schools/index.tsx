@@ -119,6 +119,8 @@ export default function SchoolsList() {
                 description: err.message || "Error deleting school",
                 variant: "destructive"
             });
+            setShowDeleteModal(false);
+            setSchoolToDelete(null);
         } finally {
             setIsDeleting(false);
         }

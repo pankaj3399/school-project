@@ -122,6 +122,10 @@ export default function SchoolPage() {
             description: "Failed to fetch school data.",
             variant: "destructive",
           });
+          setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict("");
         }
       } finally {
         setLoading(false);

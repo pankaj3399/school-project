@@ -64,6 +64,12 @@ const Analytics = () => {
       setStudents(resTeacher.students || []);
       setFilteredStudents(resTeacher.students || []);
     };
+    
+    // Fail-closed: clear selection on school change
+    setStudentId("");
+    setStudentName("");
+    setAnalyticsData([]);
+    
     fetchStudents();
   }, [selectedSchoolId, user]);
 

@@ -117,8 +117,8 @@ export default function DistrictsList() {
                 toast({
                     description: `${name} deleted successfully.`,
                 });
-                // Remove the district from state instead of marking as expired
-                setDistricts(prev => prev.filter(d => d._id !== id));
+                // Mark as expired locally instead of removing
+                setDistricts(prev => prev.map(d => d._id === id ? { ...d, status: 'expired' } : d));
                 setShowDeleteModal(false);
                 setDistrictToDelete(null);
             }

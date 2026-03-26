@@ -241,11 +241,13 @@ const SetupPage = () => {
     </>
   );
 
+  const { selectedSchool } = useSchool();
+
   if (loading) return <Loading />;
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-8">School Setup</h1>
+      <h1 className="text-4xl font-bold mb-8">{selectedSchool?.name || "School Setup"}</h1>
 
       <div className="grid grid-cols-1 gap-8">
         {/* School Information Section */}

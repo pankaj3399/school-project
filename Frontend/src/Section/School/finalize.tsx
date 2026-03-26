@@ -80,6 +80,13 @@ const Finalize = () => {
     getUserData()
   },[])
 
+  // Reset student selection when school changes
+  useEffect(() => {
+    setSelectedStudents(new Set());
+    setSelectedStudentsData([]);
+    setStudentId("");
+  }, [selectedSchoolId]);
+
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
     if (barChart) {

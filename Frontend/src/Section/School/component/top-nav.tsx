@@ -57,7 +57,7 @@ export function TopNav() {
   ];
   
   const isSystemAdminOverview = location.pathname === '/system-admin';
-  const showSchoolSelector = user?.role === Role.SystemAdmin && 
+  const showSchoolSelector = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) && 
     !isSystemAdminOverview &&
     allowedPaths.some(path => location.pathname.startsWith(path));
 
@@ -72,7 +72,7 @@ export function TopNav() {
             user?.role !== Role.SystemAdmin && user?.schoolId?.name && (
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-md border border-white/20">
                 <School className="h-4 w-4 opacity-70" />
-                <span className="text-sm font-medium">{user.schoolId.name}</span>
+                <span className="text-sm font-medium">{typeof user.schoolId === 'object' ? user.schoolId.name : user.schoolId}</span>
               </div>
             )
           )}

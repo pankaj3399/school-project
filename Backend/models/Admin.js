@@ -101,7 +101,10 @@ userSchema.methods.compareRegistrationToken = function (rawToken) {
   }
   
   // 2. Backward compatibility: check if it matches plain-text (for legacy tokens)
-  // We use a simple comparison here because legacy tokens aren't hashed anyway
+  // Only allow plaintext comparison if the stored token isn't a 64-char hex hash
+  const isHashed = /^[a-f0-9]{64}$/i.test(this.registrationToken);
+  if (isHashed) return false;
+
   return this.registrationToken === rawToken;
 };
 

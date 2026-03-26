@@ -281,9 +281,13 @@ const ViewSchool = () => {
                                                         <SelectValue placeholder="Select a district" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {districts.map(d => (
-                                                            <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
-                                                        ))}
+                                                        {districts.length > 0 ? (
+                                                            districts.map(d => (
+                                                                <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                                                            ))
+                                                        ) : (
+                                                            <div className="p-2 text-sm text-neutral-500 italic">No districts available</div>
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                             </div>

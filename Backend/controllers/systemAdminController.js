@@ -540,7 +540,6 @@ export const inviteAdmin = async (req, res) => {
 
     // Generate custom registration token
     const registrationToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(registrationToken).digest('hex');
     const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     // Create the user in "pending" state
@@ -550,10 +549,19 @@ export const inviteAdmin = async (req, res) => {
       schoolId: schoolId || null,
       districtId: districtId || null,
       approved: true, // Auto-approved since it's an invite
-      registrationToken: hashedToken, // Store the hash
+      registrationToken, // Store the raw token; model pre-save hook will hash it
       registrationTokenExpires,
       name: name || email.split('@')[0],
     });
+
+    const safeUser = {
+      id: newUser._id,
+      email: newUser.email,
+      role: newUser.role,
+      schoolId: newUser.schoolId,
+      districtId: newUser.districtId,
+      approved: newUser.approved,
+    };
 
     const userResponse = newUser.toObject();
     delete userResponse.registrationToken;
@@ -589,7 +597,7 @@ export const inviteAdmin = async (req, res) => {
       return res.status(201).json({ 
         success: true,
         message: "Admin invited successfully, but invitation email failed to send.",
-        user: userResponse,
+        user: safeUser,
         emailError: emailError.message
       });
     }
@@ -597,7 +605,7 @@ export const inviteAdmin = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Invitation sent successfully",
-      user: userResponse
+      user: safeUser
     });
   } catch (error) {
     console.error("Error inviting admin:", error);
