@@ -9,10 +9,14 @@ export const getAllSchools = async (req, res) => {
       let filter = {};
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
-        if (!adminUser || !adminUser.districtId) {
-          return res.status(200).json({ message: "No district assigned to admin.", schools: [] });
+        if (adminUser && adminUser.districtId) {
+          filter = { districtId: adminUser.districtId };
+        } else if (adminUser && adminUser.role === Role.SystemAdmin) {
+          // Bypassing districtId for SystemAdmin in transition
+          filter = {};
+        } else {
+          return res.status(200).json({ message: "No district assigned.", schools: [] });
         }
-        filter = { districtId: adminUser.districtId };
       }
       const schools = await School.find(filter);
       res.status(200).json({ message: "Schools fetched successfully", schools });
@@ -67,7 +71,7 @@ export const getAllSchools = async (req, res) => {
         console.log("Admin - district scoped students");
         const adminUser = await Admin.findById(req.user.id);
         
-        if (!adminUser || !adminUser.districtId) {
+        if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
           return res.status(403).json({ message: "Admin is not assigned to a district." });
         }
 
@@ -115,7 +119,7 @@ export const getTeachers = async (req, res) => {
             teachers = await Teacher.find(filter);
         } else if (req.user.role === Role.Admin) {
             const adminUser = await Admin.findById(req.user.id);
-            if (!adminUser || !adminUser.districtId) {
+            if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
                 return res.status(403).json({ message: "Admin is not assigned to a district." });
             }
             
@@ -166,7 +170,7 @@ export const getCurrentSchool = async (req, res) => {
                 break;
             case Role.Admin:
                 const adminUser = await Admin.findById(req.user.id);
-                if (!adminUser || !adminUser.districtId) {
+                if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
                     return res.status(403).json({ message: 'Admin is not assigned to a district' });
                 }
                 const { schoolId: adminQuerySchoolId } = req.query;
@@ -242,7 +246,7 @@ export const deleteSchool = async (req, res) => {
         
         if (req.user.role === Role.Admin) {
             const adminUser = await Admin.findById(req.user.id);
-            if (!adminUser || !adminUser.districtId) {
+            if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
                 return res.status(403).json({ message: "Admin is not assigned to a district." });
             }
             const schoolCheck = await School.findById(schoolId);
@@ -311,7 +315,7 @@ export const promote = async (req, res) => {
           school = await School.findById(schoolId);
           } else if (req.user.role === Role.Admin) {
           const adminUser = await Admin.findById(id);
-          if (!adminUser || !adminUser.districtId) {
+          if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
             return res.status(403).json({ message: "Admin is not assigned to a district." });
           }
           const { schoolId } = req.query.schoolId ? req.query : req.body;

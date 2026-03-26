@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { studentRoster } from "@/api";
 import { Download } from "lucide-react";
+import { useSchool } from "@/context/SchoolContext";
 import {
   Accordion,
   AccordionItem,
@@ -58,6 +59,7 @@ export default function SetupStudents() {
   const [editForm, setEditForm] = useState<StudentData | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
+  const { selectedSchoolId } = useSchool();
 
   const downloadTemplate = () => {
     // Create a link element to download the existing template file
@@ -222,7 +224,10 @@ export default function SetupStudents() {
         lastName: undefined,
       }));
 
-      const response = await studentRoster({ students: formattedStudents });
+      const response = await studentRoster({ 
+        students: formattedStudents,
+        schoolId: selectedSchoolId,
+      });
       if (!response.success) throw new Error("Failed to submit roster");
 
       toast({

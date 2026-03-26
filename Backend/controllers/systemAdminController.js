@@ -498,8 +498,8 @@ export const inviteAdmin = async (req, res) => {
     // If requester is an Admin, they can only invite users to their OWN district
     if (requesterRole === Role.Admin) {
       const requester = await Admin.findById(req.user.id);
-      if (!requester || !requester.districtId) {
-        return res.status(403).json({ message: "Global Admin is not assigned to a district." });
+      if (!requester || (requester.role !== Role.SystemAdmin && !requester.districtId)) {
+        return res.status(403).json({ message: "Administrator is not assigned to a district." });
       }
 
       if (districtId && districtId.toString() !== requester.districtId.toString()) {

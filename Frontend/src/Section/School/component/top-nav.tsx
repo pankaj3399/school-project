@@ -10,19 +10,18 @@ import {
 import { useAuth } from "@/authContext"
 import SupportPanel from "../support-panel"
 import { useState } from "react"
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SchoolSelector } from "@/components/SchoolSelector";
 import { Role } from "@/enum";
 
 export function TopNav() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [showSupport, setShowSupport] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
-    // Remove token from localStorage and sessionStorage
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
+    logout();
     navigate('/');
   };
 
@@ -45,11 +44,34 @@ export function TopNav() {
     return label;
   };
 
+  // Only show school selector for System Admin on specific reporting/roster pages
+  const allowedPaths = [
+    '/analytics', 
+    '/teacher', // This matches both /teacher and /teachers roster pages
+    '/students', 
+    '/history', 
+    '/print-report', 
+    '/viewforms', 
+    '/createform', 
+    '/editform', 
+    '/addteacher', 
+    '/addstudent',
+    '/school/points-history',
+    '/setup',
+    '/setup-teachers',
+    '/setup-students'
+  ];
+  
+  const isSystemAdminOverview = location.pathname === '/system-admin';
+  const showSchoolSelector = user?.role === Role.SystemAdmin && 
+    !isSystemAdminOverview &&
+    allowedPaths.some(path => location.pathname.startsWith(path));
+
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
       <div className="flex items-center justify-between h-16 px-4">
         <div className="flex items-center space-x-4 pl-4">
-          {(user?.role === Role.SystemAdmin || user?.role === Role.Admin) && (
+          {showSchoolSelector && (
             <SchoolSelector />
           )}
         </div>

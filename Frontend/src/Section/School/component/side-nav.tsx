@@ -18,7 +18,7 @@ const navItems = [
 ];
 
 export function SideNav() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -34,9 +34,7 @@ export function SideNav() {
   };
 
   const handleLogout = () => {
-    // Remove token from localStorage and sessionStorage
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
+    logout();
     navigate('/');
   };
 
@@ -90,7 +88,7 @@ export function SideNav() {
       )}
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:block w-64 bg-[#654f6f] text-white  shadow-lg min-h-fit h-screen">
+      <nav className="hidden md:block w-64 bg-[#654f6f] text-white shadow-lg h-full overflow-y-auto">
         <div className="p-4">
           <img src="/radu-logo-2.png" alt="Logo" className="w-full h-fit invert object-cover " />
         </div>

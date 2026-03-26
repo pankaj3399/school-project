@@ -80,10 +80,15 @@ const getSchoolIdFromUser = async (req) => {
   const userRole = req.user.role;
 
   // If system admin, allow picking schoolId from query or body
-  if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
+  if (userRole === Role.SystemAdmin) {
+    return req.query.schoolId || req.body.schoolId || null;
+  }
+
+  // Admin (District/School) still requires schoolId or has it assigned
+  if (userRole === Role.Admin) {
     const schoolId = req.query.schoolId || req.body.schoolId;
     if (!schoolId) {
-        throw new Error("School ID is required for System Administrators");
+        throw new Error("School ID is required for Administrators");
     }
     return schoolId;
   }
@@ -1275,7 +1280,7 @@ export const getAnalyticsData = async (req, res) => {
 
     // Build match criteria
     let matchCriteria = {
-      schoolId: new mongoose.Types.ObjectId(schoolId),
+      ...(schoolId && { schoolId: new mongoose.Types.ObjectId(schoolId) }),
       submittedAt: {
         $gte: startDateUTC,
         $lte: todayUTC,
@@ -1416,7 +1421,7 @@ export const getAnalyticsData = async (req, res) => {
       PointsHistory.aggregate([
         {
           $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
+            ...(schoolId && { schoolId: new mongoose.Types.ObjectId(schoolId) }),
             formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
             ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
           }
@@ -1463,7 +1468,7 @@ export const getAnalyticsData = async (req, res) => {
       PointsHistory.aggregate([
         {
           $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
+            ...(schoolId && { schoolId: new mongoose.Types.ObjectId(schoolId) }),
             formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
             ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
           }

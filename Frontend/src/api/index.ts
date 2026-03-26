@@ -957,6 +957,7 @@ export const teacherRoster = async (data: any) => {
       {
         url,
         teachers: data.teachers,
+        schoolId: data.schoolId,
       },
       {
         headers: {
@@ -980,6 +981,7 @@ export const studentRoster = async (data: any) => {
       {
         url,
         students: data.students,
+        schoolId: data.schoolId,
       },
       {
         headers: {

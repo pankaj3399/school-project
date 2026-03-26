@@ -18,7 +18,6 @@ import ViewTeacherForms from "./Section/Teacher/view-teacher-forms";
 import FormPage from "./Section/Teacher/submit-form";
 import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
-import AdminDashboard from "./Section/School/dashboard";
 import SuperAdminDashboard from "./Section/School/super-admin-dashboard";
 import ForgotPassword from "./components/ForgetPassword";
 import OtpVerificationPage from "./components/OtpVerification";
@@ -71,29 +70,13 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) {
-    if (user.role === Role.SystemAdmin) {
-      return <Navigate to="/system-admin" replace />;
-    }
-    if (user.role === Role.Admin) {
-      return <Navigate to="/analytics" replace />;
-    }
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/analytics" replace />;
   }
   return <>{children}</>;
 };
 
 const HomeRedirect = () => {
-  const { user } = useAuth();
-  if (user?.role === Role.SystemAdmin) {
-    return <Navigate to="/system-admin" replace />;
-  }
-  if (user?.role === Role.Admin) {
-    return <Navigate to="/analytics" replace />;
-  }
-  if (user?.role === Role.Teacher) {
-    return <Navigate to="/teachers" replace />;
-  }
-  return <AdminDashboard />;
+  return <Navigate to="/analytics" replace />;
 };
 
 export default function App() {
@@ -113,7 +96,7 @@ export default function App() {
           <Route path="/resetpassword" element={<ResetPassword />} />
 
           {/* Authenticated Routes */}
-          <Route path="/analytics" element={<ProtectedRoute requiredRoles={[Role.Admin, Role.SchoolAdmin, Role.Teacher]}><Analytics /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin, Role.SchoolAdmin, Role.Teacher]}><Analytics /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />

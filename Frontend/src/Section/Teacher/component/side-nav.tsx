@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut,X,MenuIcon,ClipboardIcon, Users, School, Target, Paperclip, SettingsIcon} from 'lucide-react';
+import { LogOut, X, MenuIcon, ClipboardIcon, Users, School, Target, Paperclip, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser } from '@/api';
-
-
+import { useAuth } from '@/authContext';
 
 export function TeacherSideNav() {
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const[toogle,Settoogle] = useState(false);
   const [navItems, setNavItems] = useState<any[]>([
@@ -37,11 +37,7 @@ export function TeacherSideNav() {
   }
 
   const handleLogout = () => {
-    
-    localStorage.removeItem('token'); 
-    sessionStorage.removeItem('token'); 
-
-    
+    logout();
     navigate('/');
   };
 
@@ -81,7 +77,7 @@ export function TeacherSideNav() {
     </nav>
     }
 
-<nav className={ `w-64 bg-[#654f6f] shadow-lg max-md:hidden`}>
+<nav className={ `w-64 bg-[#654f6f] shadow-lg h-full overflow-y-auto max-md:hidden`}>
       <div className="p-4">
       <img src="/radu-logo-2.png" alt="" className='w-full invert object-cover' />
       </div>

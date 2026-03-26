@@ -27,21 +27,28 @@ export const requestLoginOtp = async (req, res) => {
     const { email, role, password } = req.body; // Now requires password for validation
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user;
-    console.log(userRole)
-    switch (userRole) {
-      case Role.Teacher: {
-        user = await Teacher.findOne({ email });
-        break;
-      }
-      case Role.Student: {
-        user = await Student.findOne({ email });
-        break;
-      }
-      default: {
-        user = await Admin.findOne({ email });
-        break;
+    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
+    
+    if (isSystemAdminEmail) {
+      user = await Admin.findOne({ email });
+      userRole = Role.SystemAdmin;
+    } else {
+      switch (userRole) {
+        case Role.Teacher: {
+          user = await Teacher.findOne({ email });
+          break;
+        }
+        case Role.Student: {
+          user = await Student.findOne({ email });
+          break;
+        }
+        default: {
+          user = await Admin.findOne({ email });
+          break;
+        }
       }
     }
+
 
     console.log(user)
 
@@ -146,20 +153,28 @@ export const login = async (req, res) => {
 
   try {
     let user;
-    switch (userRole) {
-      case Role.Teacher: {
-        user = await Teacher.findOne({ email });
-        break;
-      }
-      case Role.Student: {
-        user = await Student.findOne({ email });
-        break;
-      }
-      default: {
-        user = await Admin.findOne({ email });
-        break;
+    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
+    
+    if (isSystemAdminEmail) {
+      user = await Admin.findOne({ email });
+      userRole = Role.SystemAdmin;
+    } else {
+      switch (userRole) {
+        case Role.Teacher: {
+          user = await Teacher.findOne({ email });
+          break;
+        }
+        case Role.Student: {
+          user = await Student.findOne({ email });
+          break;
+        }
+        default: {
+          user = await Admin.findOne({ email });
+          break;
+        }
       }
     }
+
 
     if (!user) {
       return res.status(404).json({ message: "User Not found" });
@@ -278,21 +293,28 @@ export const verifyLoginOtp = async (req, res) => {
     const { otp, email, role } = req.body;
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user;
-
-    switch (userRole) {
-      case Role.Teacher: {
-        user = await Teacher.findOne({ email });
-        break;
-      }
-      case Role.Student: {
-        user = await Student.findOne({ email });
-        break;
-      }
-      default: {
-        user = await Admin.findOne({ email });
-        break;
+    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
+    
+    if (isSystemAdminEmail) {
+      user = await Admin.findOne({ email });
+      userRole = Role.SystemAdmin;
+    } else {
+      switch (userRole) {
+        case Role.Teacher: {
+          user = await Teacher.findOne({ email });
+          break;
+        }
+        case Role.Student: {
+          user = await Student.findOne({ email });
+          break;
+        }
+        default: {
+          user = await Admin.findOne({ email });
+          break;
+        }
       }
     }
+
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -449,20 +471,28 @@ export const verifyOtp = async (req, res) => {
     const { otp, email, role } = req.body;
     let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
     let user;
-    switch (userRole) {
-      case Role.Teacher: {
-        user = await Teacher.findOne({ email });
-        break;
-      }
-      case Role.Student: {
-        user = await Student.findOne({ email });
-        break;
-      }
-      default: {
-        user = await Admin.findOne({ email });
-        break;
+    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
+    
+    if (isSystemAdminEmail) {
+      user = await Admin.findOne({ email });
+      userRole = Role.SystemAdmin;
+    } else {
+      switch (userRole) {
+        case Role.Teacher: {
+          user = await Teacher.findOne({ email });
+          break;
+        }
+        case Role.Student: {
+          user = await Student.findOne({ email });
+          break;
+        }
+        default: {
+          user = await Admin.findOne({ email });
+          break;
+        }
       }
     }
+
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -797,20 +827,28 @@ export const resetPassword = async (req, res) => {
 
     // Find the user based on email and role
     let user;
-    switch (userRole) {
-      case Role.Teacher: {
-        user = await Teacher.findOne({ email });
-        break;
-      }
-      case Role.Student: {
-        user = await Student.findOne({ email });
-        break;
-      }
-      default: {
-        user = await Admin.findOne({ email });
-        break;
+    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
+    
+    if (isSystemAdminEmail) {
+      user = await Admin.findOne({ email });
+      userRole = Role.SystemAdmin;
+    } else {
+      switch (userRole) {
+        case Role.Teacher: {
+          user = await Teacher.findOne({ email });
+          break;
+        }
+        case Role.Student: {
+          user = await Student.findOne({ email });
+          break;
+        }
+        default: {
+          user = await Admin.findOne({ email });
+          break;
+        }
       }
     }
+
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

@@ -37,18 +37,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
       <AuthProvider>
         <SchoolProvider>
-          <div className="flex min-h-screen bg-gray-100">
-            <TeacherSideNav />
-            <Toaster />
-            <div className="flex flex-col flex-1">
+        <div className="flex h-screen overflow-hidden bg-gray-100">
+          <TeacherSideNav />
+          <Toaster />
+          <div className="flex flex-col flex-1 overflow-hidden">
               <TopNav />
               <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#ffffff]">
                 <div className="container mx-auto px-6 py-8">
                   <Breadcrumb />
                   {children}
                 </div>
+                <Footer />
               </main>
-              <Footer />
             </div>
           </div>
         </SchoolProvider>
@@ -59,18 +59,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <AuthProvider>
       <SchoolProvider>
-        <div className="flex min-h-screen bg-gray-200 ">
+        <div className="flex h-screen overflow-hidden bg-gray-200 ">
           <SideNav />
           <Toaster />
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 overflow-hidden">
             <TopNav />
             <main className="flex-1 overflow-x-hidden overflow-y-auto  border bg-[#ffffff]   ">
               <div className="container mx-auto px-3 py-8">
                 {pathname !== '/analytics' && <Breadcrumb />}
                 {children}
               </div>
+              <Footer />
             </main>
-            <Footer />
           </div>
         </div>
       </SchoolProvider>
