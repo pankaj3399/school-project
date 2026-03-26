@@ -11,6 +11,8 @@ import { useAuth } from "@/authContext"
 import SupportPanel from "../support-panel"
 import { useState } from "react"
 import { useNavigate } from 'react-router-dom';
+import { SchoolSelector } from "@/components/SchoolSelector";
+import { Role } from "@/enum";
 
 export function TopNav() {
   const { user } = useAuth();
@@ -26,7 +28,8 @@ export function TopNav() {
 
   const getUserLabel = () => {
     if (!user) return "";
-    if (user.role === 'Admin') return 'System Admin';
+    if (user.role === Role.SystemAdmin) return 'System Admin';
+    if (user.role === Role.Admin) return 'Admin | ' + (user.name || '');
 
     let label = user.name || "";
     if (user.role === 'SchoolAdmin') {
@@ -44,58 +47,65 @@ export function TopNav() {
 
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
-      <div className="flex items-center justify-end h-16 px-4 space-x-4">
-        <SupportPanel
-          isOpen={showSupport}
-          onOpenChange={setShowSupport}
-          trigger={
-            <Button variant="ghost" className="text-white hover:text-white hover:bg-[#7a617f]">
-              Support
-            </Button>
-          }
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === 'Admin' ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
-            >
-              {getUserLabel()}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            {user?.role === 'Admin' ? (
-              <>
-                <DropdownMenuItem onClick={() => navigate('/system-admin')} className="cursor-pointer font-medium">
-                  System Admin Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="font-normal">
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-              </>
-            ) : (
-              <>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+      <div className="flex items-center justify-between h-16 px-4">
+        <div className="flex items-center space-x-4 pl-4">
+          {user?.role === Role.SystemAdmin && (
+            <SchoolSelector />
+          )}
+        </div>
+        <div className="flex items-center space-x-4">
+          <SupportPanel
+            isOpen={showSupport}
+            onOpenChange={setShowSupport}
+            trigger={
+              <Button variant="ghost" className="text-white hover:text-white hover:bg-[#7a617f]">
+                Support
+              </Button>
+            }
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === Role.SystemAdmin ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
+              >
+                {getUserLabel()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {user?.role === Role.SystemAdmin ? (
+                <>
+                  <DropdownMenuItem onClick={() => navigate('/system-admin')} className="cursor-pointer font-medium">
+                    System Admin Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="font-normal">
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}
                     </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                </>
+              ) : (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
-  )
+  );
 }

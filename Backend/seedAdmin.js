@@ -32,9 +32,9 @@ const seedAdmin = async () => {
         existingAdmin.approved = true;
         
         // Ensure role is correct if it was somehow changed
-        if (existingAdmin.role !== Role.Admin) {
-             console.log(`Updating role from ${existingAdmin.role} to ${Role.Admin}`);
-             existingAdmin.role = Role.Admin;
+        if (existingAdmin.role !== Role.SystemAdmin) {
+             console.log(`Updating role from ${existingAdmin.role} to ${Role.SystemAdmin}`);
+             existingAdmin.role = Role.SystemAdmin;
         }
         
         await existingAdmin.save();
@@ -45,7 +45,7 @@ const seedAdmin = async () => {
         const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
         
         const admin = await Admin.create({
-          role: Role.Admin,
+          role: Role.SystemAdmin,
           name: "System Admin",
           email: adminEmail,
           password: hashedAdminPassword,

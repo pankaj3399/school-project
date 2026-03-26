@@ -123,7 +123,7 @@
 //     const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
     
 //     const admin = await Admin.create({
-//       role: Role.Admin,
+//       role: Role.SystemAdmin,
 //       name: "System Admin",
 //       email: process.env.ADMIN_EMAIL || "admin@example.com",
 //       password: hashedAdminPassword,

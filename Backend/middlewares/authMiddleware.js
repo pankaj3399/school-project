@@ -29,7 +29,7 @@ export const authorizeRoles = (...allowedRoles) => {
         }
 
         // SystemAdmin and Admin have global access ("access everywhere")
-        const globalRoles = [Role.SystemAdmin, Role.Admin];
+        const globalRoles = [Role.SystemAdmin];
         if (globalRoles.includes(req.user.role)) {
             return next();
         }

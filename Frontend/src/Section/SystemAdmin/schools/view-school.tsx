@@ -1,6 +1,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { getCurrrentSchool, getStats } from '@/api'
+import { getCurrrentSchool, getStats, deleteSchool } from '@/api'
+import { useNavigate } from 'react-router-dom'
+import { useToast } from '@/hooks/use-toast'
+import { Button } from "@/components/ui/button"
+import { IconTrash } from '@tabler/icons-react'
 import CurrentWeekCharts from '../../School/component/current-week-charts'
 import EducationYearChart from '../../School/component/new-chart'
 import TeacherRanks from '../../School/component/TeacherRanks'
@@ -13,7 +17,40 @@ const ViewSchool = () => {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<Error | null>(null)
+  const navigate = useNavigate()
+  const { toast } = useToast()
   const requestRef = useRef(0)
+
+  const handleDelete = async () => {
+    if (!id || !school) return
+    if (!window.confirm(`Are you sure you want to delete ${school.name}? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      const response = await deleteSchool(id, token)
+      if (response.error) {
+        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to delete school")
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive"
+        })
+      } else {
+        toast({
+          description: `${school.name} deleted successfully.`,
+        })
+        navigate(`/system-admin/districts/${school.districtId}`)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred while deleting the school.",
+        variant: "destructive"
+      })
+    }
+  }
 
   useEffect(() => {
     if (id) {
@@ -117,6 +154,14 @@ const ViewSchool = () => {
             <p className="text-neutral-500">{school.address}, {school.district?.name || 'Unassigned District'}</p>
           </div>
         </div>
+        <Button 
+          variant="ghost" 
+          onClick={handleDelete}
+          className="text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
+        >
+          <IconTrash className="w-5 h-5" />
+          Delete School
+        </Button>
       </div>
 
       {/* Stats Overview */}

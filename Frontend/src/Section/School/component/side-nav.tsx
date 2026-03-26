@@ -1,16 +1,16 @@
 //school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Paperclip, SettingsIcon} from 'lucide-react';
+import { School,  Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Paperclip, SettingsIcon, LayoutDashboard} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/authContext';
+import { Role } from '@/enum';
 
 const navItems = [
   { href: '/analytics', label: 'Analytics', icon: School },
-  // { href: '/addteacher', label: 'Add Teacher', icon: UserPlus },
-  // { href: '/addstudent', label: 'Add Student', icon: UserPlus },
+  { href: '/system-admin', label: 'System Overview', icon: LayoutDashboard, roles: [Role.SystemAdmin] },
   { href: '/teacher', label: 'Teachers', icon: Users },
   { href: '/students', label: 'Students', icon: BookOpen },
-  // { href: '/createform', label: 'Create Forms', icon: ClipboardIcon },
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
   { href: '/history', label: 'Point History', icon: ClipboardIcon },
   { href: '/print-report', label: 'Print Report', icon: Paperclip },
@@ -18,8 +18,16 @@ const navItems = [
 ];
 
 export function SideNav() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+
+  const filteredItems = navItems.filter(item => {
+    if (item.roles) {
+      return !!user && (item.roles as string[]).includes(user.role);
+    }
+    return true;
+  });
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -51,7 +59,7 @@ export function SideNav() {
               <img src="/radu-logo.png" alt="Logo" className="w-14 h-14" />
             </div>
             <ul className="space-y-2 py-4">
-              {navItems.map((item) => (
+              {filteredItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     to={item.href}
@@ -87,7 +95,7 @@ export function SideNav() {
           <img src="/radu-logo-2.png" alt="Logo" className="w-full h-fit invert object-cover " />
         </div>
         <ul className="space-y-2 py-4">
-          {navItems.map((item) => (
+          {filteredItems.map((item) => (
             <li key={item.href}>
               <Link
                 to={item.href}

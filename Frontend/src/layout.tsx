@@ -8,6 +8,7 @@ import { useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./authContext";
 import { OtpProvider } from "./components/OtpContextProvider";
+import { SchoolProvider } from "./context/SchoolContext";
 // import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,40 +36,44 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   if (isTeacherLayout) {
     return (
       <AuthProvider>
-      <div className="flex min-h-screen bg-gray-100">
-      <TeacherSideNav />
-      <Toaster />
-      <div className="flex flex-col flex-1">
-        <TopNav />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#ffffff]">
-          <div className="container mx-auto px-6 py-8">
-            <Breadcrumb />
-            {children}
+        <SchoolProvider>
+          <div className="flex min-h-screen bg-gray-100">
+            <TeacherSideNav />
+            <Toaster />
+            <div className="flex flex-col flex-1">
+              <TopNav />
+              <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#ffffff]">
+                <div className="container mx-auto px-6 py-8">
+                  <Breadcrumb />
+                  {children}
+                </div>
+              </main>
+              <Footer />
+            </div>
           </div>
-        </main>
-        <Footer />
-      </div>
-    </div>
-    </AuthProvider>
+        </SchoolProvider>
+      </AuthProvider>
     );
   }
 
   return (
     <AuthProvider>
-    <div className="flex min-h-screen bg-gray-200 ">
-      <SideNav />
-      <Toaster />
-      <div className="flex flex-col flex-1">
-        <TopNav />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto  border bg-[#ffffff]   ">
-          <div className="container mx-auto px-3 py-8">
-            {pathname !== '/analytics' && <Breadcrumb />}
-            {children}
+      <SchoolProvider>
+        <div className="flex min-h-screen bg-gray-200 ">
+          <SideNav />
+          <Toaster />
+          <div className="flex flex-col flex-1">
+            <TopNav />
+            <main className="flex-1 overflow-x-hidden overflow-y-auto  border bg-[#ffffff]   ">
+              <div className="container mx-auto px-3 py-8">
+                {pathname !== '/analytics' && <Breadcrumb />}
+                {children}
+              </div>
+            </main>
+            <Footer />
           </div>
-        </main>
-        <Footer />
-      </div>
-    </div>
+        </div>
+      </SchoolProvider>
     </AuthProvider>
-    );
+  );
 }

@@ -4,7 +4,7 @@ import {Role} from '../enum.js';
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   email: {
@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
   },
   approved:{
     type: Boolean,
@@ -38,9 +38,19 @@ const userSchema = new mongoose.Schema({
     ref: 'District', 
     default: null,
   },
+  registrationToken: {
+    type: String,
+    default: null
+  },
+  registrationTokenExpires: {
+    type: Date,
+    default: null
+  },
   // Terms of Use tracking
+  termsAccepted: { type: Boolean, default: false },
   termsAcceptedAt: { type: Date },
   termsVersion: { type: String },
+  termsAcceptedIp: { type: String },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -66,7 +66,12 @@ export default function DistrictsList() {
             if (!token) return;
             const data = await getDistricts(token, { search });
             if (data.error) {
-                setError("Failed to fetch districts");
+                toast({
+                    title: "Error",
+                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to fetch districts"),
+                    variant: "destructive"
+                });
+                setError(typeof data.error === 'string' ? data.error : (data.error.message || "Failed to fetch districts"));
             } else {
                 setDistricts(data.districts || []);
             }
@@ -93,20 +98,35 @@ export default function DistrictsList() {
         try {
             const token = getAuthToken(user);
             if (!token) {
-                alert("Authentication required. Please sign in again.");
+                toast({
+                    title: "Authentication Error",
+                    description: "Authentication required. Please sign in again.",
+                    variant: "destructive"
+                });
                 return;
             }
             const data = await deleteDistrict(id, token);
             if (data.error) {
-                alert("Failed to delete district");
+                toast({
+                    title: "Error",
+                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete district"),
+                    variant: "destructive"
+                });
             } else {
+                toast({
+                    description: `${name} deleted successfully.`,
+                });
                 // Update state to reflect expired status instead of removal
                 setDistricts(districts.map(d => 
                     d._id === id ? { ...d, subscriptionStatus: 'expired' as any } : d
                 ));
             }
-        } catch (err) {
-            alert("Error deleting district");
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: err.message || "Error deleting district",
+                variant: "destructive"
+            });
         }
     };
 

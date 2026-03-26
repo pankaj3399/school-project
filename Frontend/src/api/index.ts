@@ -288,15 +288,32 @@ export const updateSchool = async (
         },
       },
     );
-    return response;
+    return response.data;
   } catch (error: any) {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
 
-export const getForms = async (token: string) => {
+export const deleteSchool = async (id: string, token: string) => {
   try {
-    const response = await axios.get(`${API_URL}/form/getForms`, {
+    const response = await axios.delete(
+      `${API_URL}/school/deleteSchool/${id}`,
+      {
+        headers: {
+          token,
+        },
+      },
+    );
+    return response.data;
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+
+export const getForms = async (token: string, schoolId?: string) => {
+  try {
+    const url = schoolId ? `${API_URL}/form/getForms?schoolId=${schoolId}` : `${API_URL}/form/getForms`;
+    const response = await axios.get(url, {
       headers: {
         token,
       },
@@ -1209,6 +1226,25 @@ export const updateTerms = async (data: any, token: string) => {
     const response = await axios.post(`${API_URL}/system-admin/terms`, data, {
       headers: { token },
     });
+    return response.data;
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+export const inviteAdmin = async (data: { email: string; name: string; role: string; schoolId?: string; districtId?: string }) => {
+  try {
+    const token = getToken();
+    const response = await axios.post(`${API_URL}/system-admin/invite`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+export const completeAdminRegistration = async (data: { token: string; password: string; name?: string; termsAccepted?: boolean; termsVersion?: string }) => {
+  try {
+    const response = await axios.post(`${API_URL}/system-admin/complete-registration`, data);
     return response.data;
   } catch (error: any) {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };

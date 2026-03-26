@@ -69,7 +69,7 @@ export default function AddDistrict() {
                 navigate('/system-admin/districts');
             } else {
                 // Robust error message extraction
-                const errorMsg = response.error?.response?.data?.message || response.error?.message || response.message || "Failed to create district";
+                const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || response.message || "Failed to create district");
                 toast({
                     title: "Registration Failed",
                     description: errorMsg,

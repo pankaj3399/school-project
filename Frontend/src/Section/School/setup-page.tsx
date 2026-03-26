@@ -7,6 +7,9 @@ import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
 import PasswordConfirmationModal from "./PasswordConfirmationModal";
+import { useSchool } from "@/context/SchoolContext";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 import { 
   Select, 
   SelectTrigger, 
@@ -51,6 +54,8 @@ const SetupPage = () => {
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState(TIMEZONE_OPTIONS[0].value);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const { selectedSchoolId } = useSchool();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -66,7 +71,18 @@ const SetupPage = () => {
           return;
         }
 
-        const data = await getCurrrentSchool(token);
+        // For SystemAdmin/Admin, we need a schoolId. For SchoolAdmin/Teacher, backend finds it automatically if not provided.
+        // However, it's safer to pass selectedSchoolId if we have it.
+        const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+        
+        if (isAdmin && !selectedSchoolId) {
+          // If admin but no school selected, we are in "create new school" mode or just landed
+          setSchool(null);
+          setLoading(false);
+          return;
+        }
+
+        const data = await getCurrrentSchool(token, selectedSchoolId || undefined);
         setSchool(data.school || null);
         if (data.school) {
           setSchoolName(data.school.name);
@@ -77,18 +93,22 @@ const SetupPage = () => {
           setTimezone(data.school.timeZone || "UTC-5");
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch school data.",
-          variant: "destructive",
-        });
+        // Only toast error if it's not a 404 (school not found is okay if creating a new one)
+        const isNotFoundError = (error as any)?.response?.status === 404;
+        if (!isNotFoundError) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch school data.",
+            variant: "destructive",
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchSchool();
-  }, [toast]);
+  }, [toast, selectedSchoolId, user]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};

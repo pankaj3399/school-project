@@ -37,6 +37,7 @@ import Setup from "./Section/School/setup";
 import SetupStudents from "./Section/School/setup-students";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
 import CompleteGuardianRegistration from "@/Section/Guardian/complete-registration";
+import CompleteAdminRegistration from "@/Section/SystemAdmin/complete-registration";
 import TermsPage from "@/components/TermsPage";
 import { Role } from "./enum";
 
@@ -49,7 +50,7 @@ import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
 import ViewSchool from "@/Section/SystemAdmin/schools/view-school";
 import TermsManagement from "./Section/SystemAdmin/terms";
 
-const systemAdminRoles = [Role.SystemAdmin, Role.Admin];
+const systemAdminRoles = [Role.SystemAdmin];
 
 // Reusable ProtectedRoute component
 const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode, requiredRoles?: string[] }) => {
@@ -65,12 +66,43 @@ const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode
   return <>{children}</>;
 };
 
+// Redirect logged-in users to their respective dashboards
+const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) {
+    if (user.role === Role.SystemAdmin) {
+      return <Navigate to="/system-admin" replace />;
+    }
+    if (user.role === Role.Admin) {
+      return <Navigate to="/analytics" replace />;
+    }
+    return <Navigate to="/home" replace />;
+  }
+  return <>{children}</>;
+};
+
+const HomeRedirect = () => {
+  const { user } = useAuth();
+  if (user?.role === Role.SystemAdmin) {
+    return <Navigate to="/system-admin" replace />;
+  }
+  if (user?.role === Role.Admin) {
+    return <Navigate to="/analytics" replace />;
+  }
+  return <AdminDashboard />;
+};
+
 export default function App() {
   return (
     <div className="min-h-screen bg-white text-gray-800">
       <RootLayout>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={
+            <AuthRedirect>
+              <LandingPage />
+            </AuthRedirect>
+          } />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
@@ -78,7 +110,7 @@ export default function App() {
           <Route path="/resetpassword" element={<ResetPassword />} />
 
           {/* Authenticated Routes */}
-          <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
@@ -103,7 +135,11 @@ export default function App() {
           <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
           {/* Dashboards */}
-          <Route path="/home" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/home" element={
+            <ProtectedRoute>
+              <HomeRedirect />
+            </ProtectedRoute>
+          } />
           <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
@@ -118,6 +154,7 @@ export default function App() {
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
           <Route path="/guardian/complete-registration" element={<CompleteGuardianRegistration />} />
+          <Route path="/admin/complete-registration" element={<CompleteAdminRegistration />} />
           <Route path="/terms" element={<TermsPage />} />
 
           {/* System Admin Routes */}

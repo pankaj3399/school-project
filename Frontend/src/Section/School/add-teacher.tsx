@@ -83,9 +83,10 @@ export default function AddTeacher() {
         }
         navigate("/teacher");
       } else {
+        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to add teacher. Please try again.");
         toast({
           title: "Error",
-          description: "Failed to add teacher. Please try again.",
+          description: errorMsg,
           variant: "destructive",
         });
       }
@@ -109,9 +110,6 @@ export default function AddTeacher() {
 
   if (loading) {
     return <Loading />;
-  }
-  if (error) {
-    alert("An unexpected error occurred. Please try again. " + error);
   }
   return (
     <div className="grid place-items-center w-full h-full mt-20">

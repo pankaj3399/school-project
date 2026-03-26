@@ -1,9 +1,12 @@
 import { useAuth } from '../../authContext';
 import { Navigate } from 'react-router-dom';
+import { Role } from '@/enum';
+import { useToast } from '@/hooks/use-toast';
 
 const SuperAdminDashboard = () => {
     const { user } = useAuth();
-    const isSuperAdmin = user?.role === 'Admin';
+    const { toast } = useToast();
+    const isSuperAdmin = user?.role === Role.SystemAdmin;
 
     // Redirect if not authorized
     if (!isSuperAdmin) {
@@ -33,9 +36,13 @@ const SuperAdminDashboard = () => {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error downloading waitlist:', error);
-            alert('Failed to download waitlist data');
+            toast({
+                title: "Error",
+                description: error.message || "Failed to download waitlist data",
+                variant: "destructive"
+            });
         }
     };
 

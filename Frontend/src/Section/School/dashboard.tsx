@@ -3,8 +3,19 @@ import CurrentWeekCharts from './component/current-week-charts'
 import EducationYearChart from './component/new-chart'
 import TeacherRanks from './component/TeacherRanks'
 
-const AdminDashboard = () => {
+import { useSchool } from '@/context/SchoolContext'
+import { useAuth } from '@/authContext'
+import { Role } from '@/enum'
+import { useToast } from '@/hooks/use-toast'
 
+const AdminDashboard = () => {
+  const { user } = useAuth()
+  const { selectedSchoolId } = useSchool()
+  const { toast } = useToast()
+  
+  const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
+    ? (selectedSchoolId || undefined) 
+    : undefined;
 
   const handleDownloadWaitlist = async () => {
     try {
@@ -35,9 +46,13 @@ const AdminDashboard = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading waitlist:', error);
-      alert('Failed to download waitlist data');
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download waitlist data",
+        variant: "destructive"
+      });
     }
   };
 
@@ -57,10 +72,10 @@ const AdminDashboard = () => {
 
       <div className='grid grid-cols-4'>
         <div className='col-span-3'>
-          <EducationYearChart studentId='' />
-          <CurrentWeekCharts studentId='' />
+          <EducationYearChart studentId='' schoolId={effectiveSchoolId} />
+          <CurrentWeekCharts studentId='' schoolId={effectiveSchoolId} />
         </div>
-        <TeacherRanks studentId='' />
+        <TeacherRanks studentId='' schoolId={effectiveSchoolId} />
       </div>
     </div>
   )
