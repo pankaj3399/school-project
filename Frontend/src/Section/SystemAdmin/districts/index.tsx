@@ -84,7 +84,7 @@ export default function DistrictsList() {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, toast]);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {

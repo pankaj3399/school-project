@@ -130,7 +130,7 @@ export default function SchoolsList() {
         return (
             school.name.toLowerCase().includes(searchText) ||
             districtName.toLowerCase().includes(searchText) ||
-            school.state.toLowerCase().includes(searchText)
+            (school.state || "").toLowerCase().includes(searchText)
         );
     });
 
@@ -224,7 +224,7 @@ export default function SchoolsList() {
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="secondary" className="bg-gray-100 text-gray-700 hover:bg-gray-100 border-0">
-                                                {school.state}
+                                                {school.state || "N/A"}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">

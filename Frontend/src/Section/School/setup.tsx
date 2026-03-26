@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Role } from "@/enum";
 
 interface TeacherData {
   // firstName: string;
@@ -169,6 +170,16 @@ export default function Setup() {
   };
 
   const handleSubmitRoster = async () => {
+    const isAdmin = user?.role === Role.Admin || user?.role === Role.SystemAdmin;
+    if (isAdmin && !selectedSchoolId) {
+      toast({
+        title: "No School Selected",
+        description: "Please select a school from the header to proceed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!validateTeacherData()) {
       toast({
         title: "Validation Error",

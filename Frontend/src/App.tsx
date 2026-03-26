@@ -71,12 +71,19 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) {
+    if (user.role === Role.Student) {
+      return <Navigate to="/student" replace />;
+    }
     return <Navigate to="/analytics" replace />;
   }
   return <>{children}</>;
 };
 
 const HomeRedirect = () => {
+  const { user } = useAuth();
+  if (user?.role === Role.Student) {
+    return <Navigate to="/student" replace />;
+  }
   return <Navigate to="/analytics" replace />;
 };
 
@@ -102,7 +109,6 @@ export default function App() {
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
-          <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />
           <Route path="/teachers/students" element={<ProtectedRoute><ViewTeacherStudents /></ProtectedRoute>} />
           <Route path="/createform" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
@@ -128,7 +134,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
-          <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
+          <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
           <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />

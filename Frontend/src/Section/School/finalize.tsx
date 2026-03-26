@@ -153,17 +153,27 @@ const Finalize = () => {
         const resTeacher = await getStudents(token ?? "", selectedSchoolId || undefined)
         const school = await getCurrrentSchool(token ?? "", selectedSchoolId || undefined)
 
-        if (resTeacher.error || school.error) {
-          throw new Error(resTeacher.error || school.error);
+        if (resTeacher.error) {
+           throw new Error(resTeacher.error);
         }
 
         setStudents(resTeacher.students || [])
         setSchoolData(school.school || {})
       } catch (error: any) {
         console.error("Error fetching finalize data:", error);
+        
+        let message = error.message || "Failed to fetch necessary data for reporting.";
+        const status = error?.response?.status;
+        
+        if (status === 404) {
+          message = "The requested school or data was not found. Please ensure a school is selected.";
+        } else if (status === 403) {
+          message = "Access denied. You do not have permission to view this school's reports.";
+        }
+
         toast({
           title: "Error",
-          description: error.message || "Failed to fetch necessary data for reporting.",
+          description: message,
           variant: "destructive"
         });
       }

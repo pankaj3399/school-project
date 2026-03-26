@@ -72,14 +72,16 @@ const seed = async () => {
     await District.deleteMany({});
     console.log("Cleared existing data");
 
+    const systemAdminEmail = process.env.ADMIN_EMAIL;
     const commonPassword = process.env.ADMIN_PASSWORD;
+
+    if (!systemAdminEmail || !commonPassword) {
+      throw Error("ADMIN_EMAIL or ADMIN_PASSWORD is not specified in environment variables");
+    }
+
     const hashedPwd = await bcrypt.hash(commonPassword, 12);
 
     // 1. Create System Admin
-    const systemAdminEmail = process.env.ADMIN_EMAIL;
-    if (!systemAdminEmail) {
-      throw Error("ADMIN_EMAIL is not specified in environment variables");
-    }
     const systemAdmin = await Admin.create({
       role: Role.SystemAdmin,
       name: "System Admin",
@@ -240,7 +242,6 @@ const seed = async () => {
     console.log("\n================================================");
     console.log("🎉 SEEDING COMPLETED SUCCESSFULLY! 🎉");
     console.log("All data reset and reseeded.");
-    console.log(`Common Password: ${commonPassword}`);
     console.log("================================================\n");
 
     process.exit(0);

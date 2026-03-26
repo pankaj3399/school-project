@@ -85,11 +85,24 @@ userSchema.pre('save', function (next) {
 // Helper to compare raw token with hashed token
 userSchema.methods.compareRegistrationToken = function (rawToken) {
   if (!this.registrationToken || !rawToken) return false;
-  const hashedToken = crypto
+
+  // 1. Try hashed comparison (for new/updated tokens)
+  const hashedTokenStr = crypto
     .createHash('sha256')
     .update(rawToken)
     .digest('hex');
-  return this.registrationToken === hashedToken;
+  
+  const actualTokenBuffer = Buffer.from(this.registrationToken);
+  const providedHashedBuffer = Buffer.from(hashedTokenStr);
+  
+  if (actualTokenBuffer.length === providedHashedBuffer.length && 
+      crypto.timingSafeEqual(actualTokenBuffer, providedHashedBuffer)) {
+    return true;
+  }
+  
+  // 2. Backward compatibility: check if it matches plain-text (for legacy tokens)
+  // We use a simple comparison here because legacy tokens aren't hashed anyway
+  return this.registrationToken === rawToken;
 };
 
 userSchema.index({ schoolId: 1 });

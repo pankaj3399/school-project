@@ -83,6 +83,7 @@ const SetupPage = () => {
           setDistrict("");
           setState("AL");
           setCountry("United States");
+          setTimezone(TIMEZONE_OPTIONS[0].value);
           setLoading(false);
           return;
         }
@@ -100,7 +101,15 @@ const SetupPage = () => {
       } catch (error) {
         // Only toast error if it's not a 404 (school not found is okay if creating a new one)
         const isNotFoundError = (error as any)?.response?.status === 404;
-        if (!isNotFoundError) {
+        if (isNotFoundError) {
+          setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict("");
+          setState("AL");
+          setCountry("United States");
+          setTimezone(TIMEZONE_OPTIONS[0].value);
+        } else {
           toast({
             title: "Error",
             description: "Failed to fetch school data.",

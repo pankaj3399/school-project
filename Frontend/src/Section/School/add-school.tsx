@@ -129,7 +129,7 @@ export default function SchoolPage() {
     };
 
     fetchSchool();
-  }, [toast, selectedSchoolId, user]);
+  }, [toast, selectedSchoolId, user, districtIdFromQuery]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};

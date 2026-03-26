@@ -11,6 +11,7 @@ import TeacherRanks from '../../School/component/TeacherRanks'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Modal from '@/Section/School/Modal'
 
 const ViewSchool = () => {
     const { id } = useParams<{ id: string }>()
@@ -21,6 +22,8 @@ const ViewSchool = () => {
     const [districts, setDistricts] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [fetchError, setFetchError] = useState<Error | null>(null)
     const navigate = useNavigate()
     const { toast } = useToast()
@@ -106,11 +109,9 @@ const ViewSchool = () => {
 
     const handleDelete = async () => {
         if (!id || !school) return
-        if (!window.confirm(`Are you sure you want to delete ${school.name}? This action cannot be undone.`)) {
-            return
-        }
-
+        
         try {
+            setIsDeleting(true)
             const token = localStorage.getItem('token') || ''
             const response = await deleteSchool(id, token)
             if (response.error) throw new Error(typeof response.error === 'string' ? response.error : response.error.message)
@@ -123,6 +124,8 @@ const ViewSchool = () => {
                 description: error.message || "Failed to delete school",
                 variant: "destructive"
             })
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -172,7 +175,7 @@ const ViewSchool = () => {
                     </Button>
                     <Button 
                         variant="ghost" 
-                        onClick={handleDelete}
+                        onClick={() => setShowDeleteModal(true)}
                         className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl gap-2"
                     >
                         <IconTrash className="w-5 h-5" />
@@ -180,6 +183,17 @@ const ViewSchool = () => {
                     </Button>
                 </div>
             </div>
+
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                title="Delete School"
+                description={`Are you sure you want to delete ${school?.name}? This action will permanently remove the school and its data.`}
+                callToAction="Delete"
+                variant="danger"
+                confirmDisabled={isDeleting}
+            />
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="space-y-6">
                 <TabsList className="bg-white border border-neutral-200 p-1 rounded-xl shadow-sm">

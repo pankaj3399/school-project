@@ -86,6 +86,10 @@ const getSchoolIdFromUser = async (req) => {
 
   // Admin (District/School) still requires schoolId or has it assigned
   if (userRole === Role.Admin) {
+    const adminUser = await Admin.findById(userId);
+    if (!adminUser || (!adminUser.districtId && adminUser.role !== Role.SystemAdmin)) {
+        return null; // Return null to prevent global lookup if no district assigned
+    }
     const schoolId = req.query.schoolId || req.body.schoolId;
     if (!schoolId) {
         throw new Error("School ID is required for Administrators");
@@ -1421,9 +1425,8 @@ export const getAnalyticsData = async (req, res) => {
       PointsHistory.aggregate([
         {
           $match: {
-            ...(schoolId && { schoolId: new mongoose.Types.ObjectId(schoolId) }),
-            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
-            ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
+            ...matchCriteria,
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
           }
         },
         {
@@ -1468,9 +1471,8 @@ export const getAnalyticsData = async (req, res) => {
       PointsHistory.aggregate([
         {
           $match: {
-            ...(schoolId && { schoolId: new mongoose.Types.ObjectId(schoolId) }),
-            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
-            ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
+            ...matchCriteria,
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
           }
         },
         {

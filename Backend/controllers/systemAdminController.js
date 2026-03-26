@@ -495,6 +495,14 @@ export const inviteAdmin = async (req, res) => {
       }
     }
 
+    // New: Validate relationship if both IDs are provided
+    if (schoolId && districtId) {
+       const targetSchool = await School.findById(schoolId);
+       if (targetSchool && targetSchool.districtId.toString() !== districtId.toString()) {
+           return res.status(400).json({ message: "The specified school does not belong to the specified district." });
+       }
+    }
+
     // If requester is an Admin, they can only invite users to their OWN district
     if (requesterRole === Role.Admin) {
       const requester = await Admin.findById(req.user.id);
@@ -532,6 +540,7 @@ export const inviteAdmin = async (req, res) => {
 
     // Generate custom registration token
     const registrationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(registrationToken).digest('hex');
     const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     // Create the user in "pending" state
@@ -540,10 +549,10 @@ export const inviteAdmin = async (req, res) => {
       role,
       schoolId: schoolId || null,
       districtId: districtId || null,
-      approved: true, // Auto-approved since it's an invite from SystemAdmin
-      registrationToken,
+      approved: true, // Auto-approved since it's an invite
+      registrationToken: hashedToken, // Store the hash
       registrationTokenExpires,
-      name: name || email.split('@')[0], // Use provided name or placeholder
+      name: name || email.split('@')[0],
     });
 
     const userResponse = newUser.toObject();
@@ -599,23 +608,22 @@ export const inviteAdmin = async (req, res) => {
 // Complete administrator registration
 export const completeAdminRegistration = async (req, res) => {
   try {
-    const { token, name, password, termsAccepted, termsVersion } = req.body;
+    const { token, email, name, password, termsAccepted, termsVersion } = req.body;
 
-    if (!token || !password) {
-      return res.status(400).json({ message: "Token and password are required" });
+    if (!token || !password || !email) {
+      return res.status(400).json({ message: "Token, email, and password are required" });
     }
 
     if (!termsAccepted) {
       return res.status(400).json({ message: "You must accept the terms of use to complete registration." });
     }
 
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const admin = await Admin.findOne({
-      registrationToken: hashedToken,
+      email: email.toLowerCase(),
       registrationTokenExpires: { $gt: Date.now() },
     });
 
-    if (!admin) {
+    if (!admin || !admin.compareRegistrationToken(token)) {
       return res.status(400).json({ message: "Invalid or expired registration token" });
     }
 

@@ -76,18 +76,13 @@ const Analytics = () => {
           ? selectedSchoolId 
           : undefined;
 
-        console.log('📊 MAIN PAGE: Fetching analytics with period:', period, 'studentId:', studentId, 'schoolId:', effectiveSchoolId);
         const data = await getAnalyticsData({
           period,
           ...(studentId && { studentId }),
           ...(effectiveSchoolId && { schoolId: effectiveSchoolId })
         });
 
-        console.log('📊 MAIN PAGE: Received data:', data);
         if (data.success) {
-          console.log('📊 MAIN PAGE: Award Points data:', data.data.awardPoints);
-          console.log('📊 MAIN PAGE: Deduct Points data:', data.data.deductPoints);
-          console.log('📊 MAIN PAGE: Withdraw Points data:', data.data.withdrawPoints);
           setAnalyticsData(data.data);
         }
       } catch (error) {
@@ -102,9 +97,7 @@ const Analytics = () => {
 
   // Process chart data - show only actual data from database
   const processChartData = (data: ChartDataPoint[], period: string) => {
-    console.log('🔄 Processing chart data - Input:', data, 'Period:', period);
     if (!data || data.length === 0) {
-      console.log('🔄 No data to process, returning empty array');
       return [];
     }
 
@@ -114,7 +107,6 @@ const Analytics = () => {
       label: formatDateLabel(d.date, period)
     }));
 
-    console.log('🔄 Processed data (ONLY DB data):', result);
     return result;
   };
 

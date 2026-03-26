@@ -93,7 +93,7 @@ export default function AddTeacher() {
         email: "",
         checkbox: false,
         grade: "K",
-        type: "Special"
+        type: "Lead"
       });
     } catch (error) {
       console.error("Error adding teacher:", error);

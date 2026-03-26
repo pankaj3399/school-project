@@ -26,6 +26,18 @@ export function TopNav() {
     navigate('/');
   };
 
+  const getUserLabel = () => {
+    if (!user) return "";
+    switch (user.role) {
+      case Role.SystemAdmin: return "System Admin";
+      case Role.Admin: return "District Manager";
+      case Role.SchoolAdmin: return "School Admin";
+      case Role.Teacher: return "Teacher";
+      case Role.Student: return "Student";
+      default: return user.role;
+    }
+  };
+
   // Only show school selector for System Admin on specific reporting/roster pages
   const allowedPaths = [
     '/analytics', 
@@ -86,7 +98,7 @@ export function TopNav() {
               {user?.role === Role.SystemAdmin ? (
                 <>
                   <DropdownMenuLabel className="font-semibold px-2 py-1.5 text-[#654f6f]">
-                    System Admin
+                    {getUserLabel()}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/system-admin')} className="cursor-pointer font-medium">
@@ -104,7 +116,12 @@ export function TopNav() {
                 <>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.name}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium leading-none">{user?.name}</p>
+                        <span className="text-[10px] bg-[#654f6f]/10 text-[#654f6f] px-1.5 py-0.5 rounded ml-2 font-semibold uppercase tracking-wider">
+                          {getUserLabel()}
+                        </span>
+                      </div>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>

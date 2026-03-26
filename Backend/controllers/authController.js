@@ -31,7 +31,12 @@ export const requestLoginOtp = async (req, res) => {
     
     if (isSystemAdminEmail) {
       user = await Admin.findOne({ email });
-      userRole = Role.SystemAdmin;
+      if (user && user.role === Role.SystemAdmin) {
+        userRole = Role.SystemAdmin;
+      } else if (isSystemAdminEmail) {
+        // Fail if it's the admin email but role in DB is not system admin
+        return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
+      }
     } else {
       switch (userRole) {
         case Role.Teacher: {
@@ -157,7 +162,11 @@ export const login = async (req, res) => {
     
     if (isSystemAdminEmail) {
       user = await Admin.findOne({ email });
-      userRole = Role.SystemAdmin;
+      if (user && user.role === Role.SystemAdmin) {
+        userRole = Role.SystemAdmin;
+      } else if (isSystemAdminEmail) {
+        return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
+      }
     } else {
       switch (userRole) {
         case Role.Teacher: {
@@ -297,7 +306,11 @@ export const verifyLoginOtp = async (req, res) => {
     
     if (isSystemAdminEmail) {
       user = await Admin.findOne({ email });
-      userRole = Role.SystemAdmin;
+      if (user && user.role === Role.SystemAdmin) {
+        userRole = Role.SystemAdmin;
+      } else if (isSystemAdminEmail) {
+        return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
+      }
     } else {
       switch (userRole) {
         case Role.Teacher: {

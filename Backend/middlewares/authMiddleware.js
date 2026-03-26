@@ -28,7 +28,8 @@ export const authorizeRoles = (...allowedRoles) => {
             return res.status(403).json({ message: 'User role not found' });
         }
 
-        // SystemAdmin has global access
+        // Role.SystemAdmin has global, unscoped access across the platform.
+        // Role.Admin (District Manager) access is explicitly scoped by districtId within each controller.
         const globalRoles = [Role.SystemAdmin];
         if (globalRoles.includes(req.user.role)) {
             return next();

@@ -9,13 +9,12 @@ export const getAllSchools = async (req, res) => {
       let filter = {};
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
-        if (adminUser && adminUser.districtId) {
-          filter = { districtId: adminUser.districtId };
-        } else if (adminUser && adminUser.role === Role.SystemAdmin) {
-          // Bypassing districtId for SystemAdmin in transition
+        if (adminUser && adminUser.role === Role.SystemAdmin) {
           filter = {};
+        } else if (adminUser && adminUser.districtId) {
+          filter = { districtId: adminUser.districtId };
         } else {
-          return res.status(200).json({ message: "No district assigned.", schools: [] });
+          return res.status(200).json({ message: "No district assigned or access denied.", schools: [] });
         }
       }
       const schools = await School.find(filter);
@@ -170,15 +169,20 @@ export const getCurrentSchool = async (req, res) => {
                 break;
             case Role.Admin:
                 const adminUser = await Admin.findById(req.user.id);
-                if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
-                    return res.status(403).json({ message: 'Admin is not assigned to a district' });
+                if (!adminUser) return res.status(403).json({ message: "Admin user not found." });
+                
+                if (adminUser.role === Role.SystemAdmin) {
+                  const { schoolId: saSchoolId } = req.query;
+                  if (!saSchoolId) return res.status(400).json({ message: 'School ID is required for System Administrators' });
+                  sch = await School.findById(saSchoolId).populate('createdBy');
+                } else if (adminUser.districtId) {
+                  const { schoolId: dSchoolId } = req.query;
+                  if (!dSchoolId) return res.status(400).json({ message: 'School ID is required for Administrators' });
+                  sch = await School.findOne({ _id: dSchoolId, districtId: adminUser.districtId }).populate('createdBy');
+                  if (!sch) return res.status(403).json({ message: "Access denied to school outside your district." });
+                } else {
+                  return res.status(403).json({ message: 'Admin is not assigned to a district' });
                 }
-                const { schoolId: adminQuerySchoolId } = req.query;
-                if (!adminQuerySchoolId) {
-                    return res.status(400).json({ message: 'School ID is required for Administrators' });
-                }
-                sch = await School.findOne({ _id: adminQuerySchoolId, districtId: adminUser.districtId }).populate('createdBy');
-                if (!sch) return res.status(403).json({ message: "Access denied to school outside your district." });
                 break;
         }
 
@@ -246,12 +250,22 @@ export const deleteSchool = async (req, res) => {
         
         if (req.user.role === Role.Admin) {
             const adminUser = await Admin.findById(req.user.id);
-            if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
-                return res.status(403).json({ message: "Admin is not assigned to a district." });
+            if (!adminUser) return res.status(403).json({ message: "Admin user not found." });
+
+            if (adminUser.role !== Role.SystemAdmin) {
+                if (!adminUser.districtId) {
+                    return res.status(403).json({ message: "Admin is not assigned to a district." });
+                }
+                const schoolCheck = await School.findById(schoolId);
+                if (!schoolCheck || schoolCheck.districtId.toString() !== adminUser.districtId.toString()) {
+                    return res.status(403).json({ message: "Access denied. School is outside your district." });
+                }
             }
-            const schoolCheck = await School.findById(schoolId);
-            if (!schoolCheck || schoolCheck.districtId.toString() !== adminUser.districtId.toString()) {
-                return res.status(403).json({ message: "Access denied. School is outside your district." });
+        } else if (req.user.role === Role.SchoolAdmin) {
+            const adminUser = await Admin.findById(req.user.id);
+            const school = await School.findById(schoolId);
+            if (!school || school.createdBy.toString() !== req.user.id) {
+                return res.status(403).json({ message: "Access denied. You can only delete schools you created." });
             }
         }
 
