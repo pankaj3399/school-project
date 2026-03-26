@@ -9,6 +9,7 @@ import { Role } from '@/enum';
 const navItems = [
   { href: '/analytics', label: 'Analytics', icon: School },
   { href: '/system-admin', label: 'System Overview', icon: LayoutDashboard, roles: [Role.SystemAdmin] },
+  { href: '/system-admin/schools', label: 'Schools', icon: School, roles: [Role.SystemAdmin] },
   { href: '/teacher', label: 'Teachers', icon: Users },
   { href: '/students', label: 'Students', icon: BookOpen },
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },

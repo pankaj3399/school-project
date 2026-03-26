@@ -160,7 +160,7 @@ const SetupPage = () => {
         formData.append("logo", logo);
       }
 
-      const response:any = school ? await updateSchool(formData, school._id, token):await addSchool(formData, token);
+      const response:any = school ? await updateSchool(school._id, formData, token):await addSchool(formData, token);
 
       if (!response.error) {
         toast({

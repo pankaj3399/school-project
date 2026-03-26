@@ -48,6 +48,7 @@ import ViewDistrict from "@/Section/SystemAdmin/districts/view-district";
 import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
 import ViewSchool from "@/Section/SystemAdmin/schools/view-school";
 import TermsManagement from "./Section/SystemAdmin/terms";
+import SchoolsList from "./Section/SystemAdmin/schools/index";
 
 const systemAdminRoles = [Role.SystemAdmin];
 
@@ -150,7 +151,7 @@ export default function App() {
           <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/schools" element={<Navigate to="/system-admin/districts" replace />} />
+          <Route path="/system-admin/schools" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SchoolsList /></ProtectedRoute>} />
           <Route path="/system-admin/schools/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddSchool /></ProtectedRoute>} />
           <Route path="/system-admin/schools/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewSchool /></ProtectedRoute>} />
           <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={systemAdminRoles}><TermsManagement /></ProtectedRoute>} />

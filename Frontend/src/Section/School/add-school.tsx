@@ -176,7 +176,7 @@ export default function SchoolPage() {
         formData.append("logo", logo);
       }
       const response = isEditing
-        ? await updateSchool(formData, school._id, token)
+        ? await updateSchool(school._id, formData, token)
         : await addSchool(formData, token);
 
 

@@ -274,8 +274,8 @@ export const getCurrentUser = async (token?: string) => {
 };
 
 export const updateSchool = async (
-  data: FormData,
   id: string,
+  data: any,
   token: string,
 ) => {
   try {

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { teacherRoster } from "@/api";
 import { Download } from "lucide-react";
+import { useAuth } from "@/authContext";
 import { useSchool } from "@/context/SchoolContext";
 import {
   Accordion,
@@ -48,6 +49,7 @@ export default function Setup() {
   const [editForm, setEditForm] = useState<TeacherData | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
   const { selectedSchoolId } = useSchool();
 
   const downloadTemplate = () => {
@@ -239,7 +241,9 @@ export default function Setup() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Teacher Roster Setup</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Teacher Roster Setup {user?.schoolId?.name ? `for ${user.schoolId.name}` : ""}
+      </h1>
 
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">

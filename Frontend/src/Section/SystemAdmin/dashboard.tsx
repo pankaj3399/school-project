@@ -106,7 +106,7 @@ export default function SystemAdminDashboard() {
             icon: School,
             color: "text-indigo-600",
             bgColor: "bg-indigo-100",
-            link: "/system-admin/districts"
+            link: "/system-admin/schools"
         },
         {
             title: "Teachers",

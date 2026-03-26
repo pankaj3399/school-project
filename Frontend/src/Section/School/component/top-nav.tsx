@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { School, UserCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,25 +24,6 @@ export function TopNav() {
   const handleLogout = () => {
     logout();
     navigate('/');
-  };
-
-  const getUserLabel = () => {
-    if (!user) return "";
-    if (user.role === Role.SystemAdmin) return 'System Admin';
-    if (user.role === Role.Admin) return 'Admin | ' + (user.name || '');
-
-    let label = user.name || "";
-    if (user.role === 'SchoolAdmin') {
-      label += ' | System Manager';
-    } else if (user.type === 'Special') {
-      label += ` | Teacher | ${user.subject || 'N/A'}`;
-    } else {
-      label += ' | Lead Teacher';
-      if (user.grade) {
-        label += ` | Grade ${user.grade}`;
-      }
-    }
-    return label;
   };
 
   // Only show school selector for System Admin on specific reporting/roster pages
@@ -70,12 +52,18 @@ export function TopNav() {
   return (
     <header className="bg-[#654f6f] text-white shadow-sm">
       <div className="flex items-center justify-between h-16 px-4">
-        <div className="flex items-center space-x-4 pl-4">
-          {showSchoolSelector && (
+        <div /> {/* Spacer to push content to the right */}
+        <div className="flex items-center space-x-4 pr-4">
+          {showSchoolSelector ? (
             <SchoolSelector />
+          ) : (
+            user?.role !== Role.SystemAdmin && user?.schoolId?.name && (
+              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-md border border-white/20">
+                <School className="h-4 w-4 opacity-70" />
+                <span className="text-sm font-medium">{user.schoolId.name}</span>
+              </div>
+            )
           )}
-        </div>
-        <div className="flex items-center space-x-4">
           <SupportPanel
             isOpen={showSupport}
             onOpenChange={setShowSupport}
@@ -89,14 +77,18 @@ export function TopNav() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className={`relative mr-8 h-8 w-fit rounded-full ${user?.role === Role.SystemAdmin ? 'bg-white text-[#654f6f] hover:bg-white/90 hover:text-[#654f6f]' : 'text-white hover:text-white hover:bg-[#7a617f]'}`}
+                className="relative h-9 w-9 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/20 flex items-center justify-center p-0"
               >
-                {getUserLabel()}
+                <UserCircle className="h-6 w-6" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               {user?.role === Role.SystemAdmin ? (
                 <>
+                  <DropdownMenuLabel className="font-semibold px-2 py-1.5 text-[#654f6f]">
+                    System Admin
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/system-admin')} className="cursor-pointer font-medium">
                     System Admin Dashboard
                   </DropdownMenuItem>
