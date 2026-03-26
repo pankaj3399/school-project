@@ -105,7 +105,7 @@ export default function ViewTeachers() {
 
   useEffect(() => {
     fetchTeachers();
-  }, [selectedSchoolId, user, toast]);
+  }, [selectedSchoolId, user]);
 
   const navigate = useNavigate();
 

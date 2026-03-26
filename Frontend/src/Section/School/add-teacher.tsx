@@ -19,7 +19,6 @@ export default function AddTeacher() {
   });
   const [customGrade, setCustomGrade] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -83,7 +82,7 @@ export default function AddTeacher() {
         }
         navigate("/teacher");
       } else {
-        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to add teacher. Please try again.");
+        const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || "Failed to add teacher. Please try again.");
         toast({
           title: "Error",
           description: errorMsg,
@@ -97,7 +96,7 @@ export default function AddTeacher() {
         type: "Special"
       });
     } catch (error) {
-      setError("An unexpected error occurred. Please try again.");
+      console.error("Error adding teacher:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",

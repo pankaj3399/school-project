@@ -78,6 +78,11 @@ const SetupPage = () => {
         if (isAdmin && !selectedSchoolId) {
           // If admin but no school selected, we are in "create new school" mode or just landed
           setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict("");
+          setState("AL");
+          setCountry("United States");
           setLoading(false);
           return;
         }

@@ -90,6 +90,9 @@ const HomeRedirect = () => {
   if (user?.role === Role.Admin) {
     return <Navigate to="/analytics" replace />;
   }
+  if (user?.role === Role.Teacher) {
+    return <Navigate to="/teachers" replace />;
+  }
   return <AdminDashboard />;
 };
 
@@ -110,7 +113,7 @@ export default function App() {
           <Route path="/resetpassword" element={<ResetPassword />} />
 
           {/* Authenticated Routes */}
-          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute requiredRoles={[Role.Admin, Role.SchoolAdmin, Role.Teacher]}><Analytics /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />

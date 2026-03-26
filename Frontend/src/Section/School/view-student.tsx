@@ -76,7 +76,7 @@ export default function ViewStudents() {
     }
 
     fetchStudents()
-  }, [selectedSchoolId, user, toast, editingStudent])
+  }, [selectedSchoolId, user, toast])
 
 
   useEffect(() => {

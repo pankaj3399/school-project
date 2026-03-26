@@ -98,7 +98,7 @@ const Analytics = () => {
     };
 
     fetchAnalytics();
-  }, [period, studentId]);
+  }, [period, studentId, selectedSchoolId, user]);
 
   // Process chart data - show only actual data from database
   const processChartData = (data: ChartDataPoint[], period: string) => {

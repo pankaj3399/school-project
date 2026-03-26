@@ -49,7 +49,7 @@ export function TopNav() {
     <header className="bg-[#654f6f] text-white shadow-sm">
       <div className="flex items-center justify-between h-16 px-4">
         <div className="flex items-center space-x-4 pl-4">
-          {user?.role === Role.SystemAdmin && (
+          {(user?.role === Role.SystemAdmin || user?.role === Role.Admin) && (
             <SchoolSelector />
           )}
         </div>

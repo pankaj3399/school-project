@@ -23,9 +23,10 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [selectedSchoolId]);
 
-  // Reset selected school if user changes and is not SystemAdmin
   useEffect(() => {
-    if (user && user.role !== Role.SystemAdmin && user.role !== Role.Admin) {
+    if (!user) {
+      setSelectedSchoolId(null);
+    } else if (user.role !== Role.SystemAdmin && user.role !== Role.Admin) {
       setSelectedSchoolId(null);
     }
   }, [user]);

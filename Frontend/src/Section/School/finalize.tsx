@@ -140,22 +140,36 @@ const Finalize = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token")
-      
-      const isAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
-      if (isAdmin && !selectedSchoolId) {
-        setStudents([])
-        setSchoolData({})
-        return;
-      }
+      try {
+        const token = localStorage.getItem("token")
+        
+        const isAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
+        if (isAdmin && !selectedSchoolId) {
+          setStudents([])
+          setSchoolData({})
+          return;
+        }
 
-      const resTeacher = await getStudents(token ?? "", selectedSchoolId || undefined)
-      const school = await getCurrrentSchool(token ?? "", selectedSchoolId || undefined)      
-      setStudents(resTeacher.students || [])
-      setSchoolData(school.school || {})
+        const resTeacher = await getStudents(token ?? "", selectedSchoolId || undefined)
+        const school = await getCurrrentSchool(token ?? "", selectedSchoolId || undefined)
+
+        if (resTeacher.error || school.error) {
+          throw new Error(resTeacher.error || school.error);
+        }
+
+        setStudents(resTeacher.students || [])
+        setSchoolData(school.school || {})
+      } catch (error: any) {
+        console.error("Error fetching finalize data:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch necessary data for reporting.",
+          variant: "destructive"
+        });
+      }
     }
     fetchData()
-  }, [selectedSchoolId, authUser])
+  }, [selectedSchoolId, authUser, toast])
 
   return (
     <div className="flex flex-col justify-center min-h-[80vh] gap-8">

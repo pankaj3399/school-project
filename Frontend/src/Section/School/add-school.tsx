@@ -92,6 +92,12 @@ export default function SchoolPage() {
         const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
         if (isAdmin && !selectedSchoolId) {
           setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict(districtIdFromQuery || "");
+          setState("AL");
+          setCountry("United States");
+          setTimezone("UTC-5");
           setLoading(false);
           return;
         }
@@ -106,7 +112,7 @@ export default function SchoolPage() {
           }
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
-          setTimezone(data.school.timezone || "UTC-5");
+          setTimezone(data.school.timeZone || "UTC-5");
         }
       } catch (error) {
         const isNotFoundError = (error as any)?.response?.status === 404;

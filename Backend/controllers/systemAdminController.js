@@ -462,7 +462,7 @@ export const getAllAdmins = async (req, res) => {
 // Invite a new administrator
 export const inviteAdmin = async (req, res) => {
   try {
-    const { email, role, schoolId, districtId } = req.body;
+    const { email, role, schoolId, districtId, name } = req.body;
 
     if (!email || !role) {
       return res.status(400).json({ message: "Email and role are required" });
@@ -514,6 +514,16 @@ export const inviteAdmin = async (req, res) => {
       }
     }
 
+    // Validate ID existence
+    if (districtId) {
+      const district = await District.findById(districtId);
+      if (!district) return res.status(404).json({ message: "District not found." });
+    }
+    if (schoolId) {
+      const school = await School.findById(schoolId);
+      if (!school) return res.status(404).json({ message: "School not found." });
+    }
+
     // Check if user already exists
     const existingUser = await Admin.findOne({ email });
     if (existingUser) {
@@ -533,8 +543,11 @@ export const inviteAdmin = async (req, res) => {
       approved: true, // Auto-approved since it's an invite from SystemAdmin
       registrationToken,
       registrationTokenExpires,
-      name: email.split('@')[0], // Placeholder name
+      name: name || email.split('@')[0], // Use provided name or placeholder
     });
+
+    const userResponse = newUser.toObject();
+    delete userResponse.registrationToken;
 
     // Send invitation email
     try {
@@ -567,7 +580,7 @@ export const inviteAdmin = async (req, res) => {
       return res.status(201).json({ 
         success: true,
         message: "Admin invited successfully, but invitation email failed to send.",
-        user: newUser,
+        user: userResponse,
         emailError: emailError.message
       });
     }
@@ -575,7 +588,7 @@ export const inviteAdmin = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Invitation sent successfully",
-      user: newUser
+      user: userResponse
     });
   } catch (error) {
     console.error("Error inviting admin:", error);
@@ -592,8 +605,13 @@ export const completeAdminRegistration = async (req, res) => {
       return res.status(400).json({ message: "Token and password are required" });
     }
 
+    if (!termsAccepted) {
+      return res.status(400).json({ message: "You must accept the terms of use to complete registration." });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const admin = await Admin.findOne({
-      registrationToken: token,
+      registrationToken: hashedToken,
       registrationTokenExpires: { $gt: Date.now() },
     });
 

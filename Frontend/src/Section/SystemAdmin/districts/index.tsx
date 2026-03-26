@@ -35,6 +35,7 @@ import { getDistricts, deleteDistrict } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
+import Modal from '@/Section/School/Modal';
 
 interface District {
     _id: string;
@@ -54,6 +55,9 @@ export default function DistrictsList() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [districtToDelete, setDistrictToDelete] = useState<{ id: string; name: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
 
 
@@ -91,11 +95,8 @@ export default function DistrictsList() {
     }, [searchTerm, fetchDistricts]);
 
     const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
-            return;
-        }
-
         try {
+            setIsDeleting(true);
             const token = getAuthToken(user);
             if (!token) {
                 toast({
@@ -116,10 +117,10 @@ export default function DistrictsList() {
                 toast({
                     description: `${name} deleted successfully.`,
                 });
-                // Update state to reflect expired status instead of removal
-                setDistricts(districts.map(d => 
-                    d._id === id ? { ...d, subscriptionStatus: 'expired' as any } : d
-                ));
+                // Remove the district from state instead of marking as expired
+                setDistricts(prev => prev.filter(d => d._id !== id));
+                setShowDeleteModal(false);
+                setDistrictToDelete(null);
             }
         } catch (err: any) {
             toast({
@@ -127,6 +128,8 @@ export default function DistrictsList() {
                 description: err.message || "Error deleting district",
                 variant: "destructive"
             });
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -263,7 +266,10 @@ export default function DistrictsList() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem 
                                                         className="text-red-600"
-                                                        onClick={() => handleDelete(district._id, district.name)}
+                                                        onClick={() => {
+                                                            setDistrictToDelete({ id: district._id, name: district.name });
+                                                            setShowDeleteModal(true);
+                                                        }}
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete District
                                                     </DropdownMenuItem>
@@ -277,6 +283,20 @@ export default function DistrictsList() {
                     </Table>
                 </div>
             )}
+            
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setDistrictToDelete(null);
+                }}
+                onConfirm={() => districtToDelete && handleDelete(districtToDelete.id, districtToDelete.name)}
+                title="Delete District"
+                description={`Are you sure you want to delete ${districtToDelete?.name}? This action will permanently remove the district and its data.`}
+                callToAction="Delete"
+                variant="danger"
+                confirmDisabled={isDeleting}
+            />
         </div>
     );
 }

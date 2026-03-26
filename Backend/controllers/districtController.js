@@ -9,6 +9,15 @@ import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.
 import bcrypt from 'bcryptjs';
 import { escapeRegExp } from "../utils/stringUtils.js";
 
+// Shared helper to verify admin district scope
+const getAdminUserWithDistrict = async (userId) => {
+  const adminUser = await User.findById(userId);
+  if (!adminUser || !adminUser.districtId) {
+    return null;
+  }
+  return adminUser;
+};
+
 // Create a new district
 export const createDistrict = async (req, res) => {
   try {
@@ -76,8 +85,8 @@ export const getDistricts = async (req, res) => {
     const query = {};
     
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (!adminUser || !adminUser.districtId) {
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser) {
         return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
       query._id = adminUser.districtId;
@@ -188,9 +197,9 @@ export const getDistrictById = async (req, res) => {
     const { id } = req.params;
     
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only access your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
     
@@ -230,9 +239,9 @@ export const updateDistrict = async (req, res) => {
     const { id } = req.params;
     
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only update your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
 
@@ -264,9 +273,9 @@ export const deleteDistrict = async (req, res) => {
     const { id } = req.params;
 
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only delete your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
 
@@ -304,9 +313,9 @@ export const getDistrictStats = async (req, res) => {
     const { id } = req.params;
 
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only view stats for your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
 
@@ -352,9 +361,9 @@ export const addSchoolToDistrict = async (req, res) => {
     const { name, address, state, country, timeZone, domain } = req.body;
 
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only add schools to your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
 
@@ -406,9 +415,9 @@ export const getDistrictSchools = async (req, res) => {
     const { id } = req.params;
 
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only view schools in your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
 
@@ -476,9 +485,9 @@ export const assignDistrictAdmin = async (req, res) => {
     const { id } = req.params; // District ID from URL params
 
     if (req.user.role === Role.Admin) {
-      const adminUser = await User.findById(req.user.id);
-      if (id !== adminUser.districtId?.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only assign admins to your own district." });
+      const adminUser = await getAdminUserWithDistrict(req.user.id);
+      if (!adminUser || id !== adminUser.districtId.toString()) {
+        return res.status(403).json({ message: "Admin is not assigned to a district." });
       }
     }
 
