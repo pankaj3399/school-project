@@ -36,7 +36,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return localStorage.getItem('selectedSchoolId');
   });
 
-  const selectedSchool = selectedSchoolId ? schools.find(s => s._id === selectedSchoolId) : null;
+  const selectedSchool = selectedSchoolId ? (schools.find(s => s._id === selectedSchoolId) ?? null) : null;
 
   useEffect(() => {
     if (selectedSchoolId) {
