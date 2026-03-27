@@ -68,7 +68,7 @@ const Analytics = () => {
     // Fail-closed: clear selection on school change
     setStudentId("");
     setStudentName("");
-    setAnalyticsData([]);
+    setAnalyticsData(null);
     
     fetchStudents();
   }, [selectedSchoolId, user]);

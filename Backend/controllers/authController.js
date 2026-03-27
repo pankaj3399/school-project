@@ -30,11 +30,10 @@ export const requestLoginOtp = async (req, res) => {
     const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
     
     if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email });
+      user = await Admin.findOne({ email: email.toLowerCase() });
       if (user && user.role === Role.SystemAdmin) {
         userRole = Role.SystemAdmin;
-      } else if (isSystemAdminEmail) {
-        // Fail if it's the admin email but role in DB is not system admin
+      } else {
         return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
       }
     } else {
@@ -54,8 +53,6 @@ export const requestLoginOtp = async (req, res) => {
       }
     }
 
-
-    console.log(user)
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -164,7 +161,7 @@ export const login = async (req, res) => {
       user = await Admin.findOne({ email });
       if (user && user.role === Role.SystemAdmin) {
         userRole = Role.SystemAdmin;
-      } else if (isSystemAdminEmail) {
+      } else {
         return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
       }
     } else {
@@ -308,7 +305,7 @@ export const verifyLoginOtp = async (req, res) => {
       user = await Admin.findOne({ email });
       if (user && user.role === Role.SystemAdmin) {
         userRole = Role.SystemAdmin;
-      } else if (isSystemAdminEmail) {
+      } else {
         return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
       }
     } else {

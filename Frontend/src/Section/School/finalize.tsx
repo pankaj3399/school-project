@@ -183,6 +183,9 @@ const Finalize = () => {
           description: message,
           variant: "destructive"
         });
+        setStudents([]);
+        setSchoolData(null);
+        setSelectedStudentsData([]);
       }
     }
     fetchData()

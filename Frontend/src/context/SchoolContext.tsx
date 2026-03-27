@@ -2,11 +2,27 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useAuth } from '../authContext';
 import { Role } from '../enum';
 
+interface School {
+  _id: string;
+  name: string;
+  address?: string;
+  district?: string;
+  districtId?: {
+    _id: string;
+    name: string;
+  };
+  logo?: string;
+  state?: string;
+  country?: string;
+  timeZone?: string;
+  domain?: string;
+}
+
 interface SchoolContextType {
   selectedSchoolId: string | null;
   setSelectedSchoolId: (id: string | null) => void;
-  schools: any[];
-  selectedSchool: any | null;
+  schools: School[];
+  selectedSchool: School | null;
   loading: boolean;
 }
 
@@ -14,7 +30,7 @@ const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [schools, setSchools] = useState<any[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(() => {
     return localStorage.getItem('selectedSchoolId');
@@ -39,8 +55,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setLoading(true);
         try {
           const token = localStorage.getItem('token') || '';
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/school`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/school/`, {
+            headers: { 'token': token }
           });
           const data = await response.json();
           if (data.schools) {

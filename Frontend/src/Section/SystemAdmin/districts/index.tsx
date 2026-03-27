@@ -118,7 +118,7 @@ export default function DistrictsList() {
                     description: `${name} deleted successfully.`,
                 });
                 // Mark as expired locally instead of removing
-                setDistricts(prev => prev.map(d => d._id === id ? { ...d, status: 'expired' } : d));
+                setDistricts(prev => prev.map(d => d._id === id ? { ...d, subscriptionStatus: 'expired' } : d));
                 setShowDeleteModal(false);
                 setDistrictToDelete(null);
             }

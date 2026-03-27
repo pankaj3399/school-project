@@ -27,14 +27,24 @@ const getSchoolIdFromUser = async (req) => {
 
   if (userRole === Role.Admin) {
     const admin = await Admin.findById(userId);
+    if (!admin || !admin.districtId) {
+      const error = new Error("Administrator is not assigned to a district.");
+      error.status = 403;
+      throw error;
+    }
     const requestedSchoolId = req.query.schoolId || req.body.schoolId;
-    if (requestedSchoolId && admin && admin.districtId) {
+    if (requestedSchoolId) {
       const school = await School.findById(requestedSchoolId);
       if (school && school.districtId.toString() === admin.districtId.toString()) {
         return requestedSchoolId;
       }
+      const error = new Error("Access denied. School is outside your district.");
+      error.status = 403;
+      throw error;
     }
-    return undefined; // Return undefined if no match or not authorized
+    const error = new Error("School ID is required for this operation.");
+    error.status = 400;
+    throw error;
   }
 
   const admin = await Admin.findById(userId);

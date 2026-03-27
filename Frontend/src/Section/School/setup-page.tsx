@@ -57,6 +57,16 @@ const SetupPage = () => {
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
 
+  const resetSchoolForm = () => {
+    setSchool(null);
+    setSchoolName("");
+    setAddress("");
+    setDistrict("");
+    setState("AL");
+    setCountry("United States");
+    setTimezone(TIMEZONE_OPTIONS[0].value);
+  };
+
   useEffect(() => {
     const fetchSchool = async () => {
       try {
@@ -77,13 +87,7 @@ const SetupPage = () => {
         
         if (isAdmin && !selectedSchoolId) {
           // If admin but no school selected, we are in "create new school" mode or just landed
-          setSchool(null);
-          setSchoolName("");
-          setAddress("");
-          setDistrict("");
-          setState("AL");
-          setCountry("United States");
-          setTimezone(TIMEZONE_OPTIONS[0].value);
+          resetSchoolForm();
           setLoading(false);
           return;
         }
@@ -102,19 +106,14 @@ const SetupPage = () => {
         // Only toast error if it's not a 404 (school not found is okay if creating a new one)
         const isNotFoundError = (error as any)?.response?.status === 404;
         if (isNotFoundError) {
-          setSchool(null);
-          setSchoolName("");
-          setAddress("");
-          setDistrict("");
-          setState("AL");
-          setCountry("United States");
-          setTimezone(TIMEZONE_OPTIONS[0].value);
+          resetSchoolForm();
         } else {
           toast({
             title: "Error",
             description: "Failed to fetch school data.",
             variant: "destructive",
           });
+          resetSchoolForm();
         }
       } finally {
         setLoading(false);
@@ -177,7 +176,7 @@ const SetupPage = () => {
           description: `${schoolName} has been updated in the system.`,
         });
         setLoading(false);
-        setSchool(response.data.school);
+        setSchool(response.school || response.data?.school);
         setIsEditing(false);
       } else {
         toast({

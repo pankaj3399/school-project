@@ -626,6 +626,10 @@ export const completeAdminRegistration = async (req, res) => {
       return res.status(400).json({ message: "You must accept the terms of use to complete registration." });
     }
 
+    if (!termsVersion) {
+      return res.status(400).json({ message: "termsVersion is required when accepting terms." });
+    }
+
     const admin = await Admin.findOne({
       email: email.toLowerCase(),
       registrationTokenExpires: { $gt: Date.now() },

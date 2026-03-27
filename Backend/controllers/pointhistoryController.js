@@ -412,7 +412,7 @@ export const getYearPointsHistory = async (req, res) => {
 
     res.status(200).json({ data: pointsHistory });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -552,7 +552,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
 
     res.status(200).json({ data: pointsHistory });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -724,7 +724,7 @@ export const getWeekPointsHistory = async (req, res) => {
       timezone: schoolTimezone
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -845,7 +845,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
       timezone: schoolTimezone
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -1010,7 +1010,7 @@ export const getHistoricalPointsData = async (req, res) => {
       timeZone: schoolTimezone,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 export const getHistoricalPointsDataByStudentId = async (req, res) => {
@@ -1544,7 +1544,7 @@ export const getAnalyticsData = async (req, res) => {
     console.error("Error in getAnalyticsData:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.status ? error.message : "Internal server error"
+      message: (error.status && error.message) ? error.message : "Internal server error"
     });
   }
 };
@@ -1647,7 +1647,7 @@ export const getCombinedStudentPointsHistory = async (req, res) => {
       ),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -1703,6 +1703,6 @@ export const getStudentPointsHistory = async (req, res) => {
       teacher,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };

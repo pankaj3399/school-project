@@ -92,8 +92,8 @@ userSchema.methods.compareRegistrationToken = function (rawToken) {
     .update(rawToken)
     .digest('hex');
   
-  const actualTokenBuffer = Buffer.from(this.registrationToken);
-  const providedHashedBuffer = Buffer.from(hashedTokenStr);
+  const actualTokenBuffer = Buffer.from(this.registrationToken, 'hex');
+  const providedHashedBuffer = Buffer.from(hashedTokenStr, 'hex');
   
   if (actualTokenBuffer.length === providedHashedBuffer.length && 
       crypto.timingSafeEqual(actualTokenBuffer, providedHashedBuffer)) {

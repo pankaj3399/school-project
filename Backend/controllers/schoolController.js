@@ -19,7 +19,7 @@ export const getAllSchools = async (req, res) => {
           filter = { districtId: adminUser.districtId };
         }
       }
-      const schools = await School.find(filter);
+      const schools = await School.find(filter).populate('districtId').populate('createdBy');
       res.status(200).json({ message: "Schools fetched successfully", schools });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
@@ -162,7 +162,7 @@ export const getCurrentSchool = async (req, res) => {
                 if (!schoolAdmin || !schoolAdmin.schoolId) {
                   return res.status(403).json({ message: "Access denied. No school assigned or admin not found." });
                 }
-                sch = await School.findById(schoolAdmin.schoolId).populate('createdBy');
+                sch = await School.findById(schoolAdmin.schoolId).populate('districtId').populate('createdBy');
                 break;
             case Role.SystemAdmin:
                 // For system admins, look for schoolId in query
@@ -170,7 +170,7 @@ export const getCurrentSchool = async (req, res) => {
                 if (!querySchoolId) {
                     return res.status(400).json({ message: 'School ID is required for System Administrators' });
                 }
-                sch = await School.findById(querySchoolId).populate('createdBy');
+                sch = await School.findById(querySchoolId).populate('districtId').populate('createdBy');
                 break;
             case Role.Admin:
                 const adminUser = await Admin.findById(req.user.id);
@@ -179,11 +179,11 @@ export const getCurrentSchool = async (req, res) => {
                 if (adminUser.role === Role.SystemAdmin) {
                   const { schoolId: saSchoolId } = req.query;
                   if (!saSchoolId) return res.status(400).json({ message: 'School ID is required for System Administrators' });
-                  sch = await School.findById(saSchoolId).populate('createdBy');
+                  sch = await School.findById(saSchoolId).populate('districtId').populate('createdBy');
                 } else if (adminUser.districtId) {
                   const { schoolId: dSchoolId } = req.query;
                   if (!dSchoolId) return res.status(400).json({ message: 'School ID is required for Administrators' });
-                  sch = await School.findOne({ _id: dSchoolId, districtId: adminUser.districtId }).populate('createdBy');
+                  sch = await School.findOne({ _id: dSchoolId, districtId: adminUser.districtId }).populate('districtId').populate('createdBy');
                   if (!sch) return res.status(403).json({ message: "Access denied to school outside your district." });
                 } else {
                   return res.status(403).json({ message: 'Admin is not assigned to a district' });
@@ -210,7 +210,9 @@ export const updateSchool = async (req, res) => {
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
-        if (!adminUser || !school || school.districtId.toString() !== (adminUser.districtId || "").toString()) {
+        const adminDistrictId = adminUser.districtId?.toString() || "";
+        const schoolDistrictId = school.districtId?.toString() || "";
+        if (!adminUser || !school || schoolDistrictId !== adminDistrictId) {
           return res.status(403).json({ message: "Access denied. School is outside your district." });
         }
       } else if (req.user.role === Role.SchoolAdmin) {
@@ -231,9 +233,9 @@ export const updateSchool = async (req, res) => {
       if(logoUrl)
        updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address,district, logo: logoUrl, state, country, timeZone, domain },
+        { name, address, district, districtId: req.body.districtId || undefined, logo: logoUrl, state, country, timeZone, domain },
         { new: true }
-      ).populate('createdBy');
+      ).populate('districtId').populate('createdBy');
       else
       updatedSchool = await School.findByIdAndUpdate(
         req.params.id,

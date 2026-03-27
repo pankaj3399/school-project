@@ -116,16 +116,20 @@ export default function SchoolPage() {
         }
       } catch (error) {
         const isNotFoundError = (error as any)?.response?.status === 404;
+        const resetSchoolForm = () => {
+          setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict("");
+        };
+
         if (!isNotFoundError) {
           toast({
             title: "Error",
             description: "Failed to fetch school data.",
             variant: "destructive",
           });
-          setSchool(null);
-          setSchoolName("");
-          setAddress("");
-          setDistrict("");
+          resetSchoolForm();
         }
       } finally {
         setLoading(false);
