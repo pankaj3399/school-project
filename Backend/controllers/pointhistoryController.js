@@ -80,10 +80,30 @@ const getSchoolIdFromUser = async (req) => {
   const userRole = req.user.role;
 
   // If system admin, allow picking schoolId from query or body
-  if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
+  if (userRole === Role.SystemAdmin) {
+    return req.query.schoolId || req.body.schoolId || null;
+  }
+
+  // Admin (District/School) still requires schoolId or has it assigned
+  if (userRole === Role.Admin) {
+    const adminUser = await Admin.findById(userId);
+    if (!adminUser || !adminUser.districtId) {
+      const error = new Error("Administrator is not assigned to a district.");
+      error.status = 403;
+      throw error;
+    }
     const schoolId = req.query.schoolId || req.body.schoolId;
     if (!schoolId) {
-        throw new Error("School ID is required for System Administrators");
+      const error = new Error("School ID is required for analytics.");
+      error.status = 400;
+      throw error;
+    }
+    // Verify this school belongs to the admin's district
+    const schoolExists = await School.exists({ _id: schoolId, districtId: adminUser.districtId });
+    if (!schoolExists) {
+      const error = new Error("Access denied. School is outside your district.");
+      error.status = 403;
+      throw error;
     }
     return schoolId;
   }
@@ -138,6 +158,7 @@ const getGradeFromUser = async (userId) => {
 export const getYearPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     const teacherData = await getGradeFromUser(req.user.id);
 
     const yearStart = await getEducationalYearStart(schoolId);
@@ -391,13 +412,14 @@ export const getYearPointsHistory = async (req, res) => {
 
     res.status(200).json({ data: pointsHistory });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
 export const getYearPointsHistoryByStudent = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     const teacherData = await getGradeFromUser(req.user.id);
     const studentId = req.params.id;
 
@@ -530,13 +552,14 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
 
     res.status(200).json({ data: pointsHistory });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
 export const getWeekPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
 
@@ -701,7 +724,7 @@ export const getWeekPointsHistory = async (req, res) => {
       timezone: schoolTimezone
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -712,6 +735,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
     console.log("Requested student ID:", req.params.id);
 
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     console.log("School ID:", schoolId);
 
     const teacherData = await getGradeFromUser(req.user.id);
@@ -821,13 +845,14 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
       timezone: schoolTimezone
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
 export const getHistoricalPointsData = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     const { period, formType } = req.body;
     const teacherData = await getGradeFromUser(req.user.id);
     const schoolTimezone = await getSchoolTimezone(schoolId);
@@ -985,7 +1010,7 @@ export const getHistoricalPointsData = async (req, res) => {
       timeZone: schoolTimezone,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 export const getHistoricalPointsDataByStudentId = async (req, res) => {
@@ -998,6 +1023,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     console.log("Request params:", req.params);
 
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     console.log("School ID:", schoolId);
 
     const { period, formType, studentId } = req.body;
@@ -1275,7 +1301,7 @@ export const getAnalyticsData = async (req, res) => {
 
     // Build match criteria
     let matchCriteria = {
-      schoolId: new mongoose.Types.ObjectId(schoolId),
+      ...(schoolId && { schoolId: new mongoose.Types.ObjectId(schoolId) }),
       submittedAt: {
         $gte: startDateUTC,
         $lte: todayUTC,
@@ -1416,9 +1442,8 @@ export const getAnalyticsData = async (req, res) => {
       PointsHistory.aggregate([
         {
           $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
-            ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
+            ...matchCriteria,
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
           }
         },
         {
@@ -1463,9 +1488,8 @@ export const getAnalyticsData = async (req, res) => {
       PointsHistory.aggregate([
         {
           $match: {
-            schoolId: new mongoose.Types.ObjectId(schoolId),
-            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] },
-            ...(teacherData ? { submittedForId: { $in: teacherData.studentIds } } : {})
+            ...matchCriteria,
+            formType: { $in: [FormType.AwardPoints, FormType.AwardPointsIEP] }
           }
         },
         {
@@ -1518,9 +1542,9 @@ export const getAnalyticsData = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getAnalyticsData:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: error.message
+      message: (error.status && error.message) ? error.message : "Internal server error"
     });
   }
 };
@@ -1528,6 +1552,7 @@ export const getAnalyticsData = async (req, res) => {
 export const getCombinedStudentPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
     const { grades } = req.body; // grades is now an array of strings
@@ -1622,13 +1647,14 @@ export const getCombinedStudentPointsHistory = async (req, res) => {
       ),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
 export const getStudentPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (!schoolId) return res.status(400).json({ message: "School ID is required" });
     const studentId = req.params.id;
     const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
@@ -1677,6 +1703,6 @@ export const getStudentPointsHistory = async (req, res) => {
       teacher,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };

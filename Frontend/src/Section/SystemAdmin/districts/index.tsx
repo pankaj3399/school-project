@@ -35,6 +35,7 @@ import { getDistricts, deleteDistrict } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
+import Modal from '@/Section/School/Modal';
 
 interface District {
     _id: string;
@@ -54,6 +55,9 @@ export default function DistrictsList() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [districtToDelete, setDistrictToDelete] = useState<{ id: string; name: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
 
 
@@ -66,7 +70,12 @@ export default function DistrictsList() {
             if (!token) return;
             const data = await getDistricts(token, { search });
             if (data.error) {
-                setError("Failed to fetch districts");
+                toast({
+                    title: "Error",
+                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to fetch districts"),
+                    variant: "destructive"
+                });
+                setError(typeof data.error === 'string' ? data.error : (data.error.message || "Failed to fetch districts"));
             } else {
                 setDistricts(data.districts || []);
             }
@@ -75,7 +84,7 @@ export default function DistrictsList() {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, toast]);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -86,27 +95,41 @@ export default function DistrictsList() {
     }, [searchTerm, fetchDistricts]);
 
     const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
-            return;
-        }
-
         try {
+            setIsDeleting(true);
             const token = getAuthToken(user);
             if (!token) {
-                alert("Authentication required. Please sign in again.");
+                toast({
+                    title: "Authentication Error",
+                    description: "Authentication required. Please sign in again.",
+                    variant: "destructive"
+                });
                 return;
             }
             const data = await deleteDistrict(id, token);
             if (data.error) {
-                alert("Failed to delete district");
+                toast({
+                    title: "Error",
+                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete district"),
+                    variant: "destructive"
+                });
             } else {
-                // Update state to reflect expired status instead of removal
-                setDistricts(districts.map(d => 
-                    d._id === id ? { ...d, subscriptionStatus: 'expired' as any } : d
-                ));
+                toast({
+                    description: `${name} deleted successfully.`,
+                });
+                // Mark as expired locally instead of removing
+                setDistricts(prev => prev.map(d => d._id === id ? { ...d, subscriptionStatus: 'expired' } : d));
+                setShowDeleteModal(false);
+                setDistrictToDelete(null);
             }
-        } catch (err) {
-            alert("Error deleting district");
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: err.message || "Error deleting district",
+                variant: "destructive"
+            });
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -243,7 +266,10 @@ export default function DistrictsList() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem 
                                                         className="text-red-600"
-                                                        onClick={() => handleDelete(district._id, district.name)}
+                                                        onClick={() => {
+                                                            setDistrictToDelete({ id: district._id, name: district.name });
+                                                            setShowDeleteModal(true);
+                                                        }}
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete District
                                                     </DropdownMenuItem>
@@ -257,6 +283,20 @@ export default function DistrictsList() {
                     </Table>
                 </div>
             )}
+            
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setDistrictToDelete(null);
+                }}
+                onConfirm={() => districtToDelete && handleDelete(districtToDelete.id, districtToDelete.name)}
+                title="Delete District"
+                description={`Are you sure you want to delete ${districtToDelete?.name}? This action will permanently remove the district and its data.`}
+                callToAction="Delete"
+                variant="danger"
+                confirmDisabled={isDeleting}
+            />
         </div>
     );
 }

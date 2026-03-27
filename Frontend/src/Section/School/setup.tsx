@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { teacherRoster } from "@/api";
 import { Download } from "lucide-react";
+import { useAuth } from "@/authContext";
+import { useSchool } from "@/context/SchoolContext";
 import {
   Accordion,
   AccordionItem,
@@ -28,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Role } from "@/enum";
 
 interface TeacherData {
   // firstName: string;
@@ -47,6 +50,8 @@ export default function Setup() {
   const [editForm, setEditForm] = useState<TeacherData | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { selectedSchoolId, selectedSchool } = useSchool();
 
   const downloadTemplate = () => {
     // Create a link element to download the existing template file
@@ -165,6 +170,16 @@ export default function Setup() {
   };
 
   const handleSubmitRoster = async () => {
+    const isAdmin = user?.role === Role.Admin || user?.role === Role.SystemAdmin;
+    if (isAdmin && !selectedSchoolId) {
+      toast({
+        title: "No School Selected",
+        description: "Please select a school from the header to proceed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!validateTeacherData()) {
       toast({
         title: "Validation Error",
@@ -184,7 +199,10 @@ export default function Setup() {
         // lastName: undefined,
       }));
       console.log(formattedTeachers);
-      const response = await teacherRoster({ teachers: formattedTeachers });
+      const response = await teacherRoster({ 
+        teachers: formattedTeachers,
+        schoolId: selectedSchoolId,
+      });
       if (!response.success) throw new Error("Failed to submit roster");
 
       toast({
@@ -234,7 +252,9 @@ export default function Setup() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Teacher Roster Setup</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Teacher Roster Setup {selectedSchool?.name ? `for ${selectedSchool.name}` : user?.schoolId?.name ? `for ${user.schoolId.name}` : ""}
+      </h1>
 
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">

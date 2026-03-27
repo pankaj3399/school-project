@@ -10,7 +10,9 @@ import {
   createTermsVersion,
   getAllTermsVersions,
   recordTermsAcceptance,
-  getAllAdmins
+  getAllAdmins,
+  inviteAdmin,
+  completeAdminRegistration
 } from '../controllers/systemAdminController.js';
 import { authenticateToken, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { Role } from '../enum.js';
@@ -34,6 +36,7 @@ const upload = multer({
 
 // Public routes (no authentication required)
 router.get('/terms', getCurrentTerms);
+router.post('/complete-registration', completeAdminRegistration);
 
 // All routes below this point require authentication
 router.use(authenticateToken);
@@ -58,7 +61,8 @@ router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), (re
   });
 }, bulkImportSchools);
 router.post('/clone-district', authorizeRoles(Role.SystemAdmin, Role.Admin), cloneFromTemplate);
-router.get('/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllAdmins);
+router.get('/admins', authorizeRoles(Role.SystemAdmin), getAllAdmins);
+router.post('/invite', authorizeRoles(Role.SystemAdmin, Role.Admin), inviteAdmin);
 
 // Terms management routes (authenticated)
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllTermsVersions);

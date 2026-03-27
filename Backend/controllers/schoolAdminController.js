@@ -20,9 +20,31 @@ const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
   const userRole = req.user.role;
 
-  if (userRole === Role.SystemAdmin || userRole === Role.Admin) {
+  if (userRole === Role.SystemAdmin) {
     const schoolId = req.query.schoolId || req.body.schoolId;
     return schoolId || undefined;
+  }
+
+  if (userRole === Role.Admin) {
+    const admin = await Admin.findById(userId);
+    if (!admin || !admin.districtId) {
+      const error = new Error("Administrator is not assigned to a district.");
+      error.status = 403;
+      throw error;
+    }
+    const requestedSchoolId = req.query.schoolId || req.body.schoolId;
+    if (requestedSchoolId) {
+      const school = await School.findById(requestedSchoolId);
+      if (school && school.districtId.toString() === admin.districtId.toString()) {
+        return requestedSchoolId;
+      }
+      const error = new Error("Access denied. School is outside your district.");
+      error.status = 403;
+      throw error;
+    }
+    const error = new Error("School ID is required for this operation.");
+    error.status = 400;
+    throw error;
   }
 
   const admin = await Admin.findById(userId);
@@ -709,6 +731,10 @@ export const teacherRoster = async (req, res) => {
     const user = req.user;
     const schoolId = await getSchoolIdFromUser(req);
 
+    if (!schoolId) {
+      return res.status(400).json({ message: "School context is required for roster operations." });
+    }
+
     const school = await School.findById(schoolId);
     if (!school) {
       return res.status(404).json({ message: "School not found" });
@@ -785,6 +811,10 @@ export const studentRoster = async (req, res) => {
     const { students, url } = req.body;
     const user = req.user;
     const schoolId = await getSchoolIdFromUser(req);
+
+    if (!schoolId) {
+      return res.status(400).json({ message: "School context is required for roster operations." });
+    }
 
     const school = await School.findById(schoolId);
     if (!school) {

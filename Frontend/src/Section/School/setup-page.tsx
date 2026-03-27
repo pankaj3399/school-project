@@ -7,6 +7,9 @@ import { useNavigate } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, updateSchool } from "@/api";
 import PasswordConfirmationModal from "./PasswordConfirmationModal";
+import { useSchool } from "@/context/SchoolContext";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 import { 
   Select, 
   SelectTrigger, 
@@ -51,6 +54,18 @@ const SetupPage = () => {
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState(TIMEZONE_OPTIONS[0].value);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const { selectedSchoolId } = useSchool();
+  const { user } = useAuth();
+
+  const resetSchoolForm = () => {
+    setSchool(null);
+    setSchoolName("");
+    setAddress("");
+    setDistrict("");
+    setState("AL");
+    setCountry("United States");
+    setTimezone(TIMEZONE_OPTIONS[0].value);
+  };
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -66,7 +81,18 @@ const SetupPage = () => {
           return;
         }
 
-        const data = await getCurrrentSchool(token);
+        // For SystemAdmin/Admin, we need a schoolId. For SchoolAdmin/Teacher, backend finds it automatically if not provided.
+        // However, it's safer to pass selectedSchoolId if we have it.
+        const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+        
+        if (isAdmin && !selectedSchoolId) {
+          // If admin but no school selected, we are in "create new school" mode or just landed
+          resetSchoolForm();
+          setLoading(false);
+          return;
+        }
+
+        const data = await getCurrrentSchool(token, selectedSchoolId || undefined);
         setSchool(data.school || null);
         if (data.school) {
           setSchoolName(data.school.name);
@@ -77,18 +103,25 @@ const SetupPage = () => {
           setTimezone(data.school.timeZone || "UTC-5");
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch school data.",
-          variant: "destructive",
-        });
+        // Only toast error if it's not a 404 (school not found is okay if creating a new one)
+        const isNotFoundError = (error as any)?.response?.status === 404;
+        if (isNotFoundError) {
+          resetSchoolForm();
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to fetch school data.",
+            variant: "destructive",
+          });
+          resetSchoolForm();
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchSchool();
-  }, [toast]);
+  }, [toast, selectedSchoolId, user]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -135,7 +168,7 @@ const SetupPage = () => {
         formData.append("logo", logo);
       }
 
-      const response:any = school ? await updateSchool(formData, school._id, token):await addSchool(formData, token);
+      const response:any = school ? await updateSchool(school._id, formData, token):await addSchool(formData, token);
 
       if (!response.error) {
         toast({
@@ -143,7 +176,7 @@ const SetupPage = () => {
           description: `${schoolName} has been updated in the system.`,
         });
         setLoading(false);
-        setSchool(response.data.school);
+        setSchool(response.school || response.data?.school);
         setIsEditing(false);
       } else {
         toast({
@@ -207,11 +240,13 @@ const SetupPage = () => {
     </>
   );
 
+  const { selectedSchool } = useSchool();
+
   if (loading) return <Loading />;
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-8">School Setup</h1>
+      <h1 className="text-4xl font-bold mb-8">{selectedSchool?.name || "School Setup"}</h1>
 
       <div className="grid grid-cols-1 gap-8">
         {/* School Information Section */}

@@ -106,7 +106,7 @@ export default function SystemAdminDashboard() {
             icon: School,
             color: "text-indigo-600",
             bgColor: "bg-indigo-100",
-            link: "/system-admin/districts"
+            link: "/system-admin/schools"
         },
         {
             title: "Teachers",
@@ -244,6 +244,7 @@ export default function SystemAdminDashboard() {
                             <Button
                                 variant="secondary"
                                 className="w-full mt-4 bg-white text-[#00a58c] hover:bg-emerald-50 border-0"
+                                onClick={() => navigate('/analytics')}
                             >
                                 View Detailed Analytics
                                 <ArrowUpRight className="ml-2 h-4 w-4" />

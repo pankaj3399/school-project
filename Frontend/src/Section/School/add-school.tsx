@@ -7,6 +7,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
+import { useSchool } from "@/context/SchoolContext";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 import AllCharts from "./component/all-charts";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { TIMEZONE_OPTIONS } from "@/lib/luxon";
@@ -35,6 +38,8 @@ export default function SchoolPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const districtIdFromQuery = searchParams.get("districtId");
+  const { selectedSchoolId } = useSchool();
+  const { user } = useAuth();
 
   const [state, setState] = useState("AL");
   const [country, setCountry] = useState("United States");
@@ -57,7 +62,7 @@ export default function SchoolPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const res = await getStats()
+      const res = await getStats(selectedSchoolId || undefined)
       setStats({
         teachers: res.totalTeachers,
         students: res.totalStudents,
@@ -68,7 +73,7 @@ export default function SchoolPage() {
       })
     }
     fetchStats()
-  }, [])
+  }, [selectedSchoolId])
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -84,7 +89,20 @@ export default function SchoolPage() {
           return;
         }
 
-        const data = await getCurrrentSchool(token);
+        const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+        if (isAdmin && !selectedSchoolId) {
+          setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict(districtIdFromQuery || "");
+          setState("AL");
+          setCountry("United States");
+          setTimezone("UTC-5");
+          setLoading(false);
+          return;
+        }
+
+        const data = await getCurrrentSchool(token, selectedSchoolId || undefined);
         setSchool(data.school || null);
         if (data.school) {
           setSchoolName(data.school.name);
@@ -94,21 +112,32 @@ export default function SchoolPage() {
           }
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
-          setTimezone(data.school.timezone || "UTC-5");
+          setTimezone(data.school.timeZone || "UTC-5");
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch school data.",
-          variant: "destructive",
-        });
+        const isNotFoundError = (error as any)?.response?.status === 404;
+        const resetSchoolForm = () => {
+          setSchool(null);
+          setSchoolName("");
+          setAddress("");
+          setDistrict("");
+        };
+
+        if (!isNotFoundError) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch school data.",
+            variant: "destructive",
+          });
+          resetSchoolForm();
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchSchool();
-  }, [toast]);
+  }, [toast, selectedSchoolId, user, districtIdFromQuery]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -155,7 +184,7 @@ export default function SchoolPage() {
         formData.append("logo", logo);
       }
       const response = isEditing
-        ? await updateSchool(formData, school._id, token)
+        ? await updateSchool(school._id, formData, token)
         : await addSchool(formData, token);
 
 
@@ -164,17 +193,17 @@ export default function SchoolPage() {
           title: isEditing
             ? "School updated successfully"
             : "School added successfully",
-          description: `${schoolName} has been ${isEditing ? "updated" : "added"
-            } to the system.`,
+          description: response.message || `${schoolName} has been ${isEditing ? "updated" : "added"} to the system.`,
         });
         setLoading(false);
-        setSchool(response.data.school);
+        setSchool(response.school || response.data?.school);
         setIsEditing(false);
         navigate("/analytics");
       } else {
+        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to process the request. Please try again.");
         toast({
           title: "Error",
-          description: "Failed to process the request. Please try again.",
+          description: errorMsg,
           variant: "destructive",
         });
       }

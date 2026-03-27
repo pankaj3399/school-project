@@ -19,6 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Modal from "./Modal";
 import { useNavigate } from "react-router-dom";
+import { useSchool } from "@/context/SchoolContext";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 import {
   Select,
   SelectContent,
@@ -30,6 +33,8 @@ import {
 import { GRADE_OPTIONS } from "@/lib/types";
 
 export default function ViewTeachers() {
+  const { user } = useAuth();
+  const { selectedSchoolId } = useSchool();
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
@@ -56,7 +61,11 @@ export default function ViewTeachers() {
         return;
       }
 
-      const data = await getTeachers();
+      const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
+        ? (selectedSchoolId || undefined) 
+        : undefined;
+
+      const data = await getTeachers(effectiveSchoolId);
       console.log("API Response:", data); // Debug log
 
       // Handle different response structures
@@ -96,7 +105,7 @@ export default function ViewTeachers() {
 
   useEffect(() => {
     fetchTeachers();
-  }, [toast]); // Removed editingTeacher dependency to prevent unnecessary refetches
+  }, [selectedSchoolId, user]);
 
   const navigate = useNavigate();
 

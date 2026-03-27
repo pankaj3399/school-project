@@ -19,7 +19,6 @@ export default function AddTeacher() {
   });
   const [customGrade, setCustomGrade] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -83,9 +82,10 @@ export default function AddTeacher() {
         }
         navigate("/teacher");
       } else {
+        const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || "Failed to add teacher. Please try again.");
         toast({
           title: "Error",
-          description: "Failed to add teacher. Please try again.",
+          description: errorMsg,
           variant: "destructive",
         });
       }
@@ -93,10 +93,10 @@ export default function AddTeacher() {
         email: "",
         checkbox: false,
         grade: "K",
-        type: "Special"
+        type: "Lead"
       });
     } catch (error) {
-      setError("An unexpected error occurred. Please try again.");
+      console.error("Error adding teacher:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -109,9 +109,6 @@ export default function AddTeacher() {
 
   if (loading) {
     return <Loading />;
-  }
-  if (error) {
-    alert("An unexpected error occurred. Please try again. " + error);
   }
   return (
     <div className="grid place-items-center w-full h-full mt-20">

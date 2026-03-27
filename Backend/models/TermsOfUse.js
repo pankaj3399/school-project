@@ -70,7 +70,7 @@ const TermsAcceptanceSchema = new mongoose.Schema({
   },
   userType: { 
     type: String, 
-    enum: ['Teacher', 'Guardian', 'Student', 'SchoolAdmin', 'DistrictAdmin'],
+    enum: ['Teacher', 'Guardian', 'Student', 'SchoolAdmin', 'DistrictAdmin', 'Admin', 'SystemAdmin'],
     required: true
   },
   termsVersion: { 

@@ -8,8 +8,13 @@ import { toast } from '@/hooks/use-toast'
 import { Form, Question, FormType } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
+import { useSchool } from '@/context/SchoolContext'
+import { useAuth } from '@/authContext'
+import { Role } from '@/enum'
 
 export default function ViewForms() {
+  const { user } = useAuth()
+  const { selectedSchoolId } = useSchool()
   const [forms, setForms] = useState<any[]>([])
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
   const [groupedForms, setGroupedForms] = useState<{
@@ -32,9 +37,14 @@ export default function ViewForms() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token')!
+        
+        const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
+          ? (selectedSchoolId || undefined) 
+          : undefined;
+
         const [formsData, studentsData] = await Promise.all([
-          getForms(token),
-          getStudents(token)
+          getForms(token, effectiveSchoolId),
+          getStudents(token, effectiveSchoolId)
         ])
 
         if (formsData.error) {
@@ -57,7 +67,7 @@ export default function ViewForms() {
     }
 
     fetchData()
-  }, [])
+  }, [selectedSchoolId, user])
 
   const groupForms = (forms: any[]) => {
     const grouped = forms.reduce((acc, form) => {

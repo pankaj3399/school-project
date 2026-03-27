@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button"
 import EducationYearChart from "./component/new-chart"
 import { useEffect, useState } from "react"
 import { getCurrentUser, getCurrrentSchool, getStudents, sendReportImage } from "@/api"
+import { useSchool } from "@/context/SchoolContext"
+import { useAuth } from "@/authContext"
+import { Role } from "@/enum"
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import * as htmlToImage from 'html-to-image'
@@ -62,6 +65,8 @@ const Finalize = () => {
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
   const [user, setUser] = useState<any>({})
+  const { selectedSchoolId } = useSchool()
+  const { user: authUser } = useAuth()
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
   useEffect(()=>{
@@ -74,6 +79,13 @@ const Finalize = () => {
 
     getUserData()
   },[])
+
+  // Reset student selection when school changes
+  useEffect(() => {
+    setSelectedStudents(new Set());
+    setSelectedStudentsData([]);
+    setStudentId("");
+  }, [selectedSchoolId]);
 
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
@@ -135,14 +147,49 @@ const Finalize = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token")
-      const resTeacher = await getStudents(token ?? "")
-      const school = await getCurrrentSchool(token ?? "")      
-      setStudents(resTeacher.students)
-      setSchoolData(school)
+      try {
+        const token = localStorage.getItem("token")
+        
+        const isAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
+        if (isAdmin && !selectedSchoolId) {
+          setStudents([])
+          setSchoolData({})
+          return;
+        }
+
+        const resTeacher = await getStudents(token ?? "", selectedSchoolId || undefined)
+        const school = await getCurrrentSchool(token ?? "", selectedSchoolId || undefined)
+
+        if (resTeacher.error) {
+           throw new Error(resTeacher.error);
+        }
+
+        setStudents(resTeacher.students || [])
+        setSchoolData(school.school || {})
+      } catch (error: any) {
+        console.error("Error fetching finalize data:", error);
+        
+        let message = error.message || "Failed to fetch necessary data for reporting.";
+        const status = error?.response?.status;
+        
+        if (status === 404) {
+          message = "The requested school or data was not found. Please ensure a school is selected.";
+        } else if (status === 403) {
+          message = "Access denied. You do not have permission to view this school's reports.";
+        }
+
+        toast({
+          title: "Error",
+          description: message,
+          variant: "destructive"
+        });
+        setStudents([]);
+        setSchoolData(null);
+        setSelectedStudentsData([]);
+      }
     }
     fetchData()
-  }, [])
+  }, [selectedSchoolId, authUser, toast])
 
   return (
     <div className="flex flex-col justify-center min-h-[80vh] gap-8">

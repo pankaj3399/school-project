@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { getStudents, getAnalyticsData } from "@/api";
+import { useSchool } from "@/context/SchoolContext";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +32,8 @@ interface AnalyticsData {
 }
 
 const Analytics = () => {
+  const { user } = useAuth();
+  const { selectedSchoolId } = useSchool();
   const [studentName, setStudentName] = useState<string>("");
   const [studentId, setStudentId] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
@@ -46,33 +51,44 @@ const Analytics = () => {
     color: string;
   } | null>(null);
 
-  // Fetch students on mount
+  // Fetch students on mount or when selectedSchoolId changes
   useEffect(() => {
     const fetchStudents = async () => {
       const token = localStorage.getItem("token");
-      const resTeacher = await getStudents(token ?? "");
+      // Use selectedSchoolId if the user is a SystemAdmin or Admin
+      const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
+        ? selectedSchoolId 
+        : undefined;
+        
+      const resTeacher = await getStudents(token ?? "", effectiveSchoolId || undefined);
       setStudents(resTeacher.students || []);
       setFilteredStudents(resTeacher.students || []);
     };
+    
+    // Fail-closed: clear selection on school change
+    setStudentId("");
+    setStudentName("");
+    setAnalyticsData(null);
+    
     fetchStudents();
-  }, []);
+  }, [selectedSchoolId, user]);
 
-  // Fetch analytics data when period or studentId changes
+  // Fetch analytics data when period, studentId or selectedSchoolId changes
   useEffect(() => {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        console.log('📊 MAIN PAGE: Fetching analytics with period:', period, 'studentId:', studentId);
+        const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
+          ? selectedSchoolId 
+          : undefined;
+
         const data = await getAnalyticsData({
           period,
-          ...(studentId && { studentId })
+          ...(studentId && { studentId }),
+          ...(effectiveSchoolId && { schoolId: effectiveSchoolId })
         });
 
-        console.log('📊 MAIN PAGE: Received data:', data);
         if (data.success) {
-          console.log('📊 MAIN PAGE: Award Points data:', data.data.awardPoints);
-          console.log('📊 MAIN PAGE: Deduct Points data:', data.data.deductPoints);
-          console.log('📊 MAIN PAGE: Withdraw Points data:', data.data.withdrawPoints);
           setAnalyticsData(data.data);
         }
       } catch (error) {
@@ -83,13 +99,11 @@ const Analytics = () => {
     };
 
     fetchAnalytics();
-  }, [period, studentId]);
+  }, [period, studentId, selectedSchoolId, user]);
 
   // Process chart data - show only actual data from database
   const processChartData = (data: ChartDataPoint[], period: string) => {
-    console.log('🔄 Processing chart data - Input:', data, 'Period:', period);
     if (!data || data.length === 0) {
-      console.log('🔄 No data to process, returning empty array');
       return [];
     }
 
@@ -99,7 +113,6 @@ const Analytics = () => {
       label: formatDateLabel(d.date, period)
     }));
 
-    console.log('🔄 Processed data (ONLY DB data):', result);
     return result;
   };
 

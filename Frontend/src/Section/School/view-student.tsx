@@ -7,12 +7,17 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "./Modal"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
+import { useSchool } from "@/context/SchoolContext"
+import { useAuth } from "@/authContext"
+import { Role } from "@/enum"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GRADE_OPTIONS } from "@/lib/types"
 
 const STUDENT_GRADES = GRADE_OPTIONS
 
 export default function ViewStudents() {
+  const { user } = useAuth()
+  const { selectedSchoolId } = useSchool()
   const [students, setStudents] = useState<any[]>([])
   const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +42,11 @@ export default function ViewStudents() {
           return
         }
 
-        const data = await getStudents(token)
+        const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
+          ? (selectedSchoolId || undefined) 
+          : undefined;
+
+        const data = await getStudents(token, effectiveSchoolId)
 
         if (data.error) {
           toast({
@@ -67,7 +76,7 @@ export default function ViewStudents() {
     }
 
     fetchStudents()
-  }, [toast, editingStudent])
+  }, [selectedSchoolId, user, toast])
 
 
   useEffect(() => {

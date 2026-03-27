@@ -77,7 +77,6 @@ export default function OtpVerificationPage() {
         description: "An error occurred. Please try again.",
         variant: "destructive",
       });
-      alert("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

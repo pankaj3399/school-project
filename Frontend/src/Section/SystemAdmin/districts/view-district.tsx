@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { getDistrictById, updateDistrict } from '@/api';
+import { getDistrictById, updateDistrict, deleteSchool } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2 } from 'lucide-react';
@@ -10,6 +10,10 @@ import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+import { InviteAdminDialog } from '@/components/InviteAdminDialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -39,9 +43,10 @@ export default function ViewDistrict() {
                             subscriptionStatus: response.district.subscriptionStatus
                         });
                     } else if (response.error) {
+                        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to load district data.");
                         toast({
                             title: "Error",
-                            description: response.error.message || "Failed to load district data.",
+                            description: errorMsg,
                             variant: "destructive"
                         });
                     }
@@ -79,10 +84,11 @@ export default function ViewDistrict() {
                 setData({ ...data, district: response.district });
                 toast({
                     title: "Success",
-                    description: "District settings updated successfully.",
+                    description: response.message || "District settings updated successfully.",
                 });
             } else {
-                throw new Error(response.error?.message || "Update failed");
+                const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || "Update failed");
+                throw new Error(errorMsg);
             }
         } catch (error: any) {
             toast({
@@ -100,6 +106,40 @@ export default function ViewDistrict() {
             <Loader2 className="h-8 w-8 animate-spin text-[#00a58c]" />
         </div>
     );
+
+    const handleDeleteSchool = async (schoolId: string, schoolName: string) => {
+        if (!window.confirm(`Are you sure you want to delete ${schoolName}? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token') || '';
+            const response = await deleteSchool(schoolId, token);
+            if (response.error) {
+                const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to delete school");
+                toast({
+                    title: "Error",
+                    description: errorMsg,
+                    variant: "destructive"
+                });
+            } else {
+                toast({
+                    description: `${schoolName} deleted successfully.`,
+                });
+                // Update local state to remove the school
+                setData((prev: any) => ({
+                    ...prev,
+                    schools: prev.schools.filter((s: any) => s._id !== schoolId)
+                }));
+            }
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "An unexpected error occurred while deleting the school.",
+                variant: "destructive"
+            });
+        }
+    };
     
     if (!data || !data.district) return (
         <div className="p-8 text-center">
@@ -108,7 +148,7 @@ export default function ViewDistrict() {
         </div>
     );
 
-    const { district, schools, adminCount } = data;
+    const { district, schools, adminCount, admins = [] } = data;
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -244,14 +284,24 @@ export default function ViewDistrict() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                onClick={() => navigate(`/system-admin/schools/${school._id}`)}
-                                                className="hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
-                                            >
-                                                View
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
+                                                    onClick={() => navigate(`/system-admin/schools/${school._id}`)}
+                                                    className="hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
+                                                >
+                                                    View
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
+                                                    onClick={() => handleDeleteSchool(school._id, school.name)}
+                                                    className="hover:bg-red-50 text-red-500 hover:text-red-600"
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -271,21 +321,44 @@ export default function ViewDistrict() {
 
                 <TabsContent value="admins" className="mt-6">
                     <Card className="border-0 shadow-sm ring-1 ring-gray-100">
-                        <CardContent className="p-12 text-center text-gray-500 space-y-4">
-                            <Users className="h-12 w-12 mx-auto text-gray-300" />
-                            <div className="max-w-xs mx-auto">
-                                <h4 className="font-bold text-gray-900 mb-1">Admin Management</h4>
-                                <p className="text-sm">Manage district-level administrators and their permissions here.</p>
-                            </div>
-                            <Button 
-                                variant="outline" 
-                                className="mt-4 opacity-50 cursor-not-allowed"
-                                disabled
-                                aria-disabled="true"
-                                title="Coming soon"
-                            >
-                                Invite Administrator
-                            </Button>
+                        <CardHeader className="border-b bg-gray-50/30 flex flex-row items-center justify-between">
+                            <CardTitle className="text-lg">District Administrators</CardTitle>
+                            <InviteAdminDialog districtId={id} />
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {admins.length > 0 ? (
+                                        admins.map((admin: any) => (
+                                            <TableRow key={admin._id}>
+                                                <TableCell className="font-medium">{admin.name}</TableCell>
+                                                <TableCell>{admin.email}</TableCell>
+                                                <TableCell>
+                                                    <span className={cn(
+                                                        "px-2 py-1 rounded-full text-xs font-medium",
+                                                        admin.approved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                                    )}>
+                                                        {admin.approved ? 'Active' : 'Pending'}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                                                No administrators found for this district.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
                 </TabsContent>

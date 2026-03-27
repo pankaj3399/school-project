@@ -18,7 +18,6 @@ import ViewTeacherForms from "./Section/Teacher/view-teacher-forms";
 import FormPage from "./Section/Teacher/submit-form";
 import ViewPointHistory from "./Section/School/component/point-history";
 import EditForm from "./Section/School/edit-form";
-import AdminDashboard from "./Section/School/dashboard";
 import SuperAdminDashboard from "./Section/School/super-admin-dashboard";
 import ForgotPassword from "./components/ForgetPassword";
 import OtpVerificationPage from "./components/OtpVerification";
@@ -37,6 +36,7 @@ import Setup from "./Section/School/setup";
 import SetupStudents from "./Section/School/setup-students";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
 import CompleteGuardianRegistration from "@/Section/Guardian/complete-registration";
+import CompleteAdminRegistration from "@/Section/SystemAdmin/complete-registration";
 import TermsPage from "@/components/TermsPage";
 import { Role } from "./enum";
 
@@ -48,8 +48,9 @@ import ViewDistrict from "@/Section/SystemAdmin/districts/view-district";
 import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
 import ViewSchool from "@/Section/SystemAdmin/schools/view-school";
 import TermsManagement from "./Section/SystemAdmin/terms";
+import SchoolsList from "./Section/SystemAdmin/schools/index";
 
-const systemAdminRoles = [Role.SystemAdmin, Role.Admin];
+const systemAdminRoles = [Role.SystemAdmin];
 
 // Reusable ProtectedRoute component
 const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode, requiredRoles?: string[] }) => {
@@ -65,12 +66,40 @@ const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode
   return <>{children}</>;
 };
 
+// Redirect logged-in users to their respective dashboards
+const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) {
+    if (user.role === Role.Student) {
+      return <Navigate to="/student" replace />;
+    }
+    return <Navigate to="/analytics" replace />;
+  }
+  return <>{children}</>;
+};
+
+const HomeRedirect = () => {
+  const { user } = useAuth();
+  if (user?.role === Role.Student) {
+    return <Navigate to="/student" replace />;
+  }
+  if (user?.role === Role.Teacher) {
+    return <Navigate to="/analytics" replace />;
+  }
+  return <Navigate to="/analytics" replace />;
+};
+
 export default function App() {
   return (
     <div className="min-h-screen bg-white text-gray-800">
       <RootLayout>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={
+            <AuthRedirect>
+              <LandingPage />
+            </AuthRedirect>
+          } />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/signin" element={<LoginForm />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
@@ -78,12 +107,11 @@ export default function App() {
           <Route path="/resetpassword" element={<ResetPassword />} />
 
           {/* Authenticated Routes */}
-          <Route path="/analytics" element={<ProtectedRoute><AddSchool /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin, Role.SchoolAdmin, Role.Teacher]}><Analytics /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
-          <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />
           <Route path="/teachers/students" element={<ProtectedRoute><ViewTeacherStudents /></ProtectedRoute>} />
           <Route path="/createform" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
@@ -103,9 +131,13 @@ export default function App() {
           <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
 
           {/* Dashboards */}
-          <Route path="/home" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/home" element={
+            <ProtectedRoute>
+              <HomeRedirect />
+            </ProtectedRoute>
+          } />
           <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
-          <Route path="/teacher" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
+          <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
           <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
@@ -118,6 +150,7 @@ export default function App() {
           <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
           <Route path="/guardian/complete-registration" element={<CompleteGuardianRegistration />} />
+          <Route path="/admin/complete-registration" element={<CompleteAdminRegistration />} />
           <Route path="/terms" element={<TermsPage />} />
 
           {/* System Admin Routes */}
@@ -127,7 +160,7 @@ export default function App() {
           <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/schools" element={<Navigate to="/system-admin/districts" replace />} />
+          <Route path="/system-admin/schools" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SchoolsList /></ProtectedRoute>} />
           <Route path="/system-admin/schools/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddSchool /></ProtectedRoute>} />
           <Route path="/system-admin/schools/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewSchool /></ProtectedRoute>} />
           <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={systemAdminRoles}><TermsManagement /></ProtectedRoute>} />

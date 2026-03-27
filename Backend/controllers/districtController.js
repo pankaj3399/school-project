@@ -9,6 +9,20 @@ import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.
 import bcrypt from 'bcryptjs';
 import { escapeRegExp } from "../utils/stringUtils.js";
 
+// Shared helper to verify admin district scope
+const ensureAdminDistrictScope = async (userId) => {
+  const adminUser = await User.findById(userId);
+  if (!adminUser) return null;
+  
+  // SystemAdmin has global scope
+  if (adminUser.role === Role.SystemAdmin) return adminUser;
+  
+  // Role.Admin must have a districtId
+  if (!adminUser.districtId) return null;
+  
+  return adminUser;
+};
+
 // Create a new district
 export const createDistrict = async (req, res) => {
   try {
@@ -74,6 +88,18 @@ export const getDistricts = async (req, res) => {
     const { state, status, search, page = 1, limit = 20 } = req.query;
     
     const query = {};
+    
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser) {
+        console.warn(`Admin ${req.user.id} has no districtId assigned or does not exist.`);
+        return res.status(200).json({ districts: [], pagination: { total: 0, page: 1, limit: limit, pages: 0 } });
+      }
+      
+      if (adminUser.role !== Role.SystemAdmin) {
+        query._id = adminUser.districtId;
+      }
+    }
     
     if (state) query.state = state;
     if (status) query.subscriptionStatus = status;
@@ -179,6 +205,13 @@ export const getDistrictById = async (req, res) => {
   try {
     const { id } = req.params;
     
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
+    
     const district = await District.findById(id)
       .populate('createdBy', 'name email')
       .populate('termsAcceptedBy', 'name email');
@@ -191,16 +224,17 @@ export const getDistrictById = async (req, res) => {
     const schools = await School.find({ districtId: id })
       .select('name address createdAt');
 
-    // Get admin counts
-    const districtAdmins = await User.countDocuments({ 
+    // Get admins associated with this district
+    const districtAdmins = await User.find({ 
       districtId: id, 
-      role: Role.DistrictAdmin 
-    });
+      role: { $in: [Role.DistrictAdmin, Role.Admin] } 
+    }).select('name email role approved');
 
     return res.status(200).json({
       district,
       schools,
-      adminCount: districtAdmins
+      adminCount: districtAdmins.length,
+      admins: districtAdmins
     });
   } catch (error) {
     console.error("Error fetching district:", error);
@@ -212,6 +246,14 @@ export const getDistrictById = async (req, res) => {
 export const updateDistrict = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
+
     const { code, createdBy, createdAt, ...allowedUpdates } = req.body;
 
     const district = await District.findByIdAndUpdate(
@@ -238,6 +280,13 @@ export const updateDistrict = async (req, res) => {
 export const deleteDistrict = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
 
     // Check if district has any schools
     const schoolCount = await School.countDocuments({ districtId: id });
@@ -271,6 +320,13 @@ export const deleteDistrict = async (req, res) => {
 export const getDistrictStats = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
 
     const district = await District.findById(id);
     if (!district) {
@@ -312,6 +368,13 @@ export const addSchoolToDistrict = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, address, state, country, timeZone, domain } = req.body;
+
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
 
     const district = await District.findById(id);
     if (!district) {
@@ -359,6 +422,14 @@ export const addSchoolToDistrict = async (req, res) => {
 export const getDistrictSchools = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
+
     const { page = 1, limit = 20 } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -421,6 +492,14 @@ export const getDistrictSchools = async (req, res) => {
 export const assignDistrictAdmin = async (req, res) => {
   try {
     const { id } = req.params; // District ID from URL params
+
+    if (req.user.role === Role.Admin) {
+      const adminUser = await ensureAdminDistrictScope(req.user.id);
+      if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission for this district." });
+      }
+    }
+
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
