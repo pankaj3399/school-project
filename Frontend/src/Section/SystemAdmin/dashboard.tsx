@@ -57,6 +57,7 @@ export default function SystemAdminDashboard() {
     const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
     const [geoError, setGeoError] = useState<string | null>(null);
     const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
+    const [districtError, setDistrictError] = useState<string | null>(null);
 
     const { toast } = useToast();
 
@@ -99,6 +100,10 @@ export default function SystemAdminDashboard() {
                     }
                     if (Array.isArray(distComp.districtStats)) {
                         setDistrictAnalytics(distComp.districtStats);
+                        setDistrictError(null);
+                    } else if (distComp.error) {
+                        setDistrictAnalytics([]);
+                        setDistrictError(typeof distComp.error === 'string' ? distComp.error : 'Could not load district analytics');
                     }
                 }
             } catch (error) {
@@ -385,6 +390,10 @@ export default function SystemAdminDashboard() {
                 <CardContent>
                     {loading ? (
                         <div className="h-32 flex items-center justify-center text-gray-400">Loading...</div>
+                    ) : districtError ? (
+                        <div className="h-32 flex items-center justify-center text-center text-sm text-amber-800 bg-amber-50 rounded-lg border border-amber-100 px-4">
+                            {districtError}
+                        </div>
                     ) : districtAnalytics.length === 0 ? (
                         <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
                             No active districts with data yet.

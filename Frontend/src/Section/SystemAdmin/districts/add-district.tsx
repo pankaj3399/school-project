@@ -9,6 +9,7 @@ import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AddDistrict() {
     const navigate = useNavigate();
@@ -28,10 +29,14 @@ export default function AddDistrict() {
 
     useEffect(() => {
         const fetchDistricts = async () => {
-            const token = getAuthToken(user);
-            if (token) {
-                const res = await getDistricts(token);
-                if (res.districts) setExistingDistricts(res.districts);
+            try {
+                const token = getAuthToken(user);
+                if (token) {
+                    const res = await getDistricts(token);
+                    if (res.districts) setExistingDistricts(res.districts);
+                }
+            } catch (err) {
+                console.error('Failed to load districts for template selector:', err);
             }
         };
         fetchDistricts();
@@ -132,18 +137,22 @@ export default function AddDistrict() {
                                     <Copy className="h-4 w-4" />
                                     Clone Settings from Existing District (Optional)
                                 </Label>
-                                <select
-                                    className="w-full h-10 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a58c]/20"
-                                    value={templateDistrictId}
-                                    onChange={(e) => setTemplateDistrictId(e.target.value)}
+                                <Select
+                                    value={templateDistrictId || '_none'}
+                                    onValueChange={(val) => setTemplateDistrictId(val === '_none' ? '' : val)}
                                 >
-                                    <option value="">Start from scratch</option>
-                                    {existingDistricts.map((d: any) => (
-                                        <option key={d._id} value={d._id}>
-                                            {d.name} ({d.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger className="bg-white border-blue-200">
+                                        <SelectValue placeholder="Start from scratch" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="_none">Start from scratch</SelectItem>
+                                        {existingDistricts.map((d: any) => (
+                                            <SelectItem key={d._id} value={d._id}>
+                                                {d.name} ({d.code})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <p className="text-[10px] text-blue-600">
                                     Selecting a template will copy its default settings (token name, max tokens/day, form templates) to the new district.
                                 </p>

@@ -25,27 +25,37 @@ export const getDashboardStats = async (req, res) => {
     const districtFilter = isSystemAdmin ? {} : { _id: userDistrictId };
     const schoolFilter = isSystemAdmin ? {} : { districtId: userDistrictId };
 
-    const totalDistricts = await District.countDocuments(districtFilter);
-    const activeDistricts = await District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' });
-    const pendingDistricts = await District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' });
-
-    // Get school IDs for scoping teachers/students/points
-    const schoolIds = isSystemAdmin
-      ? null
-      : (await School.find({ districtId: userDistrictId }).select('_id')).map(s => s._id);
-
-    const teacherFilter = isSystemAdmin ? {} : { schoolId: { $in: schoolIds } };
-    const studentFilter = isSystemAdmin ? {} : { schoolId: { $in: schoolIds } };
-
-    const totalSchools = await School.countDocuments(schoolFilter);
-    const totalTeachers = await Teacher.countDocuments(teacherFilter);
-    const totalStudents = await Student.countDocuments(studentFilter);
-
-    const pointsMatch = isSystemAdmin ? {} : { schoolId: { $in: schoolIds } };
-    const totalPointsResult = await PointsHistory.aggregate([
-      { $match: pointsMatch },
-      { $group: { _id: null, total: { $sum: "$awarded" } } }
+    const [totalDistricts, activeDistricts, pendingDistricts, totalSchools] = await Promise.all([
+      District.countDocuments(districtFilter),
+      District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' }),
+      District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' }),
+      School.countDocuments(schoolFilter),
     ]);
+
+    // For teachers/students/points, use aggregation with $lookup to avoid loading school IDs into memory
+    const schoolLookupMatch = isSystemAdmin ? [{}] : [{ districtId: userDistrictId }];
+
+    const [teacherCountResult, studentCountResult, totalPointsResult] = await Promise.all([
+      School.aggregate([
+        { $match: schoolLookupMatch[0] },
+        { $lookup: { from: 'teachers', localField: '_id', foreignField: 'schoolId', as: 'teachers' } },
+        { $group: { _id: null, total: { $sum: { $size: '$teachers' } } } }
+      ]),
+      School.aggregate([
+        { $match: schoolLookupMatch[0] },
+        { $lookup: { from: 'students', localField: '_id', foreignField: 'schoolId', as: 'students' } },
+        { $group: { _id: null, total: { $sum: { $size: '$students' } } } }
+      ]),
+      School.aggregate([
+        { $match: schoolLookupMatch[0] },
+        { $lookup: { from: 'pointshistories', localField: '_id', foreignField: 'schoolId', as: 'points' } },
+        { $unwind: { path: '$points', preserveNullAndEmptyArrays: true } },
+        { $group: { _id: null, total: { $sum: '$points.awarded' } } }
+      ]),
+    ]);
+
+    const totalTeachers = teacherCountResult[0]?.total || 0;
+    const totalStudents = studentCountResult[0]?.total || 0;
     const totalPoints = totalPointsResult[0]?.total || 0;
 
     // Get recent activity
