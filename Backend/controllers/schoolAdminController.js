@@ -622,6 +622,14 @@ export const verifyResetOtp = async (req, res) => {
     await Otp.deleteOne({ _id: storedOtp._id });
 
     const schoolId = await getSchoolIdFromUser(req);
+    // Without a real schoolId, Mongoose drops the key from the filter and
+    // deleteMany({}) wipes the entire collection (Mongoose strictQuery behavior).
+    if (schoolId == null || schoolId === "") {
+      return res.status(400).json({
+        message:
+          "Cannot reset roster: your account has no school assigned, or pass a valid schoolId.",
+      });
+    }
     await PointsHistory.deleteMany({
       schoolId,
     });
@@ -642,6 +650,12 @@ export const verifyResetOtp = async (req, res) => {
 export const resetStudentRoster = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    if (schoolId == null || schoolId === "") {
+      return res.status(400).json({
+        message:
+          "Cannot reset roster: your account has no school assigned, or pass a valid schoolId.",
+      });
+    }
     await PointsHistory.deleteMany({
       schoolId,
     });
