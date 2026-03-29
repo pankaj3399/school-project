@@ -104,6 +104,9 @@ export default function SystemAdminDashboard() {
                     } else if (distComp.error) {
                         setDistrictAnalytics([]);
                         setDistrictError(typeof distComp.error === 'string' ? distComp.error : 'Could not load district analytics');
+                    } else {
+                        setDistrictAnalytics([]);
+                        setDistrictError('Could not load district analytics');
                     }
                 }
             } catch (error) {
@@ -403,12 +406,12 @@ export default function SystemAdminDashboard() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b text-left text-gray-500">
-                                        <th className="pb-3 font-medium">District</th>
-                                        <th className="pb-3 font-medium">State</th>
-                                        <th className="pb-3 font-medium text-right">Schools</th>
-                                        <th className="pb-3 font-medium text-right">Teachers</th>
-                                        <th className="pb-3 font-medium text-right">Students</th>
-                                        <th className="pb-3 font-medium text-right">Tokens</th>
+                                        <th scope="col" className="pb-3 font-medium">District</th>
+                                        <th scope="col" className="pb-3 font-medium">State</th>
+                                        <th scope="col" className="pb-3 font-medium text-right">Schools</th>
+                                        <th scope="col" className="pb-3 font-medium text-right">Teachers</th>
+                                        <th scope="col" className="pb-3 font-medium text-right">Students</th>
+                                        <th scope="col" className="pb-3 font-medium text-right">Tokens</th>
                                     </tr>
                                 </thead>
                                 <tbody>

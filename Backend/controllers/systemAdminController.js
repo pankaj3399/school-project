@@ -41,21 +41,21 @@ export const getDashboardStats = async (req, res) => {
     ]);
 
     // For teachers/students/points, use aggregation with $lookup to avoid loading school IDs into memory
-    const schoolLookupMatch = isSystemAdmin ? [{}] : [{ districtId: userDistrictId }];
+    const schoolMatchStage = isSystemAdmin ? [] : [{ $match: { districtId: userDistrictId } }];
 
     const [teacherCountResult, studentCountResult, totalPointsResult] = await Promise.all([
       School.aggregate([
-        { $match: schoolLookupMatch[0] },
+        ...schoolMatchStage,
         { $lookup: { from: 'teachers', localField: '_id', foreignField: 'schoolId', as: 'teachers' } },
         { $group: { _id: null, total: { $sum: { $size: '$teachers' } } } }
       ]),
       School.aggregate([
-        { $match: schoolLookupMatch[0] },
+        ...schoolMatchStage,
         { $lookup: { from: 'students', localField: '_id', foreignField: 'schoolId', as: 'students' } },
         { $group: { _id: null, total: { $sum: { $size: '$students' } } } }
       ]),
       School.aggregate([
-        { $match: schoolLookupMatch[0] },
+        ...schoolMatchStage,
         { $lookup: { from: 'pointshistories', localField: '_id', foreignField: 'schoolId', as: 'points' } },
         { $unwind: { path: '$points', preserveNullAndEmptyArrays: true } },
         { $group: { _id: null, total: { $sum: '$points.awarded' } } }

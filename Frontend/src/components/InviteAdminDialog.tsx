@@ -14,12 +14,12 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { inviteAdmin } from '@/api';
-import { Role } from '@/enum';
+import { Role, type RoleType } from '@/enum';
 
 interface InviteAdminDialogProps {
   districtId: string | undefined;
   schoolId?: string;
-  role?: string;
+  role?: RoleType;
   label?: string;
 }
 
@@ -38,6 +38,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
         return;
       }
     } else if (!districtId) {
+      toast({ title: "Error", description: "A district must be selected to send this invitation.", variant: "destructive" });
       return;
     }
     
