@@ -59,8 +59,21 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             headers: { 'token': token }
           });
           const data = await response.json();
-          if (data.schools) {
-            setSchools(data.schools);
+          // TODO: remove after confirming shape — then drop Array.isArray / data?.data fallback below
+          console.log("[SchoolContext] GET /school/ response", data, {
+            isArray: Array.isArray(data),
+            topLevelKeys:
+              data && typeof data === "object" && !Array.isArray(data)
+                ? Object.keys(data as object)
+                : null,
+          });
+          const list = Array.isArray(data)
+            ? data
+            : data?.schools ?? data?.data;
+          if (Array.isArray(list)) {
+            setSchools(list);
+          } else {
+            setSchools([]);
           }
         } catch (error) {
           console.error("Error fetching schools in context:", error);

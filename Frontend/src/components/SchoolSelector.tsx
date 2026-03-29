@@ -48,6 +48,7 @@ export function SchoolSelector() {
             <CommandEmpty>No school found.</CommandEmpty>
             <CommandGroup>
               <CommandItem
+                value="all-schools-default"
                 onSelect={() => {
                   setSelectedSchoolId(null);
                   setOpen(false);
@@ -65,6 +66,7 @@ export function SchoolSelector() {
               {schools.map((school) => (
                 <CommandItem
                   key={school._id}
+                  value={`${school.name} ${school._id}`}
                   onSelect={() => {
                     setSelectedSchoolId(school._id);
                     setOpen(false);
