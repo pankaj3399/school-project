@@ -201,11 +201,9 @@ export default function ViewDistrict() {
                         <Globe className="h-4 w-4 mr-2" />
                         Website
                     </Button>
-                                <Button 
-                                    className="bg-[#00a58c] hover:bg-[#008f7a] opacity-50 cursor-not-allowed" 
-                                    disabled 
-                                    aria-disabled="true"
-                                    title="Coming soon"
+                                <Button
+                                    className="bg-[#00a58c] hover:bg-[#008f7a]"
+                                    onClick={() => setSearchParams({ tab: 'admins' })}
                                 >
                                     Manage Admins
                                 </Button>
@@ -323,7 +321,7 @@ export default function ViewDistrict() {
                     <Card className="border-0 shadow-sm ring-1 ring-gray-100">
                         <CardHeader className="border-b bg-gray-50/30 flex flex-row items-center justify-between">
                             <CardTitle className="text-lg">District Administrators</CardTitle>
-                            <InviteAdminDialog districtId={id} />
+                            <InviteAdminDialog districtId={id} label="Invite District Admin" />
                         </CardHeader>
                         <CardContent className="p-6">
                             <Table>
