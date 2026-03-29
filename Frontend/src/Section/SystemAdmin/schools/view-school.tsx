@@ -4,7 +4,9 @@ import { getCurrrentSchool, getStats, deleteSchool, getDistricts, updateSchool }
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconTrash, IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight } from '@tabler/icons-react'
+import { IconTrash, IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck } from '@tabler/icons-react'
+import { InviteAdminDialog } from '@/components/InviteAdminDialog'
+import { Role } from '@/enum'
 import CurrentWeekCharts from '../../School/component/current-week-charts'
 import EducationYearChart from '../../School/component/new-chart'
 import TeacherRanks from '../../School/component/TeacherRanks'
@@ -200,6 +202,9 @@ const ViewSchool = () => {
                     <TabsTrigger value="dashboard" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100">
                         <IconLayoutDashboard className="w-4 h-4" /> Dashboard
                     </TabsTrigger>
+                    <TabsTrigger value="admins" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100">
+                        <IconShieldCheck className="w-4 h-4" /> Admins
+                    </TabsTrigger>
                     <TabsTrigger value="settings" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100">
                         <IconSettings className="w-4 h-4" /> Settings
                     </TabsTrigger>
@@ -239,6 +244,25 @@ const ViewSchool = () => {
                            <TeacherRanks studentId='' schoolId={id} />
                         </div>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="admins" className="outline-none">
+                    <Card className="border-neutral-200 shadow-sm rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-neutral-50/50 border-b p-6 flex flex-row items-center justify-between">
+                            <CardTitle className="text-xl font-bold text-neutral-900">School Administrators</CardTitle>
+                            <InviteAdminDialog
+                                districtId={school.districtId?._id || school.districtId}
+                                schoolId={id}
+                                role={Role.SchoolAdmin}
+                                label="Invite School Admin"
+                            />
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <p className="text-sm text-neutral-500">
+                                Use the "Invite School Admin" button to assign an administrator to this school. They will receive an email invitation to set up their account.
+                            </p>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="settings" className="outline-none">

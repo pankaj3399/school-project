@@ -18,9 +18,12 @@ import { Role } from '@/enum';
 
 interface InviteAdminDialogProps {
   districtId: string | undefined;
+  schoolId?: string;
+  role?: string;
+  label?: string;
 }
 
-export function InviteAdminDialog({ districtId }: InviteAdminDialogProps) {
+export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteAdminDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -36,8 +39,8 @@ export function InviteAdminDialog({ districtId }: InviteAdminDialogProps) {
       const response = await inviteAdmin({
         email,
         name,
-        role: Role.Admin,
-        schoolId: '', // For district admin, schoolId might be empty or specific if needed. 
+        role: role || Role.Admin,
+        schoolId: schoolId || '',
         districtId: districtId
       });
 
@@ -69,15 +72,15 @@ export function InviteAdminDialog({ districtId }: InviteAdminDialogProps) {
       <DialogTrigger asChild>
         <Button className="bg-[#00a58c] hover:bg-[#008f7a]">
           <UserPlus className="h-4 w-4 mr-2" />
-          Invite Admin
+          {label || 'Invite Admin'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleInvite}>
           <DialogHeader>
-            <DialogTitle>Invite Administrator</DialogTitle>
+            <DialogTitle>Invite {role === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
             <DialogDescription>
-              Send an invitation to a new district administrator. They will receive an email to set up their account.
+              Send an invitation to a new {role === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

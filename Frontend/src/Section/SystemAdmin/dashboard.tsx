@@ -25,7 +25,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { getSystemDashboardStats, getStateAnalytics } from '@/api';
+import { getSystemDashboardStats, getStateAnalytics, getDistrictAnalytics } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
@@ -37,6 +37,17 @@ type StateAnalyticsRow = {
     schoolCount: number;
 };
 
+type DistrictAnalyticsRow = {
+    districtId: string;
+    name: string;
+    code: string;
+    state: string;
+    schoolCount: number;
+    teacherCount: number;
+    studentCount: number;
+    totalTokens: number;
+};
+
 export default function SystemAdminDashboard() {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -45,6 +56,7 @@ export default function SystemAdminDashboard() {
     const [error, setError] = useState<string | null>(null);
     const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
     const [geoError, setGeoError] = useState<string | null>(null);
+    const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
 
     const { toast } = useToast();
 
@@ -66,9 +78,10 @@ export default function SystemAdminDashboard() {
             try {
                 const token = getAuthToken(user);
                 if (token) {
-                    const [dash, geo] = await Promise.all([
+                    const [dash, geo, distComp] = await Promise.all([
                         getSystemDashboardStats(token),
                         getStateAnalytics(token),
+                        getDistrictAnalytics(token),
                     ]);
                     if (dash.stats) {
                         setStats(dash.stats);
@@ -83,6 +96,9 @@ export default function SystemAdminDashboard() {
                         setGeoError(typeof geo.error === 'string' ? geo.error : 'Could not load geographic data');
                     } else {
                         setStateAnalytics([]);
+                    }
+                    if (Array.isArray(distComp.districtStats)) {
+                        setDistrictAnalytics(distComp.districtStats);
                     }
                 }
             } catch (error) {
@@ -357,6 +373,59 @@ export default function SystemAdminDashboard() {
                     </CardContent>
                 </Card>
             </div>
+            {/* District-Level Analytics */}
+            <Card className="border-0 shadow-sm ring-1 ring-gray-100">
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-gray-500" />
+                        District-Level Analytics
+                    </CardTitle>
+                    <CardDescription>Performance breakdown by district (active districts).</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? (
+                        <div className="h-32 flex items-center justify-center text-gray-400">Loading...</div>
+                    ) : districtAnalytics.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+                            No active districts with data yet.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b text-left text-gray-500">
+                                        <th className="pb-3 font-medium">District</th>
+                                        <th className="pb-3 font-medium">State</th>
+                                        <th className="pb-3 font-medium text-right">Schools</th>
+                                        <th className="pb-3 font-medium text-right">Teachers</th>
+                                        <th className="pb-3 font-medium text-right">Students</th>
+                                        <th className="pb-3 font-medium text-right">Tokens</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {districtAnalytics.map((d) => (
+                                        <tr
+                                            key={d.districtId}
+                                            className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            onClick={() => navigate(`/system-admin/districts/${d.districtId}`)}
+                                        >
+                                            <td className="py-3 font-medium text-gray-900">
+                                                {d.name}
+                                                <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
+                                            </td>
+                                            <td className="py-3 text-gray-600">{d.state || '—'}</td>
+                                            <td className="py-3 text-right text-gray-900">{d.schoolCount}</td>
+                                            <td className="py-3 text-right text-gray-900">{d.teacherCount}</td>
+                                            <td className="py-3 text-right text-gray-900">{d.studentCount}</td>
+                                            <td className="py-3 text-right font-semibold text-[#00a58c]">{d.totalTokens.toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { createDistrict } from '@/api';
+import { createDistrict, getDistricts, cloneFromTemplate } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 
 export default function AddDistrict() {
@@ -15,6 +15,8 @@ export default function AddDistrict() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [templateDistrictId, setTemplateDistrictId] = useState('');
+    const [existingDistricts, setExistingDistricts] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         name: '',
         code: '',
@@ -23,6 +25,17 @@ export default function AddDistrict() {
         contactName: '',
         contactEmail: ''
     });
+
+    useEffect(() => {
+        const fetchDistricts = async () => {
+            const token = getAuthToken(user);
+            if (token) {
+                const res = await getDistricts(token);
+                if (res.districts) setExistingDistricts(res.districts);
+            }
+        };
+        fetchDistricts();
+    }, [user]);
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,12 +72,20 @@ export default function AddDistrict() {
         }
 
         try {
-            const response = await createDistrict(formData, token);
+            let response;
+            if (templateDistrictId) {
+                response = await cloneFromTemplate({
+                    templateDistrictId,
+                    newDistrictData: formData
+                }, token);
+            } else {
+                response = await createDistrict(formData, token);
+            }
 
             if (response.district) {
                 toast({
                     title: "Success",
-                    description: `${response.district.name} has been registered successfully.`,
+                    description: `${response.district.name} has been registered successfully.${templateDistrictId ? ' (Cloned from template)' : ''}`,
                 });
                 navigate('/system-admin/districts');
             } else {
@@ -105,6 +126,30 @@ export default function AddDistrict() {
                 </CardHeader>
                 <CardContent className="p-8">
                     <form onSubmit={handleSubmit} className="space-y-8">
+                        {existingDistricts.length > 0 && (
+                            <div className="space-y-2 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                                <Label className="text-sm font-bold text-blue-800 flex items-center gap-2">
+                                    <Copy className="h-4 w-4" />
+                                    Clone Settings from Existing District (Optional)
+                                </Label>
+                                <select
+                                    className="w-full h-10 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a58c]/20"
+                                    value={templateDistrictId}
+                                    onChange={(e) => setTemplateDistrictId(e.target.value)}
+                                >
+                                    <option value="">Start from scratch</option>
+                                    {existingDistricts.map((d: any) => (
+                                        <option key={d._id} value={d._id}>
+                                            {d.name} ({d.code})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-[10px] text-blue-600">
+                                    Selecting a template will copy its default settings (token name, max tokens/day, form templates) to the new district.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="name" className="text-sm font-bold text-gray-700">District Name</Label>

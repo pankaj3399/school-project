@@ -14,19 +14,42 @@ import bcrypt from 'bcryptjs';
 // Get top-level dashboard stats
 export const getDashboardStats = async (req, res) => {
   try {
-    const totalDistricts = await District.countDocuments();
-    const activeDistricts = await District.countDocuments({ subscriptionStatus: 'active' });
-    const pendingDistricts = await District.countDocuments({ subscriptionStatus: 'pending' });
-    const totalSchools = await School.countDocuments();
-    const totalTeachers = await Teacher.countDocuments();
-    const totalStudents = await Student.countDocuments();
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const userDistrictId = req.user.districtId;
+
+    // If not SystemAdmin, scope to their district
+    if (!isSystemAdmin && !userDistrictId) {
+      return res.status(403).json({ message: "No district assigned to your account." });
+    }
+
+    const districtFilter = isSystemAdmin ? {} : { _id: userDistrictId };
+    const schoolFilter = isSystemAdmin ? {} : { districtId: userDistrictId };
+
+    const totalDistricts = await District.countDocuments(districtFilter);
+    const activeDistricts = await District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' });
+    const pendingDistricts = await District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' });
+
+    // Get school IDs for scoping teachers/students/points
+    const schoolIds = isSystemAdmin
+      ? null
+      : (await School.find({ districtId: userDistrictId }).select('_id')).map(s => s._id);
+
+    const teacherFilter = isSystemAdmin ? {} : { schoolId: { $in: schoolIds } };
+    const studentFilter = isSystemAdmin ? {} : { schoolId: { $in: schoolIds } };
+
+    const totalSchools = await School.countDocuments(schoolFilter);
+    const totalTeachers = await Teacher.countDocuments(teacherFilter);
+    const totalStudents = await Student.countDocuments(studentFilter);
+
+    const pointsMatch = isSystemAdmin ? {} : { schoolId: { $in: schoolIds } };
     const totalPointsResult = await PointsHistory.aggregate([
+      { $match: pointsMatch },
       { $group: { _id: null, total: { $sum: "$awarded" } } }
     ]);
     const totalPoints = totalPointsResult[0]?.total || 0;
 
     // Get recent activity
-    const recentDistricts = await District.find()
+    const recentDistricts = await District.find(districtFilter)
       .sort({ createdAt: -1 })
       .limit(5)
       .select('name code state subscriptionStatus createdAt');
@@ -52,8 +75,18 @@ export const getDashboardStats = async (req, res) => {
 // Get state-level analytics
 export const getStateLevelStats = async (req, res) => {
   try {
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const userDistrictId = req.user.districtId;
+
+    if (!isSystemAdmin && !userDistrictId) {
+      return res.status(403).json({ message: "No district assigned to your account." });
+    }
+
+    const districtMatch = isSystemAdmin ? {} : { _id: userDistrictId };
+
     // Aggregate districts by state
     const stateStats = await District.aggregate([
+      { $match: districtMatch },
       {
         $group: {
           _id: "$state",
@@ -66,8 +99,11 @@ export const getStateLevelStats = async (req, res) => {
       { $sort: { districtCount: -1 } }
     ]);
 
+    const schoolMatchStage = isSystemAdmin ? [] : [{ $match: { districtId: userDistrictId } }];
+
     // Get school counts per state
     const schoolsByState = await School.aggregate([
+      ...schoolMatchStage,
       {
         $lookup: {
           from: 'districts',
@@ -107,8 +143,19 @@ export const getStateLevelStats = async (req, res) => {
 // Get district comparison analytics
 export const getDistrictComparison = async (req, res) => {
   try {
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const userDistrictId = req.user.districtId;
+
+    if (!isSystemAdmin && !userDistrictId) {
+      return res.status(403).json({ message: "No district assigned to your account." });
+    }
+
+    const matchFilter = isSystemAdmin
+      ? { subscriptionStatus: 'active' }
+      : { _id: userDistrictId, subscriptionStatus: 'active' };
+
     const districtStats = await District.aggregate([
-      { $match: { subscriptionStatus: 'active' } },
+      { $match: matchFilter },
       {
         $lookup: {
           from: 'schools',
