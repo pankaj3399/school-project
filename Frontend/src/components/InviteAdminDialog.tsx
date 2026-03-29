@@ -32,9 +32,12 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!districtId) return;
-    if (role === Role.SchoolAdmin && !schoolId) {
-      toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
+    if (role === Role.SchoolAdmin) {
+      if (!schoolId) {
+        toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
+        return;
+      }
+    } else if (!districtId) {
       return;
     }
     

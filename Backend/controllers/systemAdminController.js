@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import District from '../models/District.js';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
@@ -11,11 +12,18 @@ import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
 
+// Resolve the current user's districtId from the database (not the JWT claim)
+// and return it as an ObjectId for use in aggregation pipelines.
+async function resolveDistrictId(userId) {
+  const user = await Admin.findById(userId).select('districtId').lean();
+  return user?.districtId ? new mongoose.Types.ObjectId(String(user.districtId)) : null;
+}
+
 // Get top-level dashboard stats
 export const getDashboardStats = async (req, res) => {
   try {
     const isSystemAdmin = req.user.role === Role.SystemAdmin;
-    const userDistrictId = req.user.districtId;
+    const userDistrictId = isSystemAdmin ? null : await resolveDistrictId(req.user.id);
 
     // If not SystemAdmin, scope to their district
     if (!isSystemAdmin && !userDistrictId) {
@@ -86,7 +94,7 @@ export const getDashboardStats = async (req, res) => {
 export const getStateLevelStats = async (req, res) => {
   try {
     const isSystemAdmin = req.user.role === Role.SystemAdmin;
-    const userDistrictId = req.user.districtId;
+    const userDistrictId = isSystemAdmin ? null : await resolveDistrictId(req.user.id);
 
     if (!isSystemAdmin && !userDistrictId) {
       return res.status(403).json({ message: "No district assigned to your account." });
@@ -154,7 +162,7 @@ export const getStateLevelStats = async (req, res) => {
 export const getDistrictComparison = async (req, res) => {
   try {
     const isSystemAdmin = req.user.role === Role.SystemAdmin;
-    const userDistrictId = req.user.districtId;
+    const userDistrictId = isSystemAdmin ? null : await resolveDistrictId(req.user.id);
 
     if (!isSystemAdmin && !userDistrictId) {
       return res.status(403).json({ message: "No district assigned to your account." });
@@ -338,6 +346,14 @@ export const cloneFromTemplate = async (req, res) => {
     const template = await District.findById(templateDistrictId);
     if (!template) {
       return res.status(404).json({ message: "Template district not found" });
+    }
+
+    // Non-SystemAdmin can only clone from districts they manage
+    if (req.user.role !== Role.SystemAdmin) {
+      const userDistrictId = await resolveDistrictId(req.user.id);
+      if (!userDistrictId || template._id.toString() !== userDistrictId.toString()) {
+        return res.status(403).json({ message: "You can only clone from districts you manage." });
+      }
     }
 
     // Create new district with template settings

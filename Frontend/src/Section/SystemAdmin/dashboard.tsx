@@ -14,7 +14,7 @@ import {
     Download,
     AlertCircle
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
     Bar,
     BarChart,
@@ -415,11 +415,15 @@ export default function SystemAdminDashboard() {
                                     {districtAnalytics.map((d) => (
                                         <tr
                                             key={d.districtId}
-                                            className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
-                                            onClick={() => navigate(`/system-admin/districts/${d.districtId}`)}
+                                            className="border-b last:border-0 hover:bg-gray-50 transition-colors"
                                         >
                                             <td className="py-3 font-medium text-gray-900">
-                                                {d.name}
+                                                <Link
+                                                    to={`/system-admin/districts/${d.districtId}`}
+                                                    className="hover:text-[#00a58c] hover:underline focus:outline-none focus:ring-2 focus:ring-[#00a58c]/30 rounded"
+                                                >
+                                                    {d.name}
+                                                </Link>
                                                 <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
                                             </td>
                                             <td className="py-3 text-gray-600">{d.state || '—'}</td>
