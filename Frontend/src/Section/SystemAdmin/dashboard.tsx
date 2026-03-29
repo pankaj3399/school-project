@@ -430,9 +430,9 @@ export default function SystemAdminDashboard() {
                                                 <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
                                             </td>
                                             <td className="py-3 text-gray-600">{d.state || '—'}</td>
-                                            <td className="py-3 text-right text-gray-900">{d.schoolCount}</td>
-                                            <td className="py-3 text-right text-gray-900">{d.teacherCount}</td>
-                                            <td className="py-3 text-right text-gray-900">{d.studentCount}</td>
+                                            <td className="py-3 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
+                                            <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
+                                            <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>
                                             <td className="py-3 text-right font-semibold text-[#00a58c]">{d.totalTokens.toLocaleString()}</td>
                                         </tr>
                                     ))}

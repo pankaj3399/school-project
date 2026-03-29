@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { InviteAdminDialog } from '@/components/InviteAdminDialog';
+import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -321,7 +322,7 @@ export default function ViewDistrict() {
                     <Card className="border-0 shadow-sm ring-1 ring-gray-100">
                         <CardHeader className="border-b bg-gray-50/30 flex flex-row items-center justify-between">
                             <CardTitle className="text-lg">District Administrators</CardTitle>
-                            <InviteAdminDialog districtId={id} label="Invite District Admin" />
+                            <InviteAdminDialog districtId={id} role={Role.DistrictAdmin} label="Invite District Admin" />
                         </CardHeader>
                         <CardContent className="p-6">
                             <Table>

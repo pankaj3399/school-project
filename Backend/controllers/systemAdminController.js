@@ -356,10 +356,18 @@ export const cloneFromTemplate = async (req, res) => {
       }
     }
 
-    // Create new district with template settings
+    // Create new district with template settings (whitelist allowed fields)
     const newDistrict = await District.create({
-      ...newDistrictData,
+      name: newDistrictData.name,
       code: newDistrictData.code?.toUpperCase(),
+      address: newDistrictData.address,
+      city: newDistrictData.city,
+      state: newDistrictData.state,
+      zipCode: newDistrictData.zipCode,
+      country: newDistrictData.country,
+      contactEmail: newDistrictData.contactEmail,
+      contactPhone: newDistrictData.contactPhone,
+      contactName: newDistrictData.contactName,
       settings: template.settings,
       templateSourceId: templateDistrictId,
       createdBy: req.user.id,

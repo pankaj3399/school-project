@@ -48,8 +48,8 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
         email,
         name,
         role: role || Role.Admin,
-        schoolId: schoolId || '',
-        districtId: districtId
+        ...(schoolId ? { schoolId } : {}),
+        ...(districtId ? { districtId } : {}),
       });
 
       if (response.error) {
