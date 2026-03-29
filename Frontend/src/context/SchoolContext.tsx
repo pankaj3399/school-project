@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useAuth } from '../authContext';
 import { Role } from '../enum';
+import { API_URL } from '@/api';
 
 interface School {
   _id: string;
@@ -55,10 +56,28 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setLoading(true);
         try {
           const token = localStorage.getItem('token') || '';
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/school/`, {
-            headers: { 'token': token }
+          const url = `${API_URL}/school/`;
+          const response = await fetch(url, {
+            headers: { token },
           });
-          const data = await response.json();
+          const text = await response.text();
+          const trimmed = text.trim();
+          if (trimmed.startsWith("<")) {
+            console.error(
+              "[SchoolContext] Got HTML instead of JSON — API base is usually wrong (use VITE_API_URL with /api, same as rest of app).",
+              { url, status: response.status, preview: trimmed.slice(0, 160) },
+            );
+            setSchools([]);
+            return;
+          }
+          let data: unknown;
+          try {
+            data = JSON.parse(text) as unknown;
+          } catch {
+            console.error("[SchoolContext] Response was not valid JSON", { url, status: response.status, preview: trimmed.slice(0, 200) });
+            setSchools([]);
+            return;
+          }
           // TODO: remove after confirming shape — then drop Array.isArray / data?.data fallback below
           console.log("[SchoolContext] GET /school/ response", data, {
             isArray: Array.isArray(data),
@@ -69,7 +88,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           });
           const list = Array.isArray(data)
             ? data
-            : data?.schools ?? data?.data;
+            : (data as { schools?: unknown; data?: unknown })?.schools ??
+              (data as { schools?: unknown; data?: unknown })?.data;
           if (Array.isArray(list)) {
             setSchools(list);
           } else {

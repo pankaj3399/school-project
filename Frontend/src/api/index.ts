@@ -1,7 +1,7 @@
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
 
-const API_URL = import.meta.env.VITE_VERCEL
+export const API_URL = import.meta.env.VITE_VERCEL
   ? import.meta.env.VITE_API_URL
   : import.meta.env.PROD
     ? "/api"
