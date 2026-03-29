@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useMemo, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
     Building2,
@@ -15,10 +15,27 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getSystemDashboardStats } from '@/api';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Legend,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import { getSystemDashboardStats, getStateAnalytics } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
+
+type StateAnalyticsRow = {
+    state: string;
+    districtCount: number;
+    activeDistrictCount: number;
+    schoolCount: number;
+};
 
 export default function SystemAdminDashboard() {
     const navigate = useNavigate();
@@ -26,8 +43,22 @@ export default function SystemAdminDashboard() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
+    const [geoError, setGeoError] = useState<string | null>(null);
 
     const { toast } = useToast();
+
+    const geoChartData = useMemo(() => {
+        return [...stateAnalytics]
+            .map((row) => ({
+                name: row.state || 'Unknown',
+                schools: row.schoolCount,
+                districts: row.districtCount,
+            }))
+            .sort((a, b) => b.schools + b.districts - (a.schools + a.districts));
+    }, [stateAnalytics]);
+
+    const hasGeoData = geoChartData.some((d) => d.schools > 0 || d.districts > 0);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -35,11 +66,23 @@ export default function SystemAdminDashboard() {
             try {
                 const token = getAuthToken(user);
                 if (token) {
-                    const data = await getSystemDashboardStats(token);
-                    if (data.stats) {
-                        setStats(data.stats);
-                    } else if (data.error) {
+                    const [dash, geo] = await Promise.all([
+                        getSystemDashboardStats(token),
+                        getStateAnalytics(token),
+                    ]);
+                    if (dash.stats) {
+                        setStats(dash.stats);
+                    } else if (dash.error) {
                         setError("Failed to load dashboard metrics");
+                    }
+                    if (Array.isArray(geo.stateAnalytics)) {
+                        setStateAnalytics(geo.stateAnalytics);
+                        setGeoError(null);
+                    } else if (geo.error) {
+                        setStateAnalytics([]);
+                        setGeoError(typeof geo.error === 'string' ? geo.error : 'Could not load geographic data');
+                    } else {
+                        setStateAnalytics([]);
                     }
                 }
             } catch (error) {
@@ -202,11 +245,72 @@ export default function SystemAdminDashboard() {
                             <Map className="h-5 w-5 text-gray-500" />
                             Geographic Distribution
                         </CardTitle>
+                        <CardDescription>
+                            Schools and districts by U.S. state (from district records).{" "}
+                            <button
+                                type="button"
+                                className="text-[#00a58c] font-medium hover:underline"
+                                onClick={() => navigate('/system-admin/schools')}
+                            >
+                                Manage schools
+                            </button>
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-64 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                            State-level map/chart will go here
-                        </div>
+                        {loading ? (
+                            <div className="h-64 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg">
+                                Loading map data…
+                            </div>
+                        ) : geoError ? (
+                            <div className="h-64 flex items-center justify-center text-center text-sm text-amber-800 bg-amber-50 rounded-lg border border-amber-100 px-4">
+                                {geoError}
+                            </div>
+                        ) : !hasGeoData ? (
+                            <div className="h-64 flex flex-col items-center justify-center text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200 px-6">
+                                <p className="text-sm font-medium text-gray-700">No state breakdown yet</p>
+                                <p className="text-sm mt-1 max-w-md">
+                                    Add districts with a state, or link schools to those districts, to see counts by state.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="h-72 w-full min-h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        layout="vertical"
+                                        data={geoChartData}
+                                        margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" horizontal={false} />
+                                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                                        <YAxis
+                                            type="category"
+                                            dataKey="name"
+                                            width={44}
+                                            tick={{ fontSize: 12 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                borderRadius: 8,
+                                                border: '1px solid #e5e7eb',
+                                                fontSize: 13,
+                                            }}
+                                            formatter={(value: number, name: string) => [
+                                                value,
+                                                name === 'schools' ? 'Schools' : 'Districts',
+                                            ]}
+                                        />
+                                        <Legend
+                                            wrapperStyle={{ fontSize: 13 }}
+                                            formatter={(value) => (value === 'schools' ? 'Schools' : 'Districts')}
+                                        />
+                                        <Bar dataKey="schools" name="schools" fill="#00a58c" radius={[0, 4, 4, 0]} maxBarSize={28} />
+                                        <Bar dataKey="districts" name="districts" fill="#94a3b8" radius={[0, 4, 4, 0]} maxBarSize={28} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
