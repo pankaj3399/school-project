@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import District from '../models/District.js';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
@@ -11,22 +12,62 @@ import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
 
+// Resolve the current user's districtId from the database (not the JWT claim)
+// and return it as an ObjectId for use in aggregation pipelines.
+async function resolveDistrictId(userId) {
+  const user = await Admin.findById(userId).select('districtId').lean();
+  return user?.districtId ? new mongoose.Types.ObjectId(String(user.districtId)) : null;
+}
+
 // Get top-level dashboard stats
 export const getDashboardStats = async (req, res) => {
   try {
-    const totalDistricts = await District.countDocuments();
-    const activeDistricts = await District.countDocuments({ subscriptionStatus: 'active' });
-    const pendingDistricts = await District.countDocuments({ subscriptionStatus: 'pending' });
-    const totalSchools = await School.countDocuments();
-    const totalTeachers = await Teacher.countDocuments();
-    const totalStudents = await Student.countDocuments();
-    const totalPointsResult = await PointsHistory.aggregate([
-      { $group: { _id: null, total: { $sum: "$awarded" } } }
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const userDistrictId = isSystemAdmin ? null : await resolveDistrictId(req.user.id);
+
+    // If not SystemAdmin, scope to their district
+    if (!isSystemAdmin && !userDistrictId) {
+      return res.status(403).json({ message: "No district assigned to your account." });
+    }
+
+    const districtFilter = isSystemAdmin ? {} : { _id: userDistrictId };
+    const schoolFilter = isSystemAdmin ? {} : { districtId: userDistrictId };
+
+    const [totalDistricts, activeDistricts, pendingDistricts, totalSchools] = await Promise.all([
+      District.countDocuments(districtFilter),
+      District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' }),
+      District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' }),
+      School.countDocuments(schoolFilter),
     ]);
+
+    // For teachers/students/points, use aggregation with $lookup to avoid loading school IDs into memory
+    const schoolMatchStage = isSystemAdmin ? [] : [{ $match: { districtId: userDistrictId } }];
+
+    const [teacherCountResult, studentCountResult, totalPointsResult] = await Promise.all([
+      School.aggregate([
+        ...schoolMatchStage,
+        { $lookup: { from: 'teachers', localField: '_id', foreignField: 'schoolId', as: 'teachers' } },
+        { $group: { _id: null, total: { $sum: { $size: '$teachers' } } } }
+      ]),
+      School.aggregate([
+        ...schoolMatchStage,
+        { $lookup: { from: 'students', localField: '_id', foreignField: 'schoolId', as: 'students' } },
+        { $group: { _id: null, total: { $sum: { $size: '$students' } } } }
+      ]),
+      School.aggregate([
+        ...schoolMatchStage,
+        { $lookup: { from: 'pointshistories', localField: '_id', foreignField: 'schoolId', as: 'points' } },
+        { $unwind: { path: '$points', preserveNullAndEmptyArrays: true } },
+        { $group: { _id: null, total: { $sum: '$points.awarded' } } }
+      ]),
+    ]);
+
+    const totalTeachers = teacherCountResult[0]?.total || 0;
+    const totalStudents = studentCountResult[0]?.total || 0;
     const totalPoints = totalPointsResult[0]?.total || 0;
 
     // Get recent activity
-    const recentDistricts = await District.find()
+    const recentDistricts = await District.find(districtFilter)
       .sort({ createdAt: -1 })
       .limit(5)
       .select('name code state subscriptionStatus createdAt');
@@ -52,8 +93,18 @@ export const getDashboardStats = async (req, res) => {
 // Get state-level analytics
 export const getStateLevelStats = async (req, res) => {
   try {
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const userDistrictId = isSystemAdmin ? null : await resolveDistrictId(req.user.id);
+
+    if (!isSystemAdmin && !userDistrictId) {
+      return res.status(403).json({ message: "No district assigned to your account." });
+    }
+
+    const districtMatch = isSystemAdmin ? {} : { _id: userDistrictId };
+
     // Aggregate districts by state
     const stateStats = await District.aggregate([
+      { $match: districtMatch },
       {
         $group: {
           _id: "$state",
@@ -66,8 +117,11 @@ export const getStateLevelStats = async (req, res) => {
       { $sort: { districtCount: -1 } }
     ]);
 
+    const schoolMatchStage = isSystemAdmin ? [] : [{ $match: { districtId: userDistrictId } }];
+
     // Get school counts per state
     const schoolsByState = await School.aggregate([
+      ...schoolMatchStage,
       {
         $lookup: {
           from: 'districts',
@@ -107,8 +161,19 @@ export const getStateLevelStats = async (req, res) => {
 // Get district comparison analytics
 export const getDistrictComparison = async (req, res) => {
   try {
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const userDistrictId = isSystemAdmin ? null : await resolveDistrictId(req.user.id);
+
+    if (!isSystemAdmin && !userDistrictId) {
+      return res.status(403).json({ message: "No district assigned to your account." });
+    }
+
+    const matchFilter = isSystemAdmin
+      ? { subscriptionStatus: 'active' }
+      : { _id: userDistrictId, subscriptionStatus: 'active' };
+
     const districtStats = await District.aggregate([
-      { $match: { subscriptionStatus: 'active' } },
+      { $match: matchFilter },
       {
         $lookup: {
           from: 'schools',
@@ -283,10 +348,26 @@ export const cloneFromTemplate = async (req, res) => {
       return res.status(404).json({ message: "Template district not found" });
     }
 
-    // Create new district with template settings
+    // Non-SystemAdmin can only clone from districts they manage
+    if (req.user.role !== Role.SystemAdmin) {
+      const userDistrictId = await resolveDistrictId(req.user.id);
+      if (!userDistrictId || template._id.toString() !== userDistrictId.toString()) {
+        return res.status(403).json({ message: "You can only clone from districts you manage." });
+      }
+    }
+
+    // Create new district with template settings (whitelist allowed fields)
     const newDistrict = await District.create({
-      ...newDistrictData,
+      name: newDistrictData.name,
       code: newDistrictData.code?.toUpperCase(),
+      address: newDistrictData.address,
+      city: newDistrictData.city,
+      state: newDistrictData.state,
+      zipCode: newDistrictData.zipCode,
+      country: newDistrictData.country,
+      contactEmail: newDistrictData.contactEmail,
+      contactPhone: newDistrictData.contactPhone,
+      contactName: newDistrictData.contactName,
       settings: template.settings,
       templateSourceId: templateDistrictId,
       createdBy: req.user.id,

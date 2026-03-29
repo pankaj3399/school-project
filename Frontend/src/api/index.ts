@@ -1223,6 +1223,17 @@ export const getDistrictAnalytics = async (token: string) => {
   }
 };
 
+export const cloneFromTemplate = async (data: { templateDistrictId: string; newDistrictData: any }, token: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/system-admin/clone-district`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+
 export const updateTerms = async (data: any, token: string) => {
   try {
     const response = await axios.post(`${API_URL}/system-admin/terms`, data, {

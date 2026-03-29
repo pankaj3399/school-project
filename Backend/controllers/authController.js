@@ -16,8 +16,8 @@ import PendingTokens from "../models/PendingTokens.js";
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 import { TermsOfUse } from "../models/TermsOfUse.js";
 
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const generateToken = (id, role, districtId = null) => {
+  return jwt.sign({ id, role, districtId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 // Updated authController.js
@@ -230,7 +230,7 @@ export const login = async (req, res) => {
 
     await Otp.deleteOne({ _id: storedOtp._id });
 
-    const token = generateToken(user._id, userRole);
+    const token = generateToken(user._id, userRole, user.districtId);
     if (userRole == Role.Teacher && user.isFirstLogin) {
       return res.status(200).json({
         message: "First login",
@@ -343,7 +343,7 @@ export const verifyLoginOtp = async (req, res) => {
     // OTP is valid, delete it (single use)
     await Otp.deleteOne({ _id: storedOtp._id });
 
-    const token = generateToken(user._id, userRole);
+    const token = generateToken(user._id, userRole, user.districtId);
     if (userRole == Role.Teacher && user.isFirstLogin) {
       return res.status(200).json({
         message: "First login",
@@ -411,7 +411,7 @@ export const signup = async (req, res) => {
       role,
     });
     const savedUser = await newUser.save();
-    const token = generateToken(savedUser._id, role);
+    const token = generateToken(savedUser._id, role, savedUser.districtId);
     if (!newUser.approved)
       return res.status(401).json({ message: "User not approved" });
     res.status(201).json({

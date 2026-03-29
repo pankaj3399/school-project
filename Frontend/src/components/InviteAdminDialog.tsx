@@ -14,13 +14,16 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { inviteAdmin } from '@/api';
-import { Role } from '@/enum';
+import { Role, type RoleType } from '@/enum';
 
 interface InviteAdminDialogProps {
   districtId: string | undefined;
+  schoolId?: string;
+  role?: RoleType;
+  label?: string;
 }
 
-export function InviteAdminDialog({ districtId }: InviteAdminDialogProps) {
+export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteAdminDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -29,16 +32,24 @@ export function InviteAdminDialog({ districtId }: InviteAdminDialogProps) {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!districtId) return;
+    if (role === Role.SchoolAdmin) {
+      if (!schoolId) {
+        toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
+        return;
+      }
+    } else if (!districtId) {
+      toast({ title: "Error", description: "A district must be selected to send this invitation.", variant: "destructive" });
+      return;
+    }
     
     setLoading(true);
     try {
       const response = await inviteAdmin({
         email,
         name,
-        role: Role.Admin,
-        schoolId: '', // For district admin, schoolId might be empty or specific if needed. 
-        districtId: districtId
+        role: role || Role.Admin,
+        ...(schoolId ? { schoolId } : {}),
+        ...(districtId ? { districtId } : {}),
       });
 
       if (response.error) {
@@ -69,15 +80,15 @@ export function InviteAdminDialog({ districtId }: InviteAdminDialogProps) {
       <DialogTrigger asChild>
         <Button className="bg-[#00a58c] hover:bg-[#008f7a]">
           <UserPlus className="h-4 w-4 mr-2" />
-          Invite Admin
+          {label || 'Invite Admin'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleInvite}>
           <DialogHeader>
-            <DialogTitle>Invite Administrator</DialogTitle>
+            <DialogTitle>Invite {role === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
             <DialogDescription>
-              Send an invitation to a new district administrator. They will receive an email to set up their account.
+              Send an invitation to a new {role === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
