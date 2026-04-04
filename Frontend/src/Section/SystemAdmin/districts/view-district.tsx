@@ -304,14 +304,14 @@ export default function ViewDistrict() {
                                                             {school.address || "No address"}
                                                         </p>
                                                     </TableCell>
-                                                    <TableCell className="text-center font-medium">{school.teacherCount || 0}</TableCell>
-                                                    <TableCell className="text-center font-medium">{school.studentCount || 0}</TableCell>
+                                                    <TableCell className="text-center font-medium">{school.teacherCount?.toLocaleString() || 0}</TableCell>
+                                                    <TableCell className="text-center font-medium">{school.studentCount?.toLocaleString() || 0}</TableCell>
                                                     <TableCell className="text-center font-bold text-[#00a58c]">{school.tokens?.toLocaleString() || 0}</TableCell>
                                                     <TableCell className="text-center font-bold text-amber-600">{school.withdrawals?.toLocaleString() || 0}</TableCell>
                                                     <TableCell className="text-center font-bold text-red-500">{school.oopsies?.toLocaleString() || 0}</TableCell>
                                                     <TableCell className="text-center font-medium">
                                                         <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                                                            {school.feedbackCount || 0}
+                                                            {school.feedbackCount?.toLocaleString() || 0}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="text-right">

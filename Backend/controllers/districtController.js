@@ -420,7 +420,7 @@ export const getDistrictStats = async (req, res) => {
       Student.countDocuments({ schoolId: { $in: schoolIds } }),
       PointsHistory.aggregate([
         { $match: { schoolId: { $in: schoolIds } } },
-        { $group: { _id: null, total: { $sum: "$awarded" } } }
+        { $group: { _id: null, total: { $sum: "$points" } } }
       ])
     ]);
 
