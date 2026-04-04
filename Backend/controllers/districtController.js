@@ -223,7 +223,6 @@ export const getDistrictById = async (req, res) => {
 
     // Get associated schools with detailed stats
     const schoolsData = await School.find({ districtId: id })
-      .select('name address createdAt')
       .sort({ createdAt: -1 });
 
     const schoolIds = schoolsData.map(s => s._id);
