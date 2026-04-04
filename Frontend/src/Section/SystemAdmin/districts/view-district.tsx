@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDistrictById, updateDistrict, deleteSchool } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -329,15 +329,10 @@ export default function ViewDistrict() {
                                                                 variant="ghost" 
                                                                 size="sm"
                                                                 onClick={() => handleDeleteSchool(school._id, school.name)}
-                                                                className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-600"
+                                                                className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-600 flex items-center justify-center"
                                                                 title="Delete"
                                                             >
-                                                                <Loader2 className={cn("h-4 w-4", "invisible")} /> 
-                                                                {/* Using a placeholder for consistency, but normally just the icon */}
-                                                                <span className="sr-only">Delete</span>
-                                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                                                </div>
+                                                                <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </div>
                                                     </TableCell>
