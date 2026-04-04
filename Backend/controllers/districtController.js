@@ -3,7 +3,7 @@ import School from "../models/School.js";
 import User from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
-import { Role } from "../enum.js";
+import { Role, FormType } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
 import Feedback from "../models/Feedback.js";
 import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.js";
@@ -278,11 +278,11 @@ export const getDistrictById = async (req, res) => {
         acc[sId] = { tokens: 0, withdrawals: 0, oopsies: 0 };
       }
 
-      if (type === 'AwardPoints' || type === 'AwardPointsIEP') {
+      if (type === FormType.AwardPoints || type === FormType.AwardPointsIEP) {
         acc[sId].tokens += item.totalPoints;
-      } else if (type === 'PointWithdraw') {
+      } else if (type === FormType.PointWithdraw) {
         acc[sId].withdrawals += item.totalPoints;
-      } else if (type === 'DeductPoints') {
+      } else if (type === FormType.DeductPoints) {
         acc[sId].oopsies += Math.abs(item.totalPoints);
       }
       

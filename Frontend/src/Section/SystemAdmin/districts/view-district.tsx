@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDistrictById, updateDistrict, deleteSchool } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, Trash2, Eye } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -323,7 +323,7 @@ export default function ViewDistrict() {
                                                                 className="h-8 w-8 p-0 hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
                                                                 title="View"
                                                             >
-                                                                <ArrowLeft className="h-4 w-4 rotate-180" />
+                                                                <Eye className="h-4 w-4" />
                                                             </Button>
                                                             <Button 
                                                                 variant="ghost" 

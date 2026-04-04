@@ -192,6 +192,14 @@ const SetupPage = () => {
     let url: string | null = null;
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to download the waitlist.",
+          variant: "destructive",
+        });
+        return;
+      }
       const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
         method: 'GET',
         headers: {
