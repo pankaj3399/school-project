@@ -17,7 +17,7 @@ export function Breadcrumb() {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
           const label = /^\d/.test(segment)
-          ? "E-Tokens"
+          ? "Admin"
           : segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
         
 

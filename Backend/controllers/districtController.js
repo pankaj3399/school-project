@@ -220,9 +220,86 @@ export const getDistrictById = async (req, res) => {
       return res.status(404).json({ message: "District not found" });
     }
 
-    // Get associated schools
-    const schools = await School.find({ districtId: id })
-      .select('name address createdAt');
+    // Get associated schools with detailed stats
+    const schoolsData = await School.find({ districtId: id })
+      .select('name address createdAt')
+      .sort({ createdAt: -1 });
+
+    const schoolIds = schoolsData.map(s => s._id);
+
+    // Get counts and stats for each school
+    const [teacherCounts, studentCounts, pointsStats, feedbackCounts] = await Promise.all([
+      Teacher.aggregate([
+        { $match: { schoolId: { $in: schoolIds } } },
+        { $group: { _id: "$schoolId", count: { $sum: 1 } } }
+      ]),
+      Student.aggregate([
+        { $match: { schoolId: { $in: schoolIds } } },
+        { $group: { _id: "$schoolId", count: { $sum: 1 } } }
+      ]),
+      PointsHistory.aggregate([
+        { $match: { schoolId: { $in: schoolIds } } },
+        {
+          $group: {
+            _id: { schoolId: "$schoolId", formType: "$formType" },
+            totalPoints: { $sum: "$points" }
+          }
+        }
+      ]),
+      Feedback.aggregate([
+        { $match: { schoolId: { $in: schoolIds } } },
+        { $group: { _id: "$schoolId", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    // Create maps for quick lookup
+    const teacherMap = teacherCounts.reduce((acc, item) => {
+      acc[item._id.toString()] = item.count;
+      return acc;
+    }, {});
+
+    const studentMap = studentCounts.reduce((acc, item) => {
+      acc[item._id.toString()] = item.count;
+      return acc;
+    }, {});
+
+    const feedbackMap = feedbackCounts.reduce((acc, item) => {
+      acc[item._id.toString()] = item.count;
+      return acc;
+    }, {});
+
+    // Points map structure: { schoolId: { tokens: 0, withdrawals: 0, oopsies: 0 } }
+    const pointsMap = pointsStats.reduce((acc, item) => {
+      const sId = item._id.schoolId.toString();
+      const type = item._id.formType;
+      
+      if (!acc[sId]) {
+        acc[sId] = { tokens: 0, withdrawals: 0, oopsies: 0 };
+      }
+
+      if (type === 'AwardPoints' || type === 'AwardPointsIEP') {
+        acc[sId].tokens += item.totalPoints;
+      } else if (type === 'PointWithdraw') {
+        acc[sId].withdrawals += item.totalPoints;
+      } else if (type === 'DeductPoints') {
+        acc[sId].oopsies += Math.abs(item.totalPoints);
+      }
+      
+      return acc;
+    }, {});
+
+    const schoolsWithStats = schoolsData.map(school => {
+      const sId = school._id.toString();
+      return {
+        ...school.toObject(),
+        teacherCount: teacherMap[sId] || 0,
+        studentCount: studentMap[sId] || 0,
+        feedbackCount: feedbackMap[sId] || 0,
+        tokens: pointsMap[sId]?.tokens || 0,
+        withdrawals: pointsMap[sId]?.withdrawals || 0,
+        oopsies: pointsMap[sId]?.oopsies || 0
+      };
+    });
 
     // Get admins associated with this district
     const districtAdmins = await User.find({ 
@@ -232,7 +309,7 @@ export const getDistrictById = async (req, res) => {
 
     return res.status(200).json({
       district,
-      schools,
+      schools: schoolsWithStats,
       adminCount: districtAdmins.length,
       admins: districtAdmins
     });
