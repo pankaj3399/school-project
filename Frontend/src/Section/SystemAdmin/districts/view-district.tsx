@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDistrictById, updateDistrict, deleteSchool } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, Trash2, Eye } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -263,55 +263,90 @@ export default function ViewDistrict() {
                 
                 <TabsContent value="schools" className="mt-6">
                     <Card className="border-0 shadow-sm ring-1 ring-gray-100">
-                        <CardHeader className="border-b bg-gray-50/30">
+                        <CardHeader className="border-b bg-gray-50/30 flex flex-row items-center justify-between">
                             <CardTitle className="text-lg">District Schools</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => navigate(`/system-admin/schools/new?districtId=${id}`)}>Add School</Button>
+                                <Button variant="outline" size="sm" className="bg-white" onClick={() => navigate('/system-admin/schools/import')}>Bulk Import</Button>
+                            </div>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-0">
                             {schools?.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {schools.map((school: any) => (
-                                        <div key={school._id} className="flex justify-between items-center p-4 border rounded-xl hover:shadow-md transition-shadow bg-white">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 bg-gray-50 rounded-lg flex items-center justify-center border">
-                                                    <School className="h-5 w-5 text-gray-400" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-bold text-gray-900">{school.name}</h4>
-                                                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                                                        <MapPin className="h-3 w-3" />
-                                                        {school.address || "No address provided"}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm"
-                                                    onClick={() => navigate(`/system-admin/schools/${school._id}`)}
-                                                    className="hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
-                                                >
-                                                    View
-                                                </Button>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm"
-                                                    onClick={() => handleDeleteSchool(school._id, school.name)}
-                                                    className="hover:bg-red-50 text-red-500 hover:text-red-600"
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-gray-50/50">
+                                                <TableHead className="font-bold text-gray-700">SCHOOL NAME</TableHead>
+                                                <TableHead className="font-bold text-gray-700">Address</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-center">TEACHERS</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-center">STUDENTS</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-center">TOKENS</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-center">WITHDRAWALS</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-center">OOPSIES</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-center">FEEDBACK</TableHead>
+                                                <TableHead className="font-bold text-gray-700 text-right">ACTIONS</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {schools.map((school: any) => (
+                                                <TableRow key={school._id} className="hover:bg-gray-50/50 transition-colors">
+                                                    <TableCell className="font-bold text-gray-900">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="p-1.5 bg-gray-100 rounded-lg">
+                                                                <School className="h-4 w-4 text-gray-500" />
+                                                            </div>
+                                                            {school.name}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="max-w-[200px]">
+                                                        <p className="text-xs text-gray-500 flex items-center gap-1 truncate">
+                                                            <MapPin className="h-3 w-3 shrink-0" />
+                                                            {school.address || "No address"}
+                                                        </p>
+                                                    </TableCell>
+                                                    <TableCell className="text-center font-medium">{school.teacherCount?.toLocaleString() || 0}</TableCell>
+                                                    <TableCell className="text-center font-medium">{school.studentCount?.toLocaleString() || 0}</TableCell>
+                                                    <TableCell className="text-center font-bold text-[#00a58c]">{school.tokens?.toLocaleString() || 0}</TableCell>
+                                                    <TableCell className="text-center font-bold text-amber-600">{school.withdrawals?.toLocaleString() || 0}</TableCell>
+                                                    <TableCell className="text-center font-bold text-red-500">{school.oopsies?.toLocaleString() || 0}</TableCell>
+                                                    <TableCell className="text-center font-medium">
+                                                        <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                                                            {school.feedbackCount?.toLocaleString() || 0}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => navigate(`/system-admin/schools/${school._id}`)}
+                                                                className="h-8 w-8 p-0 hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
+                                                                title="View"
+                                                                aria-label={`View ${school.name}`}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => handleDeleteSchool(school._id, school.name)}
+                                                                className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-600 flex items-center justify-center"
+                                                                title="Delete"
+                                                                aria-label={`Delete ${school.name}`}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             ) : (
-                                <div className="text-center py-12 text-gray-500 bg-gray-50/50 rounded-xl border-2 border-dashed">
+                                <div className="text-center py-12 text-gray-500 bg-gray-50/50 rounded-xl border-2 border-dashed m-6">
                                     <School className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                                     <p className="font-medium">No schools registered in this district yet.</p>
-                                    <div className="mt-6 flex justify-center gap-3">
-                                        <Button variant="outline" size="sm" onClick={() => navigate(`/system-admin/schools/new?districtId=${id}`)}>Add School Manually</Button>
-                                        <Button variant="outline" size="sm" className="bg-white" onClick={() => navigate('/system-admin/schools/import')}>Bulk Import</Button>
-                                    </div>
                                 </div>
                             )}
                         </CardContent>

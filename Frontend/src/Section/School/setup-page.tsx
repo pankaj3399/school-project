@@ -25,7 +25,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Users, GraduationCap, School } from "lucide-react";
+import { Users, GraduationCap, School, Download } from "lucide-react";
 import { TIMEZONE_OPTIONS } from "@/lib/luxon";
 
 const STATE_OPTIONS = [
@@ -186,6 +186,50 @@ const SetupPage = () => {
         });
       }
       setLoading(false);
+    }
+  };
+  const handleDownloadWaitlist = async () => {
+    let url: string | null = null;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to download the waitlist.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
+        method: 'GET',
+        headers: {
+          'token': `${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download waitlist');
+      }
+
+      const blob = await response.blob();
+      url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `waitlist-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading waitlist:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download waitlist data",
+        variant: "destructive"
+      });
+    } finally {
+      if (url) {
+        window.URL.revokeObjectURL(url);
+      }
     }
   };
 
@@ -428,7 +472,31 @@ const SetupPage = () => {
               </Button>
             </CardFooter>
           </Card>
+
+          {/* Download Waitlist Card (System Admin Only) */}
+          {user?.role === Role.SystemAdmin && (
+            <Card className="flex flex-col h-full border-blue-100 bg-blue-50/30">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Download className="h-5 w-5 text-blue-600" />
+                  <CardTitle>Download Waitlist</CardTitle>
+                </div>
+                <CardDescription>
+                  Export the current waitlist of users as a CSV file
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="mt-auto">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                  onClick={handleDownloadWaitlist}
+                >
+                  Download Waitlist
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
         </div>
+
       </div>
 
       <PasswordConfirmationModal

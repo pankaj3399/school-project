@@ -10,8 +10,6 @@ import {
     ArrowUpRight,
     TrendingUp,
     Map,
-    Plus,
-    Download,
     AlertCircle
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -27,7 +25,6 @@ import {
 } from 'recharts';
 import { getSystemDashboardStats, getStateAnalytics, getDistrictAnalytics } from '@/api';
 import { useAuth } from '@/authContext';
-import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
 
 type StateAnalyticsRow = {
@@ -58,8 +55,6 @@ export default function SystemAdminDashboard() {
     const [geoError, setGeoError] = useState<string | null>(null);
     const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
     const [districtError, setDistrictError] = useState<string | null>(null);
-
-    const { toast } = useToast();
 
     const geoChartData = useMemo(() => {
         return [...stateAnalytics]
@@ -120,42 +115,7 @@ export default function SystemAdminDashboard() {
         fetchStats();
     }, [user]);
 
-    const handleDownloadWaitlist = async () => {
-        let url: string | null = null;
-        try {
-            const token = getAuthToken(user);
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
-                method: 'GET',
-                headers: {
-                    'token': `${token}`
-                }
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to download waitlist');
-            }
-
-            const blob = await response.blob();
-            url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `waitlist-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error('Error downloading waitlist:', error);
-            toast({
-                title: "Error",
-                description: "Failed to download waitlist data",
-                variant: "destructive"
-            });
-        } finally {
-            if (url) {
-                window.URL.revokeObjectURL(url);
-            }
-        }
-    };
 
     const cards = [
         {
@@ -202,26 +162,7 @@ export default function SystemAdminDashboard() {
                     </h1>
                     <p className="text-gray-500 mt-2">Manage districts, schools, and monitor system performance.</p>
                 </div>
-                <div className="flex gap-4">
-                    <Button
-                        onClick={handleDownloadWaitlist}
-                        variant="outline"
-                        className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
-                    >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Waitlist
-                    </Button>
-                    <Button
-                        onClick={() => navigate('/system-admin/districts/new')}
-                        className="bg-[#00a58c] hover:bg-[#008f7a]"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add District
-                    </Button>
-                    <Button variant="outline" onClick={() => navigate('/system-admin/districts')}>
-                        Manage Districts
-                    </Button>
-                </div>
+
             </div>
 
             {error && (
