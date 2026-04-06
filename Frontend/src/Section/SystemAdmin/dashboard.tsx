@@ -99,8 +99,8 @@ export default function SystemAdminDashboard() {
                     ]);
                     if (dash.stats) {
                         setStats(dash.stats);
-                        setChartData(dash.chartData || []);
-                        setSchoolStats(dash.schoolStats || []);
+                        setChartData(Array.isArray(dash.chartData) ? dash.chartData : []);
+                        setSchoolStats(Array.isArray(dash.schoolStats) ? dash.schoolStats : []);
                     } else if (dash.error) {
                         setError("Failed to load dashboard metrics");
                     }
@@ -190,7 +190,7 @@ export default function SystemAdminDashboard() {
         }
         return list.map(item => ({
             ...item,
-            monthName: monthNames[item.month - 1]
+            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${item.year}` : monthNames[item.month - 1]
         }));
     }, [chartData, selectedYear]);
 
