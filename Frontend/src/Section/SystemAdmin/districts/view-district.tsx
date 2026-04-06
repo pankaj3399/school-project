@@ -35,6 +35,7 @@ export default function ViewDistrict() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editData, setEditData] = useState<any>(null);
+    const [reinvitingIds, setReinvitingIds] = useState<Record<string, boolean>>({});
 
 
     useEffect(() => {
@@ -157,6 +158,9 @@ export default function ViewDistrict() {
     };
 
     const handleReInvite = async (adminId: string, adminName: string) => {
+        if (reinvitingIds[adminId]) return;
+
+        setReinvitingIds(prev => ({ ...prev, [adminId]: true }));
         try {
             const response = await reInviteAdmin(adminId);
             if (response.error) {
@@ -183,6 +187,8 @@ export default function ViewDistrict() {
                 description: error.message || "An error occurred while resending the invitation.",
                 variant: "destructive"
             });
+        } finally {
+            setReinvitingIds(prev => ({ ...prev, [adminId]: false }));
         }
     };
 
@@ -462,9 +468,10 @@ export default function ViewDistrict() {
                                                             <Button 
                                                                 variant="link" 
                                                                 onClick={() => handleReInvite(admin._id, admin.name)}
-                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] hover:bg-[#00a58c]/10 text-xs font-bold"
+                                                                disabled={reinvitingIds[admin._id]}
+                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] hover:bg-[#00a58c]/10 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                                             >
-                                                                Invite
+                                                                {reinvitingIds[admin._id] ? 'Inviting...' : 'Invite'}
                                                             </Button>
                                                         )}
                                                     </div>
