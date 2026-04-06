@@ -302,18 +302,25 @@ export const getDistrictById = async (req, res) => {
     });
 
     // Get admins associated with this district
-    const districtAdmins = await User.find({ 
+    const districtAdminsRaw = await User.find({ 
       districtId: id, 
       role: { $in: [Role.DistrictAdmin, Role.Admin] } 
     })
     .populate('schoolId', 'name')
-    .select('name email role approved address phone position contactRole schoolId');
+    .select('name email role approved address phone position contactRole schoolId password').lean();
+
+    const admins = districtAdminsRaw.map(admin => {
+        const adminObj = { ...admin };
+        adminObj.hasCompletedRegistration = !!admin.password;
+        delete adminObj.password;
+        return adminObj;
+    });
 
     return res.status(200).json({
       district,
       schools: schoolsWithStats,
-      adminCount: districtAdmins.length,
-      admins: districtAdmins
+      adminCount: admins.length,
+      admins: admins
     });
   } catch (error) {
     console.error("Error fetching district:", error);

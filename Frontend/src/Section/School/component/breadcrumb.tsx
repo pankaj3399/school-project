@@ -17,9 +17,16 @@ export function Breadcrumb() {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
           const parentSegment = pathSegments[index - 1];
-          let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
+          let label = segment
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
           
-          if (/^[0-9a-fA-F]{24}$/.test(segment) || (/^\d/.test(segment) && ["system-admin", "districts", "schools"].includes(parentSegment))) {
+          const isObjectId = /^[0-9a-fA-F]{24}$/.test(segment);
+          const isNumericId = /^\d/.test(segment);
+          const validParentContexts = ["system-admin", "districts", "schools"];
+
+          if ((isObjectId || isNumericId) && validParentContexts.includes(parentSegment)) {
             if (parentSegment === "schools") {
               label = "School Details";
             } else if (parentSegment === "districts") {

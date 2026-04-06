@@ -44,6 +44,7 @@ export const getDashboardStats = async (req, res) => {
       District.countDocuments(districtFilter),
       District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' }),
       District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' }),
+      District.countDocuments({ ...districtFilter, subscriptionStatus: 'paused' }),
       School.countDocuments(schoolFilter),
       District.distinct('state', districtFilter),
       District.distinct('country', districtFilter)
@@ -245,6 +246,7 @@ export const getDashboardStats = async (req, res) => {
         totalDistricts,
         activeDistricts,
         pendingDistricts,
+        pausedDistricts,
         totalSchools,
         totalTeachers: totals.totalTeachers,
         totalStudents: totals.totalStudents,
@@ -993,9 +995,31 @@ export const completeAdminRegistration = async (req, res) => {
 export const updateAdmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, address, phone, position, contactRole, role, schoolId } = req.body;
+    const { name, email, address, phone, position, contactRole, role, schoolId, districtId } = req.body;
 
-    // Only SystemAdmin can update other admins' roles or school/district assignments
+    const target = await Admin.findById(id).select('-password');
+    if (!target) {
+      return res.status(404).json({ message: "Administrator not found" });
+    }
+
+    // Object-level authorization
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const isSelf = req.user.id === target.id;
+    
+    let isAuthorized = isSystemAdmin || isSelf;
+    
+    if (!isAuthorized && req.user.role === Role.Admin) {
+       // Check if they belong to the same district
+       const caller = await Admin.findById(req.user.id).select('districtId');
+       if (caller && caller.districtId && target.districtId && caller.districtId.toString() === target.districtId.toString()) {
+           isAuthorized = true;
+       }
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Access denied: You do not have permission to update this administrator." });
+    }
+
     const updateData = {
       name,
       email,
@@ -1006,16 +1030,49 @@ export const updateAdmin = async (req, res) => {
       updatedAt: Date.now()
     };
 
-    if (req.user.role === Role.SystemAdmin) {
+    // SystemAdmin invariants for role/school/district mutation
+    if (isSystemAdmin) {
       if (role) updateData.role = role;
-      if (schoolId !== undefined) updateData.schoolId = schoolId;
+      
+      if (schoolId !== undefined) {
+        if (schoolId === null) {
+          updateData.schoolId = null;
+        } else {
+          const school = await School.findById(schoolId);
+          if (!school) return res.status(404).json({ message: "Target school not found." });
+          updateData.schoolId = schoolId;
+          updateData.districtId = school.districtId; // Maintain consistency
+        }
+      }
+
+      if (districtId !== undefined) {
+        if (districtId === null) {
+           updateData.districtId = null;
+        } else {
+           const district = await District.findById(districtId);
+           if (!district) return res.status(404).json({ message: "Target district not found." });
+           updateData.districtId = districtId;
+           // If making a district-level assignment, clear the schoolId if it no longer belongs
+           if (updateData.schoolId) {
+              const school = await School.findById(updateData.schoolId);
+              if (school && school.districtId.toString() !== districtId.toString()) {
+                 updateData.schoolId = null;
+              }
+           } else if (target.schoolId) {
+              const school = await School.findById(target.schoolId);
+              if (school && school.districtId.toString() !== districtId.toString()) {
+                updateData.schoolId = null;
+              }
+           }
+        }
+      }
     }
 
-    const admin = await Admin.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
-
-    if (!admin) {
-      return res.status(404).json({ message: "Administrator not found" });
-    }
+    const admin = await Admin.findByIdAndUpdate(id, updateData, { 
+      new: true, 
+      runValidators: true,
+      context: 'query' 
+    }).select('-password');
 
     return res.status(200).json({
       success: true,
@@ -1040,6 +1097,14 @@ export const reInviteAdmin = async (req, res) => {
 
     if (admin.password) {
       return res.status(400).json({ message: "This user has already completed registration." });
+    }
+
+    // Authorization check
+    if (req.user.role !== Role.SystemAdmin) {
+      const requester = await Admin.findById(req.user.id).select('districtId');
+      if (!requester || (requester.districtId && admin.districtId && requester.districtId.toString() !== admin.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission to resend invitations for this administrator." });
+      }
     }
 
     // Generate new registration token
@@ -1079,7 +1144,7 @@ export const reInviteAdmin = async (req, res) => {
       return res.status(200).json({ 
         success: true,
         message: "Invitation token regenerated, but email failed to send.",
-        emailError: emailError.message
+        emailError: true // Send a safe flag instead of the raw message
       });
     }
 

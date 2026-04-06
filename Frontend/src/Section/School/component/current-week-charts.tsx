@@ -177,7 +177,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setDetailView({ type: 'awarded', title: 'Points Awarded', color: '#10b981' })}
+            onClick={() => setDetailView({ type: 'awarded', title: 'Points', color: '#10b981' })}
           >
             View Details
           </Button>
@@ -202,7 +202,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setDetailView({ type: 'deducted', title: 'Points Deducted', color: '#ef4444' })}
+            onClick={() => setDetailView({ type: 'deducted', title: 'Oopsies', color: '#ef4444' })}
           >
             View Details
           </Button>
@@ -227,7 +227,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setDetailView({ type: 'withdrawn', title: 'Points Withdrawn', color: '#f59e0b' })}
+            onClick={() => setDetailView({ type: 'withdrawn', title: 'Withdrawals', color: '#f59e0b' })}
           >
             View Details
           </Button>

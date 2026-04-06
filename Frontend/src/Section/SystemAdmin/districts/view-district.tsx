@@ -165,6 +165,12 @@ export default function ViewDistrict() {
                     description: response.error,
                     variant: "destructive"
                 });
+            } else if (response.emailError) {
+                toast({
+                    title: "Partial Success",
+                    description: "Invitation token regenerated, but email failed to send.",
+                    variant: "destructive"
+                });
             } else {
                 toast({
                     title: "Success",
@@ -434,17 +440,16 @@ export default function ViewDistrict() {
                                                 <TableCell>
                                                     <span className={cn(
                                                         "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                        admin.password ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                                        admin.hasCompletedRegistration ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                                                     )}>
-                                                        {admin.password ? 'Active' : 'Pending'}
+                                                        {admin.hasCompletedRegistration ? 'Active' : 'Pending'}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-gray-600">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <EditAdminDialog 
                                                             admin={admin} 
                                                             onSuccess={() => {
-                                                                // Refresh district data
                                                                 const token = getAuthToken(user);
                                                                 if (token && id) {
                                                                     getDistrictById(id, token).then(res => {
@@ -453,12 +458,11 @@ export default function ViewDistrict() {
                                                                 }
                                                             }} 
                                                         />
-                                                        {!admin.password && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] hover:bg-[#00a58c]/10 text-xs font-bold"
+                                                        {!admin.hasCompletedRegistration && (
+                                                            <Button 
+                                                                variant="link" 
                                                                 onClick={() => handleReInvite(admin._id, admin.name)}
+                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] hover:bg-[#00a58c]/10 text-xs font-bold"
                                                             >
                                                                 Invite
                                                             </Button>
@@ -634,6 +638,8 @@ export default function ViewDistrict() {
                                             <SelectContent>
                                                 <SelectItem value="active">Active</SelectItem>
                                                 <SelectItem value="paused">Paused</SelectItem>
+                                                <SelectItem value="pending">Pending</SelectItem>
+                                                <SelectItem value="suspended">Suspended</SelectItem>
                                                 <SelectItem value="expired">Expired</SelectItem>
                                             </SelectContent>
                                         </Select>

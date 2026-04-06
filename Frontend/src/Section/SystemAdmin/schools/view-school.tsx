@@ -239,10 +239,7 @@ const ViewSchool = () => {
 
                     <div className="flex flex-col lg:flex-row gap-6">
                         <div className="flex-1">
-                            <StudentRanks studentId="" />
-                        </div>
-                        <div className="flex-1">
-                            <TeacherRanks studentId="" schoolId={id} />
+                            <StudentRanks studentId="" schoolId={id} />
                         </div>
                     </div>
                 </TabsContent>
