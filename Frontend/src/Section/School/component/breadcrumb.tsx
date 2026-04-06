@@ -17,9 +17,11 @@ export function Breadcrumb() {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
           const parentSegment = pathSegments[index - 1];
-          const label = /^\d/.test(segment) && ["system-admin", "districts", "schools"].includes(parentSegment)
-          ? "Admin"
-          : segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
+          let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
+          
+          if (/^[0-9a-fA-F]{24}$/.test(segment) || (/^\d/.test(segment) && ["system-admin", "districts", "schools"].includes(parentSegment))) {
+            label = parentSegment === "schools" ? "Dashboard" : "Admin";
+          }
         
 
           return (

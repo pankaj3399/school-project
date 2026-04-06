@@ -317,24 +317,20 @@ export default function ViewDistrict() {
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1">
                                                             <Button 
-                                                                variant="ghost" 
+                                                                variant="link" 
                                                                 size="sm"
                                                                 onClick={() => navigate(`/system-admin/schools/${school._id}`)}
-                                                                className="h-8 w-8 p-0 hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
-                                                                title="View"
-                                                                aria-label={`View ${school.name}`}
+                                                                className="text-[#00a58c] hover:text-[#008f7a] font-bold text-xs"
                                                             >
-                                                                <Eye className="h-4 w-4" />
+                                                                View
                                                             </Button>
                                                             <Button 
-                                                                variant="ghost" 
+                                                                variant="link" 
                                                                 size="sm"
                                                                 onClick={() => handleDeleteSchool(school._id, school.name)}
-                                                                className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-600 flex items-center justify-center"
-                                                                title="Delete"
-                                                                aria-label={`Delete ${school.name}`}
+                                                                className="text-red-500 hover:text-red-600 font-bold text-xs"
                                                             >
-                                                                <Trash2 className="h-4 w-4" />
+                                                                Delete
                                                             </Button>
                                                         </div>
                                                     </TableCell>

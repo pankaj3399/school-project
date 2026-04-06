@@ -173,7 +173,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
       {/* Awarded Graph */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Points Awarded</CardTitle>
+          <CardTitle>Points</CardTitle>
           <Button
             variant="outline"
             size="sm"
@@ -198,7 +198,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
       {/* Deducted Graph */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Points Deducted</CardTitle>
+          <CardTitle>Oopsies</CardTitle>
           <Button
             variant="outline"
             size="sm"
@@ -223,7 +223,7 @@ const CurrentWeekCharts = ({ studentId, schoolId }: CurrentWeekChartsProps) => {
       {/* Withdrawn Graph */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Points Withdrawn</CardTitle>
+          <CardTitle>Withdrawals</CardTitle>
           <Button
             variant="outline"
             size="sm"

@@ -11,7 +11,7 @@ interface Student {
     totalPoints: number;
 }
 
-const StudenRanks = ({ studentId }: { studentId: string }) => {
+const StudentRanks = ({ studentId }: { studentId: string }) => {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -198,4 +198,4 @@ const StudenRanks = ({ studentId }: { studentId: string }) => {
     );
 };
 
-export default StudenRanks;
+export default StudentRanks;

@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input"
 import { IconTrash, IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck } from '@tabler/icons-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
 import { Role } from '@/enum'
-import CurrentWeekCharts from '../../School/component/current-week-charts'
 import EducationYearChart from '../../School/component/new-chart'
 import TeacherRanks from '../../School/component/TeacherRanks'
+import StudentRanks from '../../School/component/StudentRanks'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -216,9 +216,9 @@ const ViewSchool = () => {
                         <StatCard title="Students" value={stats?.totalStudents || 0} icon={<IconUsers className="w-6 h-6" />} color="blue" />
                         <StatCard title="Teachers" value={stats?.totalTeachers || 0} icon={<IconUserStar className="w-6 h-6" />} color="green" />
                         <StatCard title="Points" value={stats?.totalPoints || 0} icon={<IconCoins className="w-6 h-6" />} color="yellow" />
-                        <StatCard title="Withdrawn" value={stats?.totalWithdrawPoints || 0} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
-                        <StatCard title="Deducted" value={stats?.totalDeductPoints || 0} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
-                        <StatCard title="Feedback" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
+                        <StatCard title="Withdrawals" value={-(stats?.totalWithdrawPoints || 0)} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
+                        <StatCard title="Oopsies" value={-(stats?.totalDeductPoints || 0)} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
+                        <StatCard title="Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
                     </div>
 
                     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -231,17 +231,18 @@ const ViewSchool = () => {
                                     <EducationYearChart studentId='' schoolId={id} />
                                 </CardContent>
                             </Card>
-                            <Card className="border-neutral-200 shadow-sm overflow-hidden rounded-2xl">
-                                <CardHeader className="border-b bg-neutral-50/50">
-                                    <CardTitle className="text-sm font-semibold text-neutral-500">Weekly Activity Trends</CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-6">
-                                    <CurrentWeekCharts studentId='' schoolId={id} />
-                                </CardContent>
-                            </Card>
                         </div>
                         <div className="space-y-6">
                            <TeacherRanks studentId='' schoolId={id} />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex-1">
+                            <StudentRanks studentId="" />
+                        </div>
+                        <div className="flex-1">
+                            <TeacherRanks studentId="" schoolId={id} />
                         </div>
                     </div>
                 </TabsContent>
