@@ -2,16 +2,24 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { getDistrictById, updateDistrict, deleteSchool } from '@/api';
+import { getDistrictById, updateDistrict, deleteSchool, reInviteAdmin } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, Trash2, Eye } from 'lucide-react';
+import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, ImageOff } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import { InviteAdminDialog } from '@/components/InviteAdminDialog';
+import { EditAdminDialog } from '@/components/EditAdminDialog';
 import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -27,6 +35,8 @@ export default function ViewDistrict() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editData, setEditData] = useState<any>(null);
+    const [reinvitingIds, setReinvitingIds] = useState<Record<string, boolean>>({});
+    const [logoLoadError, setLogoLoadError] = useState(false);
 
 
     useEffect(() => {
@@ -39,8 +49,14 @@ export default function ViewDistrict() {
                         setData(response);
                         setEditData({
                             name: response.district.name,
-                            contactEmail: response.district.contactEmail,
-                            contactPhone: response.district.contactPhone,
+                            contactEmail: response.district.contactEmail || '',
+                            contactPhone: response.district.contactPhone || '',
+                            additionalPhone: response.district.additionalPhone || '',
+                            website: response.district.website || '',
+                            logo: response.district.logo || '',
+                            address: response.district.address || '',
+                            city: response.district.city || '',
+                            zipCode: response.district.zipCode || '',
                             subscriptionStatus: response.district.subscriptionStatus
                         });
                     } else if (response.error) {
@@ -141,7 +157,43 @@ export default function ViewDistrict() {
             });
         }
     };
-    
+
+    const handleReInvite = async (adminId: string, adminName: string) => {
+        if (reinvitingIds[adminId]) return;
+
+        setReinvitingIds(prev => ({ ...prev, [adminId]: true }));
+        try {
+            const response = await reInviteAdmin(adminId);
+            if (response.error) {
+                toast({
+                    title: "Error",
+                    description: response.error,
+                    variant: "destructive"
+                });
+            } else if (response.emailError) {
+                toast({
+                    title: "Partial Success",
+                    description: "Invitation token regenerated, but email failed to send.",
+                    variant: "destructive"
+                });
+            } else {
+                const nameFallback = adminName || 'the administrator';
+                toast({
+                    title: "Success",
+                    description: `Invitation resent to ${nameFallback}.`,
+                });
+            }
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "An error occurred while resending the invitation.",
+                variant: "destructive"
+            });
+        } finally {
+            setReinvitingIds(prev => ({ ...prev, [adminId]: false }));
+        }
+    };
+
     if (!data || !data.district) return (
         <div className="p-8 text-center">
             <h2 className="text-xl font-bold text-gray-900">District not found</h2>
@@ -169,19 +221,14 @@ export default function ViewDistrict() {
                         <div className="p-3 bg-[#00a58c]/10 text-[#00a58c] rounded-2xl">
                             <Building2 className="h-8 w-8" />
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                                {district.name}
-                            </h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-xs font-bold text-gray-600 tracking-wider">
-                                    {district.code}
-                                </span>
-                                <span className="text-gray-400">•</span>
-                                <p className="text-sm text-gray-500 font-medium flex items-center gap-1">
-                                    <MapPin className="h-3 w-3" />
-                                    {district.state}, {district.country}
-                                </p>
+                        <div className="space-y-1">
+                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{district.name}</h1>
+                            <div className="flex items-center gap-3 text-gray-500 font-medium">
+                                <span className="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-gray-600">{district.code}</span>
+                                <span className="text-gray-300">•</span>
+                                <div className="flex items-center gap-1 text-sm">
+                                    {district.state}, {district.country || 'USA'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -317,24 +364,20 @@ export default function ViewDistrict() {
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1">
                                                             <Button 
-                                                                variant="ghost" 
+                                                                variant="link" 
                                                                 size="sm"
                                                                 onClick={() => navigate(`/system-admin/schools/${school._id}`)}
-                                                                className="h-8 w-8 p-0 hover:bg-[#00a58c]/10 hover:text-[#00a58c]"
-                                                                title="View"
-                                                                aria-label={`View ${school.name}`}
+                                                                className="text-[#00a58c] hover:text-[#008f7a] font-bold text-xs"
                                                             >
-                                                                <Eye className="h-4 w-4" />
+                                                                View
                                                             </Button>
                                                             <Button 
-                                                                variant="ghost" 
+                                                                variant="link" 
                                                                 size="sm"
                                                                 onClick={() => handleDeleteSchool(school._id, school.name)}
-                                                                className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-600 flex items-center justify-center"
-                                                                title="Delete"
-                                                                aria-label={`Delete ${school.name}`}
+                                                                className="text-red-500 hover:text-red-600 font-bold text-xs"
                                                             >
-                                                                <Trash2 className="h-4 w-4" />
+                                                                Delete
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -362,31 +405,100 @@ export default function ViewDistrict() {
                         <CardContent className="p-6">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Status</TableHead>
+                                    <TableRow className="bg-gray-50/50">
+                                        <TableHead className="font-bold text-gray-700">ASSIGNMENT</TableHead>
+                                        <TableHead className="font-bold text-gray-700">ADDRESS</TableHead>
+                                        <TableHead className="font-bold text-gray-700">POSITION</TableHead>
+                                        <TableHead className="font-bold text-gray-700">EMAIL</TableHead>
+                                        <TableHead className="font-bold text-gray-700">PHONE</TableHead>
+                                        <TableHead className="font-bold text-gray-700">CONTACT ROLE</TableHead>
+                                        <TableHead className="font-bold text-gray-700">STATUS</TableHead>
+                                        <TableHead className="font-bold text-gray-700 text-right">ACTIONS</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {admins.length > 0 ? (
+                                    {admins && admins.length > 0 ? (
                                         admins.map((admin: any) => (
-                                            <TableRow key={admin._id}>
-                                                <TableCell className="font-medium">{admin.name}</TableCell>
-                                                <TableCell>{admin.email}</TableCell>
+                                            <TableRow key={admin._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <TableCell className="font-medium">
+                                                    {admin.schoolId ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <School className="w-3.5 h-3.5 text-neutral-400" />
+                                                            {admin.schoolId.name}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-400 italic">District Office</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-gray-600 truncate max-w-[150px]">
+                                                    {admin.address || <span className="text-gray-400 italic">N/A</span>}
+                                                </TableCell>
+                                                <TableCell className="text-gray-600">
+                                                    {admin.position || 'Other'}
+                                                </TableCell>
+                                                <TableCell className="text-gray-600">{admin.email}</TableCell>
+                                                <TableCell className="text-gray-600">
+                                                    {admin.phone || <span className="text-gray-400 italic">N/A</span>}
+                                                </TableCell>
+                                                <TableCell className="text-gray-600">
+                                                    <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                                                        {admin.contactRole || 'Leadership'}
+                                                    </span>
+                                                </TableCell>
                                                 <TableCell>
                                                     <span className={cn(
-                                                        "px-2 py-1 rounded-full text-xs font-medium",
-                                                        admin.approved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                                        admin.hasCompletedRegistration ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                                                     )}>
-                                                        {admin.approved ? 'Active' : 'Pending'}
+                                                        {admin.hasCompletedRegistration ? 'Active' : 'Pending'}
                                                     </span>
+                                                </TableCell>
+                                                <TableCell className="text-gray-600">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <EditAdminDialog 
+                                                            admin={admin} 
+                                                            onSuccess={async () => {
+                                                                const token = getAuthToken(user);
+                                                                if (token && id) {
+                                                                    try {
+                                                                        const res = await getDistrictById(id, token);
+                                                                        if (res.error) {
+                                                                            toast({
+                                                                                title: "Refresh Error",
+                                                                                description: `Admin updated, but data refresh failed: ${res.error}`,
+                                                                                variant: "destructive"
+                                                                            });
+                                                                        } else if (res.district) {
+                                                                            setData(res);
+                                                                        }
+                                                                    } catch (err: any) {
+                                                                        toast({
+                                                                            title: "Connection Error",
+                                                                            description: "Could not refresh district data. Please reload page.",
+                                                                            variant: "destructive"
+                                                                        });
+                                                                        console.error("District refresh failed:", err);
+                                                                    }
+                                                                }
+                                                            }} 
+                                                        />
+                                                        {!admin.hasCompletedRegistration && (
+                                                            <Button 
+                                                                variant="link" 
+                                                                onClick={() => handleReInvite(admin._id, admin.name)}
+                                                                disabled={reinvitingIds[admin._id]}
+                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] hover:bg-[#00a58c]/10 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                {reinvitingIds[admin._id] ? 'Inviting...' : 'Invite'}
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                                 No administrators found for this district.
                                             </TableCell>
                                         </TableRow>
@@ -399,66 +511,193 @@ export default function ViewDistrict() {
 
                 <TabsContent value="settings" className="mt-6">
                     <Card className="border-0 shadow-sm ring-1 ring-gray-100">
-                        <CardHeader className="border-b bg-gray-50/30">
-                            <CardTitle className="text-lg">General Settings</CardTitle>
+                        <CardHeader className="border-b bg-gray-50/10">
+                            <CardTitle className="text-lg font-bold text-gray-800">General Settings</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-8 space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-4">
+                        <CardContent className="p-8 space-y-10">
+                            {/* Basic Info & Branding */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Branding & Identity</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold text-gray-700">District Name</Label>
                                         <Input 
                                             value={editData?.name} 
-                                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                                            className="border-gray-200 focus:ring-[#00a58c]"
+                                            onChange={(e) => setEditData({...editData, name: e.target.value})}
+                                            placeholder="e.g. Legacy Schools District"
+                                            className="h-11 bg-white border-gray-200"
                                         />
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">District Logo URL</Label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <Input 
+                                                    value={editData?.logo} 
+                                                    onChange={(e) => {
+                                                        setEditData({...editData, logo: e.target.value});
+                                                        setLogoLoadError(false);
+                                                    }}
+                                                    placeholder="https://example.com/logo.png"
+                                                    className="h-11 bg-white border-gray-200"
+                                                />
+                                            </div>
+                                            {editData?.logo && /^(https:|data:)/i.test(editData.logo) && !logoLoadError ? (
+                                                <div className="h-11 w-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                                                    <img 
+                                                        src={editData.logo} 
+                                                        alt="Logo preview" 
+                                                        className="max-h-full max-w-full object-contain"
+                                                        onError={() => setLogoLoadError(true)}
+                                                    />
+                                                </div>
+                                            ) : editData?.logo ? (
+                                                <div className="h-11 w-11 rounded-lg border border-red-100 bg-red-50 flex items-center justify-center text-red-400 shrink-0">
+                                                    <ImageOff className="h-5 w-5" />
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contact Information */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Contact Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Main Contact Phone</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.contactPhone} 
+                                                onChange={(e) => setEditData({...editData, contactPhone: e.target.value})}
+                                                placeholder="(555) 000-0000"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Additional Phone</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.additionalPhone} 
+                                                onChange={(e) => setEditData({...editData, additionalPhone: e.target.value})}
+                                                placeholder="(555) 000-0000"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold text-gray-700">Contact Email</Label>
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <Input 
                                                 value={editData?.contactEmail} 
-                                                onChange={(e) => setEditData({ ...editData, contactEmail: e.target.value })}
-                                                className="pl-10 border-gray-200 focus:ring-[#00a58c]"
+                                                onChange={(e) => setEditData({...editData, contactEmail: e.target.value})}
+                                                placeholder="email@example.edu"
+                                                className="pl-10 h-11 bg-white border-gray-200"
                                             />
                                         </div>
                                     </div>
-                                </div>
-                                <div className="space-y-4">
+
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">Contact Phone</Label>
+                                        <Label className="text-sm font-bold text-gray-700">Official Website</Label>
                                         <div className="relative">
-                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <Input 
-                                                value={editData?.contactPhone || ''} 
-                                                onChange={(e) => setEditData({ ...editData, contactPhone: e.target.value })}
-                                                className="pl-10 border-gray-200 focus:ring-[#00a58c]"
+                                                value={editData?.website} 
+                                                onChange={(e) => setEditData({...editData, website: e.target.value})}
+                                                placeholder="https://www.district.edu"
+                                                className="pl-10 h-11 bg-white border-gray-200"
                                             />
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">Status</Label>
-                                        <select 
-                                            className="w-full h-10 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a58c]/20 transition-shadow"
-                                            value={editData?.subscriptionStatus}
-                                            onChange={(e) => setEditData({ ...editData, subscriptionStatus: e.target.value })}
-                                        >
-                                            <option value="active">Active</option>
-                                            <option value="suspended">Suspended</option>
-                                            <option value="expired">Expired</option>
-                                        </select>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div className="pt-6 border-t flex justify-end">
+
+                            {/* Location Section */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Main Office Address</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-sm font-bold text-gray-700">Street Address</Label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.address} 
+                                                onChange={(e) => setEditData({...editData, address: e.target.value})}
+                                                placeholder="e.g. 100 Main St"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">City</Label>
+                                        <Input 
+                                            value={editData?.city} 
+                                            onChange={(e) => setEditData({...editData, city: e.target.value})}
+                                            placeholder="e.g. Buffalo"
+                                            className="h-11 bg-white border-gray-200"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Zip Code</Label>
+                                        <Input 
+                                            value={editData?.zipCode} 
+                                            onChange={(e) => setEditData({...editData, zipCode: e.target.value})}
+                                            placeholder="e.g. 14201"
+                                            className="h-11 bg-white border-gray-200"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Account Status Section */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Account Maintenance</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Subscription Status</Label>
+                                        <Select 
+                                            value={editData?.subscriptionStatus} 
+                                            onValueChange={(v) => setEditData({...editData, subscriptionStatus: v})}
+                                        >
+                                            <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="paused">Paused</SelectItem>
+                                                <SelectItem value="pending">Pending</SelectItem>
+                                                <SelectItem value="suspended">Suspended</SelectItem>
+                                                <SelectItem value="expired">Expired</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-12 pt-8 border-t border-gray-100 flex justify-end">
                                 <Button 
-                                    className="bg-[#00a58c] hover:bg-[#008f7a] px-8"
-                                    onClick={handleUpdate}
+                                    onClick={handleUpdate} 
                                     disabled={saving}
+                                    className="bg-[#00a58c] hover:bg-[#008f7a] h-12 px-10 rounded-lg font-bold shadow-lg shadow-[#00a58c]/20 transition-all active:scale-95"
                                 >
-                                    {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save Changes"}
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Saving Changes...
+                                        </>
+                                    ) : (
+                                        "Save Changes"
+                                    )}
                                 </Button>
                             </div>
                         </CardContent>

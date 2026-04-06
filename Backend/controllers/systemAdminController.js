@@ -44,6 +44,7 @@ export const getDashboardStats = async (req, res) => {
       District.countDocuments(districtFilter),
       District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' }),
       District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' }),
+      District.countDocuments({ ...districtFilter, subscriptionStatus: 'paused' }),
       School.countDocuments(schoolFilter),
       District.distinct('state', districtFilter),
       District.distinct('country', districtFilter)
@@ -245,6 +246,7 @@ export const getDashboardStats = async (req, res) => {
         totalDistricts,
         activeDistricts,
         pendingDistricts,
+        pausedDistricts,
         totalSchools,
         totalTeachers: totals.totalTeachers,
         totalStudents: totals.totalStudents,
@@ -772,10 +774,9 @@ export const getAllAdmins = async (req, res) => {
   }
 };
 
-// Invite a new administrator
 export const inviteAdmin = async (req, res) => {
   try {
-    const { email, role, schoolId, districtId, name } = req.body;
+    const { email, role, schoolId, districtId, name, address, phone, position, contactRole } = req.body;
 
     if (!email || !role) {
       return res.status(400).json({ message: "Email and role are required" });
@@ -865,6 +866,10 @@ export const inviteAdmin = async (req, res) => {
       registrationToken, // Store the raw token; model pre-save hook will hash it
       registrationTokenExpires,
       name: name || email.split('@')[0],
+      address,
+      phone,
+      position,
+      contactRole
     });
 
     const safeUser = {
@@ -983,5 +988,172 @@ export const completeAdminRegistration = async (req, res) => {
   } catch (error) {
     console.error("Error completing admin registration:", error);
     return res.status(500).json({ message: "Error completing registration", error: error.message });
+  }
+};
+
+// Update an administrator's information
+export const updateAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, address, phone, position, contactRole, role, schoolId, districtId } = req.body;
+
+    const target = await Admin.findById(id).select('-password');
+    if (!target) {
+      return res.status(404).json({ message: "Administrator not found" });
+    }
+
+    // Object-level authorization
+    const isSystemAdmin = req.user.role === Role.SystemAdmin;
+    const isSelf = req.user.id === target.id;
+    
+    let isAuthorized = isSystemAdmin || isSelf;
+    
+    if (!isAuthorized && req.user.role === Role.Admin) {
+       // Check if they belong to the same district
+       const caller = await Admin.findById(req.user.id).select('districtId');
+       if (caller && caller.districtId && target.districtId && caller.districtId.toString() === target.districtId.toString()) {
+           isAuthorized = true;
+       }
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Access denied: You do not have permission to update this administrator." });
+    }
+
+    const updateData = {
+      name,
+      email,
+      address,
+      phone,
+      position,
+      contactRole,
+      updatedAt: Date.now()
+    };
+
+    // SystemAdmin invariants for role/school/district mutation
+    if (isSystemAdmin) {
+      if (role) updateData.role = role;
+      
+      if (schoolId !== undefined) {
+        if (schoolId === null) {
+          updateData.schoolId = null;
+        } else {
+          const school = await School.findById(schoolId);
+          if (!school) return res.status(404).json({ message: "Target school not found." });
+          updateData.schoolId = schoolId;
+          updateData.districtId = school.districtId; // Maintain consistency
+        }
+      }
+
+      if (districtId !== undefined) {
+        if (districtId === null) {
+           updateData.districtId = null;
+        } else {
+           const district = await District.findById(districtId);
+           if (!district) return res.status(404).json({ message: "Target district not found." });
+           updateData.districtId = districtId;
+           // If making a district-level assignment, clear the schoolId if it no longer belongs
+           if (updateData.schoolId) {
+              const school = await School.findById(updateData.schoolId);
+              if (school && school.districtId.toString() !== districtId.toString()) {
+                 updateData.schoolId = null;
+              }
+           } else if (target.schoolId) {
+              const school = await School.findById(target.schoolId);
+              if (school && school.districtId.toString() !== districtId.toString()) {
+                updateData.schoolId = null;
+              }
+           }
+        }
+      }
+    }
+
+    const admin = await Admin.findByIdAndUpdate(id, updateData, { 
+      new: true, 
+      runValidators: true,
+      context: 'query' 
+    }).select('-password');
+
+    return res.status(200).json({
+      success: true,
+      message: "Administrator updated successfully",
+      admin
+    });
+  } catch (error) {
+    console.error("Error updating admin:", error);
+    return res.status(500).json({ message: "Error updating administrator", error: error.message });
+  }
+};
+
+// Re-invite an administrator (resend invitation)
+export const reInviteAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const admin = await Admin.findById(id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Administrator not found" });
+    }
+
+    if (admin.password) {
+      return res.status(400).json({ message: "This user has already completed registration." });
+    }
+
+    // Authorization check
+    if (req.user.role !== Role.SystemAdmin) {
+      const requester = await Admin.findById(req.user.id).select('districtId');
+      if (!requester || (requester.districtId && admin.districtId && requester.districtId.toString() !== admin.districtId.toString())) {
+        return res.status(403).json({ message: "Access denied: You do not have permission to resend invitations for this administrator." });
+      }
+    }
+
+    // Generate new registration token
+    const registrationToken = crypto.randomBytes(32).toString('hex');
+    const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    admin.registrationToken = registrationToken;
+    admin.registrationTokenExpires = registrationTokenExpires;
+    await admin.save();
+
+    // Send invitation email
+    try {
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
+      
+      const body = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 8px;">
+          <h2 style="color: #00a58c;">Re-invitation to Join RADU E-Token™</h2>
+          <p>Hello ${admin.name},</p>
+          <p>You have been re-invited to join the RADU E-Token™ System as a <strong>${admin.role}</strong>.</p>
+          <p>Please click the button below to set up your account and get started:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
+          <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #999;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
+        </div>
+      `;
+
+      const { sendEmail } = await import("../services/mail.js");
+      await sendEmail(admin.email, "Re-invitation to Join RADU E-Token™ System", body, body, null);
+    } catch (emailError) {
+      console.error("Error sending re-invitation email:", emailError);
+      return res.status(200).json({ 
+        success: true,
+        message: "Invitation token regenerated, but email failed to send.",
+        emailError: true // Send a safe flag instead of the raw message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Invitation resent successfully"
+    });
+  } catch (error) {
+    console.error("Error re-inviting admin:", error);
+    return res.status(500).json({ message: "Error resending invitation", error: error.message });
   }
 };

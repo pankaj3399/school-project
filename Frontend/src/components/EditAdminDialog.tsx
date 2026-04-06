@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
+import { Edit2, Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { updateAdmin } from '@/api';
 import {
   Select,
   SelectContent,
@@ -19,74 +21,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from '@/hooks/use-toast';
-import { inviteAdmin } from '@/api';
-import { Role, type RoleType } from '@/enum';
 
-interface InviteAdminDialogProps {
-  districtId: string | undefined;
-  schoolId?: string;
-  role?: RoleType;
-  label?: string;
+interface EditAdminDialogProps {
+  admin: any;
+  onSuccess?: () => void;
 }
 
-export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteAdminDialogProps) {
+export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [position, setPosition] = useState('Other');
-  const [contactRole, setContactRole] = useState('Leadership');
+  const [email, setEmail] = useState(admin.email || '');
+  const [name, setName] = useState(admin.name || '');
+  const [address, setAddress] = useState(admin.address || '');
+  const [phone, setPhone] = useState(admin.phone || '');
+  const [position, setPosition] = useState(admin.position || 'Other');
+  const [contactRole, setContactRole] = useState(admin.contactRole || 'Leadership');
   const { toast } = useToast();
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (role === Role.SchoolAdmin) {
-      if (!schoolId) {
-        toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
-        return;
-      }
-    } else if (!districtId) {
-      toast({ title: "Error", description: "A district must be selected to send this invitation.", variant: "destructive" });
-      return;
+  useEffect(() => {
+    if (open) {
+      setEmail(admin.email || '');
+      setName(admin.name || '');
+      setAddress(admin.address || '');
+      setPhone(admin.phone || '');
+      setPosition(admin.position || 'Other');
+      setContactRole(admin.contactRole || 'Leadership');
     }
-    
+  }, [open, admin]);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      const response = await inviteAdmin({
+      const response = await updateAdmin(admin._id, {
         email,
         name,
         address,
         phone,
         position,
-        contactRole,
-        role: role || Role.Admin,
-        ...(schoolId ? { schoolId } : {}),
-        ...(districtId ? { districtId } : {}),
+        contactRole
       });
 
       if (response.error) {
-        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to send invitation.");
-        throw new Error(errorMsg);
+        throw new Error(typeof response.error === 'string' ? response.error : response.error.message);
       }
       
       toast({
-        title: "Invitation Sent",
-        description: response.message || `An invitation has been sent to ${email}.`,
+        title: "Success",
+        description: "Administrator information updated successfully.",
       });
       setOpen(false);
-      setEmail('');
-      setName('');
-      setAddress('');
-      setPhone('');
-      setPosition('Other');
-      setContactRole('Leadership');
+      if (onSuccess) onSuccess();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "An error occurred while sending the invitation.",
+        description: error.message || "Failed to update administrator.",
         variant: "destructive",
       });
     } finally {
@@ -97,25 +86,24 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#00a58c] hover:bg-[#008f7a]">
-          <UserPlus className="h-4 w-4 mr-2" />
-          {label || 'Invite Admin'}
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+          <Edit2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleInvite}>
+        <form onSubmit={handleUpdate}>
           <DialogHeader>
-            <DialogTitle>Invite {role === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
+            <DialogTitle>Edit Administrator</DialogTitle>
             <DialogDescription>
-              Send an invitation to a new {role === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
+              Update the contact information for this administrator.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="edit-name">Full Name</Label>
                 <Input
-                  id="name"
+                  id="edit-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
@@ -123,9 +111,9 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="edit-email">Email Address</Label>
                 <Input
-                  id="email"
+                  id="edit-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -137,7 +125,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="position">Position</Label>
+                <Label htmlFor="edit-position">Position</Label>
                 <Select value={position} onValueChange={setPosition}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select position" />
@@ -152,7 +140,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="contactRole">Platform Role</Label>
+                <Label htmlFor="edit-contactRole">Platform Role</Label>
                 <Select value={contactRole} onValueChange={setContactRole}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
@@ -167,11 +155,11 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="edit-phone">Phone Number</Label>
                 <div className="relative">
                   <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="phone"
+                    id="edit-phone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="(555) 000-0000"
@@ -180,11 +168,11 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="edit-address">Address</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="address"
+                    id="edit-address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="123 School St"
@@ -199,10 +187,10 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  Saving...
                 </>
               ) : (
-                "Send Invitation"
+                "Save Changes"
               )}
             </Button>
           </DialogFooter>

@@ -48,11 +48,19 @@ const DistrictSchema = new mongoose.Schema({
   logo: { 
     type: String 
   },
+  website: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  additionalPhone: { 
+    type: String 
+  },
   
   // Subscription & Access
   subscriptionStatus: { 
     type: String, 
-    enum: ['active', 'pending', 'suspended', 'expired'], 
+    enum: ['active', 'paused', 'expired', 'pending', 'suspended'], 
     default: 'pending',
     index: true
   },
