@@ -395,7 +395,7 @@ export const getDistrictComparison = async (req, res) => {
                 as: "ph", 
                 in: { 
                   $cond: [ 
-                    { $in: ["$$ph.formType", [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "Award Points IEP"]] }, 
+                    { $in: ["$$ph.formType", [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]] }, 
                     "$$ph.points", 
                     0 
                   ] 

@@ -138,6 +138,7 @@ export default function SystemAdminDashboard() {
             icon: Globe,
             color: "text-orange-500",
             subLabel: "Total Teachers",
+            shortLabel: "Teachers",
             subValue: stats?.totalTeachers || 0
         },
         {
@@ -146,6 +147,7 @@ export default function SystemAdminDashboard() {
             icon: Map,
             color: "text-blue-500",
             subLabel: "Total Students",
+            shortLabel: "Students",
             subValue: stats?.totalStudents || 0
         },
         {
@@ -154,6 +156,7 @@ export default function SystemAdminDashboard() {
             icon: Building2,
             color: "text-amber-500",
             subLabel: "Total Tokens",
+            shortLabel: "Tokens",
             subValue: stats?.totalTokensEarned || 0
         },
         {
@@ -162,6 +165,7 @@ export default function SystemAdminDashboard() {
             icon: School,
             color: "text-indigo-500",
             subLabel: "Total Feedbacks",
+            shortLabel: "Feedbacks",
             subValue: stats?.totalFeedbacks || 0
         },
         {
@@ -170,6 +174,7 @@ export default function SystemAdminDashboard() {
             icon: Users,
             color: "text-green-500",
             subLabel: "Total Oopsies",
+            shortLabel: "Oopsies",
             subValue: stats?.totalOopsies || 0
         },
         {
@@ -178,6 +183,7 @@ export default function SystemAdminDashboard() {
             icon: GraduationCap,
             color: "text-red-500",
             subLabel: "Total Withdrawals",
+            shortLabel: "Withdrawals",
             subValue: stats?.totalWithdrawals || 0
         }
     ];
@@ -222,33 +228,44 @@ export default function SystemAdminDashboard() {
     }, [schoolStats]);
 
 
-    const RankBox = ({ title, data, labelKey, valueKey, labelSuffix = "" }: any) => (
-        <Card className="border-0 shadow-sm ring-1 ring-gray-100 flex-1">
-            <CardHeader className="py-4">
-                <CardTitle className="text-sm font-semibold">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {data.length === 0 ? <p className="text-xs text-gray-400">No data available</p> : null}
-                    {data.map((item: any, i: number) => {
-                        const maxValue = Math.max(...data.map((d: any) => d[valueKey] || 0), 1);
-                        const pct = ((item[valueKey] || 0) / maxValue) * 100;
-                        return (
-                            <div key={i} className="flex flex-col gap-1 text-xs">
-                                <div className="flex justify-between items-center text-gray-700 font-medium">
-                                    <span className="truncate pr-2">{item[labelKey] || "Unknown"}</span>
-                                    <span>{item[valueKey] || 0} {labelSuffix}</span>
+    interface RankBoxProps<T> {
+        title: string;
+        data: T[];
+        labelKey: keyof T;
+        valueKey: keyof T;
+        labelSuffix?: string;
+    }
+
+    function RankBox<T extends Record<string, any>>({ title, data, labelKey, valueKey, labelSuffix = "" }: RankBoxProps<T>) {
+        return (
+            <Card className="border-0 shadow-sm ring-1 ring-gray-100 flex-1">
+                <CardHeader className="py-4">
+                    <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {data.length === 0 ? <p className="text-xs text-gray-400">No data available</p> : null}
+                        {data.map((item, i) => {
+                            const val = Number(item[valueKey]) || 0;
+                            const maxValue = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
+                            const pct = (val / maxValue) * 100;
+                            return (
+                                <div key={i} className="flex flex-col gap-1 text-xs">
+                                    <div className="flex justify-between items-center text-gray-700 font-medium">
+                                        <span className="truncate pr-2">{String(item[labelKey]) || "Unknown"}</span>
+                                        <span>{val} {labelSuffix}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2">
+                                        <div className="bg-[#00a58c] h-2 rounded-full" style={{ width: `${pct}%` }}></div>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2">
-                                    <div className="bg-[#00a58c] h-2 rounded-full" style={{ width: `${pct}%` }}></div>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            </CardContent>
-        </Card>
-    );
+                            )
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <div className="bg-gray-50 min-h-screen">
@@ -282,7 +299,7 @@ export default function SystemAdminDashboard() {
                                 </div>
                             </div>
                             <div className="mt-2 text-[10px] font-bold text-gray-500 bg-gray-100/50 px-2 py-0.5 rounded-full">
-                                {card.subLabel.split(' ')[1]}: {loading ? "..." : (card.subValue || 0).toLocaleString()}
+                                {card.shortLabel}: {loading ? "..." : (card.subValue || 0).toLocaleString()}
                             </div>
                         </Card>
                     ))}
@@ -448,9 +465,9 @@ export default function SystemAdminDashboard() {
                                                 <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right font-semibold text-[#00a58c]">{d.totalTokens.toLocaleString()}</td>
-                                                <td className="py-3 text-right font-semibold text-blue-600">{d.withdrawals?.toLocaleString() || 0}</td>
-                                                <td className="py-3 text-right font-semibold text-red-500">{d.oopsies?.toLocaleString() || 0}</td>
-                                                <td className="py-3 text-right font-semibold text-amber-600">{d.feedbacks?.toLocaleString() || 0}</td>
+                                                <td className="py-3 text-right font-semibold text-blue-600">{d.withdrawals.toLocaleString()}</td>
+                                                <td className="py-3 text-right font-semibold text-red-500">{d.oopsies.toLocaleString()}</td>
+                                                <td className="py-3 text-right font-semibold text-amber-600">{d.feedbacks.toLocaleString()}</td>
                                             </tr>
                                         ))}
                                     </tbody>
