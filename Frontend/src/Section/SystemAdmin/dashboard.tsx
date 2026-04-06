@@ -1,18 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
     Building2,
     School,
     Users,
     GraduationCap,
-    Coins,
-    ArrowUpRight,
-    TrendingUp,
     Map,
-    AlertCircle
+    AlertCircle,
+    Globe
 } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
     Bar,
     BarChart,
@@ -43,30 +40,51 @@ type DistrictAnalyticsRow = {
     teacherCount: number;
     studentCount: number;
     totalTokens: number;
+    withdrawals: number;
+    oopsies: number;
+    feedbacks: number;
 };
 
+type ChartDataRow = {
+    year: string;
+    month: number;
+    states: number;
+    districts: number;
+    schools: number;
+    teachers: number;
+    students: number;
+};
+
+type SchoolStatRow = {
+    _id: string;
+    name: string;
+    teacherCount: number;
+    studentCount: number;
+    totalTokens: number;
+};
+
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export default function SystemAdminDashboard() {
-    const navigate = useNavigate();
     const { user } = useAuth();
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
-    const [geoError, setGeoError] = useState<string | null>(null);
     const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
     const [districtError, setDistrictError] = useState<string | null>(null);
+    const [chartData, setChartData] = useState<ChartDataRow[]>([]);
+    const [schoolStats, setSchoolStats] = useState<SchoolStatRow[]>([]);
 
-    const geoChartData = useMemo(() => {
-        return [...stateAnalytics]
-            .map((row) => ({
-                name: row.state || 'Unknown',
-                schools: row.schoolCount,
-                districts: row.districtCount,
-            }))
-            .sort((a, b) => b.schools + b.districts - (a.schools + a.districts));
-    }, [stateAnalytics]);
-
-    const hasGeoData = geoChartData.some((d) => d.schools > 0 || d.districts > 0);
+    // Chart Filters
+    const [selectedYear, setSelectedYear] = useState<string>('All Year');
+    const [visibleBars, setVisibleBars] = useState({
+        states: true,
+        districts: true,
+        schools: true,
+        teachers: true,
+        students: true
+    });
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -81,15 +99,13 @@ export default function SystemAdminDashboard() {
                     ]);
                     if (dash.stats) {
                         setStats(dash.stats);
+                        setChartData(Array.isArray(dash.chartData) ? dash.chartData : []);
+                        setSchoolStats(Array.isArray(dash.schoolStats) ? dash.schoolStats : []);
                     } else if (dash.error) {
                         setError("Failed to load dashboard metrics");
                     }
                     if (Array.isArray(geo.stateAnalytics)) {
                         setStateAnalytics(geo.stateAnalytics);
-                        setGeoError(null);
-                    } else if (geo.error) {
-                        setStateAnalytics([]);
-                        setGeoError(typeof geo.error === 'string' ? geo.error : 'Could not load geographic data');
                     } else {
                         setStateAnalytics([]);
                     }
@@ -115,274 +131,353 @@ export default function SystemAdminDashboard() {
         fetchStats();
     }, [user]);
 
-
-
     const cards = [
         {
-            title: "Active Districts",
-            value: stats?.activeDistricts || 0,
-            total: stats?.totalDistricts || 0,
+            title: "Total countries",
+            value: stats?.totalCountries || 0,
+            icon: Globe,
+            color: "text-orange-500",
+            subLabel: "Total Teachers",
+            shortLabel: "Teachers",
+            subValue: stats?.totalTeachers || 0
+        },
+        {
+            title: "Total states",
+            value: stats?.totalStates || 0,
+            icon: Map,
+            color: "text-blue-500",
+            subLabel: "Total Students",
+            shortLabel: "Students",
+            subValue: stats?.totalStudents || 0
+        },
+        {
+            title: "Total Districts",
+            value: stats?.totalDistricts || 0,
             icon: Building2,
-            color: "text-blue-600",
-            bgColor: "bg-blue-100",
-            link: "/system-admin/districts"
+            color: "text-amber-500",
+            subLabel: "Total Tokens",
+            shortLabel: "Tokens",
+            subValue: stats?.totalTokensEarned || 0
         },
         {
             title: "Total Schools",
             value: stats?.totalSchools || 0,
             icon: School,
-            color: "text-indigo-600",
-            bgColor: "bg-indigo-100",
-            link: "/system-admin/schools"
+            color: "text-indigo-500",
+            subLabel: "Total Feedbacks",
+            shortLabel: "Feedbacks",
+            subValue: stats?.totalFeedbacks || 0
         },
         {
-            title: "Teachers",
+            title: "Total teachers",
             value: stats?.totalTeachers || 0,
             icon: Users,
-            color: "text-emerald-600",
-            bgColor: "bg-emerald-100",
-            link: "/system-admin/search?type=teacher"
+            color: "text-green-500",
+            subLabel: "Total Oopsies",
+            shortLabel: "Oopsies",
+            subValue: stats?.totalOopsies || 0
         },
         {
-            title: "Students",
+            title: "Total students",
             value: stats?.totalStudents || 0,
             icon: GraduationCap,
-            color: "text-amber-600",
-            bgColor: "bg-amber-100",
-            link: "/system-admin/search?type=student"
+            color: "text-red-500",
+            subLabel: "Total Withdrawals",
+            shortLabel: "Withdrawals",
+            subValue: stats?.totalWithdrawals || 0
         }
     ];
 
-    return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                        System Overview
-                    </h1>
-                    <p className="text-gray-500 mt-2">Manage districts, schools, and monitor system performance.</p>
-                </div>
+    // Chart processing
+    const filteredChartData = useMemo(() => {
+        let list = [...chartData];
+        if (selectedYear !== 'All Year') {
+            list = list.filter(item => item.year === selectedYear);
+        }
+        return list.map(item => ({
+            ...item,
+            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${item.year}` : monthNames[item.month - 1]
+        }));
+    }, [chartData, selectedYear]);
 
+    const availableYears = useMemo(() => {
+        const years = new Set<string>();
+        chartData.forEach(item => years.add(item.year));
+        return Array.from(years).sort().reverse();
+    }, [chartData]);
+
+    // Box Rankings Prep
+    const topStatesByDistricts = useMemo(() => {
+        return [...stateAnalytics].sort((a, b) => b.activeDistrictCount - a.activeDistrictCount).slice(0, 3);
+    }, [stateAnalytics]);
+
+    const topDistrictsBySchools = useMemo(() => {
+        return [...districtAnalytics].sort((a, b) => b.schoolCount - a.schoolCount).slice(0, 3);
+    }, [districtAnalytics]);
+
+    const topSchoolsByTeachers = useMemo(() => {
+        return [...schoolStats].sort((a, b) => b.teacherCount - a.teacherCount).slice(0, 5);
+    }, [schoolStats]);
+
+    const topSchoolsByStudents = useMemo(() => {
+        return [...schoolStats].sort((a, b) => b.studentCount - a.studentCount).slice(0, 5);
+    }, [schoolStats]);
+
+    const topSchoolsByTokens = useMemo(() => {
+        return [...schoolStats].sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 5);
+    }, [schoolStats]);
+
+
+    interface RankBoxProps<T> {
+        title: string;
+        data: T[];
+        labelKey: keyof T;
+        valueKey: keyof T;
+        labelSuffix?: string;
+    }
+
+    function RankBox<T extends Record<string, any>>({ title, data, labelKey, valueKey, labelSuffix = "" }: RankBoxProps<T>) {
+        return (
+            <Card className="border-0 shadow-sm ring-1 ring-gray-100 flex-1">
+                <CardHeader className="py-4">
+                    <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {data.length === 0 ? <p className="text-xs text-gray-400">No data available</p> : null}
+                        {data.map((item, i) => {
+                            const val = Number(item[valueKey]) || 0;
+                            const maxValue = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
+                            const pct = (val / maxValue) * 100;
+                            return (
+                                <div key={i} className="flex flex-col gap-1 text-xs">
+                                    <div className="flex justify-between items-center text-gray-700 font-medium">
+                                        <span className="truncate pr-2">{String(item[labelKey]) || "Unknown"}</span>
+                                        <span>{val} {labelSuffix}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2">
+                                        <div className="bg-[#00a58c] h-2 rounded-full" style={{ width: `${pct}%` }}></div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <div className="bg-gray-50 min-h-screen">
+            {/* Dark Header Strip representing top UI */}
+            <div className="bg-[#5B4365] text-white">
+                <div className="max-w-7xl mx-auto px-8 py-3 flex justify-between items-center">
+                    <div className="text-sm">
+                        <h2 className="font-bold text-xl uppercase tracking-wider mb-1">System Overview</h2>
+                        <p className="text-gray-300 text-xs">Totals, rankings, and historical growth for states, districts and schools</p>
+                    </div>
+                </div>
             </div>
 
-            {error && (
-                <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-xl flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5" />
-                    {error}
-                </div>
-            )}
+            <div className="p-8 max-w-7xl mx-auto space-y-8">
+                {error && (
+                    <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-xl flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5" />
+                        {error}
+                    </div>
+                )}
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {cards.map((card, index) => (
-                    <Card
-                        key={index}
-                        className="hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-sm ring-1 ring-gray-100"
-                        onClick={() => card.link && navigate(card.link)}
-                    >
-                        <CardContent className="p-6">
-                            <div className="flex justify-between items-start">
-                                <div className={`p-3 rounded-xl ${card.bgColor} ${card.color}`}>
-                                    <card.icon className="h-6 w-6" />
+                {/* Stats Grid top header */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {cards.map((card, index) => (
+                        <Card key={index} className="border-0 shadow-sm ring-1 ring-gray-100 flex flex-col items-center justify-between p-4 text-center min-h-[140px]">
+                            <h4 className={`text-[10px] font-bold uppercase mb-1 ${card.color}`}>{card.title}</h4>
+                            <div className="flex flex-col items-center flex-1 justify-center">
+                                <span className="text-gray-400 text-[10px] mb-1 font-medium italic">{card.subLabel}</span>
+                                <div className={'bg-gray-50 text-gray-800 px-4 py-2 rounded-lg text-xl font-black shadow-inner'}>
+                                    {loading ? "..." : (card.value || 0).toLocaleString()}
                                 </div>
-                                {card.total !== undefined && (
-                                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                        Total: {card.total}
-                                    </span>
+                            </div>
+                            <div className="mt-2 text-[10px] font-bold text-gray-500 bg-gray-100/50 px-2 py-0.5 rounded-full">
+                                {card.shortLabel}: {loading ? "..." : (card.subValue || 0).toLocaleString()}
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Main Middle Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Rank Boxes */}
+                    <div className="lg:col-span-3 space-y-4 flex flex-col">
+                        <RankBox 
+                            title="Top 3 States (By Active Districts)" 
+                            data={topStatesByDistricts} 
+                            labelKey="state" 
+                            valueKey="activeDistrictCount" 
+                        />
+                        <RankBox 
+                            title="Top Districts (By Active Schools)" 
+                            data={topDistrictsBySchools} 
+                            labelKey="name" 
+                            valueKey="schoolCount" 
+                        />
+                    </div>
+
+                    {/* Chart Center */}
+                    <Card className="lg:col-span-6 border-0 shadow-sm ring-1 ring-gray-100">
+                        <CardHeader className="flex flex-col items-center pb-2">
+                            <div className="flex gap-2 text-xs mb-4 flex-wrap justify-center">
+                                <button
+                                    onClick={() => setSelectedYear('All Year')}
+                                    className={`px-3 py-1 rounded-full font-medium ${selectedYear === 'All Year' ? 'bg-[#00a58c] text-white' : 'bg-gray-100 text-gray-600'}`}
+                                >
+                                    All Year
+                                </button>
+                                {availableYears.map(year => (
+                                    <button
+                                        key={year}
+                                        onClick={() => setSelectedYear(year)}
+                                        className={`px-3 py-1 rounded-full font-medium ${selectedYear === year ? 'bg-[#00a58c] text-white' : 'bg-gray-100 text-gray-600'}`}
+                                    >
+                                        {year}
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {/* Checkboxes */}
+                            <div className="flex gap-4 text-xs font-semibold text-gray-600 mb-2 border-t pt-4 w-full justify-center flex-wrap">
+                                {Object.keys(visibleBars).map(key => (
+                                    <label key={key} className="flex items-center gap-1 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={(visibleBars as any)[key]}
+                                            onChange={(e) => setVisibleBars({ ...visibleBars, [key]: e.target.checked })}
+                                            className="w-3 h-3 accent-[#00a58c]"
+                                        />
+                                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                                    </label>
+                                ))}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-72 w-full min-h-[300px]">
+                                {loading ? (
+                                    <div className="h-full flex items-center justify-center text-gray-400">Loading chart...</div>
+                                ) : filteredChartData.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-gray-400 border border-dashed rounded bg-gray-50">No data available for selected year.</div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={filteredChartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                                            <XAxis dataKey="monthName" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                                            <Legend wrapperStyle={{ fontSize: 12, marginTop: 10 }} />
+                                            {visibleBars.states && <Bar dataKey="states" name="States" fill="#3b82f6" radius={[4, 4, 0, 0]} />}
+                                            {visibleBars.districts && <Bar dataKey="districts" name="Districts" fill="#f59e0b" radius={[4, 4, 0, 0]} />}
+                                            {visibleBars.schools && <Bar dataKey="schools" name="Schools" fill="#10b981" radius={[4, 4, 0, 0]} />}
+                                            {visibleBars.teachers && <Bar dataKey="teachers" name="Teachers" fill="#ef4444" radius={[4, 4, 0, 0]} />}
+                                            {visibleBars.students && <Bar dataKey="students" name="Students" fill="#8b5cf6" radius={[4, 4, 0, 0]} />}
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 )}
                             </div>
-                            <div className="mt-4">
-                                <p className="text-sm font-medium text-gray-500">{card.title}</p>
-                                <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                                    {loading ? "-" : card.value.toLocaleString()}
-                                </h3>
-                            </div>
+                            <p className="text-center text-xs text-gray-500 mt-4 italic">The X-Axis views the full historical timeline</p>
                         </CardContent>
                     </Card>
-                ))}
-            </div>
 
-            {/* Analytics Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="col-span-2 border-0 shadow-sm ring-1 ring-gray-100">
+                    {/* Right Rank Boxes */}
+                    <div className="lg:col-span-3 space-y-4 flex flex-col">
+                        <RankBox 
+                            title="Schools By Active Teachers" 
+                            data={topSchoolsByTeachers} 
+                            labelKey="name" 
+                            valueKey="teacherCount" 
+                        />
+                        <RankBox 
+                            title="Schools By Active Students" 
+                            data={topSchoolsByStudents} 
+                            labelKey="name" 
+                            valueKey="studentCount" 
+                        />
+                        <RankBox 
+                            title="Schools By Tokens Issued" 
+                            data={topSchoolsByTokens} 
+                            labelKey="name" 
+                            valueKey="totalTokens" 
+                        />
+                    </div>
+                </div>
+
+                {/* District-Level Analytics */}
+                <Card className="border-0 shadow-sm ring-1 ring-gray-100">
                     <CardHeader>
                         <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                            <Map className="h-5 w-5 text-gray-500" />
-                            Geographic Distribution
+                            <Building2 className="h-5 w-5 text-gray-500" />
+                            District-Level Analytics
                         </CardTitle>
-                        <CardDescription>
-                            Schools and districts by U.S. state (from district records).{" "}
-                            <button
-                                type="button"
-                                className="text-[#00a58c] font-medium hover:underline"
-                                onClick={() => navigate('/system-admin/schools')}
-                            >
-                                Manage schools
-                            </button>
-                        </CardDescription>
+                        <CardDescription>Performance breakdown by district (active districts).</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <div className="h-64 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg">
-                                Loading map data…
+                            <div className="h-32 flex items-center justify-center text-gray-400">Loading...</div>
+                        ) : districtError ? (
+                            <div className="h-32 flex items-center justify-center text-center text-sm text-amber-800 bg-amber-50 rounded-lg border border-amber-100 px-4">
+                                {districtError}
                             </div>
-                        ) : geoError ? (
-                            <div className="h-64 flex items-center justify-center text-center text-sm text-amber-800 bg-amber-50 rounded-lg border border-amber-100 px-4">
-                                {geoError}
-                            </div>
-                        ) : !hasGeoData ? (
-                            <div className="h-64 flex flex-col items-center justify-center text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200 px-6">
-                                <p className="text-sm font-medium text-gray-700">No state breakdown yet</p>
-                                <p className="text-sm mt-1 max-w-md">
-                                    Add districts with a state, or link schools to those districts, to see counts by state.
-                                </p>
+                        ) : districtAnalytics.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+                                No active districts with data yet.
                             </div>
                         ) : (
-                            <div className="h-72 w-full min-h-[260px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        layout="vertical"
-                                        data={geoChartData}
-                                        margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" horizontal={false} />
-                                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-                                        <YAxis
-                                            type="category"
-                                            dataKey="name"
-                                            width={44}
-                                            tick={{ fontSize: 12 }}
-                                            tickLine={false}
-                                            axisLine={false}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                borderRadius: 8,
-                                                border: '1px solid #e5e7eb',
-                                                fontSize: 13,
-                                            }}
-                                            formatter={(value: number, name: string) => [
-                                                value,
-                                                name === 'schools' ? 'Schools' : 'Districts',
-                                            ]}
-                                        />
-                                        <Legend
-                                            wrapperStyle={{ fontSize: 13 }}
-                                            formatter={(value) => (value === 'schools' ? 'Schools' : 'Districts')}
-                                        />
-                                        <Bar dataKey="schools" name="schools" fill="#00a58c" radius={[0, 4, 4, 0]} maxBarSize={28} />
-                                        <Bar dataKey="districts" name="districts" fill="#94a3b8" radius={[0, 4, 4, 0]} maxBarSize={28} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b text-left text-gray-500">
+                                            <th scope="col" className="pb-3 font-medium">District</th>
+                                            <th scope="col" className="pb-3 font-medium">State</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Schools</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Teachers</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Students</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Tokens</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Withdrawals</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Oopsies</th>
+                                            <th scope="col" className="pb-3 font-medium text-right">Feedbacks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {districtAnalytics.map((d) => (
+                                            <tr
+                                                key={d.districtId}
+                                                className="border-b last:border-0 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <td className="py-3 font-medium text-gray-900">
+                                                    <Link
+                                                        to={`/system-admin/districts/${d.districtId}`}
+                                                        className="hover:text-[#00a58c] hover:underline focus:outline-none focus:ring-2 focus:ring-[#00a58c]/30 rounded"
+                                                    >
+                                                        {d.name}
+                                                    </Link>
+                                                    <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
+                                                </td>
+                                                <td className="py-3 text-gray-600">{d.state || '—'}</td>
+                                                <td className="py-3 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
+                                                <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
+                                                <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>
+                                                <td className="py-3 text-right font-semibold text-[#00a58c]">{d.totalTokens.toLocaleString()}</td>
+                                                <td className="py-3 text-right font-semibold text-blue-600">{d.withdrawals.toLocaleString()}</td>
+                                                <td className="py-3 text-right font-semibold text-red-500">{d.oopsies.toLocaleString()}</td>
+                                                <td className="py-3 text-right font-semibold text-amber-600">{d.feedbacks.toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </CardContent>
                 </Card>
-
-                <Card className="border-0 shadow-sm ring-1 ring-gray-100 bg-gradient-to-br from-[#00a58c] to-[#008f7a] text-white">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-white">
-                            <Coins className="h-5 w-5" />
-                            Token Economy
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-6">
-                            <div>
-                                <p className="text-emerald-100 text-sm font-medium mb-1">Total Tokens Distributed</p>
-                                <h3 className="text-3xl font-bold">
-                                    {loading ? "-" : (stats?.totalTokensEarned || 0).toLocaleString()}
-                                </h3>
-                            </div>
-
-                            <div className="pt-4 border-t border-emerald-400/30">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-emerald-100 text-sm">Growth (30d)</span>
-                                    <span className="flex items-center text-white font-bold bg-white/20 px-2 py-0.5 rounded text-sm">
-                                        <TrendingUp className="h-3 w-3 mr-1" /> {stats?.growth30d ? `${stats.growth30d}%` : "N/A"}
-                                    </span>
-                                </div>
-                                <div className="h-2 bg-emerald-900/20 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-white/90 rounded-full transition-all duration-500" 
-                                        style={{ width: `${(stats?.totalDistricts ? (stats.activeDistricts / stats.totalDistricts) * 100 : 0)}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            <Button
-                                variant="secondary"
-                                className="w-full mt-4 bg-white text-[#00a58c] hover:bg-emerald-50 border-0"
-                                onClick={() => navigate('/analytics')}
-                            >
-                                View Detailed Analytics
-                                <ArrowUpRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
-            {/* District-Level Analytics */}
-            <Card className="border-0 shadow-sm ring-1 ring-gray-100">
-                <CardHeader>
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-gray-500" />
-                        District-Level Analytics
-                    </CardTitle>
-                    <CardDescription>Performance breakdown by district (active districts).</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {loading ? (
-                        <div className="h-32 flex items-center justify-center text-gray-400">Loading...</div>
-                    ) : districtError ? (
-                        <div className="h-32 flex items-center justify-center text-center text-sm text-amber-800 bg-amber-50 rounded-lg border border-amber-100 px-4">
-                            {districtError}
-                        </div>
-                    ) : districtAnalytics.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
-                            No active districts with data yet.
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b text-left text-gray-500">
-                                        <th scope="col" className="pb-3 font-medium">District</th>
-                                        <th scope="col" className="pb-3 font-medium">State</th>
-                                        <th scope="col" className="pb-3 font-medium text-right">Schools</th>
-                                        <th scope="col" className="pb-3 font-medium text-right">Teachers</th>
-                                        <th scope="col" className="pb-3 font-medium text-right">Students</th>
-                                        <th scope="col" className="pb-3 font-medium text-right">Tokens</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {districtAnalytics.map((d) => (
-                                        <tr
-                                            key={d.districtId}
-                                            className="border-b last:border-0 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <td className="py-3 font-medium text-gray-900">
-                                                <Link
-                                                    to={`/system-admin/districts/${d.districtId}`}
-                                                    className="hover:text-[#00a58c] hover:underline focus:outline-none focus:ring-2 focus:ring-[#00a58c]/30 rounded"
-                                                >
-                                                    {d.name}
-                                                </Link>
-                                                <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
-                                            </td>
-                                            <td className="py-3 text-gray-600">{d.state || '—'}</td>
-                                            <td className="py-3 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
-                                            <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
-                                            <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>
-                                            <td className="py-3 text-right font-semibold text-[#00a58c]">{d.totalTokens.toLocaleString()}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </div>
     );
+
 }

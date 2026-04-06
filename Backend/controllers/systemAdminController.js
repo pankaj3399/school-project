@@ -7,7 +7,7 @@ import Admin from '../models/Admin.js';
 import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
 import crypto from 'crypto';
 import { escapeRegExp } from '../utils/stringUtils.js';
-import { Role } from "../enum.js";
+import { Role, FormType } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
@@ -33,38 +33,204 @@ export const getDashboardStats = async (req, res) => {
     const districtFilter = isSystemAdmin ? {} : { _id: userDistrictId };
     const schoolFilter = isSystemAdmin ? {} : { districtId: userDistrictId };
 
-    const [totalDistricts, activeDistricts, pendingDistricts, totalSchools] = await Promise.all([
+    const [
+      totalDistricts, 
+      activeDistricts, 
+      pendingDistricts, 
+      totalSchools,
+      distinctStates,
+      distinctCountries
+    ] = await Promise.all([
       District.countDocuments(districtFilter),
       District.countDocuments({ ...districtFilter, subscriptionStatus: 'active' }),
       District.countDocuments({ ...districtFilter, subscriptionStatus: 'pending' }),
       School.countDocuments(schoolFilter),
+      District.distinct('state', districtFilter),
+      District.distinct('country', districtFilter)
     ]);
 
-    // For teachers/students/points, use aggregation with $lookup to avoid loading school IDs into memory
-    const schoolMatchStage = isSystemAdmin ? [] : [{ $match: { districtId: userDistrictId } }];
+    const totalStates = distinctStates.filter(Boolean).length;
+    const totalCountries = distinctCountries.filter(Boolean).length;
 
-    const [teacherCountResult, studentCountResult, totalPointsResult] = await Promise.all([
-      School.aggregate([
-        ...schoolMatchStage,
-        { $lookup: { from: 'teachers', localField: '_id', foreignField: 'schoolId', as: 'teachers' } },
-        { $group: { _id: null, total: { $sum: { $size: '$teachers' } } } }
-      ]),
-      School.aggregate([
-        ...schoolMatchStage,
-        { $lookup: { from: 'students', localField: '_id', foreignField: 'schoolId', as: 'students' } },
-        { $group: { _id: null, total: { $sum: { $size: '$students' } } } }
-      ]),
-      School.aggregate([
-        ...schoolMatchStage,
-        { $lookup: { from: 'pointshistories', localField: '_id', foreignField: 'schoolId', as: 'points' } },
-        { $unwind: { path: '$points', preserveNullAndEmptyArrays: true } },
-        { $group: { _id: null, total: { $sum: '$points.awarded' } } }
-      ]),
+    // Optimized aggregate for School stats: counts teachers, students, tokens per school
+    // Using a facet to get global totals AND specific top-performers for leaderboards
+    const schoolAggResult = await School.aggregate([
+      { $match: schoolFilter },
+      {
+        $lookup: {
+          from: 'teachers',
+          localField: '_id',
+          foreignField: 'schoolId',
+          pipeline: [{ $count: 'count' }],
+          as: 'teachers'
+        }
+      },
+      {
+        $lookup: {
+          from: 'students',
+          localField: '_id',
+          foreignField: 'schoolId',
+          pipeline: [{ $count: 'count' }],
+          as: 'students'
+        }
+      },
+      {
+        $lookup: {
+          from: 'pointshistories',
+          localField: '_id',
+          foreignField: 'schoolId',
+          pipeline: [
+            {
+              $group: {
+                _id: null,
+                totalTokens: {
+                  $sum: {
+                    $cond: [
+                      { $in: ["$formType", [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]] },
+                      "$points",
+                      0
+                    ]
+                  }
+                },
+                oopsies: {
+                  $sum: {
+                    $cond: [
+                      { $in: ["$formType", [FormType.DeductPoints, "Deduct Points"]] },
+                      "$points",
+                      0
+                    ]
+                  }
+                },
+                withdrawals: {
+                  $sum: {
+                    $cond: [
+                      { $in: ["$formType", [FormType.PointWithdraw, "Point Withdraw"]] },
+                      "$points",
+                      0
+                    ]
+                  }
+                },
+                feedbacks: {
+                  $sum: {
+                    $cond: [
+                      { $in: ["$formType", [FormType.Feedback, "Feedback"]] },
+                      1,
+                      0
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          as: 'pointsSummary'
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          teacherCount: { $ifNull: [{ $arrayElemAt: ["$teachers.count", 0] }, 0] },
+          studentCount: { $ifNull: [{ $arrayElemAt: ["$students.count", 0] }, 0] },
+          totalTokens: { $ifNull: [{ $arrayElemAt: ["$pointsSummary.totalTokens", 0] }, 0] },
+          oopsies: { $ifNull: [{ $arrayElemAt: ["$pointsSummary.oopsies", 0] }, 0] },
+          withdrawals: { $ifNull: [{ $arrayElemAt: ["$pointsSummary.withdrawals", 0] }, 0] },
+          feedbacks: { $ifNull: [{ $arrayElemAt: ["$pointsSummary.feedbacks", 0] }, 0] }
+        }
+      },
+      {
+        $facet: {
+          globalTotals: [
+            {
+              $group: {
+                _id: null,
+                totalTeachers: { $sum: "$teacherCount" },
+                totalStudents: { $sum: "$studentCount" },
+                totalTokens: { $sum: "$totalTokens" },
+                totalOopsies: { $sum: "$oopsies" },
+                totalWithdrawals: { $sum: "$withdrawals" },
+                totalFeedbacks: { $sum: "$feedbacks" },
+                schoolIds: { $push: "$_id" }
+              }
+            }
+          ],
+          topByTeachers: [{ $sort: { teacherCount: -1 } }, { $limit: 20 }],
+          topByStudents: [{ $sort: { studentCount: -1 } }, { $limit: 20 }],
+          topByTokens: [{ $sort: { totalTokens: -1 } }, { $limit: 20 }]
+        }
+      }
     ]);
 
-    const totalTeachers = teacherCountResult[0]?.total || 0;
-    const totalStudents = studentCountResult[0]?.total || 0;
-    const totalPoints = totalPointsResult[0]?.total || 0;
+    const { globalTotals, topByTeachers, topByStudents, topByTokens } = schoolAggResult[0];
+    const totals = globalTotals[0] || {
+      totalTeachers: 0,
+      totalStudents: 0,
+      totalTokens: 0,
+      totalOopsies: 0,
+      totalWithdrawals: 0,
+      totalFeedbacks: 0,
+      schoolIds: []
+    };
+
+    // Combine leaderboard schools while removing duplicates by school ID
+    const schoolMap = new Map();
+    [...topByTeachers, ...topByStudents, ...topByTokens].forEach(school => {
+      const idStr = school._id.toString();
+      if (!schoolMap.has(idStr)) {
+        schoolMap.set(idStr, school);
+      }
+    });
+    const schoolStats = Array.from(schoolMap.values());
+    const schoolIds = totals.schoolIds;
+
+    // Aggregations for 12-Month Chart History
+    const monthAgg = {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+        count: { $sum: 1 }
+      }
+    };
+
+    const [
+      stateHistory,
+      districtHistory,
+      schoolHistory,
+      teacherHistory,
+      studentHistory
+    ] = await Promise.all([
+      District.aggregate([
+        { $match: districtFilter },
+        { $match: { state: { $nin: [null, ""] } } },
+        { $group: { _id: "$state", firstSeen: { $min: "$createdAt" } } },
+        { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$firstSeen" } }, count: { $sum: 1 } } }
+      ]),
+      District.aggregate([{ $match: districtFilter }, monthAgg]),
+      School.aggregate([{ $match: schoolFilter }, monthAgg]),
+      Teacher.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg]),
+      Student.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg])
+    ]);
+
+    // Format historical data
+    const chartDataMap = {};
+    const processHistory = (history, key) => {
+      history.forEach(item => {
+        if (!item._id) return;
+        if (!chartDataMap[item._id]) {
+          const [year, month] = item._id.split('-');
+          chartDataMap[item._id] = { year, month: parseInt(month, 10), states: 0, districts: 0, schools: 0, teachers: 0, students: 0 };
+        }
+        chartDataMap[item._id][key] += item.count;
+      });
+    };
+
+    processHistory(stateHistory, 'states');
+    processHistory(districtHistory, 'districts');
+    processHistory(schoolHistory, 'schools');
+    processHistory(teacherHistory, 'teachers');
+    processHistory(studentHistory, 'students');
+
+    const chartData = Object.values(chartDataMap).sort((a, b) => {
+      if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
+      return a.month - b.month;
+    });
 
     // Get recent activity
     const recentDistricts = await District.find(districtFilter)
@@ -74,14 +240,21 @@ export const getDashboardStats = async (req, res) => {
 
     return res.status(200).json({
       stats: {
+        totalCountries,
+        totalStates,
         totalDistricts,
         activeDistricts,
         pendingDistricts,
         totalSchools,
-        totalTeachers,
-        totalStudents,
-        totalTokensEarned: totalPoints
+        totalTeachers: totals.totalTeachers,
+        totalStudents: totals.totalStudents,
+        totalTokensEarned: totals.totalTokens,
+        totalOopsies: totals.totalOopsies,
+        totalWithdrawals: totals.totalWithdrawals,
+        totalFeedbacks: totals.totalFeedbacks
       },
+      chartData,
+      schoolStats,
       recentDistricts
     });
   } catch (error) {
@@ -215,7 +388,66 @@ export const getDistrictComparison = async (req, res) => {
           schoolCount: { $size: '$schools' },
           teacherCount: { $size: '$teachers' },
           studentCount: { $size: '$students' },
-          totalTokens: { $sum: '$pointsHistory.awarded' }
+          totalTokens: { 
+            $sum: { 
+              $map: { 
+                input: "$pointsHistory", 
+                as: "ph", 
+                in: { 
+                  $cond: [ 
+                    { $in: ["$$ph.formType", [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]] }, 
+                    "$$ph.points", 
+                    0 
+                  ] 
+                } 
+              } 
+            } 
+          },
+          withdrawals: { 
+            $sum: { 
+              $map: { 
+                input: "$pointsHistory", 
+                as: "ph", 
+                in: { 
+                  $cond: [ 
+                    { $in: ["$$ph.formType", [FormType.PointWithdraw, "Point Withdraw"]] }, 
+                    "$$ph.points", 
+                    0 
+                  ] 
+                } 
+              } 
+            } 
+          },
+          oopsies: { 
+            $sum: { 
+              $map: { 
+                input: "$pointsHistory", 
+                as: "ph", 
+                in: { 
+                  $cond: [ 
+                    { $in: ["$$ph.formType", [FormType.DeductPoints, "Deduct Points"]] }, 
+                    "$$ph.points", 
+                    0 
+                  ] 
+                } 
+              } 
+            } 
+          },
+          feedbacks: { 
+            $sum: { 
+              $map: { 
+                input: "$pointsHistory", 
+                as: "ph", 
+                in: { 
+                  $cond: [ 
+                    { $in: ["$$ph.formType", [FormType.Feedback, "Feedback"]] }, 
+                    1, 
+                    0 
+                  ] 
+                } 
+              } 
+            } 
+          }
         }
       },
       { $sort: { totalTokens: -1 } }
