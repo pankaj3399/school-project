@@ -47,9 +47,14 @@ export default function ViewDistrict() {
                         setData(response);
                         setEditData({
                             name: response.district.name,
-                            contactEmail: response.district.contactEmail,
-                            contactPhone: response.district.contactPhone,
+                            contactEmail: response.district.contactEmail || '',
+                            contactPhone: response.district.contactPhone || '',
+                            additionalPhone: response.district.additionalPhone || '',
                             website: response.district.website || '',
+                            logo: response.district.logo || '',
+                            address: response.district.address || '',
+                            city: response.district.city || '',
+                            zipCode: response.district.zipCode || '',
                             subscriptionStatus: response.district.subscriptionStatus
                         });
                     } else if (response.error) {
@@ -480,81 +485,167 @@ export default function ViewDistrict() {
                         <CardHeader className="border-b bg-gray-50/10">
                             <CardTitle className="text-lg font-bold text-gray-800">General Settings</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">District Name</Label>
-                                    <Input 
-                                        value={editData?.name} 
-                                        onChange={(e) => setEditData({...editData, name: e.target.value})}
-                                        placeholder="District Name"
-                                        className="h-11 bg-white border-gray-200"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Contact Phone</Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <CardContent className="p-8 space-y-10">
+                            {/* Basic Info & Branding */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Branding & Identity</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">District Name</Label>
                                         <Input 
-                                            value={editData?.contactPhone} 
-                                            onChange={(e) => setEditData({...editData, contactPhone: e.target.value})}
-                                            placeholder="Contact Phone"
-                                            className="pl-10 h-11 bg-white border-gray-200"
+                                            value={editData?.name} 
+                                            onChange={(e) => setEditData({...editData, name: e.target.value})}
+                                            placeholder="e.g. Legacy Schools District"
+                                            className="h-11 bg-white border-gray-200"
                                         />
                                     </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Contact Email</Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                        <Input 
-                                            value={editData?.contactEmail} 
-                                            onChange={(e) => setEditData({...editData, contactEmail: e.target.value})}
-                                            placeholder="Contact Email"
-                                            className="pl-10 h-11 bg-white border-gray-200"
-                                        />
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">District Logo URL</Label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <Input 
+                                                    value={editData?.logo} 
+                                                    onChange={(e) => setEditData({...editData, logo: e.target.value})}
+                                                    placeholder="https://example.com/logo.png"
+                                                    className="h-11 bg-white border-gray-200"
+                                                />
+                                            </div>
+                                            {editData?.logo && (
+                                                <div className="h-11 w-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                                                    <img src={editData.logo} alt="Logo preview" className="max-h-full max-w-full object-contain" />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Status</Label>
-                                    <Select 
-                                        value={editData?.subscriptionStatus} 
-                                        onValueChange={(v) => setEditData({...editData, subscriptionStatus: v})}
-                                    >
-                                        <SelectTrigger className="h-11 bg-white border-gray-200">
-                                            <SelectValue placeholder="Select status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="active">Active</SelectItem>
-                                            <SelectItem value="pending">Pending</SelectItem>
-                                            <SelectItem value="suspended">Suspended</SelectItem>
-                                            <SelectItem value="expired">Expired</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                            {/* Contact Information */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Contact Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Main Contact Phone</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.contactPhone} 
+                                                onChange={(e) => setEditData({...editData, contactPhone: e.target.value})}
+                                                placeholder="(555) 000-0000"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Additional Phone</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.additionalPhone} 
+                                                onChange={(e) => setEditData({...editData, additionalPhone: e.target.value})}
+                                                placeholder="(555) 000-0000"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Contact Email</Label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.contactEmail} 
+                                                onChange={(e) => setEditData({...editData, contactEmail: e.target.value})}
+                                                placeholder="email@example.edu"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Official Website</Label>
+                                        <div className="relative">
+                                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.website} 
+                                                onChange={(e) => setEditData({...editData, website: e.target.value})}
+                                                placeholder="https://www.district.edu"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Website</Label>
-                                    <div className="relative">
-                                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            {/* Location Section */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Main Office Address</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-sm font-bold text-gray-700">Street Address</Label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input 
+                                                value={editData?.address} 
+                                                onChange={(e) => setEditData({...editData, address: e.target.value})}
+                                                placeholder="e.g. 100 Main St"
+                                                className="pl-10 h-11 bg-white border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">City</Label>
                                         <Input 
-                                            value={editData?.website} 
-                                            onChange={(e) => setEditData({...editData, website: e.target.value})}
-                                            placeholder="https://example.edu"
-                                            className="pl-10 h-11 bg-white border-gray-200"
+                                            value={editData?.city} 
+                                            onChange={(e) => setEditData({...editData, city: e.target.value})}
+                                            placeholder="e.g. Buffalo"
+                                            className="h-11 bg-white border-gray-200"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Zip Code</Label>
+                                        <Input 
+                                            value={editData?.zipCode} 
+                                            onChange={(e) => setEditData({...editData, zipCode: e.target.value})}
+                                            placeholder="e.g. 14201"
+                                            className="h-11 bg-white border-gray-200"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-10 flex justify-end">
+                            {/* Account Status Section */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-wider">Account Maintenance</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Subscription Status</Label>
+                                        <Select 
+                                            value={editData?.subscriptionStatus} 
+                                            onValueChange={(v) => setEditData({...editData, subscriptionStatus: v})}
+                                        >
+                                            <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="paused">Paused</SelectItem>
+                                                <SelectItem value="expired">Expired</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-12 pt-8 border-t border-gray-100 flex justify-end">
                                 <Button 
                                     onClick={handleUpdate} 
                                     disabled={saving}
-                                    className="bg-[#00a58c] hover:bg-[#008f7a] h-11 px-8 rounded-lg font-bold shadow-sm shadow-[#00a58c]/20"
+                                    className="bg-[#00a58c] hover:bg-[#008f7a] h-12 px-10 rounded-lg font-bold shadow-lg shadow-[#00a58c]/20 transition-all active:scale-95"
                                 >
                                     {saving ? (
                                         <>

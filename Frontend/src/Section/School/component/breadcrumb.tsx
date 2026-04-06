@@ -20,7 +20,13 @@ export function Breadcrumb() {
           let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
           
           if (/^[0-9a-fA-F]{24}$/.test(segment) || (/^\d/.test(segment) && ["system-admin", "districts", "schools"].includes(parentSegment))) {
-            label = parentSegment === "schools" ? "Dashboard" : "Admin";
+            if (parentSegment === "schools") {
+              label = "School Details";
+            } else if (parentSegment === "districts") {
+              label = "District Details";
+            } else {
+              label = "Dashboard";
+            }
           }
         
 
