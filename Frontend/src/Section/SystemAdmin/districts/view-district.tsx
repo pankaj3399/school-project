@@ -36,6 +36,7 @@ export default function ViewDistrict() {
     const [saving, setSaving] = useState(false);
     const [editData, setEditData] = useState<any>(null);
     const [reinvitingIds, setReinvitingIds] = useState<Record<string, boolean>>({});
+    const [logoLoadError, setLogoLoadError] = useState(false);
 
 
     useEffect(() => {
@@ -176,9 +177,10 @@ export default function ViewDistrict() {
                     variant: "destructive"
                 });
             } else {
+                const nameFallback = adminName || 'the administrator';
                 toast({
                     title: "Success",
-                    description: `Invitation resent to ${adminName}.`,
+                    description: `Invitation resent to ${nameFallback}.`,
                 });
             }
         } catch (error: any) {
@@ -533,29 +535,28 @@ export default function ViewDistrict() {
                                             <div className="flex-1">
                                                 <Input 
                                                     value={editData?.logo} 
-                                                    onChange={(e) => setEditData({...editData, logo: e.target.value})}
+                                                    onChange={(e) => {
+                                                        setEditData({...editData, logo: e.target.value});
+                                                        setLogoLoadError(false);
+                                                    }}
                                                     placeholder="https://example.com/logo.png"
                                                     className="h-11 bg-white border-gray-200"
                                                 />
                                             </div>
-                                            {editData?.logo && /^(https:|data:)/i.test(editData.logo) && (
+                                            {editData?.logo && /^(https:|data:)/i.test(editData.logo) && !logoLoadError ? (
                                                 <div className="h-11 w-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
                                                     <img 
                                                         src={editData.logo} 
                                                         alt="Logo preview" 
                                                         className="max-h-full max-w-full object-contain"
-                                                        onError={(e) => {
-                                                            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Logo'; // Fallback URL
-                                                            // Alternatively, use a state to show a local component or Icon
-                                                        }}
+                                                        onError={() => setLogoLoadError(true)}
                                                     />
                                                 </div>
-                                            )}
-                                            {editData?.logo && !/^(https:|data:)/i.test(editData.logo) && (
+                                            ) : editData?.logo ? (
                                                 <div className="h-11 w-11 rounded-lg border border-red-100 bg-red-50 flex items-center justify-center text-red-400 shrink-0">
-                                                    <ImageOff className="h-5 h-5" />
+                                                    <ImageOff className="h-5 w-5" />
                                                 </div>
-                                            )}
+                                            ) : null}
                                         </div>
                                     </div>
                                 </div>
