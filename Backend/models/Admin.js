@@ -51,6 +51,26 @@ const userSchema = new mongoose.Schema({
   termsAcceptedAt: { type: Date },
   termsVersion: { type: String },
   termsAcceptedIp: { type: String },
+  address: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  phone: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  position: {
+    type: String,
+    enum: ['Principal', 'AP', 'Dean', 'AN Teacher', 'Other'],
+    default: 'Other',
+  },
+  contactRole: {
+    type: String,
+    enum: ['Leadership', 'Tech partner'],
+    default: 'Leadership',
+  },
   createdAt: {
     type: Date,
     default: Date.now,

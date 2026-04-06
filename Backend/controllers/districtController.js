@@ -305,7 +305,9 @@ export const getDistrictById = async (req, res) => {
     const districtAdmins = await User.find({ 
       districtId: id, 
       role: { $in: [Role.DistrictAdmin, Role.Admin] } 
-    }).select('name email role approved');
+    })
+    .populate('schoolId', 'name')
+    .select('name email role approved address phone position contactRole schoolId');
 
     return res.status(200).json({
       district,

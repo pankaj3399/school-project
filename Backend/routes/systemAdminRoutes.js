@@ -12,6 +12,8 @@ import {
   recordTermsAcceptance,
   getAllAdmins,
   inviteAdmin,
+  updateAdmin,
+  reInviteAdmin,
   completeAdminRegistration
 } from '../controllers/systemAdminController.js';
 import { authenticateToken, authorizeRoles } from '../middlewares/authMiddleware.js';
@@ -63,6 +65,8 @@ router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), (re
 router.post('/clone-district', authorizeRoles(Role.SystemAdmin, Role.Admin), cloneFromTemplate);
 router.get('/admins', authorizeRoles(Role.SystemAdmin), getAllAdmins);
 router.post('/invite', authorizeRoles(Role.SystemAdmin, Role.Admin), inviteAdmin);
+router.put('/admins/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), updateAdmin);
+router.post('/admins/:id/reinvite', authorizeRoles(Role.SystemAdmin, Role.Admin), reInviteAdmin);
 
 // Terms management routes (authenticated)
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllTermsVersions);

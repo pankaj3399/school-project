@@ -772,10 +772,9 @@ export const getAllAdmins = async (req, res) => {
   }
 };
 
-// Invite a new administrator
 export const inviteAdmin = async (req, res) => {
   try {
-    const { email, role, schoolId, districtId, name } = req.body;
+    const { email, role, schoolId, districtId, name, address, phone, position, contactRole } = req.body;
 
     if (!email || !role) {
       return res.status(400).json({ message: "Email and role are required" });
@@ -865,6 +864,10 @@ export const inviteAdmin = async (req, res) => {
       registrationToken, // Store the raw token; model pre-save hook will hash it
       registrationTokenExpires,
       name: name || email.split('@')[0],
+      address,
+      phone,
+      position,
+      contactRole
     });
 
     const safeUser = {
@@ -983,5 +986,109 @@ export const completeAdminRegistration = async (req, res) => {
   } catch (error) {
     console.error("Error completing admin registration:", error);
     return res.status(500).json({ message: "Error completing registration", error: error.message });
+  }
+};
+
+// Update an administrator's information
+export const updateAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, address, phone, position, contactRole, role, schoolId } = req.body;
+
+    // Only SystemAdmin can update other admins' roles or school/district assignments
+    const updateData = {
+      name,
+      email,
+      address,
+      phone,
+      position,
+      contactRole,
+      updatedAt: Date.now()
+    };
+
+    if (req.user.role === Role.SystemAdmin) {
+      if (role) updateData.role = role;
+      if (schoolId !== undefined) updateData.schoolId = schoolId;
+    }
+
+    const admin = await Admin.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
+
+    if (!admin) {
+      return res.status(404).json({ message: "Administrator not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Administrator updated successfully",
+      admin
+    });
+  } catch (error) {
+    console.error("Error updating admin:", error);
+    return res.status(500).json({ message: "Error updating administrator", error: error.message });
+  }
+};
+
+// Re-invite an administrator (resend invitation)
+export const reInviteAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const admin = await Admin.findById(id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Administrator not found" });
+    }
+
+    if (admin.password) {
+      return res.status(400).json({ message: "This user has already completed registration." });
+    }
+
+    // Generate new registration token
+    const registrationToken = crypto.randomBytes(32).toString('hex');
+    const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    admin.registrationToken = registrationToken;
+    admin.registrationTokenExpires = registrationTokenExpires;
+    await admin.save();
+
+    // Send invitation email
+    try {
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
+      
+      const body = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 8px;">
+          <h2 style="color: #00a58c;">Re-invitation to Join RADU E-Token™</h2>
+          <p>Hello ${admin.name},</p>
+          <p>You have been re-invited to join the RADU E-Token™ System as a <strong>${admin.role}</strong>.</p>
+          <p>Please click the button below to set up your account and get started:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
+          <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #999;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
+        </div>
+      `;
+
+      const { sendEmail } = await import("../services/mail.js");
+      await sendEmail(admin.email, "Re-invitation to Join RADU E-Token™ System", body, body, null);
+    } catch (emailError) {
+      console.error("Error sending re-invitation email:", emailError);
+      return res.status(200).json({ 
+        success: true,
+        message: "Invitation token regenerated, but email failed to send.",
+        emailError: emailError.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Invitation resent successfully"
+    });
+  } catch (error) {
+    console.error("Error re-inviting admin:", error);
+    return res.status(500).json({ message: "Error resending invitation", error: error.message });
   }
 };

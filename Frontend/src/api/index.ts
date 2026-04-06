@@ -1244,7 +1244,17 @@ export const updateTerms = async (data: any, token: string) => {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
-export const inviteAdmin = async (data: { email: string; name: string; role: string; schoolId?: string; districtId?: string }) => {
+export const inviteAdmin = async (data: { 
+  email: string; 
+  name: string; 
+  role: string; 
+  schoolId?: string; 
+  districtId?: string;
+  address?: string;
+  phone?: string;
+  position?: string;
+  contactRole?: string;
+}) => {
   try {
     const token = getToken();
     const response = await axios.post(`${API_URL}/system-admin/invite`, data, {
@@ -1258,6 +1268,30 @@ export const inviteAdmin = async (data: { email: string; name: string; role: str
 export const completeAdminRegistration = async (data: { token: string; password: string; name?: string; termsAccepted?: boolean; termsVersion?: string }) => {
   try {
     const response = await axios.post(`${API_URL}/system-admin/complete-registration`, data);
+    return response.data;
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+
+export const updateAdmin = async (id: string, data: any) => {
+  try {
+    const token = getToken();
+    const response = await axios.put(`${API_URL}/system-admin/admins/${id}`, data, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+
+export const reInviteAdmin = async (id: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.post(`${API_URL}/system-admin/admins/${id}/reinvite`, {}, {
+      headers: { token },
+    });
     return response.data;
   } catch (error: any) {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };

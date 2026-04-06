@@ -48,6 +48,11 @@ const DistrictSchema = new mongoose.Schema({
   logo: { 
     type: String 
   },
+  website: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   
   // Subscription & Access
   subscriptionStatus: { 
