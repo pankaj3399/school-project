@@ -170,8 +170,15 @@ export const getDashboardStats = async (req, res) => {
       schoolIds: []
     };
 
-    // Combine leaderboard schools while removing duplicates for efficient serialization
-    const schoolStats = Array.from(new Set([...topByTeachers, ...topByStudents, ...topByTokens]));
+    // Combine leaderboard schools while removing duplicates by school ID
+    const schoolMap = new Map();
+    [...topByTeachers, ...topByStudents, ...topByTokens].forEach(school => {
+      const idStr = school._id.toString();
+      if (!schoolMap.has(idStr)) {
+        schoolMap.set(idStr, school);
+      }
+    });
+    const schoolStats = Array.from(schoolMap.values());
     const schoolIds = totals.schoolIds;
 
     // Aggregations for 12-Month Chart History
@@ -191,7 +198,7 @@ export const getDashboardStats = async (req, res) => {
     ] = await Promise.all([
       District.aggregate([
         { $match: districtFilter },
-        { $match: { state: { $ne: null, $ne: "" } } },
+        { $match: { state: { $nin: [null, ""] } } },
         { $group: { _id: "$state", firstSeen: { $min: "$createdAt" } } },
         { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$firstSeen" } }, count: { $sum: 1 } } }
       ]),

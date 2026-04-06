@@ -256,8 +256,8 @@ export default function SystemAdminDashboard() {
             <div className="bg-[#5B4365] text-white">
                 <div className="max-w-7xl mx-auto px-8 py-3 flex justify-between items-center">
                     <div className="text-sm">
-                        <h2 className="font-bold text-xl uppercase tracking-wider mb-1">SYSTEM OVERVIEW HOME PAGE</h2>
-                        <p className="text-gray-300 text-xs">Active Instances (Active States, Active Districts, Active Schools)</p>
+                        <h2 className="font-bold text-xl uppercase tracking-wider mb-1">System Overview</h2>
+                        <p className="text-gray-300 text-xs">Totals, rankings, and historical growth for states, districts and schools</p>
                     </div>
                 </div>
             </div>
