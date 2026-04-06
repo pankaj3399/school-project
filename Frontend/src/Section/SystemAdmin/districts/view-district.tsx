@@ -403,7 +403,7 @@ export default function ViewDistrict() {
                                         <TableHead className="font-bold text-gray-700">POSITION</TableHead>
                                         <TableHead className="font-bold text-gray-700">EMAIL</TableHead>
                                         <TableHead className="font-bold text-gray-700">PHONE</TableHead>
-                                        <TableHead className="font-bold text-gray-700">ROLE</TableHead>
+                                        <TableHead className="font-bold text-gray-700">CONTACT ROLE</TableHead>
                                         <TableHead className="font-bold text-gray-700">STATUS</TableHead>
                                         <TableHead className="font-bold text-gray-700 text-right">ACTIONS</TableHead>
                                     </TableRow>
