@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDistrictById, updateDistrict, deleteSchool, reInviteAdmin } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, ImageOff } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -404,7 +404,7 @@ export default function ViewDistrict() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-gray-50/50">
-                                        <TableHead className="font-bold text-gray-700">SCHOOL NAME</TableHead>
+                                        <TableHead className="font-bold text-gray-700">ASSIGNMENT</TableHead>
                                         <TableHead className="font-bold text-gray-700">ADDRESS</TableHead>
                                         <TableHead className="font-bold text-gray-700">POSITION</TableHead>
                                         <TableHead className="font-bold text-gray-700">EMAIL</TableHead>
@@ -455,12 +455,28 @@ export default function ViewDistrict() {
                                                     <div className="flex items-center justify-end gap-1">
                                                         <EditAdminDialog 
                                                             admin={admin} 
-                                                            onSuccess={() => {
+                                                            onSuccess={async () => {
                                                                 const token = getAuthToken(user);
                                                                 if (token && id) {
-                                                                    getDistrictById(id, token).then(res => {
-                                                                        if (res.district) setData(res);
-                                                                    });
+                                                                    try {
+                                                                        const res = await getDistrictById(id, token);
+                                                                        if (res.error) {
+                                                                            toast({
+                                                                                title: "Refresh Error",
+                                                                                description: `Admin updated, but data refresh failed: ${res.error}`,
+                                                                                variant: "destructive"
+                                                                            });
+                                                                        } else if (res.district) {
+                                                                            setData(res);
+                                                                        }
+                                                                    } catch (err: any) {
+                                                                        toast({
+                                                                            title: "Connection Error",
+                                                                            description: "Could not refresh district data. Please reload page.",
+                                                                            variant: "destructive"
+                                                                        });
+                                                                        console.error("District refresh failed:", err);
+                                                                    }
                                                                 }
                                                             }} 
                                                         />
@@ -522,9 +538,22 @@ export default function ViewDistrict() {
                                                     className="h-11 bg-white border-gray-200"
                                                 />
                                             </div>
-                                            {editData?.logo && (
+                                            {editData?.logo && /^(https:|data:)/i.test(editData.logo) && (
                                                 <div className="h-11 w-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                                                    <img src={editData.logo} alt="Logo preview" className="max-h-full max-w-full object-contain" />
+                                                    <img 
+                                                        src={editData.logo} 
+                                                        alt="Logo preview" 
+                                                        className="max-h-full max-w-full object-contain"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Logo'; // Fallback URL
+                                                            // Alternatively, use a state to show a local component or Icon
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {editData?.logo && !/^(https:|data:)/i.test(editData.logo) && (
+                                                <div className="h-11 w-11 rounded-lg border border-red-100 bg-red-50 flex items-center justify-center text-red-400 shrink-0">
+                                                    <ImageOff className="h-5 h-5" />
                                                 </div>
                                             )}
                                         </div>
