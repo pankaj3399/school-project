@@ -197,9 +197,12 @@ export const getCurrentSchool = async (req, res) => {
         }
         
         // Fetch administrators associated with this school
-        // Include password field to check registration status, then immediately sanitize
+        // Conditionally include PII (address/phone) only for privileged roles
+        const isPrivileged = req.user.role === Role.Admin || req.user.role === Role.SystemAdmin;
+        const projection = `_id name email role createdAt ${isPrivileged ? 'address phone ' : ''}position contactRole password`;
+        
         const adminsRaw = await Admin.find({ schoolId: sch._id })
-            .select('_id name email role createdAt address phone position contactRole password')
+            .select(projection)
             .lean();
             
         const adminsWithStatus = adminsRaw.map(admin => {
@@ -361,111 +364,118 @@ export const deleteSchool = async (req, res) => {
     }
 }
 
-export const promote = async (req, res) => {
+  export const promote = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
-      const id = req.user.id;
-      let school;
-      
-      // Get school based on user role
-      if (req.user.role === Role.SystemAdmin) {
-          const { schoolId } = req.query.schoolId ? req.query : req.body;
-          if (!schoolId) {
-              return res.status(400).json({ message: 'School ID is required for System Administrators' });
-          }
-          school = await School.findById(schoolId);
-      } else if (req.user.role === Role.Admin) {
-          const adminUser = await Admin.findById(id);
-          const isSystemAdminEquivalent = adminUser && adminUser.role === Role.SystemAdmin;
+      await session.withTransaction(async () => {
+          const id = req.user.id;
+          let school;
           
-          if (!adminUser || (!isSystemAdminEquivalent && !adminUser.districtId)) {
-            return res.status(403).json({ message: "Admin is not assigned to a district." });
-          }
-          
-          const { schoolId } = req.query.schoolId ? req.query : req.body;
-          if (!schoolId) {
-              return res.status(400).json({ message: 'School ID is required for Administrators' });
-          }
-          
-          if (isSystemAdminEquivalent) {
-            school = await School.findById(schoolId);
-          } else {
-            school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId });
-          }
-          
-          if (!school) return res.status(403).json({ message: "Access denied. School is outside your district." });
-      } else if (req.user.role === Role.SchoolAdmin) {
-          const adminUser = await Admin.findById(id);
-          if (adminUser && adminUser.schoolId) {
-             school = await School.findById(adminUser.schoolId);
-          } else {
-             return res.status(403).json({ message: "Unauthorized. School Administrator is not explicitly assigned to a school." });
-          }
-      } else if(req.user.role === Role.Teacher) {
-          const user = await Teacher.findById(id);
-          if (user) {
-            school = await School.findById(user.schoolId);
-          }
-      }
-
-      if(!school) {
-          return res.status(404).json({ message: 'School Context Missing or Not Found' });
-      }
-
-      // Handle Graduation (Grade 12 -> Graduate)
-      const graduatingStudents = await Student.countDocuments({ 
-          schoolId: school._id,
-          grade: { $in: ["12", 12] } 
-      });
-
-      await Student.updateMany(
-          { 
-              schoolId: school._id,
-              grade: { $in: ["12", 12] }
-          },
-          { $set: { grade: "Graduate" } }
-      );
-
-      // Handle Promotion for all other grades (1-11)
-      // Use a cursor to process students in batches to prevent OOM for large schools
-      const studentCursor = Student.find({ 
-          schoolId: school._id,
-          grade: { $nin: ["Graduate", "12", 12] }
-      }).cursor();
-
-      let promotedCount = graduatingStudents;
-      let bulkOps = [];
-      const BATCH_SIZE = 500;
-
-      for (let student = await studentCursor.next(); student != null; student = await studentCursor.next()) {
-          // Strictly check that grade is a numeric string (e.g. "1", "11") to prevent promoting "11A"
-          if (typeof student.grade === 'string' && /^\d+$/.test(student.grade)) {
-              const currentGrade = parseInt(student.grade);
-              if (currentGrade < 12) {
-                  bulkOps.push({
-                      updateOne: {
-                          filter: { _id: student._id },
-                          update: { $set: { grade: (currentGrade + 1).toString() } }
-                      }
-                  });
-                  promotedCount++;
+          // Get school based on user role
+          if (req.user.role === Role.SystemAdmin) {
+              const { schoolId } = req.query.schoolId ? req.query : req.body;
+              if (!schoolId) {
+                  throw new Error('School ID is required for System Administrators');
+              }
+              school = await School.findById(schoolId).session(session);
+          } else if (req.user.role === Role.Admin) {
+              const adminUser = await Admin.findById(id).session(session);
+              const isSystemAdminEquivalent = adminUser && adminUser.role === Role.SystemAdmin;
+              
+              if (!adminUser || (!isSystemAdminEquivalent && !adminUser.districtId)) {
+                throw new Error("Admin is not assigned to a district.");
+              }
+              
+              const { schoolId } = req.query.schoolId ? req.query : req.body;
+              if (!schoolId) {
+                  throw new Error('School ID is required for Administrators');
+              }
+              
+              if (isSystemAdminEquivalent) {
+                school = await School.findById(schoolId).session(session);
+              } else {
+                school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId }).session(session);
+              }
+              
+              if (!school) throw new Error("Access denied. School is outside your district.");
+          } else if (req.user.role === Role.SchoolAdmin) {
+              const adminUser = await Admin.findById(id).session(session);
+              if (adminUser && adminUser.schoolId) {
+                 school = await School.findById(adminUser.schoolId).session(session);
+              } else {
+                 throw new Error("Unauthorized. School Administrator is not explicitly assigned to a school.");
+              }
+          } else if(req.user.role === Role.Teacher) {
+              const user = await Teacher.findById(id).session(session);
+              if (user) {
+                school = await School.findById(user.schoolId).session(session);
               }
           }
 
-          if (bulkOps.length >= BATCH_SIZE) {
-              await Student.bulkWrite(bulkOps);
-              bulkOps = [];
+          if(!school) {
+              throw new Error('School Context Missing or Not Found');
           }
-      }
 
-      if (bulkOps.length > 0) {
-          await Student.bulkWrite(bulkOps);
-      }
+          // Handle Graduation (Grade 12 -> Graduate)
+          const graduatingStudents = await Student.countDocuments({ 
+              schoolId: school._id,
+              grade: { $in: ["12", 12] } 
+          }).session(session);
 
-      return res.status(200).json({
-          message: "Students promoted successfully",
-          promotedCount
+          await Student.updateMany(
+              { 
+                  schoolId: school._id,
+                  grade: { $in: ["12", 12] }
+              },
+              { $set: { grade: "Graduate" } },
+              { session }
+          );
+
+          // Handle Promotion for all other grades (1-11)
+          // Use a cursor to process students in batches
+          const studentCursor = Student.find({ 
+              schoolId: school._id,
+              grade: { $nin: ["Graduate", "12", 12] }
+          }).session(session).cursor();
+
+          let promotedCount = graduatingStudents;
+          let bulkOps = [];
+          const BATCH_SIZE = 500;
+
+          for (let student = await studentCursor.next(); student != null; student = await studentCursor.next()) {
+              if (typeof student.grade === 'string' && /^\d+$/.test(student.grade)) {
+                  const currentGrade = parseInt(student.grade);
+                  if (currentGrade < 12) {
+                      bulkOps.push({
+                          updateOne: {
+                              filter: { _id: student._id },
+                              update: { $set: { grade: (currentGrade + 1).toString() } }
+                          }
+                      });
+                      promotedCount++;
+                  }
+              }
+
+              if (bulkOps.length >= BATCH_SIZE) {
+                  await Student.bulkWrite(bulkOps, { session });
+                  bulkOps = [];
+              }
+          }
+
+          if (bulkOps.length > 0) {
+              await Student.bulkWrite(bulkOps, { session });
+          }
+
+          res.status(200).json({
+              message: "Students promoted successfully",
+              promotedCount
+          });
       });
   } catch(error) {
-      return res.status(500).json({ message: 'Server Error', error: error.message });
+      if (!res.headersSent) {
+          res.status(500).json({ message: 'Server Error', error: error.message });
+      }
+  } finally {
+      session.endSession();
   }
 }

@@ -26,9 +26,12 @@ const SetupPage = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
+        // Clear stale state immediately when selection changes
+        setSchool(null);
+        setLoading(true);
+
         if (isAdmin && !selectedSchoolId) {
           setLoading(false);
-          setSchool(null);
           return;
         }
 
@@ -36,6 +39,7 @@ const SetupPage = () => {
         setSchool(data.school || null);
       } catch (error) {
         console.error("Failed to fetch school data:", error);
+        setSchool(null);
       } finally {
         setLoading(false);
       }
@@ -45,12 +49,15 @@ const SetupPage = () => {
   }, [selectedSchoolId, user, isAdmin]);
 
   const handleDownloadWaitlist = async () => {
+    if (loading) return;
     let url: string | null = null;
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const resolvedSchoolId = school?._id || selectedSchoolId;
+      const resolvedSchoolId = selectedSchoolId || school?._id;
+      if (!resolvedSchoolId) return;
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export${resolvedSchoolId ? `?schoolId=${encodeURIComponent(resolvedSchoolId)}` : ''}`, {
         method: 'GET',
         headers: { 'token': `${token}` }
@@ -115,7 +122,7 @@ const SetupPage = () => {
         ) : (
           <div className="space-y-12 animate-in fade-in duration-700">
             {/* Maintenance Section Gating */}
-            {school?._id || selectedSchoolId ? (
+            {(selectedSchoolId || school?._id) && !loading ? (
               <>
                 {/* Primary Activity: Lifecycle Wizard */}
                 <div className="space-y-6">
@@ -124,7 +131,7 @@ const SetupPage = () => {
                     <h2 className="text-xl font-bold text-neutral-800 tracking-tight uppercase tracking-widest text-xs">Annual Transition Wizard</h2>
                   </div>
                   <LifecycleManager 
-                    schoolId={school?._id || selectedSchoolId || ""}
+                    schoolId={selectedSchoolId || school?._id || ""}
                     onDownloadWaitlist={handleDownloadWaitlist}
                   />
                 </div>
@@ -139,7 +146,7 @@ const SetupPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 gap-6">
-                    <DangerZone onResetRoster={() => setShowPasswordModal(true)} />
+                    <DangerZone onResetRoster={() => !loading && setShowPasswordModal(true)} />
                   </div>
                 </div>
 
@@ -150,13 +157,15 @@ const SetupPage = () => {
                     setShowPasswordModal(false);
                     toast({ title: "Roster Reset", description: "The student roster has been cleared successfully." });
                   }}
-                  schoolId={school?._id || selectedSchoolId || ""}
+                  schoolId={selectedSchoolId || school?._id || ""}
                 />
               </>
             ) : (
               <div className="py-20 flex flex-col items-center justify-center max-w-2xl mx-auto text-center space-y-4 bg-white/50 rounded-3xl border border-dashed border-neutral-200">
                 <School className="w-12 h-12 text-neutral-300" />
-                <p className="text-neutral-500 font-medium">Please select a school to access the Transition Wizard and Maintenance Tools.</p>
+                <p className="text-neutral-500 font-medium">
+                  {loading ? "Refreshing management data..." : "Please select a school to access the Transition Wizard and Maintenance Tools."}
+                </p>
               </div>
             )}
           </div>
