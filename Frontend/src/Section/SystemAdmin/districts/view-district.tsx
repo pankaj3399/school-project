@@ -502,7 +502,7 @@ export default function ViewDistrict() {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                                                 No administrators found for this district.
                                             </TableCell>
                                         </TableRow>

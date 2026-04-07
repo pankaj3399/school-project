@@ -59,6 +59,7 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, 
         title: "Success",
         description: "Student data has been reset successfully.",
       });
+      setPassword(""); // Clear sensitive state
       onSuccess();
       onClose();
     } catch (error) {

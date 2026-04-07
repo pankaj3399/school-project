@@ -417,17 +417,17 @@ export const promote = async (req, res) => {
       );
 
       // Handle Promotion for all other grades (1-11)
-      // Since grade is String, we use a loop or multiple updates. 
-      // Individual updates are safer for string-to-numeric-increment logic.
-      const students = await Student.find({ 
+      // Use a cursor to process students in batches to prevent OOM for large schools
+      const studentCursor = Student.find({ 
           schoolId: school._id,
           grade: { $nin: ["Graduate", "12", 12] }
-      });
+      }).cursor();
 
       let promotedCount = graduatingStudents;
-      const bulkOps = [];
+      let bulkOps = [];
+      const BATCH_SIZE = 500;
 
-      for (const student of students) {
+      for (let student = await studentCursor.next(); student != null; student = await studentCursor.next()) {
           const currentGrade = parseInt(student.grade);
           if (!isNaN(currentGrade) && currentGrade < 12) {
               bulkOps.push({
@@ -437,6 +437,11 @@ export const promote = async (req, res) => {
                   }
               });
               promotedCount++;
+          }
+
+          if (bulkOps.length >= BATCH_SIZE) {
+              await Student.bulkWrite(bulkOps);
+              bulkOps = [];
           }
       }
 

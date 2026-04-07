@@ -50,7 +50,8 @@ const SetupPage = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export`, {
+      const resolvedSchoolId = school?._id || selectedSchoolId;
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export${resolvedSchoolId ? `?schoolId=${resolvedSchoolId}` : ''}`, {
         method: 'GET',
         headers: { 'token': `${token}` }
       });
@@ -114,16 +115,23 @@ const SetupPage = () => {
         ) : (
           <div className="space-y-12 animate-in fade-in duration-700">
             {/* Primary Activity: Lifecycle Wizard */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 px-2">
-                <div className="h-6 w-1 bg-blue-500 rounded-full" />
-                <h2 className="text-xl font-bold text-neutral-800 tracking-tight uppercase tracking-widest text-xs">Annual Transition Wizard</h2>
+            {school?._id || selectedSchoolId ? (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="h-6 w-1 bg-blue-500 rounded-full" />
+                  <h2 className="text-xl font-bold text-neutral-800 tracking-tight uppercase tracking-widest text-xs">Annual Transition Wizard</h2>
+                </div>
+                <LifecycleManager 
+                  schoolId={school?._id || selectedSchoolId || ""}
+                  onDownloadWaitlist={handleDownloadWaitlist}
+                />
               </div>
-              <LifecycleManager 
-                schoolId={school?._id || selectedSchoolId || ""}
-                onDownloadWaitlist={handleDownloadWaitlist}
-              />
-            </div>
+            ) : (
+              <div className="py-20 flex flex-col items-center justify-center max-w-2xl mx-auto text-center space-y-4 bg-white/50 rounded-3xl border border-dashed border-neutral-200">
+                <School className="w-12 h-12 text-neutral-300" />
+                <p className="text-neutral-500 font-medium">Please select a school to access the Transition Wizard.</p>
+              </div>
+            )}
 
             {/* Maintenance Utilities */}
             <div className="pt-12 border-t border-neutral-100 space-y-8">

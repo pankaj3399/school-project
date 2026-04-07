@@ -20,15 +20,10 @@ const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
   const userRole = req.user.role;
 
-  console.log(`[DEBUG] getSchoolIdFromUser: userId=${userId}, role=${userRole}`);
-  console.log(`[DEBUG] Request Body:`, req.body);
-  console.log(`[DEBUG] Request Query:`, req.query);
-  console.log(`[DEBUG] Request Headers:`, req.headers.schoolid || req.headers.schoolId);
+  const resolvedSchoolId = req.get("schoolId") || req.query.schoolId || req.body.schoolId;
 
   if (userRole === Role.SystemAdmin) {
-    const schoolId = req.query.schoolId || req.body.schoolId || req.headers.schoolid || req.headers.schoolId;
-    console.log(`[DEBUG] SystemAdmin returning schoolId: ${schoolId}`);
-    return schoolId || undefined;
+    return resolvedSchoolId || undefined;
   }
 
   if (userRole === Role.Admin) {
@@ -654,25 +649,34 @@ export const verifyResetOtp = async (req, res) => {
 };
 
 export const resetPoints = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const schoolId = await getSchoolIdFromUser(req);
     if (schoolId == null || schoolId === "") {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({
         message: "Cannot reset points: valid school context required.",
       });
     }
 
-    await PointsHistory.deleteMany({ schoolId });
+    await PointsHistory.deleteMany({ schoolId }).session(session);
     await Student.updateMany(
       { schoolId },
       { $set: { points: 0, pendingEtokens: [] } }
-    );
+    ).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(200).json({ 
       success: true,
       message: "All student points and history have been reset successfully." 
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     return res.status(500).json({ message: "Server Error", error: error.message });
   }
 };

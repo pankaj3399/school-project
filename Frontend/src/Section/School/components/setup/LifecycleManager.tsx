@@ -27,6 +27,7 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       return;
     }
+    if (isProcessing) return;
     setIsProcessing(true);
     try {
       const response = await resetPoints(schoolId);
@@ -48,6 +49,7 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       return;
     }
+    if (isProcessing) return;
     setIsProcessing(true);
     try {
       const response = await promote(schoolId);
