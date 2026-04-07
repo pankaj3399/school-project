@@ -4,7 +4,7 @@ import { getCurrrentSchool, getStats, getDistricts, updateSchool, getAnalyticsDa
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck, IconMail, IconPhone, IconMapPin, IconSchool } from '@tabler/icons-react'
+import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck, IconMail, IconPhone, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
 import { EditAdminDialog } from '@/components/EditAdminDialog'
 import { Role } from '@/enum'
@@ -54,15 +54,17 @@ interface AnalyticsData {
     withdrawPoints: ChartDataPoint[];
 }
 
+type StatCardColor = 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'purple';
+
 interface StatCardProps {
     title: string;
     value: number;
     icon: ReactNode;
-    color: string;
+    color: StatCardColor;
 }
 
 const StatCard = ({ title, value, icon, color }: StatCardProps) => {
-    const colorMap: any = {
+    const colorMap: Record<StatCardColor, string> = {
         blue: "bg-blue-50 text-blue-600",
         green: "bg-green-50 text-green-600",
         yellow: "bg-yellow-50 text-yellow-600",
@@ -96,9 +98,14 @@ const ViewSchool = () => {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [fetchError, setFetchError] = useState<Error | null>(null)
+    const [logoFile, setLogoFile] = useState<File | null>(null)
+    const [logoPreview, setLogoPreview] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
     const { toast } = useToast()
     const requestRef = useRef(0)
+    const analyticsRequestRef = useRef(0)
+    const [imageLoadError, setImageLoadError] = useState(false)
 
     // Analytics state
     const [period, setPeriod] = useState<string>("1W")
@@ -119,10 +126,13 @@ const ViewSchool = () => {
         districtId: '',
         state: '',
         country: '',
-        timeZone: '',
         domain: '',
         logo: ''
     })
+
+    useEffect(() => {
+        setImageLoadError(false)
+    }, [formData.logo])
 
     const fetchData = useCallback(async () => {
         if (!id) return
@@ -141,13 +151,13 @@ const ViewSchool = () => {
             if (schoolRes.school) {
                 setSchool(schoolRes.school)
                 setAdmins(schoolRes.admins || [])
+                setLogoPreview(schoolRes.school.logo || null)
                 setFormData({
                     name: schoolRes.school.name || '',
                     address: schoolRes.school.address || '',
-                    districtId: schoolRes.school.districtId?._id || '',
-                    state: schoolRes.school.state || '',
-                    country: schoolRes.school.country || '',
-                    timeZone: schoolRes.school.timeZone || '',
+                    districtId: schoolRes.school.districtId?._id || schoolRes.school.districtId || '',
+                    state: schoolRes.school.state || 'CO',
+                    country: schoolRes.school.country || 'United States',
                     domain: schoolRes.school.domain || '',
                     logo: schoolRes.school.logo || ''
                 })
@@ -166,19 +176,29 @@ const ViewSchool = () => {
 
     const fetchAnalytics = useCallback(async () => {
         if (!id || activeTab !== 'dashboard') return
+        const requestId = ++analyticsRequestRef.current
         setAnalyticsLoading(true)
         try {
             const data = await getAnalyticsData({
                 period,
                 schoolId: id
             })
+            if (requestId !== analyticsRequestRef.current) return
+
             if (data.success) {
                 setAnalyticsData(data.data)
+            } else {
+                setAnalyticsData(null)
             }
         } catch (error) {
             console.error("Error fetching analytics:", error)
+            if (requestId === analyticsRequestRef.current) {
+                setAnalyticsData(null)
+            }
         } finally {
-            setAnalyticsLoading(false)
+            if (requestId === analyticsRequestRef.current) {
+                setAnalyticsLoading(false)
+            }
         }
     }, [id, activeTab, period])
 
@@ -192,11 +212,24 @@ const ViewSchool = () => {
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!id) return
         setSaving(true)
         try {
             const token = localStorage.getItem('token') || ''
-            const response = await updateSchool(id, formData, token)
+            
+            const data = new FormData();
+            data.append('name', formData.name);
+            data.append('address', formData.address);
+            data.append('district', formData.districtId);
+            data.append('state', formData.state);
+            data.append('country', formData.country);
+            data.append('domain', formData.domain);
+            
+            if (logoFile) {
+                data.append('logo', logoFile);
+            }
+
+            const response = await updateSchool(id!, data, token)
+            
             if (response.error) throw new Error(typeof response.error === 'string' ? response.error : response.error.message)
             
             toast({
@@ -204,6 +237,8 @@ const ViewSchool = () => {
                 description: "School settings updated successfully",
             })
             setSchool(response.school)
+            setLogoFile(null)
+            fetchData()
         } catch (error: any) {
             toast({
                 title: "Error",
@@ -212,6 +247,18 @@ const ViewSchool = () => {
             })
         } finally {
             setSaving(false)
+        }
+    }
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setLogoFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
         }
     }
 
@@ -252,11 +299,12 @@ const ViewSchool = () => {
     };
 
     const formatDateLabel = (dateStr: string, period: string) => {
-        const date = new Date(dateStr)
+        const [year, month, day] = dateStr.split('-').map(Number)
+        const date = new Date(Date.UTC(year, month - 1, day))
         if (period === "1W") {
-            return date.toLocaleDateString('en-US', { weekday: 'short' })
+            return date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
         }
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
     }
 
     const processChartData = (data: ChartDataPoint[], period: string) => {
@@ -347,11 +395,17 @@ const ViewSchool = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm transition-all hover:shadow-md">
                 <div className="flex items-center gap-4">
-                    {school.logo ? (
-                        <img src={school.logo} alt="" className="w-20 h-20 rounded-xl object-contain border p-2 bg-neutral-50" />
+                    {school.logo && !imageLoadError ? (
+                        <img 
+                            src={school.logo} 
+                            alt="" 
+                            className="w-20 h-20 rounded-xl object-contain border p-2 bg-neutral-50" 
+                            onError={() => setImageLoadError(true)}
+                            onLoad={() => setImageLoadError(false)}
+                        />
                     ) : (
                         <div className="w-20 h-20 rounded-xl bg-neutral-100 flex items-center justify-center border">
-                            <IconSettings className="w-10 h-10 text-neutral-400" />
+                            <IconSchool className="w-10 h-10 text-neutral-400" />
                         </div>
                     )}
                     <div>
@@ -483,7 +537,7 @@ const ViewSchool = () => {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-neutral-50/50">
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">School Name</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">Admin Name</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Address</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Position</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Email</TableHead>
@@ -500,9 +554,9 @@ const ViewSchool = () => {
                                                     <TableCell className="pl-6 font-medium text-neutral-900 truncate max-w-[200px]">
                                                         <div className="flex items-center gap-2">
                                                             <div className="p-1.5 bg-neutral-100 rounded-lg shrink-0">
-                                                                <IconSchool className="h-3.5 w-3.5 text-neutral-400" />
+                                                                <IconUsers className="h-3.5 w-3.5 text-neutral-400" />
                                                             </div>
-                                                            {school.name}
+                                                            {admin.name}
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">
@@ -575,82 +629,146 @@ const ViewSchool = () => {
                             <p className="text-sm text-neutral-500 mt-1">Configure basic information and district association.</p>
                         </CardHeader>
                         <CardContent className="p-8">
-                            <form onSubmit={handleUpdate} className="space-y-8 max-w-2xl">
-                                <div className="grid grid-cols-1 gap-6">
+                            <form onSubmit={handleUpdate} className="space-y-8 max-w-3xl">
+                                {/* Branding & Identity Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <div className="w-1 h-4 bg-[#00a58c] rounded-full" />
+                                        Branding & Identity
+                                    </h3>
+                                    
+                                    <div className="flex flex-col md:flex-row items-start gap-8 bg-neutral-50/50 p-6 rounded-2xl border border-neutral-100">
+                                        <div className="relative group shrink-0">
+                                            <div className="w-32 h-32 rounded-2xl bg-white border-2 border-neutral-200 overflow-hidden flex items-center justify-center shadow-sm group-hover:border-[#00a58c] transition-colors relative">
+                                                {logoPreview && !imageLoadError ? (
+                                                    <img 
+                                                        src={logoPreview} 
+                                                        alt="School Logo" 
+                                                        className="w-full h-full object-contain p-4" 
+                                                        onError={() => setImageLoadError(true)}
+                                                        onLoad={() => setImageLoadError(false)}
+                                                    />
+                                                ) : (
+                                                    <IconPhoto className="w-10 h-10 text-neutral-300" />
+                                                )}
+                                                
+                                                {/* Edit Overlay */}
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <IconUpload className="w-8 h-8 text-white" />
+                                                </button>
+                                            </div>
+                                            <input 
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleLogoChange}
+                                                accept="image/*"
+                                                className="hidden"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3 flex-1">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-neutral-900">School Logo</h4>
+                                                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                                                    This logo will be displayed on the dashboard, reports, and student IDs. 
+                                                    For best results, use a square PNG or JPG at least 256x256px.
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                <Button 
+                                                    type="button" 
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="h-8 rounded-lg text-xs font-semibold"
+                                                >
+                                                    <IconUpload className="w-3.5 h-3.5 mr-2" />
+                                                    Change Logo
+                                                </Button>
+                                                {logoFile && (
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setLogoFile(null);
+                                                            setLogoPreview(school.logo || null);
+                                                        }}
+                                                        className="h-8 rounded-lg text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* General Information Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <div className="w-1 h-4 bg-[#00a58c] rounded-full" />
+                                        General Information
+                                    </h3>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold text-neutral-700">School Name</label>
                                             <Input 
                                                 value={formData.name} 
                                                 onChange={e => setFormData({...formData, name: e.target.value})}
-                                                className="rounded-xl border-neutral-300 focus:ring-neutral-900 h-11"
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11"
                                                 required
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-neutral-700">School Logo URL</label>
-                                            <div className="flex gap-4">
-                                                <div className="flex-1">
-                                                    <Input 
-                                                        value={formData.logo} 
-                                                        onChange={e => setFormData({...formData, logo: e.target.value})}
-                                                        placeholder="https://example.com/logo.png"
-                                                        className="rounded-xl border-neutral-300 h-11"
-                                                    />
-                                                </div>
-                                                {formData.logo && (
-                                                    <div className="h-11 w-11 rounded-xl border border-neutral-200 bg-neutral-50 p-1 overflow-hidden shrink-0">
-                                                        <img 
-                                                            src={formData.logo} 
-                                                            alt="" 
-                                                            className="w-full h-full object-contain"
-                                                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <label className="text-sm font-semibold text-neutral-700">Official Domain</label>
+                                            <Input 
+                                                value={formData.domain} 
+                                                onChange={e => setFormData({...formData, domain: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11"
+                                                placeholder="e.g. school.edu"
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-neutral-700">Address</label>
-                                        <Input 
-                                            value={formData.address} 
-                                            onChange={e => setFormData({...formData, address: e.target.value})}
-                                            className="rounded-xl border-neutral-300 h-11"
-                                        />
+                                        <label className="text-sm font-semibold text-neutral-700">Street Address</label>
+                                        <div className="relative">
+                                            <IconMapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                                            <Input 
+                                                value={formData.address} 
+                                                onChange={e => setFormData({...formData, address: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11 pl-10"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-semibold text-neutral-700">District Association</label>
-                                        <div className="flex gap-4">
-                                            <div className="flex-1">
-                                                <Select 
-                                                    value={formData.districtId} 
-                                                    onValueChange={val => setFormData({...formData, districtId: val})}
-                                                >
-                                                    <SelectTrigger className="rounded-xl h-11">
-                                                        <SelectValue placeholder="Select a district" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {districts.length > 0 ? (
-                                                            districts.map(d => (
-                                                                <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
-                                                            ))
-                                                        ) : (
-                                                            <div className="p-2 text-sm text-neutral-500 italic">No districts available</div>
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                        <Select 
+                                            value={formData.districtId} 
+                                            onValueChange={val => setFormData({...formData, districtId: val})}
+                                        >
+                                            <SelectTrigger className="rounded-xl h-11 border-neutral-300 bg-white">
+                                                <SelectValue placeholder="Select a district" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {districts.map(d => (
+                                                    <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {!formData.districtId && (
+                                            <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg border border-amber-200 text-[10px] font-bold uppercase tracking-wider w-fit">
+                                                <IconAlertCircle className="w-3.5 h-3.5" />
+                                                Legacy School (No District)
                                             </div>
-                                            {!formData.districtId && (
-                                                <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-200 text-sm font-medium">
-                                                    <IconAlertCircle className="w-4 h-4" />
-                                                    Legacy School
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-neutral-500 mt-1">Assigning a district will move this school under that district's management.</p>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-6">
@@ -660,7 +778,7 @@ const ViewSchool = () => {
                                                 value={formData.state} 
                                                 onValueChange={val => setFormData({...formData, state: val})}
                                             >
-                                                <SelectTrigger className="rounded-xl h-11">
+                                                <SelectTrigger className="rounded-xl h-11 border-neutral-300">
                                                     <SelectValue placeholder="Select state" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -669,6 +787,9 @@ const ViewSchool = () => {
                                                             {s.name} ({s.abbreviation})
                                                         </SelectItem>
                                                     ))}
+                                                    {formData.state && !US_STATES.some(s => s.abbreviation === formData.state) && (
+                                                        <SelectItem key={formData.state} value={formData.state}>{formData.state}</SelectItem>
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -678,26 +799,19 @@ const ViewSchool = () => {
                                                 value={formData.country} 
                                                 onValueChange={val => setFormData({...formData, country: val})}
                                             >
-                                                <SelectTrigger className="rounded-xl h-11">
+                                                <SelectTrigger className="rounded-xl h-11 border-neutral-300">
                                                     <SelectValue placeholder="Select country" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {COUNTRIES.map(c => (
                                                         <SelectItem key={c} value={c}>{c}</SelectItem>
                                                     ))}
+                                                    {formData.country && !COUNTRIES.includes(formData.country) && (
+                                                        <SelectItem key={formData.country} value={formData.country}>{formData.country}</SelectItem>
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-neutral-700">Domain</label>
-                                        <Input 
-                                            value={formData.domain} 
-                                            onChange={e => setFormData({...formData, domain: e.target.value})}
-                                            className="rounded-xl border-neutral-300"
-                                            placeholder="e.g. school.edu"
-                                        />
                                     </div>
                                 </div>
 

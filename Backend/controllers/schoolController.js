@@ -197,17 +197,26 @@ export const getCurrentSchool = async (req, res) => {
         }
         
         // Fetch administrators associated with this school
-        const adminsRaw = await Admin.find({ schoolId: sch._id }).lean();
-        const admins = adminsRaw.map(admin => {
-            const adminObj = { 
-                ...admin,
-                hasCompletedRegistration: !!admin.password
+        // Whitelist safe fields to avoid leaking hashes or sensitive info
+        const adminsRaw = await Admin.find({ schoolId: sch._id })
+            .select('_id name email role createdAt')
+            .lean();
+            
+        const admins = adminsRaw.map(admin => ({
+            ...admin,
+            hasCompletedRegistration: !!admin.password // Note: password is deleted/excluded in projection, but we calculate this boolean before exclusion if needed or from doc
+        }));
+        
+        // Final mapping to ensure no accidental leaks and provide the boolean
+        const adminsWithStatus = await Promise.all(admins.map(async (a) => {
+            const fullAdmin = await Admin.findById(a._id).select('password');
+            return {
+                ...a,
+                hasCompletedRegistration: !!(fullAdmin && fullAdmin.password)
             };
-            delete adminObj.password;
-            return adminObj;
-        });
+        }));
 
-        return res.status(200).json({ school: sch, admins });
+        return res.status(200).json({ school: sch, admins: adminsWithStatus });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'An error occurred', error: err.message });
@@ -273,39 +282,44 @@ export const deleteSchool = async (req, res) => {
             return res.status(400).json({ message: "Administrator password is required for deletion." });
         }
 
-        // Verify administrator's password
+        // Load administrator
         const adminUser = await Admin.findById(req.user.id);
-        if (!adminUser || !adminUser.password) {
-            return res.status(403).json({ message: "Admin account not found or password not set." });
+        if (!adminUser) {
+            return res.status(403).json({ message: "Admin account not found." });
         }
 
-        const isMatch = await bcrypt.compare(password, adminUser.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Incorrect password. School deletion aborted." });
-        }
-        
+        // 1. Authorization check by role/scope FIRST
         if (req.user.role === Role.Admin) {
-            const adminUser = await Admin.findById(req.user.id);
-            if (!adminUser) return res.status(403).json({ message: "Admin user not found." });
-
             if (adminUser.role !== Role.SystemAdmin) {
                 if (!adminUser.districtId) {
                     return res.status(403).json({ message: "Admin is not assigned to a district." });
                 }
                 const schoolCheck = await School.findById(schoolId);
-                if (!schoolCheck || schoolCheck.districtId.toString() !== adminUser.districtId.toString()) {
+                if (!schoolCheck || (schoolCheck.districtId && schoolCheck.districtId.toString() !== adminUser.districtId.toString())) {
                     return res.status(403).json({ message: "Access denied. School is outside your district." });
                 }
             }
         } else if (req.user.role === Role.SchoolAdmin) {
-            const adminUser = await Admin.findById(req.user.id);
             const school = await School.findById(schoolId);
             const isCreator = school && school.createdBy && school.createdBy.toString() === req.user.id;
-            const isAssigned = adminUser && adminUser.schoolId && adminUser.schoolId.toString() === schoolId;
+            const isAssigned = adminUser.schoolId && adminUser.schoolId.toString() === schoolId;
             
             if (!isCreator && !isAssigned) {
                 return res.status(403).json({ message: "Access denied. You can only delete schools you created or are assigned to." });
             }
+        } else if (req.user.role !== Role.SystemAdmin) {
+            // Explicitly reject unsupported roles if they reached this point
+            return res.status(403).json({ message: "Access denied. Unauthorized role for this action." });
+        }
+
+        // 2. Verify administrator's password after authorization checks
+        if (!adminUser.password) {
+            return res.status(403).json({ message: "Password not set for this account." });
+        }
+
+        const isMatch = await bcrypt.compare(password, adminUser.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Incorrect password. School deletion aborted." });
         }
 
         // Check for associated teachers

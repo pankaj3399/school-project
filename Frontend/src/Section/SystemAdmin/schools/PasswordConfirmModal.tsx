@@ -52,7 +52,16 @@ export function PasswordConfirmModal({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog 
+            open={isOpen} 
+            onOpenChange={(open) => {
+                if (!open) {
+                    onClose();
+                    setPassword('');
+                    setError(null);
+                }
+            }}
+        >
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
@@ -88,11 +97,7 @@ export function PasswordConfirmModal({
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => {
-                                onClose();
-                                setPassword('');
-                                setError(null);
-                            }}
+                            onClick={onClose}
                             disabled={isLoading}
                             className="flex-1"
                         >
