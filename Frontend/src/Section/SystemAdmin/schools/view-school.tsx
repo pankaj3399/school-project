@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, ReactNode } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { getCurrrentSchool, getStats, getDistricts, updateSchool } from '@/api'
+import { getCurrrentSchool, getStats, getDistricts, updateSchool, getAnalyticsData } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,42 @@ import StudentRanks from '../../School/component/StudentRanks'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
+const US_STATES = [
+    { name: "Alabama", abbreviation: "AL" }, { name: "Alaska", abbreviation: "AK" }, { name: "Arizona", abbreviation: "AZ" },
+    { name: "Arkansas", abbreviation: "AR" }, { name: "California", abbreviation: "CA" }, { name: "Colorado", abbreviation: "CO" },
+    { name: "Connecticut", abbreviation: "CT" }, { name: "Delaware", abbreviation: "DE" }, { name: "Florida", abbreviation: "FL" },
+    { name: "Georgia", abbreviation: "GA" }, { name: "Hawaii", abbreviation: "HI" }, { name: "Idaho", abbreviation: "ID" },
+    { name: "Illinois", abbreviation: "IL" }, { name: "Indiana", abbreviation: "IN" }, { name: "Iowa", abbreviation: "IA" },
+    { name: "Kansas", abbreviation: "KS" }, { name: "Kentucky", abbreviation: "KY" }, { name: "Louisiana", abbreviation: "LA" },
+    { name: "Maine", abbreviation: "ME" }, { name: "Maryland", abbreviation: "MD" }, { name: "Massachusetts", abbreviation: "MA" },
+    { name: "Michigan", abbreviation: "MI" }, { name: "Minnesota", abbreviation: "MN" }, { name: "Mississippi", abbreviation: "MS" },
+    { name: "Missouri", abbreviation: "MO" }, { name: "Montana", abbreviation: "MT" }, { name: "Nebraska", abbreviation: "NE" },
+    { name: "Nevada", abbreviation: "NV" }, { name: "New Hampshire", abbreviation: "NH" }, { name: "New Jersey", abbreviation: "NJ" },
+    { name: "New Mexico", abbreviation: "NM" }, { name: "New York", abbreviation: "NY" }, { name: "North Carolina", abbreviation: "NC" },
+    { name: "North Dakota", abbreviation: "ND" }, { name: "Ohio", abbreviation: "OH" }, { name: "Oklahoma", abbreviation: "OK" },
+    { name: "Oregon", abbreviation: "OR" }, { name: "Pennsylvania", abbreviation: "PA" }, { name: "Rhode Island", abbreviation: "RI" },
+    { name: "South Carolina", abbreviation: "SC" }, { name: "South Dakota", abbreviation: "SD" }, { name: "Tennessee", abbreviation: "TN" },
+    { name: "Texas", abbreviation: "TX" }, { name: "Utah", abbreviation: "UT" }, { name: "Vermont", abbreviation: "VT" },
+    { name: "Virginia", abbreviation: "VA" }, { name: "Washington", abbreviation: "WA" }, { name: "West Virginia", abbreviation: "WV" },
+    { name: "Wisconsin", abbreviation: "WI" }, { name: "Wyoming", abbreviation: "WY" }
+];
+
+const COUNTRIES = ["United States", "Canada", "Other"];
+
+interface ChartDataPoint {
+    date: string;
+    points: number;
+    label?: string;
+}
+
+interface AnalyticsData {
+    awardPoints: ChartDataPoint[];
+    deductPoints: ChartDataPoint[];
+    withdrawPoints: ChartDataPoint[];
+}
 
 interface StatCardProps {
     title: string;
@@ -58,6 +94,18 @@ const ViewSchool = () => {
     const { toast } = useToast()
     const requestRef = useRef(0)
 
+    // Analytics state
+    const [period, setPeriod] = useState<string>("1W")
+    const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+    const [analyticsLoading, setAnalyticsLoading] = useState(false)
+    const [detailView, setDetailView] = useState<{
+        type: 'award' | 'deduct' | 'withdraw' | null;
+        data: ChartDataPoint[];
+        title: string;
+        color: string;
+        icon: string;
+    } | null>(null);
+
     // Form state for settings
     const [formData, setFormData] = useState({
         name: '',
@@ -66,7 +114,8 @@ const ViewSchool = () => {
         state: '',
         country: '',
         timeZone: '',
-        domain: ''
+        domain: '',
+        logo: ''
     })
 
     const fetchData = useCallback(async () => {
@@ -92,7 +141,8 @@ const ViewSchool = () => {
                     state: schoolRes.school.state || '',
                     country: schoolRes.school.country || '',
                     timeZone: schoolRes.school.timeZone || '',
-                    domain: schoolRes.school.domain || ''
+                    domain: schoolRes.school.domain || '',
+                    logo: schoolRes.school.logo || ''
                 })
             }
             setStats(statsRes)
@@ -107,9 +157,31 @@ const ViewSchool = () => {
         }
     }, [id])
 
+    const fetchAnalytics = useCallback(async () => {
+        if (!id || activeTab !== 'dashboard') return
+        setAnalyticsLoading(true)
+        try {
+            const data = await getAnalyticsData({
+                period,
+                schoolId: id
+            })
+            if (data.success) {
+                setAnalyticsData(data.data)
+            }
+        } catch (error) {
+            console.error("Error fetching analytics:", error)
+        } finally {
+            setAnalyticsLoading(false)
+        }
+    }, [id, activeTab, period])
+
     useEffect(() => {
         fetchData()
     }, [fetchData])
+
+    useEffect(() => {
+        fetchAnalytics()
+    }, [fetchAnalytics])
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -136,6 +208,82 @@ const ViewSchool = () => {
         }
     }
 
+    const formatDateLabel = (dateStr: string, period: string) => {
+        const date = new Date(dateStr)
+        if (period === "1W") {
+            return date.toLocaleDateString('en-US', { weekday: 'short' })
+        }
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+
+    const processChartData = (data: ChartDataPoint[], period: string) => {
+        if (!data) return []
+        return data.map(d => ({
+            ...d,
+            label: formatDateLabel(d.date, period)
+        }))
+    }
+
+    const PointsChart = ({
+        data,
+        title,
+        color,
+        icon,
+        type
+    }: {
+        data: ChartDataPoint[];
+        title: string;
+        color: string;
+        icon: string;
+        type: 'award' | 'deduct' | 'withdraw';
+    }) => {
+        const processedData = processChartData(data, period)
+        return (
+            <Card className="border-neutral-200 shadow-sm rounded-2xl overflow-hidden">
+                <CardHeader className="bg-neutral-50/50 border-b p-4 flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <img src={icon} alt="" className="w-10 h-10 object-contain" />
+                        <CardTitle className="text-lg font-bold text-neutral-900">{title}</CardTitle>
+                    </div>
+                    <Button
+                        onClick={() => setDetailView({ type, data, title, color, icon })}
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl h-8 px-4"
+                    >
+                        View Details
+                    </Button>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <div className="h-[240px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={processedData}>
+                                <XAxis 
+                                    dataKey="label" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    className="text-[10px] text-neutral-400"
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    className="text-[10px] text-neutral-400"
+                                />
+                                <Tooltip />
+                                <Bar 
+                                    dataKey="points" 
+                                    fill={color} 
+                                    radius={[4, 4, 0, 0]} 
+                                    barSize={period === "1W" ? 32 : 12}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
     if (loading) return (
         <div className="p-8 flex items-center gap-3 text-neutral-500">
             <div className="w-5 h-5 border-2 border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
@@ -152,9 +300,9 @@ const ViewSchool = () => {
     )
 
     return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm transition-all hover:shadow-md">
                 <div className="flex items-center gap-4">
                     {school.logo ? (
                         <img src={school.logo} alt="" className="w-20 h-20 rounded-xl object-contain border p-2 bg-neutral-50" />
@@ -166,8 +314,8 @@ const ViewSchool = () => {
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900">{school.name}</h1>
                         <div className="flex items-center gap-2 text-neutral-500 mt-1">
-                            <span className="text-sm">{school.districtId?.name || school.district || 'Unassigned District'}</span>
-                            <IconChevronRight className="w-4 h-4" />
+                            <span className="text-sm font-medium">{school.districtId?.name || school.district || 'Unassigned District'}</span>
+                            <IconChevronRight className="w-4 h-4 text-neutral-300" />
                             <span className="text-sm">{school.state}</span>
                         </div>
                     </div>
@@ -176,7 +324,7 @@ const ViewSchool = () => {
                     <Button 
                         variant="outline" 
                         onClick={() => navigate('/system-admin/schools')}
-                        className="rounded-xl"
+                        className="rounded-xl border-neutral-200 hover:bg-neutral-50"
                     >
                         Back to List
                     </Button>
@@ -184,20 +332,20 @@ const ViewSchool = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="space-y-6">
-                <TabsList className="bg-white border border-neutral-200 p-1 rounded-xl shadow-sm">
-                    <TabsTrigger value="dashboard" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100">
+                <TabsList className="bg-white border border-neutral-200 p-1 rounded-xl shadow-sm inline-flex">
+                    <TabsTrigger value="dashboard" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100 px-4 h-9">
                         <IconLayoutDashboard className="w-4 h-4" /> Dashboard
                     </TabsTrigger>
-                    <TabsTrigger value="admins" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100">
+                    <TabsTrigger value="admins" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100 px-4 h-9">
                         <IconShieldCheck className="w-4 h-4" /> Admins
                     </TabsTrigger>
-                    <TabsTrigger value="settings" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100">
+                    <TabsTrigger value="settings" className="rounded-lg gap-2 data-[state=active]:bg-neutral-100 px-4 h-9">
                         <IconSettings className="w-4 h-4" /> Settings
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="dashboard" className="space-y-6 outline-none">
-                    {/* Stats Overview */}
+                <TabsContent value="dashboard" className="space-y-8 outline-none">
+                    {/* Stats Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                         <StatCard title="Students" value={stats?.totalStudents || 0} icon={<IconUsers className="w-6 h-6" />} color="blue" />
                         <StatCard title="Teachers" value={stats?.totalTeachers || 0} icon={<IconUserStar className="w-6 h-6" />} color="green" />
@@ -208,19 +356,68 @@ const ViewSchool = () => {
                     </div>
 
                     <div className='grid grid-cols-1 lg:grid-cols-6 gap-6 items-start'>
+                        {/* LEFT: Students */}
                         <div className="lg:col-span-1">
                             <StudentRanks studentId="" schoolId={id} />
                         </div>
-                        <div className='lg:col-span-4 space-y-6'>
+
+                        {/* MIDDLE: Charts */}
+                        <div className='lg:col-span-4 space-y-8'>
+                            {/* Academic Year Chart */}
                             <Card className="border-neutral-200 shadow-sm overflow-hidden rounded-2xl">
-                                <CardHeader className="border-b bg-neutral-50/50">
-                                    <CardTitle className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Academic Year Performance</CardTitle>
+                                <CardHeader className="border-b bg-neutral-50/50 flex flex-row items-center justify-between">
+                                    <CardTitle className="text-sm font-bold text-neutral-500 uppercase tracking-widest">Academic Year Performance</CardTitle>
+                                    <Select value={period} onValueChange={setPeriod}>
+                                        <SelectTrigger className="w-[140px] h-8 rounded-lg text-xs bg-white">
+                                            <SelectValue placeholder="Period" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1W">Last Week</SelectItem>
+                                            <SelectItem value="1M">Last Month</SelectItem>
+                                            <SelectItem value="3M">3 Months</SelectItem>
+                                            <SelectItem value="6M">6 Months</SelectItem>
+                                            <SelectItem value="1Y">Yearly</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </CardHeader>
-                                <CardContent className="pt-6">
+                                <CardContent className="p-6">
                                     <EducationYearChart studentId='' schoolId={id} />
                                 </CardContent>
                             </Card>
+
+                            {/* Detailed Analytics Charts */}
+                            {analyticsLoading ? (
+                                <div className="flex items-center justify-center h-[400px] text-neutral-400">Loading analytics...</div>
+                            ) : analyticsData ? (
+                                <div className="space-y-6">
+                                    <PointsChart
+                                        data={analyticsData.awardPoints}
+                                        title="Tokens Awarded"
+                                        color="#4CAF50"
+                                        icon="/etoken.svg"
+                                        type="award"
+                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <PointsChart
+                                            data={analyticsData.withdrawPoints}
+                                            title="Withdrawals"
+                                            color="#3d59f5"
+                                            icon="/Withdraw.svg"
+                                            type="withdraw"
+                                        />
+                                        <PointsChart
+                                            data={analyticsData.deductPoints}
+                                            title="Oopsies"
+                                            color="#f44336"
+                                            icon="/oopsie.svg"
+                                            type="deduct"
+                                        />
+                                    </div>
+                                </div>
+                            ) : null}
                         </div>
+
+                        {/* RIGHT: Teachers */}
                         <div className="lg:col-span-1">
                             <TeacherRanks studentId='' schoolId={id} />
                         </div>
@@ -255,14 +452,39 @@ const ViewSchool = () => {
                         <CardContent className="p-8">
                             <form onSubmit={handleUpdate} className="space-y-8 max-w-2xl">
                                 <div className="grid grid-cols-1 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-neutral-700">School Name</label>
-                                        <Input 
-                                            value={formData.name} 
-                                            onChange={e => setFormData({...formData, name: e.target.value})}
-                                            className="rounded-xl border-neutral-300 focus:ring-neutral-900 h-11"
-                                            required
-                                        />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-neutral-700">School Name</label>
+                                            <Input 
+                                                value={formData.name} 
+                                                onChange={e => setFormData({...formData, name: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-neutral-900 h-11"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-neutral-700">School Logo URL</label>
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <Input 
+                                                        value={formData.logo} 
+                                                        onChange={e => setFormData({...formData, logo: e.target.value})}
+                                                        placeholder="https://example.com/logo.png"
+                                                        className="rounded-xl border-neutral-300 h-11"
+                                                    />
+                                                </div>
+                                                {formData.logo && (
+                                                    <div className="h-11 w-11 rounded-xl border border-neutral-200 bg-neutral-50 p-1 overflow-hidden shrink-0">
+                                                        <img 
+                                                            src={formData.logo} 
+                                                            alt="" 
+                                                            className="w-full h-full object-contain"
+                                                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
@@ -270,7 +492,7 @@ const ViewSchool = () => {
                                         <Input 
                                             value={formData.address} 
                                             onChange={e => setFormData({...formData, address: e.target.value})}
-                                            className="rounded-xl border-neutral-300"
+                                            className="rounded-xl border-neutral-300 h-11"
                                         />
                                     </div>
 
@@ -309,19 +531,37 @@ const ViewSchool = () => {
                                     <div className="grid grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold text-neutral-700">State</label>
-                                            <Input 
+                                            <Select 
                                                 value={formData.state} 
-                                                onChange={e => setFormData({...formData, state: e.target.value})}
-                                                className="rounded-xl border-neutral-300"
-                                            />
+                                                onValueChange={val => setFormData({...formData, state: val})}
+                                            >
+                                                <SelectTrigger className="rounded-xl h-11">
+                                                    <SelectValue placeholder="Select state" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {US_STATES.map(s => (
+                                                        <SelectItem key={s.abbreviation} value={s.abbreviation}>
+                                                            {s.name} ({s.abbreviation})
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold text-neutral-700">Country</label>
-                                            <Input 
+                                            <Select 
                                                 value={formData.country} 
-                                                onChange={e => setFormData({...formData, country: e.target.value})}
-                                                className="rounded-xl border-neutral-300"
-                                            />
+                                                onValueChange={val => setFormData({...formData, country: val})}
+                                            >
+                                                <SelectTrigger className="rounded-xl h-11">
+                                                    <SelectValue placeholder="Select country" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {COUNTRIES.map(c => (
+                                                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                     
@@ -360,6 +600,63 @@ const ViewSchool = () => {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Detail View Dialog */}
+            <Dialog open={!!detailView} onOpenChange={() => setDetailView(null)}>
+                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
+                    <DialogHeader className="border-b pb-4 mb-4">
+                        <div className="flex items-center gap-4">
+                            <img src={detailView?.icon} alt="" className="w-12 h-12" />
+                            <DialogTitle className="text-2xl font-bold">{detailView?.title} - Detailed View</DialogTitle>
+                        </div>
+                    </DialogHeader>
+
+                    {detailView && (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between bg-neutral-50 p-4 rounded-xl">
+                                <div className="text-sm font-medium text-neutral-500">History for {period === "1W" ? "Last Week" : "Selected Period"}</div>
+                                <div className="text-sm text-neutral-400">Analysis for {school?.name}</div>
+                            </div>
+
+                            <div className="h-[450px] w-full border border-neutral-100 p-6 rounded-2xl bg-white shadow-sm">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={processChartData(detailView.data, period)}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                    >
+                                        <XAxis
+                                            dataKey="label"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            angle={period === "1W" ? 0 : -45}
+                                            textAnchor={period === "1W" ? "middle" : "end"}
+                                            height={period === "1W" ? 30 : 60}
+                                            className="text-xs font-medium text-neutral-400"
+                                        />
+                                        <YAxis axisLine={false} tickLine={false} className="text-xs font-medium text-neutral-400" />
+                                        <Tooltip 
+                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                            cursor={{ fill: '#f8f9fa' }}
+                                        />
+                                        <Bar
+                                            dataKey="points"
+                                            fill={detailView.color}
+                                            radius={[8, 8, 0, 0]}
+                                            barSize={period === "1W" ? 60 : 30}
+                                            label={{
+                                                position: "top",
+                                                fill: "#17171e",
+                                                fontWeight: 600,
+                                                fontSize: 12
+                                            }}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
