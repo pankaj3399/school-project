@@ -197,24 +197,17 @@ export const getCurrentSchool = async (req, res) => {
         }
         
         // Fetch administrators associated with this school
-        // Whitelist safe fields to avoid leaking hashes or sensitive info
+        // Include password field to check registration status, then immediately sanitize
         const adminsRaw = await Admin.find({ schoolId: sch._id })
-            .select('_id name email role createdAt')
+            .select('_id name email role createdAt password')
             .lean();
             
-        const admins = adminsRaw.map(admin => ({
-            ...admin,
-            hasCompletedRegistration: !!admin.password // Note: password is deleted/excluded in projection, but we calculate this boolean before exclusion if needed or from doc
-        }));
-        
-        // Final mapping to ensure no accidental leaks and provide the boolean
-        const adminsWithStatus = await Promise.all(admins.map(async (a) => {
-            const fullAdmin = await Admin.findById(a._id).select('password');
-            return {
-                ...a,
-                hasCompletedRegistration: !!(fullAdmin && fullAdmin.password)
-            };
-        }));
+        const adminsWithStatus = adminsRaw.map(admin => {
+            const hasPassword = !!admin.password;
+            const adminObj = { ...admin, hasCompletedRegistration: hasPassword };
+            delete adminObj.password; // Ensure password hash is NEVER leaked
+            return adminObj;
+        });
 
         return res.status(200).json({ school: sch, admins: adminsWithStatus });
     } catch (err) {

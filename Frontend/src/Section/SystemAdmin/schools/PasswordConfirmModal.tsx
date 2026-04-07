@@ -10,7 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Lock } from 'lucide-react';
+import {
+    AlertCircle,
+    Trash2
+} from 'lucide-react';
 
 interface PasswordConfirmModalProps {
     isOpen: boolean;
@@ -51,21 +54,27 @@ export function PasswordConfirmModal({
         }
     };
 
+    const handleCancel = () => {
+        if (!isLoading) {
+            setPassword('');
+            setError(null);
+            onClose();
+        }
+    };
+
     return (
         <Dialog 
             open={isOpen} 
             onOpenChange={(open) => {
                 if (!open) {
-                    onClose();
-                    setPassword('');
-                    setError(null);
+                    handleCancel();
                 }
             }}
         >
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
-                        <Lock className="h-6 w-6" />
+                        <Trash2 className="h-6 w-6" />
                     </div>
                     <DialogTitle className="text-center text-xl">{title}</DialogTitle>
                     <DialogDescription className="text-center pt-2">
@@ -97,7 +106,7 @@ export function PasswordConfirmModal({
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={onClose}
+                            onClick={handleCancel}
                             disabled={isLoading}
                             className="flex-1"
                         >

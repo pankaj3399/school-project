@@ -95,15 +95,17 @@ export default function SchoolsList() {
         try {
             setIsDeleting(true);
             const token = getAuthToken(user);
-            if (!token) return;
+            if (!token) throw new Error("No authentication token found");
             
             const data = await deleteSchool(id, token, password);
             if (data.error) {
+                const message = typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete school");
                 toast({
                     title: "Error",
-                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete school"),
+                    description: message,
                     variant: "destructive"
                 });
+                throw new Error(message);
             } else {
                 toast({
                     description: `${name} deleted successfully.`,
@@ -113,13 +115,14 @@ export default function SchoolsList() {
                 setSchoolToDelete(null);
             }
         } catch (err: any) {
-            toast({
-                title: "Error",
-                description: err.message || "Error deleting school",
-                variant: "destructive"
-            });
-            setShowDeleteModal(false);
-            setSchoolToDelete(null);
+            if (!err.message?.includes("Failed to delete school")) {
+                 toast({
+                    title: "Error",
+                    description: err.message || "Error deleting school",
+                    variant: "destructive"
+                });
+            }
+            throw err;
         } finally {
             setIsDeleting(false);
         }

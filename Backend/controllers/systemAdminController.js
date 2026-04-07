@@ -37,6 +37,7 @@ export const getDashboardStats = async (req, res) => {
       totalDistricts, 
       activeDistricts, 
       pendingDistricts, 
+      pausedDistricts,
       totalSchools,
       distinctStates,
       distinctCountries
