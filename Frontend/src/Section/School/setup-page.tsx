@@ -51,7 +51,7 @@ const SetupPage = () => {
       if (!token) return;
 
       const resolvedSchoolId = school?._id || selectedSchoolId;
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export${resolvedSchoolId ? `?schoolId=${resolvedSchoolId}` : ''}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export${resolvedSchoolId ? `?schoolId=${encodeURIComponent(resolvedSchoolId)}` : ''}`, {
         method: 'GET',
         headers: { 'token': `${token}` }
       });
@@ -67,7 +67,7 @@ const SetupPage = () => {
       a.click();
       document.body.removeChild(a);
       
-      toast({ title: "Export Started", description: "Your waitlist CSV is being downloaded." });
+      toast({ title: "Export Complete", description: "Your waitlist CSV has been downloaded successfully." });
     } catch (error) {
       toast({ title: "Export Failed", description: "Could not retrieve waitlist data.", variant: "destructive" });
     } finally {
@@ -114,48 +114,54 @@ const SetupPage = () => {
           </div>
         ) : (
           <div className="space-y-12 animate-in fade-in duration-700">
-            {/* Primary Activity: Lifecycle Wizard */}
+            {/* Maintenance Section Gating */}
             {school?._id || selectedSchoolId ? (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 px-2">
-                  <div className="h-6 w-1 bg-blue-500 rounded-full" />
-                  <h2 className="text-xl font-bold text-neutral-800 tracking-tight uppercase tracking-widest text-xs">Annual Transition Wizard</h2>
+              <>
+                {/* Primary Activity: Lifecycle Wizard */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 px-2">
+                    <div className="h-6 w-1 bg-blue-500 rounded-full" />
+                    <h2 className="text-xl font-bold text-neutral-800 tracking-tight uppercase tracking-widest text-xs">Annual Transition Wizard</h2>
+                  </div>
+                  <LifecycleManager 
+                    schoolId={school?._id || selectedSchoolId || ""}
+                    onDownloadWaitlist={handleDownloadWaitlist}
+                  />
                 </div>
-                <LifecycleManager 
+
+                {/* Maintenance Utilities */}
+                <div className="pt-12 border-t border-neutral-100 space-y-8">
+                  <div className="space-y-1.5 px-2">
+                    <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Advanced Maintenance</h2>
+                    <p className="text-sm text-neutral-500 font-medium leading-relaxed max-w-2xl">
+                      Use these utilities for manual roster clearing and irreversible administrative resets. Ensure you have a backup before proceeding.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-6">
+                    <DangerZone onResetRoster={() => setShowPasswordModal(true)} />
+                  </div>
+                </div>
+
+                <PasswordConfirmationModal
+                  isOpen={showPasswordModal}
+                  onClose={() => setShowPasswordModal(false)}
+                  onSuccess={() => {
+                    setShowPasswordModal(false);
+                    toast({ title: "Roster Reset", description: "The student roster has been cleared successfully." });
+                  }}
                   schoolId={school?._id || selectedSchoolId || ""}
-                  onDownloadWaitlist={handleDownloadWaitlist}
                 />
-              </div>
+              </>
             ) : (
               <div className="py-20 flex flex-col items-center justify-center max-w-2xl mx-auto text-center space-y-4 bg-white/50 rounded-3xl border border-dashed border-neutral-200">
                 <School className="w-12 h-12 text-neutral-300" />
-                <p className="text-neutral-500 font-medium">Please select a school to access the Transition Wizard.</p>
+                <p className="text-neutral-500 font-medium">Please select a school to access the Transition Wizard and Maintenance Tools.</p>
               </div>
             )}
-
-            {/* Maintenance Utilities */}
-            <div className="pt-12 border-t border-neutral-100 space-y-8">
-              <div className="space-y-1.5 px-2">
-                <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Advanced Maintenance</h2>
-                <p className="text-sm text-neutral-500 font-medium leading-relaxed max-w-2xl">
-                  Use these utilities for manual roster clearing and irreversible administrative resets. Ensure you have a backup before proceeding.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-6">
-                <DangerZone onResetRoster={() => setShowPasswordModal(true)} />
-              </div>
-            </div>
           </div>
         )}
       </div>
-
-      <PasswordConfirmationModal
-        isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-        onSuccess={() => toast({ title: "Roster Reset", description: "The student roster has been cleared successfully." })}
-        schoolId={school?._id || selectedSchoolId || ""}
-      />
     </div>
   );
 };

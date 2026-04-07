@@ -22,18 +22,27 @@ const getSchoolIdFromUser = async (req) => {
 
   const resolvedSchoolId = req.get("schoolId") || req.query.schoolId || req.body.schoolId;
 
-  if (userRole === Role.SystemAdmin) {
+  const isSystemAdmin = userRole === Role.SystemAdmin || (req.user.admin && req.user.admin.role === Role.SystemAdmin);
+
+  if (isSystemAdmin) {
     return resolvedSchoolId || undefined;
   }
 
   if (userRole === Role.Admin) {
     const admin = await Admin.findById(userId);
+    const isTopLevelSystemAdmin = admin && admin.role === Role.SystemAdmin;
+    
+    if (isTopLevelSystemAdmin) {
+      return resolvedSchoolId || undefined;
+    }
+
     if (!admin || !admin.districtId) {
       const error = new Error("Administrator is not assigned to a district.");
       error.status = 403;
       throw error;
     }
-    const requestedSchoolId = req.query.schoolId || req.body.schoolId;
+    
+    const requestedSchoolId = req.query.schoolId || req.body.schoolId || req.get("schoolId");
     if (requestedSchoolId) {
       const school = await School.findById(requestedSchoolId);
       if (school && school.districtId.toString() === admin.districtId.toString()) {
@@ -48,13 +57,14 @@ const getSchoolIdFromUser = async (req) => {
     throw error;
   }
 
-  const admin = await Admin.findById(userId);
-  if (admin && admin.schoolId) {
-    return admin.schoolId;
-  }
-
   if (userRole === Role.SchoolAdmin) {
-    return req.query.schoolId || req.body.schoolId || undefined;
+    const admin = await Admin.findById(userId);
+    if (admin && admin.schoolId) {
+      return admin.schoolId.toString();
+    }
+    const error = new Error("Unauthorized. School Administrator is not explicitly assigned to a school.");
+    error.status = 403;
+    throw error;
   }
 
   // If not admin, try finding as teacher
@@ -653,6 +663,26 @@ export const resetPoints = async (req, res) => {
   session.startTransaction();
   try {
     const schoolId = await getSchoolIdFromUser(req);
+    // Explicit authorization check: for non-system admins, verify the schoolId matches their assigned scope
+    if (req.user.role === Role.Admin || req.user.role === Role.SchoolAdmin) {
+      const admin = await Admin.findById(req.user.id);
+      if (admin && admin.role !== Role.SystemAdmin) {
+        if (req.user.role === Role.SchoolAdmin && admin.schoolId?.toString() !== schoolId?.toString()) {
+           await session.abortTransaction();
+           session.endSession();
+           return res.status(403).json({ message: "Access denied. You can only reset points for your assigned school." });
+        }
+        if (req.user.role === Role.Admin && admin.districtId) {
+           const school = await School.findById(schoolId);
+           if (!school || school.districtId.toString() !== admin.districtId.toString()) {
+              await session.abortTransaction();
+              session.endSession();
+              return res.status(403).json({ message: "Access denied. School is outside your district." });
+           }
+        }
+      }
+    }
+    
     if (schoolId == null || schoolId === "") {
       await session.abortTransaction();
       session.endSession();

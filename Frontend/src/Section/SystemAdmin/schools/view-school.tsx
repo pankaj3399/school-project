@@ -538,7 +538,7 @@ const ViewSchool = () => {
                                     <TableHeader>
                                         <TableRow className="bg-neutral-50/50">
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">NAME</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">SCHOOL NAME</TableHead>
+                                            {/* SCHOOL NAME column removed for single school view */}
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">ADDRESS</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">POSITION</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">EMAIL</TableHead>
@@ -555,14 +555,7 @@ const ViewSchool = () => {
                                                     <TableCell className="pl-6 font-medium text-neutral-900 truncate max-w-[200px]">
                                                         {admin.name}
                                                     </TableCell>
-                                                    <TableCell className="font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="p-1.5 bg-neutral-100 rounded-lg shrink-0">
-                                                                <IconUsers className="h-3.5 w-3.5 text-neutral-400" />
-                                                            </div>
-                                                            {school.name}
-                                                        </div>
-                                                    </TableCell>
+                                                    {/* SCHOOL NAME cell removed for single school view */}
                                                     <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">
                                                         <div className="flex items-center gap-1.5">
                                                             <IconMapPin className="h-3 w-3 shrink-0" />
@@ -614,7 +607,7 @@ const ViewSchool = () => {
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={9} className="text-center py-12 text-neutral-400">
+                                                <TableCell colSpan={8} className="text-center py-12 text-neutral-400">
                                                     No administrators found for this school.
                                                 </TableCell>
                                             </TableRow>

@@ -6,7 +6,7 @@ interface DangerZoneProps {
   onResetRoster: () => void;
 }
 
-export const DangerZone: React.FC<DangerZoneProps> = ({ onResetRoster }) => {
+export function DangerZone({ onResetRoster }: DangerZoneProps) {
   return (
     <Card className="border-none shadow-2xl bg-white/40 backdrop-blur-md rounded-3xl overflow-hidden ring-1 ring-red-200">
       <CardHeader className="bg-red-50/50 border-b border-red-100 p-8">

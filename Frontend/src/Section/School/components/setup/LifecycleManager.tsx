@@ -23,11 +23,11 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
   const { toast } = useToast();
 
   const handleResetPoints = async () => {
+    if (isProcessing) return;
     if (!schoolId) {
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       return;
     }
-    if (isProcessing) return;
     setIsProcessing(true);
     try {
       const response = await resetPoints(schoolId);
@@ -45,18 +45,19 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
   };
 
   const handlePromoteStudents = async () => {
+    if (isProcessing) return;
     if (!schoolId) {
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       return;
     }
-    if (isProcessing) return;
     setIsProcessing(true);
     try {
       const response = await promote(schoolId);
       if (response.error) {
         toast({ title: "Promotion Failed", description: response.error, variant: "destructive" });
       } else {
-        setPromotionResult({ count: (response as any).promotedCount || 0 });
+        const promotedCount = (response as any).promotedCount || (response as any).count || 0;
+        setPromotionResult({ count: promotedCount });
         setActiveStep('finalize');
         toast({ title: "Promotion Successful", description: "Students advanced to the next grade." });
       }
@@ -149,20 +150,20 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
               <div className="space-y-2">
                 <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 2: Point & History Reset</h3>
                 <p className="text-neutral-500 leading-relaxed">
-                  Start the new year with a clean slate. This will reset all student point balances to zero and archive the previous year's history.
+                  Start the new year with a clean slate. This will reset all student point balances to zero and <span className="font-bold text-red-500">permanently delete</span> the previous year's history.
                 </p>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3 text-left">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-800">
-                  <p className="font-bold">Maintenance Notice</p>
-                  <p className="opacity-80">Rosters are preserved, but point balances will be wiped. This is highly recommended before promotion.</p>
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 text-left">
+                <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-red-800">
+                  <p className="font-bold">Irreversible Action</p>
+                  <p className="opacity-80 text-xs">Point balances and history will be <span className="font-black underline">permanently removed</span>. Ensure you have exported all data before proceeding.</p>
                 </div>
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button onClick={() => setActiveStep('promote')} variant="ghost" className="h-14 px-8 rounded-2xl font-bold text-neutral-400">
+                <Button onClick={() => setActiveStep('promote')} disabled={isProcessing} variant="ghost" className="h-14 px-8 rounded-2xl font-bold text-neutral-400">
                   Skip this step
                 </Button>
                 <Button 
@@ -214,7 +215,7 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
               </div>
               
               <div className="flex gap-4 pt-4">
-                <Button onClick={() => setActiveStep('reset-points')} variant="ghost" className="h-14 px-6 rounded-2xl font-bold text-neutral-500">
+                <Button onClick={() => setActiveStep('reset-points')} disabled={isProcessing} variant="ghost" className="h-14 px-6 rounded-2xl font-bold text-neutral-500">
                   Back
                 </Button>
                 <Button 

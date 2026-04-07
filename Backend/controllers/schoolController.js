@@ -375,21 +375,30 @@ export const promote = async (req, res) => {
           school = await School.findById(schoolId);
       } else if (req.user.role === Role.Admin) {
           const adminUser = await Admin.findById(id);
-          if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
+          const isSystemAdminEquivalent = adminUser && adminUser.role === Role.SystemAdmin;
+          
+          if (!adminUser || (!isSystemAdminEquivalent && !adminUser.districtId)) {
             return res.status(403).json({ message: "Admin is not assigned to a district." });
           }
+          
           const { schoolId } = req.query.schoolId ? req.query : req.body;
           if (!schoolId) {
               return res.status(400).json({ message: 'School ID is required for Administrators' });
           }
-          school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId });
+          
+          if (isSystemAdminEquivalent) {
+            school = await School.findById(schoolId);
+          } else {
+            school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId });
+          }
+          
           if (!school) return res.status(403).json({ message: "Access denied. School is outside your district." });
       } else if (req.user.role === Role.SchoolAdmin) {
           const adminUser = await Admin.findById(id);
           if (adminUser && adminUser.schoolId) {
              school = await School.findById(adminUser.schoolId);
           } else {
-             school = await School.findOne({ createdBy: id });
+             return res.status(403).json({ message: "Unauthorized. School Administrator is not explicitly assigned to a school." });
           }
       } else if(req.user.role === Role.Teacher) {
           const user = await Teacher.findById(id);
@@ -428,15 +437,18 @@ export const promote = async (req, res) => {
       const BATCH_SIZE = 500;
 
       for (let student = await studentCursor.next(); student != null; student = await studentCursor.next()) {
-          const currentGrade = parseInt(student.grade);
-          if (!isNaN(currentGrade) && currentGrade < 12) {
-              bulkOps.push({
-                  updateOne: {
-                      filter: { _id: student._id },
-                      update: { $set: { grade: (currentGrade + 1).toString() } }
-                  }
-              });
-              promotedCount++;
+          // Strictly check that grade is a numeric string (e.g. "1", "11") to prevent promoting "11A"
+          if (typeof student.grade === 'string' && /^\d+$/.test(student.grade)) {
+              const currentGrade = parseInt(student.grade);
+              if (currentGrade < 12) {
+                  bulkOps.push({
+                      updateOne: {
+                          filter: { _id: student._id },
+                          update: { $set: { grade: (currentGrade + 1).toString() } }
+                      }
+                  });
+                  promotedCount++;
+              }
           }
 
           if (bulkOps.length >= BATCH_SIZE) {
