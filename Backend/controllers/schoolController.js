@@ -195,7 +195,19 @@ export const getCurrentSchool = async (req, res) => {
         if (!sch) {
             return res.status(404).json({ message: 'School not found' });
         }
-        return res.status(200).json({ school: sch });
+        
+        // Fetch administrators associated with this school
+        const adminsRaw = await Admin.find({ schoolId: sch._id }).lean();
+        const admins = adminsRaw.map(admin => {
+            const adminObj = { 
+                ...admin,
+                hasCompletedRegistration: !!admin.password
+            };
+            delete adminObj.password;
+            return adminObj;
+        });
+
+        return res.status(200).json({ school: sch, admins });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'An error occurred', error: err.message });

@@ -4,8 +4,9 @@ import { getCurrrentSchool, getStats, getDistricts, updateSchool, getAnalyticsDa
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck } from '@tabler/icons-react'
+import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck, IconMail, IconPhone, IconMapPin, IconSchool } from '@tabler/icons-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
+import { EditAdminDialog } from '@/components/EditAdminDialog'
 import { Role } from '@/enum'
 import EducationYearChart from '../../School/component/new-chart'
 import TeacherRanks from '../../School/component/TeacherRanks'
@@ -15,6 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { reInviteAdmin } from '@/api'
+import { cn } from "@/lib/utils"
 
 const US_STATES = [
     { name: "Alabama", abbreviation: "AL" }, { name: "Alaska", abbreviation: "AK" }, { name: "Arizona", abbreviation: "AZ" },
@@ -85,6 +89,8 @@ const ViewSchool = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const activeTab = searchParams.get('tab') || 'dashboard'
     const [school, setSchool] = useState<any>(null)
+    const [admins, setAdmins] = useState<any[]>([])
+    const [reinvitingIds, setReinvitingIds] = useState<Record<string, boolean>>({})
     const [stats, setStats] = useState<any>(null)
     const [districts, setDistricts] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -134,6 +140,7 @@ const ViewSchool = () => {
 
             if (schoolRes.school) {
                 setSchool(schoolRes.school)
+                setAdmins(schoolRes.admins || [])
                 setFormData({
                     name: schoolRes.school.name || '',
                     address: schoolRes.school.address || '',
@@ -207,6 +214,42 @@ const ViewSchool = () => {
             setSaving(false)
         }
     }
+
+    const handleReInvite = async (adminId: string, adminName: string) => {
+        if (reinvitingIds[adminId]) return;
+
+        setReinvitingIds(prev => ({ ...prev, [adminId]: true }));
+        try {
+            const response = await reInviteAdmin(adminId);
+            if (response.error) {
+                toast({
+                    title: "Error",
+                    description: response.error,
+                    variant: "destructive"
+                });
+            } else if (response.emailError) {
+                toast({
+                    title: "Partial Success",
+                    description: "Invitation token regenerated, but email failed to send.",
+                    variant: "destructive"
+                });
+            } else {
+                const nameFallback = adminName || 'the administrator';
+                toast({
+                    title: "Success",
+                    description: `Invitation resent to ${nameFallback}.`,
+                });
+            }
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "An error occurred while resending the invitation.",
+                variant: "destructive"
+            });
+        } finally {
+            setReinvitingIds(prev => ({ ...prev, [adminId]: false }));
+        }
+    };
 
     const formatDateLabel = (dateStr: string, period: string) => {
         const date = new Date(dateStr)
@@ -435,10 +478,92 @@ const ViewSchool = () => {
                                 label="Invite School Admin"
                             />
                         </CardHeader>
-                        <CardContent className="p-6">
-                            <p className="text-sm text-neutral-500">
-                                Use the "Invite School Admin" button to assign an administrator to this school. They will receive an email invitation to set up their account.
-                            </p>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-neutral-50/50">
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">School Name</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Address</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Position</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Email</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Phone</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Role</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Status</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] text-right pr-6">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {admins.length > 0 ? (
+                                            admins.map((admin) => (
+                                                <TableRow key={admin._id} className="hover:bg-neutral-50/30 transition-colors">
+                                                    <TableCell className="pl-6 font-medium text-neutral-900 truncate max-w-[200px]">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="p-1.5 bg-neutral-100 rounded-lg shrink-0">
+                                                                <IconSchool className="h-3.5 w-3.5 text-neutral-400" />
+                                                            </div>
+                                                            {school.name}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <IconMapPin className="h-3 w-3 shrink-0" />
+                                                            {admin.address || "N/A"}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-neutral-600 font-medium">{admin.position || "Other"}</TableCell>
+                                                    <TableCell className="text-neutral-500 font-medium">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <IconMail className="h-3 w-3 shrink-0" />
+                                                            {admin.email}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-neutral-500 font-medium">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <IconPhone className="h-3 w-3 shrink-0" />
+                                                            {admin.phone || "N/A"}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                                                            {admin.contactRole || "Leadership"}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className={cn(
+                                                            "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                                            admin.hasCompletedRegistration ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                                        )}>
+                                                            {admin.hasCompletedRegistration ? 'Active' : 'Pending'}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-right pr-6">
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <EditAdminDialog admin={admin} onSuccess={fetchData} />
+                                                            {!admin.hasCompletedRegistration && (
+                                                                <Button 
+                                                                    variant="link" 
+                                                                    onClick={() => handleReInvite(admin._id, admin.name)}
+                                                                    disabled={reinvitingIds[admin._id]}
+                                                                    className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] text-xs font-bold"
+                                                                >
+                                                                    {reinvitingIds[admin._id] ? 'Sending...' : 'Invite'}
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={8} className="text-center py-12 text-neutral-400">
+                                                    No administrators found for this school.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
