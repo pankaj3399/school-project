@@ -537,14 +537,15 @@ const ViewSchool = () => {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-neutral-50/50">
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">Admin Name</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Address</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Position</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Email</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Phone</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Role</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">Status</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] text-right pr-6">Actions</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">NAME</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">SCHOOL NAME</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">ADDRESS</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">POSITION</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">EMAIL</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">PHONE</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">ROLE</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">STATUS</TableHead>
+                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] text-right pr-6">ACTIONS</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -552,11 +553,14 @@ const ViewSchool = () => {
                                             admins.map((admin) => (
                                                 <TableRow key={admin._id} className="hover:bg-neutral-50/30 transition-colors">
                                                     <TableCell className="pl-6 font-medium text-neutral-900 truncate max-w-[200px]">
+                                                        {admin.name}
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">
                                                         <div className="flex items-center gap-2">
                                                             <div className="p-1.5 bg-neutral-100 rounded-lg shrink-0">
                                                                 <IconUsers className="h-3.5 w-3.5 text-neutral-400" />
                                                             </div>
-                                                            {admin.name}
+                                                            {school.name}
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">

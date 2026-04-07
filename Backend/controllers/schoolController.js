@@ -199,7 +199,7 @@ export const getCurrentSchool = async (req, res) => {
         // Fetch administrators associated with this school
         // Include password field to check registration status, then immediately sanitize
         const adminsRaw = await Admin.find({ schoolId: sch._id })
-            .select('_id name email role createdAt password')
+            .select('_id name email role createdAt address phone position contactRole password')
             .lean();
             
         const adminsWithStatus = adminsRaw.map(admin => {
