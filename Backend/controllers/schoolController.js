@@ -365,9 +365,10 @@ export const deleteSchool = async (req, res) => {
     }
 }
 
-  export const promote = async (req, res) => {
-  const session = await mongoose.startSession();
+export const promote = async (req, res) => {
+  let session;
   try {
+      session = await mongoose.startSession();
       const result = await session.withTransaction(async () => {
           const id = req.user.id;
           let school;
@@ -376,7 +377,9 @@ export const deleteSchool = async (req, res) => {
           if (req.user.role === Role.SystemAdmin) {
               const schoolId = req.get("schoolId") || req.query.schoolId || req.body.schoolId;
               if (!schoolId) {
-                  throw new Error('School ID is required for System Administrators');
+                  const error = new Error('School ID is required for System Administrators');
+                  error.status = 400;
+                  throw error;
               }
               school = await School.findById(schoolId).session(session);
           } else if (req.user.role === Role.Admin) {
@@ -384,12 +387,16 @@ export const deleteSchool = async (req, res) => {
               const isSystemAdminEquivalent = adminUser && adminUser.role === Role.SystemAdmin;
               
               if (!adminUser || (!isSystemAdminEquivalent && !adminUser.districtId)) {
-                throw new Error("Admin is not assigned to a district.");
+                const error = new Error("Admin is not assigned to a district.");
+                error.status = 403;
+                throw error;
               }
               
               const schoolId = req.get("schoolId") || req.query.schoolId || req.body.schoolId;
               if (!schoolId) {
-                  throw new Error('School ID is required for Administrators');
+                  const error = new Error('School ID is required for Administrators');
+                  error.status = 400;
+                  throw error;
               }
               
               if (isSystemAdminEquivalent) {
@@ -398,13 +405,19 @@ export const deleteSchool = async (req, res) => {
                 school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId }).session(session);
               }
               
-              if (!school) throw new Error("Access denied. School is outside your district.");
+              if (!school) {
+                const error = new Error("Access denied. School is outside your district.");
+                error.status = 403;
+                throw error;
+              }
           } else if (req.user.role === Role.SchoolAdmin) {
               const adminUser = await Admin.findById(id).session(session);
               if (adminUser && adminUser.schoolId) {
                  school = await School.findById(adminUser.schoolId).session(session);
               } else {
-                 throw new Error("Unauthorized. School Administrator is not explicitly assigned to a school.");
+                 const error = new Error("Unauthorized. School Administrator is not explicitly assigned to a school.");
+                 error.status = 403;
+                 throw error;
               }
           } else if(req.user.role === Role.Teacher) {
               const user = await Teacher.findById(id).session(session);
@@ -414,7 +427,9 @@ export const deleteSchool = async (req, res) => {
           }
 
           if(!school) {
-              throw new Error('School Context Missing or Not Found');
+              const error = new Error('School Context Missing or Not Found');
+              error.status = 404;
+              throw error;
           }
 
           // Handle Graduation (Grade 12 -> Graduate)
@@ -476,9 +491,9 @@ export const deleteSchool = async (req, res) => {
       });
   } catch(error) {
       if (!res.headersSent) {
-          res.status(500).json({ message: 'Server Error', error: error.message });
+          res.status(error.status || 500).json({ message: 'Server Error', error: error.message });
       }
   } finally {
-      session.endSession();
+      if(session) await session.endSession();
   }
 }

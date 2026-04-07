@@ -26,7 +26,10 @@ const SetupPage = () => {
     const fetchSchool = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!token) {
+          setLoading(false);
+          return;
+        }
 
         // Clear stale state immediately when selection changes
         setSchool(null);
@@ -142,7 +145,7 @@ const SetupPage = () => {
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 px-2">
                     <div className="h-6 w-1 bg-blue-500 rounded-full" />
-                    <h2 className="text-xl font-bold text-neutral-800 tracking-tight uppercase tracking-widest text-xs">Annual Transition Wizard</h2>
+                    <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Annual Transition Wizard</h2>
                   </div>
                   <LifecycleManager 
                     schoolId={selectedSchoolId || school?._id || ""}
