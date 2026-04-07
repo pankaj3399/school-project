@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useCallback, ReactNode } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { getCurrrentSchool, getStats, deleteSchool, getDistricts, updateSchool } from '@/api'
+import { getCurrrentSchool, getStats, getDistricts, updateSchool } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconTrash, IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck } from '@tabler/icons-react'
+import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck } from '@tabler/icons-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
 import { Role } from '@/enum'
 import EducationYearChart from '../../School/component/new-chart'
@@ -13,7 +13,36 @@ import StudentRanks from '../../School/component/StudentRanks'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Modal from '@/Section/School/Modal'
+
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: ReactNode;
+    color: string;
+}
+
+const StatCard = ({ title, value, icon, color }: StatCardProps) => {
+    const colorMap: any = {
+        blue: "bg-blue-50 text-blue-600",
+        green: "bg-green-50 text-green-600",
+        yellow: "bg-yellow-50 text-yellow-600",
+        red: "bg-red-50 text-red-600",
+        orange: "bg-orange-50 text-orange-600",
+        purple: "bg-purple-50 text-purple-600",
+    }
+
+    return (
+        <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardContent className="p-4 flex flex-col items-center text-center">
+                <div className={`p-2.5 rounded-xl mb-3 ${colorMap[color]}`}>
+                    {icon}
+                </div>
+                <div className="text-2xl font-bold text-neutral-900">{value.toLocaleString()}</div>
+                <div className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mt-1">{title}</div>
+            </CardContent>
+        </Card>
+    )
+}
 
 const ViewSchool = () => {
     const { id } = useParams<{ id: string }>()
@@ -24,8 +53,6 @@ const ViewSchool = () => {
     const [districts, setDistricts] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [isDeleting, setIsDeleting] = useState(false)
-    const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [fetchError, setFetchError] = useState<Error | null>(null)
     const navigate = useNavigate()
     const { toast } = useToast()
@@ -109,28 +136,6 @@ const ViewSchool = () => {
         }
     }
 
-    const handleDelete = async () => {
-        if (!id || !school) return
-        
-        try {
-            setIsDeleting(true)
-            const token = localStorage.getItem('token') || ''
-            const response = await deleteSchool(id, token)
-            if (response.error) throw new Error(typeof response.error === 'string' ? response.error : response.error.message)
-            
-            toast({ description: `${school.name} deleted successfully.` })
-            navigate('/system-admin/schools')
-        } catch (error: any) {
-            toast({
-                title: "Error",
-                description: error.message || "Failed to delete school",
-                variant: "destructive"
-            })
-        } finally {
-            setIsDeleting(false)
-        }
-    }
-
     if (loading) return (
         <div className="p-8 flex items-center gap-3 text-neutral-500">
             <div className="w-5 h-5 border-2 border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
@@ -175,27 +180,8 @@ const ViewSchool = () => {
                     >
                         Back to List
                     </Button>
-                    <Button 
-                        variant="ghost" 
-                        onClick={() => setShowDeleteModal(true)}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl gap-2"
-                    >
-                        <IconTrash className="w-5 h-5" />
-                        Delete
-                    </Button>
                 </div>
             </div>
-
-            <Modal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={handleDelete}
-                title="Delete School"
-                description={`Are you sure you want to delete ${school?.name}? This action will permanently remove the school and its data.`}
-                callToAction="Delete"
-                variant="danger"
-                confirmDisabled={isDeleting}
-            />
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="space-y-6">
                 <TabsList className="bg-white border border-neutral-200 p-1 rounded-xl shadow-sm">
@@ -221,25 +207,22 @@ const ViewSchool = () => {
                         <StatCard title="Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
                     </div>
 
-                    <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
-                        <div className='lg:col-span-3 space-y-6'>
+                    <div className='grid grid-cols-1 lg:grid-cols-6 gap-6 items-start'>
+                        <div className="lg:col-span-1">
+                            <StudentRanks studentId="" schoolId={id} />
+                        </div>
+                        <div className='lg:col-span-4 space-y-6'>
                             <Card className="border-neutral-200 shadow-sm overflow-hidden rounded-2xl">
                                 <CardHeader className="border-b bg-neutral-50/50">
-                                    <CardTitle className="text-sm font-semibold text-neutral-500">Academic Year Performance</CardTitle>
+                                    <CardTitle className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Academic Year Performance</CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-6">
                                     <EducationYearChart studentId='' schoolId={id} />
                                 </CardContent>
                             </Card>
                         </div>
-                        <div className="space-y-6">
-                           <TeacherRanks studentId='' schoolId={id} />
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        <div className="flex-1">
-                            <StudentRanks studentId="" schoolId={id} />
+                        <div className="lg:col-span-1">
+                            <TeacherRanks studentId='' schoolId={id} />
                         </div>
                     </div>
                 </TabsContent>
@@ -378,29 +361,6 @@ const ViewSchool = () => {
                 </TabsContent>
             </Tabs>
         </div>
-    )
-}
-
-const StatCard = ({ title, value, icon, color }: { title: string, value: number, icon: React.ReactNode, color: string }) => {
-    const colorMap: any = {
-        blue: "bg-blue-50 text-blue-600",
-        green: "bg-green-50 text-green-600",
-        yellow: "bg-yellow-50 text-yellow-600",
-        red: "bg-red-50 text-red-600",
-        orange: "bg-orange-50 text-orange-600",
-        purple: "bg-purple-50 text-purple-600",
-    }
-
-    return (
-        <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl">
-            <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className={`p-2.5 rounded-xl mb-3 ${colorMap[color]}`}>
-                    {icon}
-                </div>
-                <div className="text-2xl font-bold text-neutral-900">{value.toLocaleString()}</div>
-                <div className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mt-1">{title}</div>
-            </CardContent>
-        </Card>
     )
 }
 
