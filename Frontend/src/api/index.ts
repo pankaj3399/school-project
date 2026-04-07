@@ -294,7 +294,7 @@ export const updateSchool = async (
   }
 };
 
-export const deleteSchool = async (id: string, token: string) => {
+export const deleteSchool = async (id: string, token: string, password?: string) => {
   try {
     const response = await axios.delete(
       `${API_URL}/school/deleteSchool/${id}`,
@@ -302,6 +302,7 @@ export const deleteSchool = async (id: string, token: string) => {
         headers: {
           token,
         },
+        data: { password }
       },
     );
     return response.data;

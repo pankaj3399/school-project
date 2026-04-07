@@ -1,4 +1,5 @@
 import { Role } from "../enum.js";
+import bcrypt from "bcryptjs";
 import School from "../models/School.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
@@ -254,6 +255,22 @@ export const updateSchool = async (req, res) => {
 export const deleteSchool = async (req, res) => {
     try {
         const schoolId = req.params.id;
+        const { password } = req.body;
+
+        if (!password) {
+            return res.status(400).json({ message: "Administrator password is required for deletion." });
+        }
+
+        // Verify administrator's password
+        const adminUser = await Admin.findById(req.user.id);
+        if (!adminUser || !adminUser.password) {
+            return res.status(403).json({ message: "Admin account not found or password not set." });
+        }
+
+        const isMatch = await bcrypt.compare(password, adminUser.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Incorrect password. School deletion aborted." });
+        }
         
         if (req.user.role === Role.Admin) {
             const adminUser = await Admin.findById(req.user.id);

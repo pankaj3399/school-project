@@ -24,7 +24,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -34,7 +33,7 @@ import { getAllSchools, deleteSchool } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
-import Modal from '@/Section/School/Modal';
+import { PasswordConfirmModal } from './PasswordConfirmModal';
 
 interface SchoolData {
     _id: string;
@@ -92,13 +91,13 @@ export default function SchoolsList() {
         fetchSchools();
     }, [fetchSchools]);
 
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = async (id: string, name: string, password?: string) => {
         try {
             setIsDeleting(true);
             const token = getAuthToken(user);
             if (!token) return;
             
-            const data = await deleteSchool(id, token);
+            const data = await deleteSchool(id, token, password);
             if (data.error) {
                 toast({
                     title: "Error",
@@ -206,11 +205,8 @@ export default function SchoolsList() {
                                         </TableCell>
                                         <TableCell>
                                             {school.districtId?.name ? (
-                                                <div 
-                                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
-                                                    onClick={() => navigate(`/system-admin/districts/${school.districtId?._id}`)}
-                                                >
-                                                    <Building2 className="h-4 w-4" />
+                                                <div className="flex items-center gap-2 text-gray-700 font-medium">
+                                                    <Building2 className="h-4 w-4 text-gray-400" />
                                                     <span>{school.districtId.name}</span>
                                                 </div>
                                             ) : school.district ? (
@@ -237,12 +233,11 @@ export default function SchoolsList() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-48">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem onClick={() => navigate(`/system-admin/schools/${school._id}`)}>
-                                                        <Eye className="mr-2 h-4 w-4" /> View Details
+                                                        <Eye className="mr-2 h-4 w-4 text-gray-400" /> Analytics
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => navigate(`/system-admin/schools/${school._id}?tab=settings`)}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit Settings
+                                                        <Edit className="mr-2 h-4 w-4 text-gray-400" /> Settings
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem 
@@ -265,18 +260,22 @@ export default function SchoolsList() {
                 </div>
             )}
             
-            <Modal
+            <PasswordConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     setShowDeleteModal(false);
                     setSchoolToDelete(null);
                 }}
-                onConfirm={() => schoolToDelete && handleDelete(schoolToDelete.id, schoolToDelete.name)}
+                onConfirm={(password) => {
+                    if (schoolToDelete) {
+                        return handleDelete(schoolToDelete.id, schoolToDelete.name, password);
+                    }
+                    return Promise.resolve();
+                }}
                 title="Delete School"
-                description={`Are you sure you want to delete ${schoolToDelete?.name}? This action will permanently remove the school and its data.`}
-                callToAction="Delete"
-                variant="danger"
-                confirmDisabled={isDeleting}
+                description={`Are you sure you want to delete ${schoolToDelete?.name}? This action will permanently remove the school and all its associated data (teachers, students, etc). This cannot be undone.`}
+                confirmText="Permanently Delete School"
+                isLoading={isDeleting}
             />
         </div>
     );
