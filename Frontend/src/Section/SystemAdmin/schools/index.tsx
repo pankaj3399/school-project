@@ -92,6 +92,7 @@ export default function SchoolsList() {
     }, [fetchSchools]);
 
     const handleDelete = async (id: string, name: string, password?: string) => {
+        let toastShown = false;
         try {
             setIsDeleting(true);
             const token = getAuthToken(user);
@@ -105,6 +106,7 @@ export default function SchoolsList() {
                     description: message,
                     variant: "destructive"
                 });
+                toastShown = true;
                 throw new Error(message);
             } else {
                 toast({
@@ -115,7 +117,7 @@ export default function SchoolsList() {
                 setSchoolToDelete(null);
             }
         } catch (err: any) {
-            if (!err.message?.includes("Failed to delete school")) {
+            if (!toastShown) {
                  toast({
                     title: "Error",
                     description: err.message || "Error deleting school",
