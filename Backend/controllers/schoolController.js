@@ -373,7 +373,7 @@ export const promote = async (req, res) => {
               return res.status(400).json({ message: 'School ID is required for System Administrators' });
           }
           school = await School.findById(schoolId);
-          } else if (req.user.role === Role.Admin) {
+      } else if (req.user.role === Role.Admin) {
           const adminUser = await Admin.findById(id);
           if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
             return res.status(403).json({ message: "Admin is not assigned to a district." });
@@ -384,35 +384,69 @@ export const promote = async (req, res) => {
           }
           school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId });
           if (!school) return res.status(403).json({ message: "Access denied. School is outside your district." });
+      } else if (req.user.role === Role.SchoolAdmin) {
+          const adminUser = await Admin.findById(id);
+          if (adminUser && adminUser.schoolId) {
+             school = await School.findById(adminUser.schoolId);
+          } else {
+             school = await School.findOne({ createdBy: id });
+          }
       } else if(req.user.role === Role.Teacher) {
           const user = await Teacher.findById(id);
-          school = await School.findById(user.schoolId);
-      } else {
-          school = await School.findOne({ createdBy: id });
+          if (user) {
+            school = await School.findById(user.schoolId);
+          }
       }
 
       if(!school) {
-          return res.status(404).json({ message: 'School not found' });
+          return res.status(404).json({ message: 'School Context Missing or Not Found' });
       }
 
-      // Get all students except those in grade 6
-      const students = await Student.find({ 
+      // Handle Graduation (Grade 12 -> Graduate)
+      const graduatingStudents = await Student.countDocuments({ 
           schoolId: school._id,
-          grade: { $lt: 12 } 
+          grade: { $in: ["12", 12] } 
       });
 
-      // Promote students
       await Student.updateMany(
           { 
-              _id: { $in: students.map(s => s._id) },
-              grade: { $lt: 12 }
+              schoolId: school._id,
+              grade: { $in: ["12", 12] }
           },
-          { $inc: { grade: 1 } }
+          { $set: { grade: "Graduate" } }
       );
+
+      // Handle Promotion for all other grades (1-11)
+      // Since grade is String, we use a loop or multiple updates. 
+      // Individual updates are safer for string-to-numeric-increment logic.
+      const students = await Student.find({ 
+          schoolId: school._id,
+          grade: { $nin: ["Graduate", "12", 12] }
+      });
+
+      let promotedCount = graduatingStudents;
+      const bulkOps = [];
+
+      for (const student of students) {
+          const currentGrade = parseInt(student.grade);
+          if (!isNaN(currentGrade) && currentGrade < 12) {
+              bulkOps.push({
+                  updateOne: {
+                      filter: { _id: student._id },
+                      update: { $set: { grade: (currentGrade + 1).toString() } }
+                  }
+              });
+              promotedCount++;
+          }
+      }
+
+      if (bulkOps.length > 0) {
+          await Student.bulkWrite(bulkOps);
+      }
 
       return res.status(200).json({
           message: "Students promoted successfully",
-          promotedCount: students.length
+          promotedCount
       });
   } catch(error) {
       return res.status(500).json({ message: 'Server Error', error: error.message });

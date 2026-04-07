@@ -812,15 +812,16 @@ export const getAnalyticsData = async (data: { period: string; studentId?: strin
   }
 };
 
-export const promote = async () => {
+export const promote = async (schoolId?: string) => {
   try {
     const token = getToken();
     await axios.put(
-      `${API_URL}/school/promote`,
+      `${API_URL}/school/promote${schoolId ? `?schoolId=${schoolId}` : ''}`,
       {},
       {
         headers: {
           token,
+          schoolId,
         },
       },
     );
@@ -931,15 +932,35 @@ export const verifyResetOtp = async (otp: string) => {
   }
 };
 
-export const resetStudentRoster = async () => {
+export const resetStudentRoster = async (schoolId?: string) => {
   try {
     const token = getToken();
     await axios.put(
-      `${API_URL}/schoolAdmin/resetStudentRoster`,
+      `${API_URL}/schoolAdmin/resetStudentRoster${schoolId ? `?schoolId=${schoolId}` : ''}`,
       {},
       {
         headers: {
           token,
+          schoolId,
+        },
+      },
+    );
+    return { success: true };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+
+export const resetPoints = async (schoolId?: string) => {
+  try {
+    const token = getToken();
+    await axios.put(
+      `${API_URL}/schoolAdmin/resetPoints${schoolId ? `?schoolId=${schoolId}` : ''}`,
+      {},
+      {
+        headers: {
+          token,
+          schoolId,
         },
       },
     );

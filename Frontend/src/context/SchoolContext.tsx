@@ -90,8 +90,15 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             ? data
             : (data as { schools?: unknown; data?: unknown })?.schools ??
               (data as { schools?: unknown; data?: unknown })?.data;
+          
           if (Array.isArray(list)) {
             setSchools(list);
+            
+            // Auto-select first school if nothing is currently selected
+            if (!selectedSchoolId && list.length > 0) {
+              const firstId = (list[0] as School)._id;
+              setSelectedSchoolId(firstId);
+            }
           } else {
             setSchools([]);
           }
