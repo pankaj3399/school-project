@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Role } from "../enum.js";
 import bcrypt from "bcryptjs";
 import School from "../models/School.js";
@@ -367,13 +368,13 @@ export const deleteSchool = async (req, res) => {
   export const promote = async (req, res) => {
   const session = await mongoose.startSession();
   try {
-      await session.withTransaction(async () => {
+      const result = await session.withTransaction(async () => {
           const id = req.user.id;
           let school;
           
           // Get school based on user role
           if (req.user.role === Role.SystemAdmin) {
-              const { schoolId } = req.query.schoolId ? req.query : req.body;
+              const schoolId = req.get("schoolId") || req.query.schoolId || req.body.schoolId;
               if (!schoolId) {
                   throw new Error('School ID is required for System Administrators');
               }
@@ -386,7 +387,7 @@ export const deleteSchool = async (req, res) => {
                 throw new Error("Admin is not assigned to a district.");
               }
               
-              const { schoolId } = req.query.schoolId ? req.query : req.body;
+              const schoolId = req.get("schoolId") || req.query.schoolId || req.body.schoolId;
               if (!schoolId) {
                   throw new Error('School ID is required for Administrators');
               }
@@ -466,10 +467,12 @@ export const deleteSchool = async (req, res) => {
               await Student.bulkWrite(bulkOps, { session });
           }
 
-          res.status(200).json({
-              message: "Students promoted successfully",
-              promotedCount
-          });
+          return { promotedCount };
+      });
+
+      return res.status(200).json({
+          message: "Students promoted successfully",
+          promotedCount: result.promotedCount
       });
   } catch(error) {
       if (!res.headersSent) {

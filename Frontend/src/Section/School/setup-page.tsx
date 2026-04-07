@@ -17,10 +17,12 @@ const SetupPage = () => {
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalSchoolId, setModalSchoolId] = useState<string | null>(null);
 
   const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
 
   useEffect(() => {
+    let isCancelled = false;
     const fetchSchool = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -31,22 +33,34 @@ const SetupPage = () => {
         setLoading(true);
 
         if (isAdmin && !selectedSchoolId) {
-          setLoading(false);
+          if (!isCancelled) setLoading(false);
           return;
         }
 
         const data = await getCurrrentSchool(token, selectedSchoolId || undefined);
-        setSchool(data.school || null);
+        if (!isCancelled) {
+          setSchool(data.school || null);
+        }
       } catch (error) {
         console.error("Failed to fetch school data:", error);
-        setSchool(null);
+        if (!isCancelled) setSchool(null);
       } finally {
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       }
     };
 
     fetchSchool();
+    return () => { isCancelled = true; };
   }, [selectedSchoolId, user, isAdmin]);
+
+  const handleOpenResetModal = () => {
+    if (loading) return;
+    const resolvedId = selectedSchoolId || school?._id;
+    if (resolvedId) {
+      setModalSchoolId(resolvedId);
+      setShowPasswordModal(true);
+    }
+  };
 
   const handleDownloadWaitlist = async () => {
     if (loading) return;
@@ -146,18 +160,22 @@ const SetupPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 gap-6">
-                    <DangerZone onResetRoster={() => !loading && setShowPasswordModal(true)} />
+                    <DangerZone onResetRoster={handleOpenResetModal} />
                   </div>
                 </div>
 
                 <PasswordConfirmationModal
                   isOpen={showPasswordModal}
-                  onClose={() => setShowPasswordModal(false)}
+                  onClose={() => {
+                    setShowPasswordModal(false);
+                    setModalSchoolId(null);
+                  }}
                   onSuccess={() => {
                     setShowPasswordModal(false);
+                    setModalSchoolId(null);
                     toast({ title: "Roster Reset", description: "The student roster has been cleared successfully." });
                   }}
-                  schoolId={selectedSchoolId || school?._id || ""}
+                  schoolId={modalSchoolId || ""}
                 />
               </>
             ) : (
