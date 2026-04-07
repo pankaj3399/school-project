@@ -238,7 +238,7 @@ export default function DistrictsList() {
                                             {getStatusBadge(district.subscriptionStatus)}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu>
+                                            <DropdownMenu modal={false}>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" className="h-8 w-8 p-0">
                                                         <MoreHorizontal className="h-4 w-4" />
@@ -265,10 +265,13 @@ export default function DistrictsList() {
                                                         <Loader2 className="mr-2 h-4 w-4" /> Suspend District
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem 
-                                                        className="text-red-600"
-                                                        onClick={() => {
+                                                        className="text-red-600 focus:text-white focus:bg-red-600"
+                                                        onSelect={(e) => {
+                                                            e.preventDefault();
                                                             setDistrictToDelete({ id: district._id, name: district.name });
-                                                            setShowDeleteModal(true);
+                                                            // Small timeout to allow the dropdown to close before the modal opens
+                                                            // This avoids Radix UI issues with pointer-events: none on body
+                                                            setTimeout(() => setShowDeleteModal(true), 100);
                                                         }}
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete District

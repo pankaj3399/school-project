@@ -24,7 +24,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -34,7 +33,7 @@ import { getAllSchools, deleteSchool } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
-import Modal from '@/Section/School/Modal';
+import { PasswordConfirmModal } from './PasswordConfirmModal';
 
 interface SchoolData {
     _id: string;
@@ -92,19 +91,23 @@ export default function SchoolsList() {
         fetchSchools();
     }, [fetchSchools]);
 
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = async (id: string, name: string, password?: string) => {
+        let toastShown = false;
         try {
             setIsDeleting(true);
             const token = getAuthToken(user);
-            if (!token) return;
+            if (!token) throw new Error("No authentication token found");
             
-            const data = await deleteSchool(id, token);
+            const data = await deleteSchool(id, token, password);
             if (data.error) {
+                const message = typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete school");
                 toast({
                     title: "Error",
-                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete school"),
+                    description: message,
                     variant: "destructive"
                 });
+                toastShown = true;
+                throw new Error(message);
             } else {
                 toast({
                     description: `${name} deleted successfully.`,
@@ -114,13 +117,14 @@ export default function SchoolsList() {
                 setSchoolToDelete(null);
             }
         } catch (err: any) {
-            toast({
-                title: "Error",
-                description: err.message || "Error deleting school",
-                variant: "destructive"
-            });
-            setShowDeleteModal(false);
-            setSchoolToDelete(null);
+            if (!toastShown) {
+                 toast({
+                    title: "Error",
+                    description: err.message || "Error deleting school",
+                    variant: "destructive"
+                });
+            }
+            throw err;
         } finally {
             setIsDeleting(false);
         }
@@ -206,11 +210,8 @@ export default function SchoolsList() {
                                         </TableCell>
                                         <TableCell>
                                             {school.districtId?.name ? (
-                                                <div 
-                                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
-                                                    onClick={() => navigate(`/system-admin/districts/${school.districtId?._id}`)}
-                                                >
-                                                    <Building2 className="h-4 w-4" />
+                                                <div className="flex items-center gap-2 text-gray-700 font-medium">
+                                                    <Building2 className="h-4 w-4 text-gray-400" />
                                                     <span>{school.districtId.name}</span>
                                                 </div>
                                             ) : school.district ? (
@@ -230,26 +231,28 @@ export default function SchoolsList() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu>
+                                            <DropdownMenu modal={false}>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" className="h-8 w-8 p-0">
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-48">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem onClick={() => navigate(`/system-admin/schools/${school._id}`)}>
-                                                        <Eye className="mr-2 h-4 w-4" /> View Details
+                                                        <Eye className="mr-2 h-4 w-4 text-gray-400" /> Analytics
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => navigate(`/system-admin/schools/${school._id}?tab=settings`)}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit Settings
+                                                        <Edit className="mr-2 h-4 w-4 text-gray-400" /> Settings
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem 
-                                                        className="text-red-600"
-                                                        onClick={() => {
+                                                        className="text-red-600 focus:text-white focus:bg-red-600"
+                                                        onSelect={(e) => {
+                                                            e.preventDefault();
                                                             setSchoolToDelete({ id: school._id, name: school.name });
-                                                            setShowDeleteModal(true);
+                                                            // Small timeout to allow the dropdown to close before the modal opens
+                                                            // This avoids Radix UI issues with pointer-events: none on body
+                                                            setTimeout(() => setShowDeleteModal(true), 100);
                                                         }}
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete School
@@ -265,18 +268,22 @@ export default function SchoolsList() {
                 </div>
             )}
             
-            <Modal
+            <PasswordConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     setShowDeleteModal(false);
                     setSchoolToDelete(null);
                 }}
-                onConfirm={() => schoolToDelete && handleDelete(schoolToDelete.id, schoolToDelete.name)}
+                onConfirm={(password) => {
+                    if (schoolToDelete) {
+                        return handleDelete(schoolToDelete.id, schoolToDelete.name, password);
+                    }
+                    return Promise.resolve();
+                }}
                 title="Delete School"
-                description={`Are you sure you want to delete ${schoolToDelete?.name}? This action will permanently remove the school and its data.`}
-                callToAction="Delete"
-                variant="danger"
-                confirmDisabled={isDeleting}
+                description={`Are you sure you want to delete ${schoolToDelete?.name}? This action will permanently remove the school and all its associated data (teachers, students, etc). This cannot be undone.`}
+                confirmText="Permanently Delete School"
+                isLoading={isDeleting}
             />
         </div>
     );

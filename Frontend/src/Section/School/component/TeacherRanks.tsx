@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { getAnalyticsData } from "@/api";
-import { XAxis, YAxis, Tooltip, Bar, BarChart } from "recharts";
+import { XAxis, YAxis, Tooltip, Bar, BarChart, ResponsiveContainer } from "recharts";
 import { IconAppleFilled } from "@tabler/icons-react";
 import { Printer, X } from "lucide-react";
 
@@ -89,36 +88,49 @@ const TeacherRanks = ({ studentId, schoolId }: { studentId: string, schoolId?: s
     <div className="relative">
       <div className="flex gap-2">
         {/* Teachers Card */}
-        <Card className="flex-1 h-[420px] w-[250px] flex flex-col mt-16" onClick={() => { setIsDialogOpen(true) }}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <IconAppleFilled className="text-neutral-700 w-8 h-8" />
-              <CardTitle className="font-medium text-lg text-center">
-                Teachers - <div>Awarded Tokens</div>
-              </CardTitle>
-            </CardTitle>
+        <Card className="flex-1 flex flex-col min-h-[400px] border-neutral-200 shadow-sm rounded-2xl overflow-hidden" onClick={() => { setIsDialogOpen(true) }}>
+          <CardHeader className="pb-3 bg-neutral-50/50 border-b">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 rounded-xl text-blue-600">
+                <IconAppleFilled className="w-6 h-6" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Teacher Rankings</CardTitle>
+                <p className="text-xs text-neutral-400 font-medium">Awarded Tokens</p>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <BarChart
-                width={200}
-                height={teachers.length * 50}
-                data={teachers}
-                layout="vertical"
-                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
-                barCategoryGap={20}
-              >
-                <XAxis type="number" />
-                <YAxis
-                  dataKey={studentId === "" ? "name" : "awardedBy"}
-                  type="category"
-                  className="text-xs"
-                  width={60}
-                />
-                <Tooltip itemStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="totalPoints" fill="#3b82f6" barSize={20} />
-              </BarChart>
-            </ScrollArea>
+          <CardContent className="pt-6">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={teachers}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  barCategoryGap={20}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey={studentId === "" ? "name" : "awardedBy"}
+                    type="category"
+                    className="text-[10px] font-medium text-neutral-500"
+                    width={80}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'transparent' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar 
+                    dataKey="totalPoints" 
+                    fill="#3b82f6" 
+                    radius={[0, 4, 4, 0]}
+                    barSize={12} 
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
