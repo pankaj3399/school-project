@@ -10,9 +10,10 @@ interface PasswordConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  schoolId?: string;
 }
 
-export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess }: PasswordConfirmationModalProps) {
+export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, schoolId }: PasswordConfirmationModalProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +44,7 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess }
       }
       
       // If password is verified, proceed with resetting student data
-      const resetResponse = await resetStudentRoster();
+      const resetResponse = await resetStudentRoster(schoolId);
       
       if (resetResponse.error) {
         toast({
@@ -58,6 +59,7 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess }
         title: "Success",
         description: "Student data has been reset successfully.",
       });
+      setPassword(""); // Clear sensitive state
       onSuccess();
       onClose();
     } catch (error) {

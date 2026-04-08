@@ -406,12 +406,13 @@ export default function ViewDistrict() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-gray-50/50">
-                                        <TableHead className="font-bold text-gray-700">ASSIGNMENT</TableHead>
+                                        <TableHead className="font-bold text-gray-700">NAME</TableHead>
+                                        <TableHead className="font-bold text-gray-700">SCHOOL NAME</TableHead>
                                         <TableHead className="font-bold text-gray-700">ADDRESS</TableHead>
                                         <TableHead className="font-bold text-gray-700">POSITION</TableHead>
                                         <TableHead className="font-bold text-gray-700">EMAIL</TableHead>
                                         <TableHead className="font-bold text-gray-700">PHONE</TableHead>
-                                        <TableHead className="font-bold text-gray-700">CONTACT ROLE</TableHead>
+                                        <TableHead className="font-bold text-gray-700">ROLE</TableHead>
                                         <TableHead className="font-bold text-gray-700">STATUS</TableHead>
                                         <TableHead className="font-bold text-gray-700 text-right">ACTIONS</TableHead>
                                     </TableRow>
@@ -420,6 +421,9 @@ export default function ViewDistrict() {
                                     {admins && admins.length > 0 ? (
                                         admins.map((admin: any) => (
                                             <TableRow key={admin._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <TableCell className="font-medium">
+                                                    {admin.name}
+                                                </TableCell>
                                                 <TableCell className="font-medium">
                                                     {admin.schoolId ? (
                                                         <div className="flex items-center gap-2">
@@ -498,7 +502,7 @@ export default function ViewDistrict() {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                                                 No administrators found for this district.
                                             </TableCell>
                                         </TableRow>

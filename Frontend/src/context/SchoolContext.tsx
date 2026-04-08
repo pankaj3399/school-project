@@ -90,10 +90,24 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             ? data
             : (data as { schools?: unknown; data?: unknown })?.schools ??
               (data as { schools?: unknown; data?: unknown })?.data;
+          
           if (Array.isArray(list)) {
             setSchools(list);
+            
+            // Check if current selection is still valid in the new list
+            const isValidSelection = selectedSchoolId && list.some((s: School) => s._id === selectedSchoolId);
+            
+            if (!isValidSelection && list.length > 0) {
+              // Auto-select first school if previous selection is invalid or missing
+              const firstId = (list[0] as School)._id;
+              setSelectedSchoolId(firstId);
+            } else if (!isValidSelection) {
+              // Clear if list is empty
+              setSelectedSchoolId(null);
+            }
           } else {
             setSchools([]);
+            setSelectedSchoolId(null);
           }
         } catch (error) {
           console.error("Error fetching schools in context:", error);

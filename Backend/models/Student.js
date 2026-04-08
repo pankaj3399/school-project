@@ -64,7 +64,7 @@ const studentSchema = new mongoose.Schema({
   grade: {
     type: String,
     required: true,
-    default: 1
+    default: "1"
   },
   isParentOneEmailVerified:{
     type:Boolean,
