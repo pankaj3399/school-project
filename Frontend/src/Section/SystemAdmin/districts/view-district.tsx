@@ -491,7 +491,7 @@ export default function ViewDistrict() {
                                                                 variant="link" 
                                                                 onClick={() => handleReInvite(admin._id, admin.name)}
                                                                 disabled={reinvitingIds[admin._id]}
-                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] hover:bg-[#00a58c]/10 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] text-xs font-bold disabled:opacity-50"
                                                             >
                                                                 {reinvitingIds[admin._id] ? 'Inviting...' : 'Invite'}
                                                             </Button>
@@ -534,7 +534,7 @@ export default function ViewDistrict() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">District Logo URL</Label>
+                                        <Label className="text-sm font-bold text-gray-700">District Logo</Label>
                                         <div className="flex gap-4">
                                             <div className="flex-1">
                                                 <Input 
@@ -679,9 +679,8 @@ export default function ViewDistrict() {
                                             <SelectContent>
                                                 <SelectItem value="active">Active</SelectItem>
                                                 <SelectItem value="paused">Paused</SelectItem>
-                                                <SelectItem value="pending">Pending</SelectItem>
-                                                <SelectItem value="suspended">Suspended</SelectItem>
                                                 <SelectItem value="expired">Expired</SelectItem>
+                                                <SelectItem value="pending">Pending</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

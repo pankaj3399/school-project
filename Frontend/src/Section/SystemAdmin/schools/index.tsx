@@ -13,11 +13,9 @@ import {
     Search, 
     Plus, 
     MoreHorizontal, 
-    School,
     Trash2,
     Eye,
     Edit,
-    Building2,
     AlertCircle
 } from 'lucide-react';
 import {
@@ -201,24 +199,13 @@ export default function SchoolsList() {
                                 filteredSchools.map((school) => (
                                     <TableRow key={school._id} className="hover:bg-gray-50 transition-colors">
                                         <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                                                    <School className="h-5 w-5" />
-                                                </div>
-                                                <p className="font-bold text-gray-900">{school.name}</p>
-                                            </div>
+                                            <p className="font-bold text-gray-900">{school.name}</p>
                                         </TableCell>
                                         <TableCell>
                                             {school.districtId?.name ? (
-                                                <div className="flex items-center gap-2 text-gray-700 font-medium">
-                                                    <Building2 className="h-4 w-4 text-gray-400" />
-                                                    <span>{school.districtId.name}</span>
-                                                </div>
+                                                <span className="text-gray-700 font-medium">{school.districtId.name}</span>
                                             ) : school.district ? (
-                                                <div className="flex items-center gap-2 text-gray-500">
-                                                    <AlertCircle className="h-4 w-4" />
-                                                    <span>{school.district} (Legacy)</span>
-                                                </div>
+                                                <span className="text-gray-500">{school.district} (Legacy)</span>
                                             ) : (
                                                 <Badge variant="outline" className="text-gray-400 border-gray-200 font-normal">
                                                     No District

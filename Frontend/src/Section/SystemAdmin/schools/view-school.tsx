@@ -4,7 +4,7 @@ import { getCurrrentSchool, getStats, getDistricts, updateSchool, getAnalyticsDa
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck, IconMail, IconPhone, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
+import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
 import { EditAdminDialog } from '@/components/EditAdminDialog'
 import { Role } from '@/enum'
@@ -79,8 +79,8 @@ const StatCard = ({ title, value, icon, color }: StatCardProps) => {
                 <div className={`p-2.5 rounded-xl mb-3 ${colorMap[color]}`}>
                     {icon}
                 </div>
-                <div className="text-2xl font-bold text-neutral-900">{value.toLocaleString()}</div>
-                <div className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mt-1">{title}</div>
+                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{title}</div>
+                <div className="text-2xl font-black text-neutral-900 leading-none">{value.toLocaleString()}</div>
             </CardContent>
         </Card>
     )
@@ -444,12 +444,12 @@ const ViewSchool = () => {
                 <TabsContent value="dashboard" className="space-y-8 outline-none">
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                        <StatCard title="Students" value={stats?.totalStudents || 0} icon={<IconUsers className="w-6 h-6" />} color="blue" />
-                        <StatCard title="Teachers" value={stats?.totalTeachers || 0} icon={<IconUserStar className="w-6 h-6" />} color="green" />
-                        <StatCard title="Points" value={stats?.totalPoints || 0} icon={<IconCoins className="w-6 h-6" />} color="yellow" />
-                        <StatCard title="Withdrawals" value={-(stats?.totalWithdrawPoints || 0)} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
-                        <StatCard title="Oopsies" value={-(stats?.totalDeductPoints || 0)} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
-                        <StatCard title="Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
+                        <StatCard title="Total Teachers" value={stats?.totalTeachers || 0} icon={<IconUserStar className="w-6 h-6" />} color="green" />
+                        <StatCard title="Total Students" value={stats?.totalStudents || 0} icon={<IconUsers className="w-6 h-6" />} color="blue" />
+                        <StatCard title="Total Tokens" value={stats?.totalPoints || 0} icon={<IconCoins className="w-6 h-6" />} color="yellow" />
+                        <StatCard title="Total Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
+                        <StatCard title="Total Oopsies" value={stats?.totalDeductPoints || 0} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
+                        <StatCard title="Total Withdrawals" value={stats?.totalWithdrawPoints || 0} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
                     </div>
 
                     <div className='grid grid-cols-1 lg:grid-cols-6 gap-6 items-start'>
@@ -538,7 +538,6 @@ const ViewSchool = () => {
                                     <TableHeader>
                                         <TableRow className="bg-neutral-50/50">
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">NAME</TableHead>
-                                            {/* SCHOOL NAME column removed for single school view */}
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">ADDRESS</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">POSITION</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">EMAIL</TableHead>
@@ -555,25 +554,15 @@ const ViewSchool = () => {
                                                     <TableCell className="pl-6 font-medium text-neutral-900 truncate max-w-[200px]">
                                                         {admin.name}
                                                     </TableCell>
-                                                    {/* SCHOOL NAME cell removed for single school view */}
                                                     <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <IconMapPin className="h-3 w-3 shrink-0" />
-                                                            {admin.address || "N/A"}
-                                                        </div>
+                                                        {admin.address || "N/A"}
                                                     </TableCell>
                                                     <TableCell className="text-neutral-600 font-medium">{admin.position || "Other"}</TableCell>
                                                     <TableCell className="text-neutral-500 font-medium">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <IconMail className="h-3 w-3 shrink-0" />
-                                                            {admin.email}
-                                                        </div>
+                                                        {admin.email}
                                                     </TableCell>
                                                     <TableCell className="text-neutral-500 font-medium">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <IconPhone className="h-3 w-3 shrink-0" />
-                                                            {admin.phone || "N/A"}
-                                                        </div>
+                                                        {admin.phone || "N/A"}
                                                     </TableCell>
                                                     <TableCell>
                                                         <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">

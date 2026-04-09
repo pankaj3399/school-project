@@ -12,6 +12,12 @@ import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
 
+// Form Type Categories for aggregation
+const AWARD_TYPES = [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"];
+const DEDUCT_TYPES = [FormType.DeductPoints, "Deduct Points"];
+const WITHDRAW_TYPES = [FormType.PointWithdraw, "Point Withdraw"];
+const FEEDBACK_TYPES = [FormType.Feedback, "Feedback"];
+
 // Resolve the current user's districtId from the database (not the JWT claim)
 // and return it as an ObjectId for use in aggregation pipelines.
 async function resolveDistrictId(userId) {
@@ -88,7 +94,7 @@ export const getDashboardStats = async (req, res) => {
                 totalTokens: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]] },
+                      { $in: ["$formType", AWARD_TYPES] },
                       "$points",
                       0
                     ]
@@ -97,7 +103,7 @@ export const getDashboardStats = async (req, res) => {
                 oopsies: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.DeductPoints, "Deduct Points"]] },
+                      { $in: ["$formType", DEDUCT_TYPES] },
                       "$points",
                       0
                     ]
@@ -106,7 +112,7 @@ export const getDashboardStats = async (req, res) => {
                 withdrawals: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.PointWithdraw, "Point Withdraw"]] },
+                      { $in: ["$formType", WITHDRAW_TYPES] },
                       "$points",
                       0
                     ]
@@ -115,7 +121,7 @@ export const getDashboardStats = async (req, res) => {
                 feedbacks: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.Feedback, "Feedback"]] },
+                      { $in: ["$formType", FEEDBACK_TYPES] },
                       1,
                       0
                     ]
@@ -191,12 +197,15 @@ export const getDashboardStats = async (req, res) => {
       }
     };
 
+    const transactionFilter = { schoolId: { $in: schoolIds || [] } };
+
     const [
       stateHistory,
       districtHistory,
       schoolHistory,
       teacherHistory,
-      studentHistory
+      studentHistory,
+      pointsHistory
     ] = await Promise.all([
       District.aggregate([
         { $match: districtFilter },
@@ -207,19 +216,56 @@ export const getDashboardStats = async (req, res) => {
       District.aggregate([{ $match: districtFilter }, monthAgg]),
       School.aggregate([{ $match: schoolFilter }, monthAgg]),
       Teacher.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg]),
-      Student.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg])
+      Student.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg]),
+      PointsHistory.aggregate([
+        { $match: transactionFilter },
+        {
+          $group: {
+            _id: {
+              month: { $dateToString: { format: "%Y-%m", date: "$submittedAt" } },
+              type: "$formType"
+            },
+            total: { $sum: "$points" }
+          }
+        }
+      ])
     ]);
 
     // Format historical data
     const chartDataMap = {};
-    const processHistory = (history, key) => {
+    const processHistory = (history, key, isSum = false) => {
       history.forEach(item => {
-        if (!item._id) return;
-        if (!chartDataMap[item._id]) {
-          const [year, month] = item._id.split('-');
-          chartDataMap[item._id] = { year, month: parseInt(month, 10), states: 0, districts: 0, schools: 0, teachers: 0, students: 0 };
+        const dateId = isSum ? item._id.month : item._id;
+        if (!dateId) return;
+        
+        if (!chartDataMap[dateId]) {
+          const [year, month] = dateId.split('-');
+          chartDataMap[dateId] = { 
+            year, 
+            month: parseInt(month, 10), 
+            states: 0, 
+            districts: 0, 
+            schools: 0, 
+            teachers: 0, 
+            students: 0,
+            tokens: 0,
+            oopsies: 0,
+            withdrawals: 0
+          };
         }
-        chartDataMap[item._id][key] += item.count;
+        
+        if (isSum) {
+          const type = item._id.type;
+          if (AWARD_TYPES.includes(type)) {
+            chartDataMap[dateId].tokens += item.total;
+          } else if (WITHDRAW_TYPES.includes(type)) {
+            chartDataMap[dateId].withdrawals += item.total;
+          } else if (DEDUCT_TYPES.includes(type)) {
+            chartDataMap[dateId].oopsies += item.total;
+          }
+        } else {
+          chartDataMap[dateId][key] += item.count;
+        }
       });
     };
 
@@ -228,6 +274,7 @@ export const getDashboardStats = async (req, res) => {
     processHistory(schoolHistory, 'schools');
     processHistory(teacherHistory, 'teachers');
     processHistory(studentHistory, 'students');
+    processHistory(pointsHistory, null, true);
 
     const chartData = Object.values(chartDataMap).sort((a, b) => {
       if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit2, Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
+import { Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateAdmin } from '@/api';
 import {
@@ -86,8 +86,8 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-          <Edit2 className="h-4 w-4" />
+        <Button variant="link" size="sm" className="h-8 px-2 text-[#00a58c] hover:text-[#008f7a] text-xs font-bold">
+          Edit
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
