@@ -371,6 +371,7 @@ export default function SystemAdminDashboard() {
                                     <div className="flex gap-2 text-[10px] flex-wrap justify-center border-b pb-4 w-full">
                                         <button
                                             onClick={() => setSelectedYear('All Year')}
+                                            aria-pressed={selectedYear === 'All Year'}
                                             className={`px-3 py-1 rounded-full font-bold transition-all ${selectedYear === 'All Year' ? 'bg-[#00a58c] text-white shadow-sm scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                                         >
                                             All Year
@@ -379,6 +380,7 @@ export default function SystemAdminDashboard() {
                                             <button
                                                 key={year}
                                                 onClick={() => setSelectedYear(year)}
+                                                aria-pressed={selectedYear === year}
                                                 className={`px-3 py-1 rounded-full font-bold transition-all ${selectedYear === year ? 'bg-[#00a58c] text-white shadow-sm scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                                             >
                                                 {year}
@@ -388,6 +390,7 @@ export default function SystemAdminDashboard() {
                                     <div className="flex gap-1.5 text-[9px] flex-wrap justify-center w-full">
                                         <button
                                             onClick={() => setSelectedMonth('All')}
+                                            aria-pressed={selectedMonth === 'All'}
                                             className={`px-2 py-0.5 rounded-md font-bold transition-all ${selectedMonth === 'All' ? 'bg-[#00a58c] text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                         >
                                             All Months
@@ -396,6 +399,7 @@ export default function SystemAdminDashboard() {
                                             <button
                                                 key={m}
                                                 onClick={() => setSelectedMonth(m)}
+                                                aria-pressed={selectedMonth === m}
                                                 className={`px-2 py-0.5 rounded-md font-bold transition-all ${selectedMonth === m ? 'bg-[#00a58c] text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                             >
                                                 {monthNames[m - 1]}
