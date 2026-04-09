@@ -600,7 +600,7 @@ const ViewSchool = () => {
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="text-center py-12 text-neutral-400">
+                                                <TableCell colSpan={9} className="text-center py-12 text-neutral-400">
                                                     No administrators found for this school.
                                                 </TableCell>
                                             </TableRow>

@@ -45,7 +45,7 @@ interface District {
     schoolCount: number;
     teacherCount: number;
     studentCount: number;
-    subscriptionStatus: 'active' | 'paused' | 'expired' | 'pending';
+    subscriptionStatus: 'active' | 'paused' | 'expired' | 'pending' | 'suspended';
 }
 
 export default function DistrictsList() {

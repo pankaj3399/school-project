@@ -79,6 +79,14 @@ type SchoolStatRow = {
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+const getAcademicYear = (item: { year: string, month: number }) => {
+    const yearNum = parseInt(item.year);
+    if (item.month >= 8) {
+        return `${yearNum}-${yearNum + 1}`;
+    }
+    return `${yearNum - 1}-${yearNum}`;
+};
+
 export default function SystemAdminDashboard() {
     const { user } = useAuth();
     const [stats, setStats] = useState<any>(null);
@@ -210,7 +218,7 @@ export default function SystemAdminDashboard() {
     const filteredChartData = useMemo(() => {
         let list = [...chartData];
         if (selectedYear !== 'All Year') {
-            list = list.filter(item => item.year === selectedYear);
+            list = list.filter(item => getAcademicYear(item) === selectedYear);
         }
         if (selectedMonth !== 'All') {
             list = list.filter(item => item.month === selectedMonth);
@@ -220,20 +228,22 @@ export default function SystemAdminDashboard() {
         const academicOrder = [8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7];
         
         return list.sort((a, b) => {
-            // If internal sorting is needed for "All Year", we group by year then academic month
-            if (selectedYear === 'All Year') {
-                if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
-            }
+            const ayA = getAcademicYear(a);
+            const ayB = getAcademicYear(b);
+            
+            if (ayA !== ayB) return ayA.localeCompare(ayB);
+            
             return academicOrder.indexOf(a.month) - academicOrder.indexOf(b.month);
         }).map(item => ({
             ...item,
-            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${item.year}` : monthNames[item.month - 1]
+            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${item.year}` : monthNames[item.month - 1],
+            academicYear: getAcademicYear(item)
         }));
     }, [chartData, selectedYear, selectedMonth]);
 
     const availableYears = useMemo(() => {
         const years = new Set<string>();
-        chartData.forEach(item => years.add(item.year));
+        chartData.forEach(item => years.add(getAcademicYear(item)));
         return Array.from(years).sort().reverse();
     }, [chartData]);
 

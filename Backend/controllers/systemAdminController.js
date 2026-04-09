@@ -191,7 +191,7 @@ export const getDashboardStats = async (req, res) => {
       }
     };
 
-    const transactionFilter = isSystemAdmin ? {} : { schoolId: { $in: schoolIds || [] } };
+    const transactionFilter = { schoolId: { $in: schoolIds || [] } };
 
     const [
       stateHistory,
