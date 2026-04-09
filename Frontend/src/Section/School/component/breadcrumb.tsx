@@ -30,8 +30,6 @@ export function Breadcrumb() {
               label = "School Details";
             } else if (parentSegment === "districts") {
               label = "District Details";
-            } else if (parentSegment === "system-admin" && segment !== "districts" && segment !== "schools") {
-              label = "Dashboard";
             }
           }
         

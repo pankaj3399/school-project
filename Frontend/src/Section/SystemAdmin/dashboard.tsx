@@ -58,6 +58,17 @@ type ChartDataRow = {
     withdrawals: number;
 };
 
+interface VisibleBars {
+    states: boolean;
+    districts: boolean;
+    schools: boolean;
+    teachers: boolean;
+    students: boolean;
+    tokens: boolean;
+    oopsies: boolean;
+    withdrawals: boolean;
+}
+
 type SchoolStatRow = {
     _id: string;
     name: string;
@@ -82,7 +93,7 @@ export default function SystemAdminDashboard() {
     // Chart Filters
     const [selectedYear, setSelectedYear] = useState<string>('All Year');
     const [selectedMonth, setSelectedMonth] = useState<number | 'All'>( 'All');
-    const [visibleBars, setVisibleBars] = useState({
+    const [visibleBars, setVisibleBars] = useState<VisibleBars>({
         states: true,
         districts: true,
         schools: true,
@@ -389,7 +400,7 @@ export default function SystemAdminDashboard() {
                                         <label key={key} className="flex items-center gap-1.5 cursor-pointer hover:text-gray-800 transition-colors">
                                             <input
                                                 type="checkbox"
-                                                checked={(visibleBars as any)[key]}
+                                                checked={visibleBars[key as keyof VisibleBars]}
                                                 onChange={(e) => setVisibleBars({ ...visibleBars, [key]: e.target.checked })}
                                                 className="w-3 h-3 accent-[#00a58c] rounded border-gray-300 pointer-events-auto"
                                             />
@@ -417,9 +428,9 @@ export default function SystemAdminDashboard() {
                                             {visibleBars.schools && <Bar dataKey="schools" name="Schools" fill="#8b5cf6" radius={[2, 2, 0, 0]} />}
                                             {visibleBars.teachers && <Bar dataKey="teachers" name="Teachers" fill="#06b6d4" radius={[2, 2, 0, 0]} />}
                                             {visibleBars.students && <Bar dataKey="students" name="Students" fill="#6366f1" radius={[2, 2, 0, 0]} />}
-                                            {(visibleBars as any).tokens && <Bar dataKey="tokens" name="Tokens" fill="#10b981" radius={[2, 2, 0, 0]} />}
-                                            {(visibleBars as any).oopsies && <Bar dataKey="oopsies" name="Oopsies" fill="#ef4444" radius={[2, 2, 0, 0]} />}
-                                            {(visibleBars as any).withdrawals && <Bar dataKey="withdrawals" name="Withdrawals" fill="#3b82f6" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.tokens && <Bar dataKey="tokens" name="Tokens" fill="#10b981" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.oopsies && <Bar dataKey="oopsies" name="Oopsies" fill="#ef4444" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.withdrawals && <Bar dataKey="withdrawals" name="Withdrawals" fill="#3b82f6" radius={[2, 2, 0, 0]} />}
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}

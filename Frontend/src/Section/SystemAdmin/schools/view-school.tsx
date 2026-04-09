@@ -448,8 +448,8 @@ const ViewSchool = () => {
                         <StatCard title="Total Students" value={stats?.totalStudents || 0} icon={<IconUsers className="w-6 h-6" />} color="blue" />
                         <StatCard title="Total Tokens" value={stats?.totalPoints || 0} icon={<IconCoins className="w-6 h-6" />} color="yellow" />
                         <StatCard title="Total Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
-                        <StatCard title="Total Oopsies" value={-(stats?.totalDeductPoints || 0)} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
-                        <StatCard title="Total Withdrawals" value={-(stats?.totalWithdrawPoints || 0)} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
+                        <StatCard title="Total Oopsies" value={stats?.totalDeductPoints || 0} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
+                        <StatCard title="Total Withdrawals" value={stats?.totalWithdrawPoints || 0} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
                     </div>
 
                     <div className='grid grid-cols-1 lg:grid-cols-6 gap-6 items-start'>

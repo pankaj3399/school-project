@@ -191,7 +191,7 @@ export const getDashboardStats = async (req, res) => {
       }
     };
 
-    const transactionFilter = isSystemAdmin ? {} : { districtId: userDistrictId };
+    const transactionFilter = isSystemAdmin ? {} : { schoolId: { $in: schoolIds || [] } };
 
     const [
       stateHistory,
@@ -216,7 +216,7 @@ export const getDashboardStats = async (req, res) => {
         {
           $group: {
             _id: {
-              month: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+              month: { $dateToString: { format: "%Y-%m", date: "$submittedAt" } },
               type: "$formType"
             },
             total: { $sum: "$points" }

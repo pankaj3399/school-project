@@ -680,6 +680,7 @@ export default function ViewDistrict() {
                                                 <SelectItem value="active">Active</SelectItem>
                                                 <SelectItem value="paused">Paused</SelectItem>
                                                 <SelectItem value="expired">Expired</SelectItem>
+                                                <SelectItem value="pending">Pending</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
