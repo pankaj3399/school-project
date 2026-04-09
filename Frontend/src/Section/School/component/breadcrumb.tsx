@@ -25,7 +25,7 @@ export function Breadcrumb() {
           const validParentContexts = ["system-admin", "districts", "schools"];
           
           // Force details label for any segment under districts/schools if it's the last segment
-          if (validParentContexts.includes(parentSegment) && isLast) {
+          if (validParentContexts.includes(parentSegment) && isLast && !["new", "import", "bulk-import"].includes(segment)) {
             if (parentSegment === "schools") {
               label = "School Details";
             } else if (parentSegment === "districts") {

@@ -139,6 +139,10 @@ export default function DistrictsList() {
                 return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Active</Badge>;
             case 'suspended':
                 return <Badge variant="destructive" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0">Suspended</Badge>;
+            case 'paused':
+                return <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-0">Paused</Badge>;
+            case 'pending':
+                return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Pending</Badge>;
             case 'expired':
                 return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">Expired</Badge>;
             default:

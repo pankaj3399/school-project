@@ -12,6 +12,12 @@ import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
 
+// Form Type Categories for aggregation
+const AWARD_TYPES = [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"];
+const DEDUCT_TYPES = [FormType.DeductPoints, "Deduct Points"];
+const WITHDRAW_TYPES = [FormType.PointWithdraw, "Point Withdraw"];
+const FEEDBACK_TYPES = [FormType.Feedback, "Feedback"];
+
 // Resolve the current user's districtId from the database (not the JWT claim)
 // and return it as an ObjectId for use in aggregation pipelines.
 async function resolveDistrictId(userId) {
@@ -88,7 +94,7 @@ export const getDashboardStats = async (req, res) => {
                 totalTokens: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]] },
+                      { $in: ["$formType", AWARD_TYPES] },
                       "$points",
                       0
                     ]
@@ -97,7 +103,7 @@ export const getDashboardStats = async (req, res) => {
                 oopsies: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.DeductPoints, "Deduct Points"]] },
+                      { $in: ["$formType", DEDUCT_TYPES] },
                       "$points",
                       0
                     ]
@@ -106,7 +112,7 @@ export const getDashboardStats = async (req, res) => {
                 withdrawals: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.PointWithdraw, "Point Withdraw"]] },
+                      { $in: ["$formType", WITHDRAW_TYPES] },
                       "$points",
                       0
                     ]
@@ -115,7 +121,7 @@ export const getDashboardStats = async (req, res) => {
                 feedbacks: {
                   $sum: {
                     $cond: [
-                      { $in: ["$formType", [FormType.Feedback, "Feedback"]] },
+                      { $in: ["$formType", FEEDBACK_TYPES] },
                       1,
                       0
                     ]
@@ -250,11 +256,11 @@ export const getDashboardStats = async (req, res) => {
         
         if (isSum) {
           const type = item._id.type;
-          if ([FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"].includes(type)) {
+          if (AWARD_TYPES.includes(type)) {
             chartDataMap[dateId].tokens += item.total;
-          } else if ([FormType.PointWithdraw, "Point Withdraw"].includes(type)) {
+          } else if (WITHDRAW_TYPES.includes(type)) {
             chartDataMap[dateId].withdrawals += item.total;
-          } else if ([FormType.DeductPoints, "Deduct Points"].includes(type)) {
+          } else if (DEDUCT_TYPES.includes(type)) {
             chartDataMap[dateId].oopsies += item.total;
           }
         } else {

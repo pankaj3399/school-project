@@ -538,7 +538,6 @@ const ViewSchool = () => {
                                     <TableHeader>
                                         <TableRow className="bg-neutral-50/50">
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px] pl-6">NAME</TableHead>
-                                            <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">SCHOOL NAME</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">ADDRESS</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">POSITION</TableHead>
                                             <TableHead className="font-bold text-neutral-500 uppercase tracking-wider text-[10px]">EMAIL</TableHead>
@@ -554,9 +553,6 @@ const ViewSchool = () => {
                                                 <TableRow key={admin._id} className="hover:bg-neutral-50/30 transition-colors">
                                                     <TableCell className="pl-6 font-medium text-neutral-900 truncate max-w-[200px]">
                                                         {admin.name}
-                                                    </TableCell>
-                                                    <TableCell className="text-neutral-500 text-xs font-medium">
-                                                        {school.name}
                                                     </TableCell>
                                                     <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">
                                                         {admin.address || "N/A"}
@@ -600,7 +596,7 @@ const ViewSchool = () => {
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={9} className="text-center py-12 text-neutral-400">
+                                                <TableCell colSpan={8} className="text-center py-12 text-neutral-400">
                                                     No administrators found for this school.
                                                 </TableCell>
                                             </TableRow>

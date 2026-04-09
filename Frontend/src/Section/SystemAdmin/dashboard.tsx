@@ -236,7 +236,7 @@ export default function SystemAdminDashboard() {
             return academicOrder.indexOf(a.month) - academicOrder.indexOf(b.month);
         }).map(item => ({
             ...item,
-            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${item.year}` : monthNames[item.month - 1],
+            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${getAcademicYear(item)}` : monthNames[item.month - 1],
             academicYear: getAcademicYear(item)
         }));
     }, [chartData, selectedYear, selectedMonth]);
