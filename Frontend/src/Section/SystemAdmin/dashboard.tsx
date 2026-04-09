@@ -58,16 +58,19 @@ type ChartDataRow = {
     withdrawals: number;
 };
 
-interface VisibleBars {
-    states: boolean;
-    districts: boolean;
-    schools: boolean;
-    teachers: boolean;
-    students: boolean;
-    tokens: boolean;
-    oopsies: boolean;
-    withdrawals: boolean;
-}
+const metricsConfig = {
+    states: { label: "States", color: "#ec4899", defaultVisible: true },
+    districts: { label: "Districts", color: "#f59e0b", defaultVisible: true },
+    schools: { label: "Schools", color: "#8b5cf6", defaultVisible: true },
+    teachers: { label: "Teachers", color: "#06b6d4", defaultVisible: true },
+    students: { label: "Students", color: "#6366f1", defaultVisible: true },
+    tokens: { label: "Tokens", color: "#10b981", defaultVisible: false },
+    oopsies: { label: "Oopsies", color: "#ef4444", defaultVisible: false },
+    withdrawals: { label: "Withdrawals", color: "#3b82f6", defaultVisible: false },
+} as const;
+
+type MetricKey = keyof typeof metricsConfig;
+type VisibleBars = Record<MetricKey, boolean>;
 
 type SchoolStatRow = {
     _id: string;
@@ -101,15 +104,12 @@ export default function SystemAdminDashboard() {
     // Chart Filters
     const [selectedYear, setSelectedYear] = useState<string>('All Year');
     const [selectedMonth, setSelectedMonth] = useState<number | 'All'>( 'All');
-    const [visibleBars, setVisibleBars] = useState<VisibleBars>({
-        states: true,
-        districts: true,
-        schools: true,
-        teachers: true,
-        students: true,
-        tokens: false,
-        oopsies: false,
-        withdrawals: false
+    const [visibleBars, setVisibleBars] = useState<VisibleBars>(() => {
+        const initial: Partial<VisibleBars> = {};
+        (Object.entries(metricsConfig) as [MetricKey, typeof metricsConfig[MetricKey]][]).forEach(([key, config]) => {
+            initial[key] = config.defaultVisible;
+        });
+        return initial as VisibleBars;
     });
 
     useEffect(() => {
@@ -410,15 +410,15 @@ export default function SystemAdminDashboard() {
                                 
                                 {/* Checkboxes */}
                                 <div className="grid grid-cols-4 gap-x-2 gap-y-2 text-[10px] font-bold text-gray-500 mt-4 pt-4 border-t w-full">
-                                    {Object.keys(visibleBars).map(key => (
+                                    {(Object.entries(metricsConfig) as [MetricKey, typeof metricsConfig[MetricKey]][]).map(([key, config]) => (
                                         <label key={key} className="flex items-center gap-1.5 cursor-pointer hover:text-gray-800 transition-colors">
                                             <input
                                                 type="checkbox"
-                                                checked={visibleBars[key as keyof VisibleBars]}
+                                                checked={visibleBars[key]}
                                                 onChange={(e) => setVisibleBars({ ...visibleBars, [key]: e.target.checked })}
                                                 className="w-3 h-3 accent-[#00a58c] rounded border-gray-300 pointer-events-auto"
                                             />
-                                            {key.charAt(0).toUpperCase() + key.slice(1)}
+                                            {config.label}
                                         </label>
                                     ))}
                                 </div>
@@ -437,19 +437,26 @@ export default function SystemAdminDashboard() {
                                             <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                                             <Legend wrapperStyle={{ fontSize: 10, marginTop: 20 }} />
-                                            {visibleBars.states && <Bar dataKey="states" name="States" fill="#ec4899" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.districts && <Bar dataKey="districts" name="Districts" fill="#f59e0b" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.schools && <Bar dataKey="schools" name="Schools" fill="#8b5cf6" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.teachers && <Bar dataKey="teachers" name="Teachers" fill="#06b6d4" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.students && <Bar dataKey="students" name="Students" fill="#6366f1" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.tokens && <Bar dataKey="tokens" name="Tokens" fill="#10b981" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.oopsies && <Bar dataKey="oopsies" name="Oopsies" fill="#ef4444" radius={[2, 2, 0, 0]} />}
-                                            {visibleBars.withdrawals && <Bar dataKey="withdrawals" name="Withdrawals" fill="#3b82f6" radius={[2, 2, 0, 0]} />}
+                                            {(Object.entries(metricsConfig) as [MetricKey, typeof metricsConfig[MetricKey]][]).map(([key, config]) => (
+                                                visibleBars[key] && (
+                                                    <Bar 
+                                                        key={key} 
+                                                        dataKey={key} 
+                                                        name={config.label} 
+                                                        fill={config.color} 
+                                                        radius={[2, 2, 0, 0]} 
+                                                    />
+                                                )
+                                            ))}
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}
                             </div>
-                            <p className="text-center text-[10px] text-gray-500 mt-4 italic">The X-Axis views the Aug-Jul (full 12 months) timeline</p>
+                            <p className="text-center text-[10px] text-gray-500 mt-4 italic">
+                                {selectedMonth === 'All'
+                                    ? 'The X-axis shows the Aug–Jul academic timeline.'
+                                    : `Showing ${monthNames[selectedMonth - 1]} across the selected academic-year range.`}
+                            </p>
                         </CardContent>
                     </Card>
 
