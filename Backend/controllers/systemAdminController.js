@@ -191,12 +191,15 @@ export const getDashboardStats = async (req, res) => {
       }
     };
 
+    const transactionFilter = isSystemAdmin ? {} : { districtId: userDistrictId };
+
     const [
       stateHistory,
       districtHistory,
       schoolHistory,
       teacherHistory,
-      studentHistory
+      studentHistory,
+      pointsHistory
     ] = await Promise.all([
       District.aggregate([
         { $match: districtFilter },
@@ -207,19 +210,56 @@ export const getDashboardStats = async (req, res) => {
       District.aggregate([{ $match: districtFilter }, monthAgg]),
       School.aggregate([{ $match: schoolFilter }, monthAgg]),
       Teacher.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg]),
-      Student.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg])
+      Student.aggregate([{ $match: { schoolId: { $in: schoolIds } } }, monthAgg]),
+      PointsHistory.aggregate([
+        { $match: transactionFilter },
+        {
+          $group: {
+            _id: {
+              month: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+              type: "$formType"
+            },
+            total: { $sum: "$points" }
+          }
+        }
+      ])
     ]);
 
     // Format historical data
     const chartDataMap = {};
-    const processHistory = (history, key) => {
+    const processHistory = (history, key, isSum = false) => {
       history.forEach(item => {
-        if (!item._id) return;
-        if (!chartDataMap[item._id]) {
-          const [year, month] = item._id.split('-');
-          chartDataMap[item._id] = { year, month: parseInt(month, 10), states: 0, districts: 0, schools: 0, teachers: 0, students: 0 };
+        const dateId = isSum ? item._id.month : item._id;
+        if (!dateId) return;
+        
+        if (!chartDataMap[dateId]) {
+          const [year, month] = dateId.split('-');
+          chartDataMap[dateId] = { 
+            year, 
+            month: parseInt(month, 10), 
+            states: 0, 
+            districts: 0, 
+            schools: 0, 
+            teachers: 0, 
+            students: 0,
+            tokens: 0,
+            oopsies: 0,
+            withdrawals: 0
+          };
         }
-        chartDataMap[item._id][key] += item.count;
+        
+        if (isSum) {
+          const type = item._id.type;
+          if ([FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"].includes(type)) {
+            chartDataMap[dateId].tokens += item.total;
+          } else if ([FormType.PointWithdraw, "Point Withdraw"].includes(type)) {
+            chartDataMap[dateId].withdrawals += item.total;
+          } else if ([FormType.DeductPoints, "Deduct Points"].includes(type)) {
+            chartDataMap[dateId].oopsies += item.total;
+          }
+        } else {
+          chartDataMap[dateId][key] += item.count;
+        }
       });
     };
 
@@ -228,6 +268,7 @@ export const getDashboardStats = async (req, res) => {
     processHistory(schoolHistory, 'schools');
     processHistory(teacherHistory, 'teachers');
     processHistory(studentHistory, 'students');
+    processHistory(pointsHistory, null, true);
 
     const chartData = Object.values(chartDataMap).sort((a, b) => {
       if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);

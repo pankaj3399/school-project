@@ -53,6 +53,9 @@ type ChartDataRow = {
     schools: number;
     teachers: number;
     students: number;
+    tokens: number;
+    oopsies: number;
+    withdrawals: number;
 };
 
 type SchoolStatRow = {
@@ -78,12 +81,16 @@ export default function SystemAdminDashboard() {
 
     // Chart Filters
     const [selectedYear, setSelectedYear] = useState<string>('All Year');
+    const [selectedMonth, setSelectedMonth] = useState<number | 'All'>( 'All');
     const [visibleBars, setVisibleBars] = useState({
         states: true,
         districts: true,
         schools: true,
         teachers: true,
-        students: true
+        students: true,
+        tokens: false,
+        oopsies: false,
+        withdrawals: false
     });
 
     useEffect(() => {
@@ -194,11 +201,24 @@ export default function SystemAdminDashboard() {
         if (selectedYear !== 'All Year') {
             list = list.filter(item => item.year === selectedYear);
         }
-        return list.map(item => ({
+        if (selectedMonth !== 'All') {
+            list = list.filter(item => item.month === selectedMonth);
+        }
+
+        // Academic Year Ordering (Aug to Jul)
+        const academicOrder = [8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7];
+        
+        return list.sort((a, b) => {
+            // If internal sorting is needed for "All Year", we group by year then academic month
+            if (selectedYear === 'All Year') {
+                if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
+            }
+            return academicOrder.indexOf(a.month) - academicOrder.indexOf(b.month);
+        }).map(item => ({
             ...item,
             monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${item.year}` : monthNames[item.month - 1]
         }));
-    }, [chartData, selectedYear]);
+    }, [chartData, selectedYear, selectedMonth]);
 
     const availableYears = useMemo(() => {
         const years = new Set<string>();
@@ -290,15 +310,15 @@ export default function SystemAdminDashboard() {
                 {/* Stats Grid top header */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {cards.map((card, index) => (
-                        <Card key={index} className="border-0 shadow-sm ring-1 ring-gray-100 flex flex-col items-center justify-between p-4 text-center min-h-[140px]">
-                            <h4 className={`text-[10px] font-bold uppercase mb-1 ${card.color}`}>{card.title}</h4>
+                        <Card key={index} className="border-0 shadow-sm ring-1 ring-gray-100 flex flex-col items-center justify-between p-4 text-center min-h-[160px] bg-white">
+                            <h4 className={`text-[10px] font-bold uppercase mb-1 tracking-wider ${card.color}`}>{card.title}</h4>
+                            <span className="text-gray-400 text-[10px] mb-2 font-medium italic">{card.subLabel}</span>
                             <div className="flex flex-col items-center flex-1 justify-center">
-                                <span className="text-gray-400 text-[10px] mb-1 font-medium italic">{card.subLabel}</span>
-                                <div className={'bg-gray-50 text-gray-800 px-4 py-2 rounded-lg text-xl font-black shadow-inner'}>
+                                <div className={'text-gray-900 text-3xl font-black'}>
                                     {loading ? "..." : (card.value || 0).toLocaleString()}
                                 </div>
                             </div>
-                            <div className="mt-2 text-[10px] font-bold text-gray-500 bg-gray-100/50 px-2 py-0.5 rounded-full">
+                            <div className="mt-3 text-[10px] font-bold text-gray-500 border-t pt-2 w-full">
                                 {card.shortLabel}: {loading ? "..." : (card.subValue || 0).toLocaleString()}
                             </div>
                         </Card>
@@ -326,38 +346,57 @@ export default function SystemAdminDashboard() {
                     {/* Chart Center */}
                     <Card className="lg:col-span-6 border-0 shadow-sm ring-1 ring-gray-100">
                         <CardHeader className="flex flex-col items-center pb-2">
-                            <div className="flex gap-2 text-xs mb-4 flex-wrap justify-center">
-                                <button
-                                    onClick={() => setSelectedYear('All Year')}
-                                    className={`px-3 py-1 rounded-full font-medium ${selectedYear === 'All Year' ? 'bg-[#00a58c] text-white' : 'bg-gray-100 text-gray-600'}`}
-                                >
-                                    All Year
-                                </button>
-                                {availableYears.map(year => (
-                                    <button
-                                        key={year}
-                                        onClick={() => setSelectedYear(year)}
-                                        className={`px-3 py-1 rounded-full font-medium ${selectedYear === year ? 'bg-[#00a58c] text-white' : 'bg-gray-100 text-gray-600'}`}
-                                    >
-                                        {year}
-                                    </button>
-                                ))}
-                            </div>
-                            
-                            {/* Checkboxes */}
-                            <div className="flex gap-4 text-xs font-semibold text-gray-600 mb-2 border-t pt-4 w-full justify-center flex-wrap">
-                                {Object.keys(visibleBars).map(key => (
-                                    <label key={key} className="flex items-center gap-1 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={(visibleBars as any)[key]}
-                                            onChange={(e) => setVisibleBars({ ...visibleBars, [key]: e.target.checked })}
-                                            className="w-3 h-3 accent-[#00a58c]"
-                                        />
-                                        {key.charAt(0).toUpperCase() + key.slice(1)}
-                                    </label>
-                                ))}
-                            </div>
+                                <div className="flex flex-col items-center gap-4 w-full">
+                                    <div className="flex gap-2 text-[10px] flex-wrap justify-center border-b pb-4 w-full">
+                                        <button
+                                            onClick={() => setSelectedYear('All Year')}
+                                            className={`px-3 py-1 rounded-full font-bold transition-all ${selectedYear === 'All Year' ? 'bg-[#00a58c] text-white shadow-sm scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                        >
+                                            All Year
+                                        </button>
+                                        {availableYears.map(year => (
+                                            <button
+                                                key={year}
+                                                onClick={() => setSelectedYear(year)}
+                                                className={`px-3 py-1 rounded-full font-bold transition-all ${selectedYear === year ? 'bg-[#00a58c] text-white shadow-sm scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                            >
+                                                {year}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-1.5 text-[9px] flex-wrap justify-center w-full">
+                                        <button
+                                            onClick={() => setSelectedMonth('All')}
+                                            className={`px-2 py-0.5 rounded-md font-bold transition-all ${selectedMonth === 'All' ? 'bg-[#00a58c] text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                        >
+                                            All Months
+                                        </button>
+                                        {[8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7].map(m => (
+                                            <button
+                                                key={m}
+                                                onClick={() => setSelectedMonth(m)}
+                                                className={`px-2 py-0.5 rounded-md font-bold transition-all ${selectedMonth === m ? 'bg-[#00a58c] text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                            >
+                                                {monthNames[m - 1]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* Checkboxes */}
+                                <div className="grid grid-cols-4 gap-x-2 gap-y-2 text-[10px] font-bold text-gray-500 mt-4 pt-4 border-t w-full">
+                                    {Object.keys(visibleBars).map(key => (
+                                        <label key={key} className="flex items-center gap-1.5 cursor-pointer hover:text-gray-800 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={(visibleBars as any)[key]}
+                                                onChange={(e) => setVisibleBars({ ...visibleBars, [key]: e.target.checked })}
+                                                className="w-3 h-3 accent-[#00a58c] rounded border-gray-300 pointer-events-auto"
+                                            />
+                                            {key.charAt(0).toUpperCase() + key.slice(1)}
+                                        </label>
+                                    ))}
+                                </div>
                         </CardHeader>
                         <CardContent>
                             <div className="h-72 w-full min-h-[300px]">
@@ -372,17 +411,20 @@ export default function SystemAdminDashboard() {
                                             <XAxis dataKey="monthName" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                                            <Legend wrapperStyle={{ fontSize: 12, marginTop: 10 }} />
-                                            {visibleBars.states && <Bar dataKey="states" name="States" fill="#3b82f6" radius={[4, 4, 0, 0]} />}
-                                            {visibleBars.districts && <Bar dataKey="districts" name="Districts" fill="#f59e0b" radius={[4, 4, 0, 0]} />}
-                                            {visibleBars.schools && <Bar dataKey="schools" name="Schools" fill="#10b981" radius={[4, 4, 0, 0]} />}
-                                            {visibleBars.teachers && <Bar dataKey="teachers" name="Teachers" fill="#ef4444" radius={[4, 4, 0, 0]} />}
-                                            {visibleBars.students && <Bar dataKey="students" name="Students" fill="#8b5cf6" radius={[4, 4, 0, 0]} />}
+                                            <Legend wrapperStyle={{ fontSize: 10, marginTop: 20 }} />
+                                            {visibleBars.states && <Bar dataKey="states" name="States" fill="#ec4899" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.districts && <Bar dataKey="districts" name="Districts" fill="#f59e0b" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.schools && <Bar dataKey="schools" name="Schools" fill="#8b5cf6" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.teachers && <Bar dataKey="teachers" name="Teachers" fill="#06b6d4" radius={[2, 2, 0, 0]} />}
+                                            {visibleBars.students && <Bar dataKey="students" name="Students" fill="#6366f1" radius={[2, 2, 0, 0]} />}
+                                            {(visibleBars as any).tokens && <Bar dataKey="tokens" name="Tokens" fill="#10b981" radius={[2, 2, 0, 0]} />}
+                                            {(visibleBars as any).oopsies && <Bar dataKey="oopsies" name="Oopsies" fill="#ef4444" radius={[2, 2, 0, 0]} />}
+                                            {(visibleBars as any).withdrawals && <Bar dataKey="withdrawals" name="Withdrawals" fill="#3b82f6" radius={[2, 2, 0, 0]} />}
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}
                             </div>
-                            <p className="text-center text-xs text-gray-500 mt-4 italic">The X-Axis views the full historical timeline</p>
+                            <p className="text-center text-[10px] text-gray-500 mt-4 italic">The X-Axis views the Aug-Jul (full 12 months) timeline</p>
                         </CardContent>
                     </Card>
 
