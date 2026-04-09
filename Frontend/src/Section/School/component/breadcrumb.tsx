@@ -22,16 +22,15 @@ export function Breadcrumb() {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
           
-          const isObjectId = /^[0-9a-fA-F]{24}$/.test(segment);
-          const isNumericId = /^\d/.test(segment);
           const validParentContexts = ["system-admin", "districts", "schools"];
-
-          if ((isObjectId || isNumericId) && validParentContexts.includes(parentSegment)) {
+          
+          // Force details label for any segment under districts/schools if it's the last segment
+          if (validParentContexts.includes(parentSegment)) {
             if (parentSegment === "schools") {
               label = "School Details";
             } else if (parentSegment === "districts") {
               label = "District Details";
-            } else {
+            } else if (parentSegment === "system-admin" && segment !== "districts" && segment !== "schools") {
               label = "Dashboard";
             }
           }
