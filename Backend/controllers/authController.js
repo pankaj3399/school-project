@@ -964,7 +964,7 @@ export const createSupportTicket = async (req, res) => {
 };
 
 export const completeGuardianRegistration = async (req, res) => {
-  const { token, email, name, password, termsAccepted, termsVersion } = req.body;
+  const { token, email, name, password, termsAccepted, termsVersion, marketingConsent, photoConsent } = req.body;
 
   if (!token || !name || !password || !email) {
     return res.status(400).json({ message: "All fields are required." });
@@ -1040,6 +1040,10 @@ export const completeGuardianRegistration = async (req, res) => {
     } else if (student.standard === email) {
       student.isParentTwoEmailVerified = true;
     }
+    
+    // Update consents
+    student.marketingConsent = marketingConsent || false;
+    student.photoConsent = photoConsent || false;
     
     // Clear the verification code only after both guardians (if applicable) have verified
     const isBothVerified = student.isParentOneEmailVerified && (!student.standard || student.isParentTwoEmailVerified);

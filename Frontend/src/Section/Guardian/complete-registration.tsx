@@ -26,6 +26,8 @@ export default function CompleteGuardianRegistration() {
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const [termsError, setTermsError] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [photoConsent, setPhotoConsent] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     password: "",
@@ -113,7 +115,9 @@ export default function CompleteGuardianRegistration() {
         name: formData.name,
         password: formData.password,
         termsAccepted,
-        termsVersion
+        termsVersion,
+        marketingConsent,
+        photoConsent
       });
 
       if (result.error) {
@@ -275,6 +279,43 @@ export default function CompleteGuardianRegistration() {
                   className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
                 />
               </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div className="flex items-start space-x-3">
+                  <Checkbox 
+                    id="marketing" 
+                    checked={marketingConsent}
+                    onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                    className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="marketing" className="text-sm font-medium leading-none cursor-pointer">
+                      Marketing Consent
+                    </Label>
+                    <p className="text-xs text-gray-500">
+                      I agree to receive news and promotional updates about the RADU E-Token™ system.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Checkbox 
+                    id="photo" 
+                    checked={photoConsent}
+                    onCheckedChange={(checked) => setPhotoConsent(checked as boolean)}
+                    className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="photo" className="text-sm font-medium leading-none cursor-pointer">
+                      Photo/Media Consent
+                    </Label>
+                    <p className="text-xs text-gray-500">
+                      I agree that photos/videos of the student can be used for educational and internal documentation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl mt-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"

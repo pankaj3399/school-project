@@ -12,6 +12,8 @@ import { useAuth } from "@/authContext"
 import { Role } from "@/enum"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GRADE_OPTIONS } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
+import { Check, X } from "lucide-react"
 
 const STUDENT_GRADES = GRADE_OPTIONS
 
@@ -435,6 +437,7 @@ export default function ViewStudents() {
                 <TableHead className="text-gray-700">Student Email</TableHead>
                 <TableHead className="text-gray-700">Guardian Email</TableHead>
                 <TableHead className="text-gray-700">Grade</TableHead>
+                <TableHead className="text-gray-700">Consents</TableHead>
                 <TableHead className="text-gray-700">Email Verification Status</TableHead>
                 <TableHead className="text-gray-700">Actions</TableHead>
               </TableRow>
@@ -446,6 +449,34 @@ export default function ViewStudents() {
                   <TableCell>{student.email}</TableCell>
                   <TableCell>{student.parentEmail || "N/A"}<br />{student.standard}</TableCell>
                   <TableCell>{student.grade || "N/A"}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-500 w-16">Marketing:</span>
+                        {student.marketingConsent ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 py-0 px-2 h-5">
+                            <Check className="h-3 w-3" /> Yes
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 flex items-center gap-1 py-0 px-2 h-5">
+                            <X className="h-3 w-3" /> No
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-500 w-16">Photo:</span>
+                        {student.photoConsent ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 py-0 px-2 h-5">
+                            <Check className="h-3 w-3" /> Yes
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 flex items-center gap-1 py-0 px-2 h-5">
+                            <X className="h-3 w-3" /> No
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
                   <TableCell>{getVerificationStatus(student)}</TableCell>
                   <TableCell>
                     <button

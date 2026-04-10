@@ -1067,7 +1067,7 @@ export async function completeTeacherRegistration({ token, name, password, subje
   }
 }
 
-export async function completeGuardianRegistration({ token, name, password, email, termsAccepted, termsVersion }: { token: string, name: string, password: string, email: string, termsAccepted?: boolean, termsVersion?: string }) {
+export async function completeGuardianRegistration({ token, name, password, email, termsAccepted, termsVersion, marketingConsent, photoConsent }: { token: string, name: string, password: string, email: string, termsAccepted?: boolean, termsVersion?: string, marketingConsent?: boolean, photoConsent?: boolean }) {
   try {
     const response = await axios.post(`${API_URL}/auth/guardian-complete-registration`, {
       token,
@@ -1075,7 +1075,9 @@ export async function completeGuardianRegistration({ token, name, password, emai
       password,
       email,
       termsAccepted,
-      termsVersion
+      termsVersion,
+      marketingConsent,
+      photoConsent
     });
     return response.data;
   } catch (error: any) {

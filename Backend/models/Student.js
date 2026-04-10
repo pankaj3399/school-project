@@ -105,6 +105,14 @@ const studentSchema = new mongoose.Schema({
   gaurdian2:{
     type: GaurdianSchema,
     default: null
+  },
+  marketingConsent: {
+    type: Boolean,
+    default: false
+  },
+  photoConsent: {
+    type: Boolean,
+    default: false
   }
 });
 
