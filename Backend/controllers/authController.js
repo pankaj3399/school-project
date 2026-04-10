@@ -1041,6 +1041,13 @@ export const completeGuardianRegistration = async (req, res) => {
       student.isParentTwoEmailVerified = true;
     }
     
+    if (marketingConsent !== undefined && typeof marketingConsent !== "boolean") {
+      return res.status(400).json({ message: "marketingConsent must be a boolean." });
+    }
+    if (photoConsent !== undefined && typeof photoConsent !== "boolean") {
+      return res.status(400).json({ message: "photoConsent must be a boolean." });
+    }
+
     // Update consents only if explicitly provided as boolean
     if (typeof marketingConsent === 'boolean') {
       student.marketingConsent = marketingConsent;
