@@ -1041,9 +1041,13 @@ export const completeGuardianRegistration = async (req, res) => {
       student.isParentTwoEmailVerified = true;
     }
     
-    // Update consents
-    student.marketingConsent = marketingConsent || false;
-    student.photoConsent = photoConsent || false;
+    // Update consents only if explicitly provided as boolean
+    if (typeof marketingConsent === 'boolean') {
+      student.marketingConsent = marketingConsent;
+    }
+    if (typeof photoConsent === 'boolean') {
+      student.photoConsent = photoConsent;
+    }
     
     // Clear the verification code only after both guardians (if applicable) have verified
     const isBothVerified = student.isParentOneEmailVerified && (!student.standard || student.isParentTwoEmailVerified);
