@@ -1,46 +1,76 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Rocket, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Eraser } from "lucide-react";
+import { Download, FileSpreadsheet, Rocket, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Eraser } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { promote, resetPoints } from "@/api";
+import { promote, resetPoints, verifyCurrentUserPassword } from "@/api";
 import { cn } from "@/lib/utils";
+import { PasswordConfirmModal } from "@/Section/SystemAdmin/schools/PasswordConfirmModal";
 
 interface LifecycleManagerProps {
   schoolId: string;
   onDownloadWaitlist: () => Promise<void>;
+  onDownloadSnapshot: () => Promise<void>;
 }
 
 type Step = 'export' | 'reset-points' | 'promote' | 'finalize';
 
-export const LifecycleManager: React.FC<LifecycleManagerProps> = ({ 
-  schoolId, 
-  onDownloadWaitlist 
+export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
+  schoolId,
+  onDownloadWaitlist,
+  onDownloadSnapshot
 }) => {
   const [activeStep, setActiveStep] = useState<Step>('export');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDownloadingSnapshot, setIsDownloadingSnapshot] = useState(false);
+  const [isDownloadingWaitlist, setIsDownloadingWaitlist] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [promotionResult, setPromotionResult] = useState<{ count: number } | null>(null);
   const { toast } = useToast();
 
-  const handleResetPoints = async () => {
-    if (isProcessing) return;
+  const handleResetPointsWithPassword = async (password: string) => {
     if (!schoolId) {
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
-      return;
+      throw new Error("School context is missing.");
     }
+
+    const verify = await verifyCurrentUserPassword(password);
+    if (verify?.error) {
+      throw new Error("Invalid password. Please try again.");
+    }
+
     setIsProcessing(true);
     try {
       const response = await resetPoints(schoolId);
       if (response.error) {
         toast({ title: "Reset Failed", description: response.error, variant: "destructive" });
-      } else {
-        toast({ title: "Points Cleared", description: "All student points and history have been reset." });
-        setActiveStep('promote');
+        throw new Error(response.error);
       }
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to reset points.", variant: "destructive" });
+      toast({ title: "Points Cleared", description: "All student points and history have been reset." });
+      setShowResetPasswordModal(false);
+      setActiveStep('promote');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDownloadSnapshot = async () => {
+    if (isDownloadingSnapshot) return;
+    setIsDownloadingSnapshot(true);
+    try {
+      await onDownloadSnapshot();
+    } finally {
+      setIsDownloadingSnapshot(false);
+    }
+  };
+
+  const handleDownloadWaitlist = async () => {
+    if (isDownloadingWaitlist) return;
+    setIsDownloadingWaitlist(true);
+    try {
+      await onDownloadWaitlist();
+    } finally {
+      setIsDownloadingWaitlist(false);
     }
   };
 
@@ -128,12 +158,27 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
               <div className="space-y-2">
                 <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 1: Data Preservation</h3>
                 <p className="text-neutral-500 leading-relaxed">
-                  Export your current student roster and waitlist. This snapshot ensures you have a record of the graduating year's performance.
+                  Export a full-year snapshot (students, teachers, and points history) and your waiting list before starting the rollover.
                 </p>
               </div>
-              <div className="flex gap-4 pt-4">
-                <Button onClick={onDownloadWaitlist} variant="outline" className="h-14 px-8 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold">
-                  <Download className="w-4 h-4" /> Export Snapshots
+              <div className="flex flex-wrap justify-center gap-3 pt-4">
+                <Button
+                  onClick={handleDownloadSnapshot}
+                  disabled={isDownloadingSnapshot}
+                  variant="outline"
+                  className="h-14 px-6 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  {isDownloadingSnapshot ? "Preparing snapshot..." : "Download Full-Year Snapshot"}
+                </Button>
+                <Button
+                  onClick={handleDownloadWaitlist}
+                  disabled={isDownloadingWaitlist}
+                  variant="outline"
+                  className="h-14 px-6 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold"
+                >
+                  <Download className="w-4 h-4" />
+                  {isDownloadingWaitlist ? "Preparing waiting list..." : "Download Waiting List"}
                 </Button>
                 <Button onClick={() => setActiveStep('reset-points')} className="h-14 px-10 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 gap-2 font-bold shadow-lg shadow-neutral-900/10">
                   Next Step <ChevronRight className="w-4 h-4" />
@@ -166,8 +211,8 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                 <Button onClick={() => setActiveStep('promote')} disabled={isProcessing} variant="ghost" className="h-14 px-8 rounded-2xl font-bold text-neutral-400">
                   Skip this step
                 </Button>
-                <Button 
-                  onClick={handleResetPoints} 
+                <Button
+                  onClick={() => setShowResetPasswordModal(true)}
                   disabled={isProcessing}
                   className="h-14 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold gap-3 shadow-lg shadow-amber-600/20"
                 >
@@ -263,6 +308,16 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
           )}
         </div>
       </CardContent>
+
+      <PasswordConfirmModal
+        isOpen={showResetPasswordModal}
+        onClose={() => setShowResetPasswordModal(false)}
+        onConfirm={handleResetPointsWithPassword}
+        title="Clear All Points"
+        description="This permanently deletes all point history and resets balances to zero. Enter your password to confirm."
+        confirmText="Clear All Points"
+        isLoading={isProcessing}
+      />
     </Card>
   );
 };

@@ -3,6 +3,9 @@ import { getReportDataStudentCombined } from '@/api';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { GRADE_OPTIONS } from '@/lib/types';
+import { useSchool } from '@/context/SchoolContext';
+import { useAuth } from '@/authContext';
+import { Role } from '@/enum';
 
 type ReportData = {
   gradeData: {
@@ -67,7 +70,9 @@ export default function ViewReport({
 }) {
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData | null>(null);
- 
+  const { selectedSchoolId } = useSchool();
+  const { user } = useAuth();
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
 
   const grades = GRADE_OPTIONS
 
@@ -182,15 +187,31 @@ export default function ViewReport({
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getReportDataStudentCombined(grades);
-        setReportData(response);
+        if (isMultiSchoolUser && !selectedSchoolId) {
+          setReportData(null);
+          setSelectedStudents(new Set());
+          setSelectedStudentsData([]);
+          return;
+        }
+        const response = await getReportDataStudentCombined(
+          grades,
+          selectedSchoolId || undefined
+        );
+        if (response?.error) {
+          setReportData(null);
+        } else {
+          setReportData(response);
+        }
+        setSelectedStudents(new Set());
+        setSelectedStudentsData([]);
       } catch (error) {
         console.error(error);
+        setReportData(null);
       }
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [selectedSchoolId, isMultiSchoolUser]);
 
 
   if (loading) {
@@ -218,7 +239,15 @@ export default function ViewReport({
         </span>
       </div>
 
-      
+
+
+      {(!reportData?.gradeData || reportData.gradeData.length === 0) && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+          {isMultiSchoolUser && !selectedSchoolId
+            ? "Select a school to load reports."
+            : "No students or grades available for this school yet."}
+        </div>
+      )}
 
       {reportData?.gradeData && reportData?.gradeData.length > 0 && reportData?.gradeData.map((gradeInfo) => (
         gradeInfo.teachers.length > 0 ? (

@@ -159,14 +159,6 @@ export default function ViewPointHistoryTeacher() {
     return <Loading />
   }
 
-  if (pointHistory.length === 0 && !studentName) {
-    return (
-      <div className="text-center">
-        <h1 className="text-xl font-bold">No History found</h1>
-      </div>
-    )
-  }
-
   // Calculate pagination label
   const startIndex = pagination.totalItems > 0 
     ? (pagination.currentPage - 1) * pagination.itemsPerPage + 1 

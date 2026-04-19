@@ -12,6 +12,7 @@ import {
 } from '../controllers/districtController.js';
 import { authenticateToken, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { ensureDistrictOwnership } from '../middlewares/ownershipMiddleware.js';
+import upload from '../middlewares/multer.js';
 import { Role } from '../enum.js';
 
 const router = express.Router();
@@ -23,7 +24,7 @@ router.use(authenticateToken);
 router.get('/', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistricts);
 router.post('/', authorizeRoles(Role.SystemAdmin, Role.Admin), createDistrict);
 router.get('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), ensureDistrictOwnership, getDistrictById);
-router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), updateDistrict);
+router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), upload.single('logo'), updateDistrict);
 router.delete('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), deleteDistrict);
 router.post('/:id/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), assignDistrictAdmin);
 

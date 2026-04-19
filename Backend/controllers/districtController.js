@@ -9,6 +9,7 @@ import Feedback from "../models/Feedback.js";
 import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.js";
 import bcrypt from 'bcryptjs';
 import { escapeRegExp } from "../utils/stringUtils.js";
+import { uploadImageFromDataURI } from "../utils/cloudinary.js";
 
 // Shared helper to verify admin district scope
 const ensureAdminDistrictScope = async (userId) => {
@@ -22,6 +23,21 @@ const ensureAdminDistrictScope = async (userId) => {
   if (!adminUser.districtId) return null;
   
   return adminUser;
+};
+
+// Generate the next sequential district code (D101, D102, ...).
+// Looks at existing D### codes and returns the next unused one.
+export const generateNextDistrictCode = async () => {
+  const districts = await District.find({ code: /^D\d+$/ }).select('code').lean();
+  let maxNum = 100;
+  for (const d of districts) {
+    const n = parseInt(d.code.slice(1), 10);
+    if (!isNaN(n) && n > maxNum) maxNum = n;
+  }
+  let next = maxNum + 1;
+  // Safeguard: ensure uniqueness (race-condition protection)
+  while (await District.findOne({ code: `D${next}` })) next++;
+  return `D${next}`;
 };
 
 // Create a new district
@@ -41,15 +57,14 @@ export const createDistrict = async (req, res) => {
       settings
     } = req.body;
 
-    if (!code || typeof code !== 'string') {
-      return res.status(400).json({ message: "District code is required and must be a string" });
-    }
-
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ message: "District name is required and must be a non-empty string" });
     }
 
-    const normalizedCode = (code || '').trim().toUpperCase();
+    // Auto-generate code if not provided; normalize to uppercase
+    const normalizedCode = code && typeof code === 'string' && code.trim()
+      ? code.trim().toUpperCase()
+      : await generateNextDistrictCode();
 
     // Check if district code already exists
     const existingDistrict = await District.findOne({ code: normalizedCode });
@@ -332,7 +347,7 @@ export const getDistrictById = async (req, res) => {
 export const updateDistrict = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     if (req.user.role === Role.Admin) {
       const adminUser = await ensureAdminDistrictScope(req.user.id);
       if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
@@ -340,7 +355,16 @@ export const updateDistrict = async (req, res) => {
       }
     }
 
-    const { code, createdBy, createdAt, ...allowedUpdates } = req.body;
+    const { code, createdBy, createdAt, logo: bodyLogo, ...allowedUpdates } = req.body;
+
+    // If a file was uploaded via multer, push it to Cloudinary; otherwise accept a
+    // logo URL/string sent in the body (backward compatible with existing clients).
+    if (req.file) {
+      const logoUrl = await uploadImageFromDataURI(req.file);
+      allowedUpdates.logo = logoUrl;
+    } else if (typeof bodyLogo === 'string') {
+      allowedUpdates.logo = bodyLogo;
+    }
 
     const district = await District.findByIdAndUpdate(
       id,

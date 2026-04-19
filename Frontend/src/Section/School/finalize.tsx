@@ -89,21 +89,28 @@ const Finalize = () => {
 
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
-    if (barChart) {
-      const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
-      const formdata = new FormData();
-      // Convert image data URL to Blob
-      const imageBlob = await (await fetch(src)).blob();
-      formdata.append('file', imageBlob, 'chart.png');
-      
-      // Stringify objects before appending
-      formdata.append('studentData', JSON.stringify(student));
-      formdata.append('schoolData', JSON.stringify(schoolData));
-      formdata.append('teacherData', JSON.stringify(student.teacher[0]));
-      
-      await sendReportImage(formdata, student.teacher[0].email || "");
+    if (!barChart) return;
+
+    const teacher = Array.isArray(student.teacher) && student.teacher.length > 0 ? student.teacher[0] : null;
+    if (!teacher) {
+      throw new Error(`No teacher assigned for ${student.studentInfo?.name || 'student'}; cannot send report.`);
     }
-    
+    if (!teacher.email) {
+      throw new Error(`Teacher for ${student.studentInfo?.name || 'student'} has no email on file.`);
+    }
+
+    const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
+    const formdata = new FormData();
+    const imageBlob = await (await fetch(src)).blob();
+    formdata.append('file', imageBlob, 'chart.png');
+    formdata.append('studentData', JSON.stringify(student));
+    formdata.append('schoolData', JSON.stringify({ school: schoolData }));
+    formdata.append('teacherData', JSON.stringify(teacher));
+
+    const result = await sendReportImage(formdata, teacher.email);
+    if ((result as any)?.error) {
+      throw new Error((result as any).error);
+    }
   }
 
   const generateAllReports = async () => {
@@ -111,28 +118,45 @@ const Finalize = () => {
     setProgress(0)
     setGeneratedPDFs([])
     setShowModal(false)
-  
+
+    let successCount = 0;
+    const failures: string[] = [];
+
     try {
       for (let i = 0; i < selectedStudentsData.length; i++) {
-        // Update student ID and wait for chart to update
-        setStudentId(selectedStudentsData[i].studentInfo._id)
+        const current = selectedStudentsData[i];
+        setStudentId(current.studentInfo._id)
         await delay(2000) // Wait for chart to update
-  
-        // Generate PDF
-        await generateRewardPDF(selectedStudentsData[i])
+
+        try {
+          await generateRewardPDF(current)
+          successCount += 1;
+        } catch (err: any) {
+          console.error('Error sending report for student:', current.studentInfo?.name, err);
+          failures.push(`${current.studentInfo?.name || 'Unknown'}: ${err?.message || 'Failed to send'}`);
+        }
+
         setProgress(((i + 1) / selectedStudentsData.length) * 100)
       }
-      toast({
-        title: "Success",
-        description: `Generated ${selectedStudentsData.length} reports successfully`,
-      })
-    } catch (error) {
-      console.error('Error sending report:', error);
-      toast({
-        title: "Error",
-        description: `Failed to send reports`,
-        variant: "destructive"
-      });
+
+      if (successCount > 0 && failures.length === 0) {
+        toast({
+          title: "Success",
+          description: `Generated ${successCount} report${successCount === 1 ? '' : 's'} successfully`,
+        })
+      } else if (successCount > 0) {
+        toast({
+          title: "Partial success",
+          description: `${successCount} sent, ${failures.length} failed. First error: ${failures[0]}`,
+          variant: "destructive"
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: failures[0] || "Failed to send reports",
+          variant: "destructive"
+        })
+      }
     } finally {
       setIsGenerating(false)
       setProgress(0)
@@ -238,7 +262,7 @@ const Finalize = () => {
         />
       </div>
       <div className="opacity-0">
-        <EducationYearChart slimLines studentId={studentId} />
+        <EducationYearChart slimLines studentId={studentId} schoolId={selectedSchoolId || undefined} />
       </div>
 
       <Modal

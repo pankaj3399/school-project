@@ -688,13 +688,14 @@ export const getHistoryOfYearByStudent = async (id: string) => {
   }
 };
 
-export const getReportDataStudentCombined = async (grades: string[]) => {
+export const getReportDataStudentCombined = async (grades: string[], schoolId?: string) => {
   try {
     const token = getToken();
     const response = await axios.post(
       `${API_URL}/schoolAdmin/stats/reportdata`,
       {
         grades,
+        ...(schoolId ? { schoolId } : {}),
       },
       {
         headers: {

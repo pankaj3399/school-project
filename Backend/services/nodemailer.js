@@ -2,15 +2,16 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com", 
-    port: 587, 
-    secure: false, 
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS, 
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
-    maxFileSize: 25 * 1024 * 1024, 
+    maxFileSize: 25 * 1024 * 1024,
     tls: {
         rejectUnauthorized: false
     }
@@ -29,8 +30,8 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
         if (!emailRegex.test(to)) {
             console.error('[NODEMAILER] Invalid email address:', to);
             return false;
-        }        
-        
+        }
+
         let info;
         if(attachment)
         info = await transporter.sendMail({

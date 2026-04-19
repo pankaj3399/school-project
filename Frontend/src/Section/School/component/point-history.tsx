@@ -48,8 +48,9 @@ export default function ViewPointHistoryTeacher() {
     const fetchData = async () => {
       const token = localStorage.getItem('token')
       const resTeacher = await getStudents(token ?? "")
-      setStudents(resTeacher.students)
-      setfilteredStudents(resTeacher.students)
+      const list = Array.isArray(resTeacher?.students) ? resTeacher.students : []
+      setStudents(list)
+      setfilteredStudents(list)
     }
     fetchData()
   }, [])
@@ -173,14 +174,6 @@ export default function ViewPointHistoryTeacher() {
     return <Loading />
   }
 
-  if (pointHistory.length === 0 && !studentName) {
-    return (
-      <div className="text-center">
-        <h1 className="text-xl font-bold">No History found</h1>
-      </div>
-    )
-  }
-
   return (
     <div className="p-8 bg-white rounded-xl shadow-xl mt-10">
       {/* Header Section with improved spacing */}
@@ -287,8 +280,10 @@ export default function ViewPointHistoryTeacher() {
               )).reverse()
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-gray-500">
-                  No records found
+                <TableCell colSpan={7} className="h-32 text-center text-gray-500">
+                  {studentName
+                    ? `No point history for ${studentName} yet.`
+                    : "No point history available yet. Once tokens, oopsies, or withdrawals are recorded, they will appear here."}
                 </TableCell>
               </TableRow>
             )}

@@ -1,16 +1,84 @@
 import mongoose from 'mongoose';
 import District from '../models/District.js';
+import { generateNextDistrictCode } from './districtController.js';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
 import Admin from '../models/Admin.js';
 import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
 import crypto from 'crypto';
+import path from 'path';
+import fs from 'fs';
 import { escapeRegExp } from '../utils/stringUtils.js';
 import { Role, FormType } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
+
+// Format internal role names for human display, e.g. "DistrictAdmin" -> "District Admin"
+const formatRoleName = (role) => {
+  if (!role) return '';
+  return String(role).replace(/([a-z])([A-Z])/g, '$1 $2');
+};
+
+// Resolve a human-readable organization label (district and/or school) for an invitee
+const resolveOrgLabel = async ({ districtId, schoolId }) => {
+  const parts = [];
+  try {
+    if (schoolId) {
+      const school = await School.findById(schoolId).select('name').lean();
+      if (school?.name) parts.push(school.name);
+    }
+    if (districtId) {
+      const district = await District.findById(districtId).select('name').lean();
+      if (district?.name) parts.push(district.name);
+    }
+  } catch (_) {
+    // Best-effort; missing data should not block the invitation
+  }
+  return parts.join(' — ');
+};
+
+// Shared invitation email body with RADU logo and recipient's org context
+const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLabel }) => {
+  let logoSrc;
+  try {
+    const logoPath = path.join(process.cwd(), 'utils', 'radu-logo.png');
+    const logoBuffer = fs.readFileSync(logoPath);
+    logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  } catch (_) {
+    logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
+  }
+
+  const displayRole = formatRoleName(role);
+  const greetingName = recipientName ? ` ${recipientName}` : '';
+  const orgLine = orgLabel
+    ? `<p>You will be joining <strong>${orgLabel}</strong>.</p>`
+    : '';
+
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #ffffff;">
+      <div style="text-align: center; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+        <img src="${logoSrc}" alt="RADU E-Token" style="max-height: 80px; max-width: 240px; object-fit: contain;" />
+      </div>
+      <h2 style="color: #00a58c; text-align: center; margin-top: 24px;">Invitation to join The RADU E-Token(&trade;) System</h2>
+      <p>Hello${greetingName},</p>
+      <p>You have been invited to join the RADU E-Token&trade; System as a <strong>${displayRole}</strong>.</p>
+      ${orgLine}
+      <p>Please click the button below to set up your account and get started:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
+      </div>
+      <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
+      <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="font-size: 12px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
+    </div>
+  `;
+};
+
+const INVITATION_EMAIL_SUBJECT = "Invitation to join The RADU E-Token(\u2122) System";
 
 // Form Type Categories for aggregation
 const AWARD_TYPES = [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"];
@@ -638,10 +706,14 @@ export const cloneFromTemplate = async (req, res) => {
       }
     }
 
+    const resolvedCode = newDistrictData.code && typeof newDistrictData.code === 'string' && newDistrictData.code.trim()
+      ? newDistrictData.code.trim().toUpperCase()
+      : await generateNextDistrictCode();
+
     // Create new district with template settings (whitelist allowed fields)
     const newDistrict = await District.create({
       name: newDistrictData.name,
-      code: newDistrictData.code?.toUpperCase(),
+      code: resolvedCode,
       address: newDistrictData.address,
       city: newDistrictData.city,
       state: newDistrictData.state,
@@ -937,26 +1009,17 @@ export const inviteAdmin = async (req, res) => {
       // Create the registration URL
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(email)}&role=${role}`;
-      
-      const body = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 8px;">
-          <h2 style="color: #00a58c;">Invitation to Join RADU E-Token™</h2>
-          <p>Hello,</p>
-          <p>You have been invited to join the RADU E-Token™ System as a <strong>${role}</strong>.</p>
-          <p>Please click the button below to set up your account and get started:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
-          </div>
-          <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
-          <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #999;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
-        </div>
-      `;
+
+      const orgLabel = await resolveOrgLabel({ districtId, schoolId });
+      const body = buildInvitationEmailBody({
+        recipientName: newUser.name,
+        role,
+        registrationUrl,
+        orgLabel
+      });
 
       const { sendEmail } = await import("../services/mail.js");
-      await sendEmail(email, "Invitation to Join RADU E-Token™ System", body, body, null);
+      await sendEmail(email, INVITATION_EMAIL_SUBJECT, body, body, null);
     } catch (emailError) {
       console.error("Error sending invitation email:", emailError);
       // We still return success but notify that email failed
@@ -1167,26 +1230,17 @@ export const reInviteAdmin = async (req, res) => {
     try {
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
-      
-      const body = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 8px;">
-          <h2 style="color: #00a58c;">Re-invitation to Join RADU E-Token™</h2>
-          <p>Hello ${admin.name},</p>
-          <p>You have been re-invited to join the RADU E-Token™ System as a <strong>${admin.role}</strong>.</p>
-          <p>Please click the button below to set up your account and get started:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
-          </div>
-          <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
-          <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #999;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
-        </div>
-      `;
+
+      const orgLabel = await resolveOrgLabel({ districtId: admin.districtId, schoolId: admin.schoolId });
+      const body = buildInvitationEmailBody({
+        recipientName: admin.name,
+        role: admin.role,
+        registrationUrl,
+        orgLabel
+      });
 
       const { sendEmail } = await import("../services/mail.js");
-      await sendEmail(admin.email, "Re-invitation to Join RADU E-Token™ System", body, body, null);
+      await sendEmail(admin.email, INVITATION_EMAIL_SUBJECT, body, body, null);
     } catch (emailError) {
       console.error("Error sending re-invitation email:", emailError);
       return res.status(200).json({ 

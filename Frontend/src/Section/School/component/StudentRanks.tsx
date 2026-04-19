@@ -10,7 +10,7 @@ interface Student {
     totalPoints: number;
 }
 
-const StudentRanks = ({ studentId, schoolId }: { studentId: string; schoolId?: string }) => {
+const StudentRanks = ({ studentId, schoolId, period = "1W" }: { studentId: string; schoolId?: string; period?: string }) => {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -18,7 +18,7 @@ const StudentRanks = ({ studentId, schoolId }: { studentId: string; schoolId?: s
 
     useEffect(() => {
         fetchData();
-    }, [studentId, schoolId]);
+    }, [studentId, schoolId, period]);
 
     const handlePrint = () => {
         if (printRef.current) {
@@ -53,7 +53,7 @@ const StudentRanks = ({ studentId, schoolId }: { studentId: string; schoolId?: s
     const fetchData = async () => {
         try {
             setLoading(true);
-            const data = await getAnalyticsData({ period: "1W", schoolId });
+            const data = await getAnalyticsData({ period, schoolId });
 
             if (data.success) {
                 const rankings = data.data.studentRankings || [];
