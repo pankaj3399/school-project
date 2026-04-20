@@ -22,7 +22,6 @@ interface PaginationData {
 }
 
 export default function ViewPointHistoryTeacher() {
-  const [pointHistory, setPointHistory] = useState<any[]>([])
   const [showPointHistory, setShowPointHistory] = useState<any[]>([])
   const [filteredPointHistory, setFilteredPointHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -89,7 +88,6 @@ export default function ViewPointHistoryTeacher() {
           // For filtered data (getHistoryByTime), still need client-side aggregation
           // as this endpoint doesn't aggregate
           const aggregated = aggregateHistoryData(data.history || []);
-          setPointHistory(aggregated);
           setShowPointHistory(aggregated);
           // For filtered data, we don't have pagination, so set a basic pagination
           setPagination({
@@ -109,7 +107,6 @@ export default function ViewPointHistoryTeacher() {
         }
 
         // Backend now aggregates IEP entries, so no need for client-side aggregation
-        setPointHistory(data.pointHistory || []);
         setShowPointHistory([...data.pointHistory || []]);
       }
       setLoading(false)
