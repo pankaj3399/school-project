@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import EducationYearChart from "./component/new-chart"
 import { useEffect, useState } from "react"
-import { getCurrentUser, getCurrrentSchool, getStudents, sendReportImage } from "@/api"
+import { getCurrrentSchool, getStudents, sendReportImage } from "@/api"
 import { useSchool } from "@/context/SchoolContext"
 import { useAuth } from "@/authContext"
 import { Role } from "@/enum"
@@ -70,33 +70,24 @@ const Finalize = () => {
   const [_, setGeneratedPDFs] = useState<{ fileName: string, pdf: jsPDF, toTeacher: string }[]>([])
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
-  const [user, setUser] = useState<any>({})
   const { selectedSchoolId } = useSchool()
   const { user: authUser } = useAuth()
 
-  const waitForChartReady = (timeoutMs = 5000, intervalMs = 50) =>
-    new Promise<void>((resolve) => {
+  const waitForChartReady = (expectedStudentId: string, timeoutMs = 5000, intervalMs = 50) =>
+    new Promise<void>((resolve, reject) => {
       const start = Date.now()
       const check = () => {
         const chart = document.getElementById('graph')
+        const matchesStudent = chart?.getAttribute('data-student-id') === expectedStudentId
         const hasRenderedShape = !!chart?.querySelector('svg path, svg rect, svg line')
-        if (hasRenderedShape) return resolve()
-        if (Date.now() - start >= timeoutMs) return resolve()
+        if (matchesStudent && hasRenderedShape) return resolve()
+        if (Date.now() - start >= timeoutMs) {
+          return reject(new Error('Chart did not render in time for the selected student.'))
+        }
         setTimeout(check, intervalMs)
       }
       check()
     })
-
-  useEffect(()=>{
-    const getUserData = async () => {
-      const token = localStorage.getItem("token")
-      const user = await getCurrentUser(token ?? "")
-      
-      setUser(user.user)
-    }
-
-    getUserData()
-  },[])
 
   // Reset student selection when school changes
   useEffect(() => {
@@ -146,9 +137,9 @@ const Finalize = () => {
       for (let i = 0; i < selectedStudentsData.length; i++) {
         const current = selectedStudentsData[i];
         setStudentId(current.studentInfo._id)
-        await waitForChartReady()
 
         try {
+          await waitForChartReady(current.studentInfo._id)
           await generateRewardPDF(current)
           successCount += 1;
         } catch (err: any) {
@@ -243,7 +234,7 @@ const Finalize = () => {
       
       <div className="grid grid-cols-4 gap-4 w-full">
         <div className="col-span-4">
-          <p>*Note: After you click on the button EMAIL REPORTS, you will receive an individual report per student in your email. Please allow a few moments so we can build the reports</p>
+          <p>*Note: After you click on the button EMAIL REPORTS, each student's report is emailed to their assigned teacher. Please allow a few moments so we can build the reports.</p>
         </div>
 
         
@@ -286,7 +277,7 @@ const Finalize = () => {
         onClose={() => setShowModal(false)}
         onConfirm={() => generateAllReports()}
         title="Email Reports"
-        description={`You are about to email ${selectedStudentsData.length} reports to ${user.email || "your email"}. Are you sure you want to proceed?`}
+        description={`You are about to email ${selectedStudentsData.length} report${selectedStudentsData.length === 1 ? '' : 's'} to each student's assigned teacher. Are you sure you want to proceed?`}
         callToAction='Confirm'
         confirmDisabled={isGenerating}
       />

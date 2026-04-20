@@ -99,7 +99,7 @@ export const createDistrict = async (req, res) => {
     if (userProvidedCode) {
       const existingDistrict = await District.findOne({ code: normalizedCode });
       if (existingDistrict) {
-        return res.status(400).json({ message: "District with this code already exists" });
+        return res.status(409).json({ message: "District with this code already exists" });
       }
     }
 

@@ -28,3 +28,4 @@ dist-ssr
 seed2.js
 school_key.pem
 PROJECT_TASKS_TODO.md
+.claude/settings.local.json

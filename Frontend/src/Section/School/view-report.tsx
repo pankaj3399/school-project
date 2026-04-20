@@ -185,11 +185,13 @@ export default function ViewReport({
   };
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       setLoading(true);
       setReportError(null);
       try {
         if (isMultiSchoolUser && !selectedSchoolId) {
+          if (cancelled) return;
           setReportData(null);
           setSelectedStudents(new Set());
           setSelectedStudentsData([]);
@@ -200,6 +202,7 @@ export default function ViewReport({
           grades,
           selectedSchoolId || undefined
         );
+        if (cancelled) return;
         if (response?.error) {
           setReportData(null);
           setReportError(response.error || 'Failed to load reports');
@@ -209,15 +212,18 @@ export default function ViewReport({
         setSelectedStudents(new Set());
         setSelectedStudentsData([]);
       } catch (error: any) {
+        if (cancelled) return;
         console.error(error);
         setReportData(null);
         setReportError(error?.message || 'Failed to load reports');
         setSelectedStudents(new Set());
         setSelectedStudentsData([]);
       }
+      if (cancelled) return;
       setLoading(false);
     };
     fetchData();
+    return () => { cancelled = true; };
   }, [selectedSchoolId, isMultiSchoolUser]);
 
 

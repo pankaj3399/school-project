@@ -29,18 +29,29 @@ export default function AddDistrict() {
     });
 
     useEffect(() => {
+        let cancelled = false;
         const fetchDistricts = async () => {
             try {
                 const token = getAuthToken(user);
-                if (token) {
-                    const res = await getDistricts(token);
-                    if (res.districts) setExistingDistricts(res.districts);
+                if (!token) return;
+                const limit = 100;
+                const collected: any[] = [];
+                let page = 1;
+                while (true) {
+                    const res = await getDistricts(token, { page, limit });
+                    if (cancelled) return;
+                    const pageDistricts: any[] = res?.districts || [];
+                    collected.push(...pageDistricts);
+                    if (pageDistricts.length < limit) break;
+                    page += 1;
                 }
+                if (!cancelled) setExistingDistricts(collected);
             } catch (err) {
-                console.error('Failed to load districts for template selector:', err);
+                if (!cancelled) console.error('Failed to load districts for template selector:', err);
             }
         };
         fetchDistricts();
+        return () => { cancelled = true; };
     }, [user]);
 
 

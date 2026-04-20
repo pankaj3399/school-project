@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileSpreadsheet, Rocket, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Eraser } from "lucide-react";
@@ -31,6 +31,21 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
   const { toast } = useToast();
   const canProceedToReset = isSnapshotDownloaded && isWaitlistDownloaded;
 
+  const resetLifecycleState = () => {
+    setIsSnapshotDownloaded(false);
+    setIsWaitlistDownloaded(false);
+    setIsDownloadingSnapshot(false);
+    setIsDownloadingWaitlist(false);
+    setShowResetPasswordModal(false);
+    setPromotionResult(null);
+    setIsProcessing(false);
+    setActiveStep('export');
+  };
+
+  useEffect(() => {
+    resetLifecycleState();
+  }, [schoolId]);
+
   const handleResetPointsWithPassword = async (password: string) => {
     if (!schoolId) {
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
@@ -41,7 +56,13 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
     try {
       const verify = await verifyCurrentUserPassword(password);
       if (verify?.error) {
-        throw new Error("Invalid password. Please try again.");
+        if (verify.error instanceof Error) {
+          throw verify.error;
+        }
+        const message = typeof verify.error === 'string'
+          ? verify.error
+          : (verify.error as any)?.message || "Password verification failed. Please try again.";
+        throw new Error(message);
       }
 
       const response = await resetPoints(schoolId);
@@ -324,7 +345,7 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
               </div>
 
               <div className="pt-6">
-                <Button onClick={() => setActiveStep('export')} className="h-14 px-12 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 font-bold shadow-xl">
+                <Button onClick={resetLifecycleState} className="h-14 px-12 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 font-bold shadow-xl">
                   Finish Maintenance
                 </Button>
               </div>

@@ -108,14 +108,10 @@ const Analytics = () => {
         return () => { active = false; };
     }, [effectiveSchoolId, isMultiSchoolUser, selectedSchoolId]);
 
-    // Fetch stats whenever the school scope changes
+    // Fetch stats whenever the school scope changes. Multi-school users with no
+    // selected school see the aggregate "All Schools" view, so we intentionally
+    // let getStats run with an undefined scope.
     useEffect(() => {
-        if (isMultiSchoolUser && !selectedSchoolId) {
-            setStats(null);
-            setLoading(false);
-            return;
-        }
-
         let active = true;
         const fetchStats = async () => {
             setLoading(true);
@@ -138,7 +134,7 @@ const Analytics = () => {
 
         fetchStats();
         return () => { active = false; };
-    }, [effectiveSchoolId, isMultiSchoolUser, selectedSchoolId]);
+    }, [effectiveSchoolId]);
 
     const resetSchoolScopedState = () => {
         setStudentId("");
@@ -146,6 +142,7 @@ const Analytics = () => {
         setStudents([]);
         setFilteredStudents([]);
         setStats(null);
+        setIsPopOverOpen(false);
     };
 
     return (

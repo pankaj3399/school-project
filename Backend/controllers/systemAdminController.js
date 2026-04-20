@@ -47,6 +47,26 @@ const safeUrl = (value) => {
   }
 };
 
+// Resolve the frontend base URL used in invitation links. Fails closed when
+// FRONTEND_URL is missing, invalid, or points to localhost so invitees never
+// receive an unreachable link.
+const resolveFrontendBaseUrl = () => {
+  const raw = process.env.FRONTEND_URL;
+  if (!raw) {
+    throw new Error('FRONTEND_URL is not configured; cannot build invitation link.');
+  }
+  const valid = safeUrl(raw);
+  if (!valid) {
+    throw new Error('FRONTEND_URL is not a valid http(s) URL; cannot build invitation link.');
+  }
+  const host = new URL(valid).hostname.toLowerCase();
+  const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.local');
+  if (isLocalhost && process.env.NODE_ENV === 'production') {
+    throw new Error('FRONTEND_URL points to localhost in production; cannot build invitation link.');
+  }
+  return valid.replace(/\/$/, '');
+};
+
 // Resolve a human-readable organization label (district and/or school) for an invitee
 const resolveOrgLabel = async ({ districtId, schoolId }) => {
   const parts = [];
@@ -65,20 +85,24 @@ const resolveOrgLabel = async ({ districtId, schoolId }) => {
   return parts.join(' — ');
 };
 
+// Read the embedded RADU logo once at module load so invitations don't block
+// the event loop on every send. Falls back to a hosted image if the file can't
+// be read at startup.
+const cachedLogoSrc = (() => {
+  try {
+    const logoPath = path.join(process.cwd(), 'utils', 'radu-logo.png');
+    const logoBuffer = fs.readFileSync(logoPath);
+    return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  } catch (_) {
+    return 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
+  }
+})();
+
 // Shared invitation email body with RADU logo and recipient's org context.
 // All user-controlled values are escaped before interpolation to prevent HTML
 // injection; registrationUrl is additionally validated to be an http(s) URL.
 const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLabel }) => {
-  let logoSrcRaw;
-  try {
-    const logoPath = path.join(process.cwd(), 'utils', 'radu-logo.png');
-    const logoBuffer = fs.readFileSync(logoPath);
-    logoSrcRaw = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-  } catch (_) {
-    logoSrcRaw = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
-  }
-
-  const logoSrc = escapeHtml(logoSrcRaw);
+  const logoSrc = escapeHtml(cachedLogoSrc);
   const displayRole = escapeHtml(formatRoleName(role));
   const greetingName = recipientName ? ` ${escapeHtml(recipientName)}` : '';
   const orgLine = orgLabel
@@ -1047,7 +1071,7 @@ export const inviteAdmin = async (req, res) => {
     // Send invitation email
     try {
       // Create the registration URL
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const baseUrl = resolveFrontendBaseUrl();
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(email)}&role=${role}`;
 
       const orgLabel = await resolveOrgLabel({ districtId, schoolId });
@@ -1268,7 +1292,7 @@ export const reInviteAdmin = async (req, res) => {
 
     // Send invitation email
     try {
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const baseUrl = resolveFrontendBaseUrl();
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
 
       const orgLabel = await resolveOrgLabel({ districtId: admin.districtId, schoolId: admin.schoolId });
