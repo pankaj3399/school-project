@@ -89,36 +89,43 @@ const Analytics = () => {
         setStudentId("");
         setStudentName("");
 
+        let active = true;
         const fetchStudents = async () => {
             const token = localStorage.getItem("token");
             const res = await getStudents(token ?? "", effectiveSchoolId);
+            if (!active) return;
             setStudents(res.students || []);
             setFilteredStudents(res.students || []);
         };
 
         fetchStudents();
+        return () => { active = false; };
     }, [effectiveSchoolId]);
 
     // Fetch stats whenever the school scope changes
     useEffect(() => {
+        let active = true;
         const fetchStats = async () => {
             setLoading(true);
             try {
                 const res = await getStats(effectiveSchoolId);
+                if (!active) return;
                 if (!res?.error) {
                     setStats(res);
                 } else {
                     setStats(null);
                 }
             } catch (err) {
+                if (!active) return;
                 console.error("Error fetching stats:", err);
                 setStats(null);
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
         };
 
         fetchStats();
+        return () => { active = false; };
     }, [effectiveSchoolId]);
 
     return (
@@ -224,13 +231,17 @@ const Analytics = () => {
                                 </Button>
                             </PopoverTrigger>
                             {studentName && (
-                                <X
+                                <button
+                                    type="button"
+                                    aria-label="Clear student selection"
                                     onClick={() => {
                                         setStudentId("");
                                         setStudentName("");
                                     }}
-                                    className="h-4 w-4 cursor-pointer hover:opacity-70"
-                                />
+                                    className="inline-flex items-center justify-center rounded hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-offset-1"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
                             )}
                         </div>
                         <PopoverContent className="w-[300px] p-0 flex flex-col">

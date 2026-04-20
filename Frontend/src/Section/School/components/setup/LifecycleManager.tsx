@@ -34,13 +34,13 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       throw new Error("School context is missing.");
     }
 
-    const verify = await verifyCurrentUserPassword(password);
-    if (verify?.error) {
-      throw new Error("Invalid password. Please try again.");
-    }
-
     setIsProcessing(true);
     try {
+      const verify = await verifyCurrentUserPassword(password);
+      if (verify?.error) {
+        throw new Error("Invalid password. Please try again.");
+      }
+
       const response = await resetPoints(schoolId);
       if (response.error) {
         toast({ title: "Reset Failed", description: response.error, variant: "destructive" });

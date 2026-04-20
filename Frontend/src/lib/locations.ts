@@ -16,6 +16,26 @@ export const US_STATES = [
     { name: "Texas", abbreviation: "TX" }, { name: "Utah", abbreviation: "UT" }, { name: "Vermont", abbreviation: "VT" },
     { name: "Virginia", abbreviation: "VA" }, { name: "Washington", abbreviation: "WA" }, { name: "West Virginia", abbreviation: "WV" },
     { name: "Wisconsin", abbreviation: "WI" }, { name: "Wyoming", abbreviation: "WY" }
-];
+] as const;
 
-export const COUNTRIES = ["USA", "Canada", "Other"];
+export const CANADA_PROVINCES = [
+    { name: "Alberta", abbreviation: "AB" }, { name: "British Columbia", abbreviation: "BC" },
+    { name: "Manitoba", abbreviation: "MB" }, { name: "New Brunswick", abbreviation: "NB" },
+    { name: "Newfoundland and Labrador", abbreviation: "NL" }, { name: "Northwest Territories", abbreviation: "NT" },
+    { name: "Nova Scotia", abbreviation: "NS" }, { name: "Nunavut", abbreviation: "NU" },
+    { name: "Ontario", abbreviation: "ON" }, { name: "Prince Edward Island", abbreviation: "PE" },
+    { name: "Quebec", abbreviation: "QC" }, { name: "Saskatchewan", abbreviation: "SK" },
+    { name: "Yukon", abbreviation: "YT" }
+] as const;
+
+export const COUNTRIES = ["USA", "Canada", "Other"] as const;
+
+export type USState = typeof US_STATES[number];
+export type USStateName = USState['name'];
+export type USStateAbbreviation = USState['abbreviation'];
+
+export type CanadaProvince = typeof CANADA_PROVINCES[number];
+export type CanadaProvinceName = CanadaProvince['name'];
+export type CanadaProvinceAbbreviation = CanadaProvince['abbreviation'];
+
+export type Country = typeof COUNTRIES[number];

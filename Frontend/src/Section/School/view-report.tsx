@@ -191,6 +191,7 @@ export default function ViewReport({
           setReportData(null);
           setSelectedStudents(new Set());
           setSelectedStudentsData([]);
+          setLoading(false);
           return;
         }
         const response = await getReportDataStudentCombined(

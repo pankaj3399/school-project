@@ -89,7 +89,9 @@ const Finalize = () => {
 
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
-    if (!barChart) return;
+    if (!barChart) {
+      throw new Error(`Chart element not found; cannot generate report for ${student.studentInfo?.name || 'student'}.`);
+    }
 
     const teacher = Array.isArray(student.teacher) && student.teacher.length > 0 ? student.teacher[0] : null;
     if (!teacher) {

@@ -97,10 +97,19 @@ export default function SchoolsList() {
             if (!user) return;
             const token = getAuthToken(user);
             if (!token) return;
-            const data = await getDistricts(token);
-            if (Array.isArray(data.districts)) {
-                setDistricts(data.districts.map((d: any) => ({ _id: d._id, name: d.name })));
+
+            const PAGE_SIZE = 100;
+            const all: { _id: string; name: string }[] = [];
+            let page = 1;
+            while (true) {
+                const data = await getDistricts(token, { page, limit: PAGE_SIZE });
+                if (!Array.isArray(data?.districts)) break;
+                all.push(...data.districts.map((d: any) => ({ _id: d._id, name: d.name })));
+                const totalPages = data?.pagination?.pages;
+                if (!totalPages || page >= totalPages || data.districts.length < PAGE_SIZE) break;
+                page += 1;
             }
+            setDistricts(all);
         };
         fetchDistrictList();
     }, [user]);

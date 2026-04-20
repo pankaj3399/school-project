@@ -49,10 +49,12 @@ export default function AddDistrict() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const isUsCountry = formData.country === 'USA';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.state) {
+        if (isUsCountry && !formData.state) {
             toast({
                 title: "State Required",
                 description: "Please select a state.",
@@ -211,20 +213,33 @@ export default function AddDistrict() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="state" className="text-sm font-bold text-gray-700">State</Label>
-                                <Select
-                                    value={formData.state}
-                                    onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
-                                >
-                                    <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
-                                        <SelectValue placeholder="Select state" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-72">
-                                        {US_STATES.map(s => (
-                                            <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Label htmlFor="state" className="text-sm font-bold text-gray-700">
+                                    State{isUsCountry ? '' : ' (US only)'}
+                                </Label>
+                                {isUsCountry ? (
+                                    <Select
+                                        value={formData.state}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                                    >
+                                        <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
+                                            <SelectValue placeholder="Select state" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-72">
+                                            {US_STATES.map(s => (
+                                                <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        id="state"
+                                        name="state"
+                                        placeholder="State / Province / Region (optional)"
+                                        value={formData.state}
+                                        onChange={handleChange}
+                                        className="border-gray-200 focus:ring-[#00a58c] h-11"
+                                    />
+                                )}
                             </div>
 
                             <div className="space-y-2">

@@ -27,6 +27,8 @@ const ensureAdminDistrictScope = async (userId) => {
 
 // Generate the next sequential district code (D101, D102, ...).
 // Looks at existing D### codes and returns the next unused one.
+// Note: this is only a best-effort candidate — the unique index on District.code
+// is the real source of truth. Callers must retry on E11000 duplicate-key errors.
 export const generateNextDistrictCode = async () => {
   const districts = await District.find({ code: /^D\d+$/ }).select('code').lean();
   let maxNum = 100;
@@ -34,10 +36,24 @@ export const generateNextDistrictCode = async () => {
     const n = parseInt(d.code.slice(1), 10);
     if (!isNaN(n) && n > maxNum) maxNum = n;
   }
-  let next = maxNum + 1;
-  // Safeguard: ensure uniqueness (race-condition protection)
-  while (await District.findOne({ code: `D${next}` })) next++;
-  return `D${next}`;
+  return `D${maxNum + 1}`;
+};
+
+// Create a district with retry on duplicate-key errors for auto-generated codes.
+// When the code is user-supplied, duplicates fail fast (no retry). When auto-generated,
+// concurrent inserts racing the same candidate code are resolved by retrying with a fresh one.
+export const createDistrictWithRetry = async (payload, { autoCode }) => {
+  const MAX_ATTEMPTS = 5;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      return await District.create(payload);
+    } catch (err) {
+      const isDup = err?.code === 11000 && (err?.keyPattern?.code || err?.message?.includes('code'));
+      if (!isDup || !autoCode) throw err;
+      payload.code = await generateNextDistrictCode();
+    }
+  }
+  throw new Error('Could not allocate a unique district code after multiple attempts');
 };
 
 // Create a new district
@@ -62,17 +78,19 @@ export const createDistrict = async (req, res) => {
     }
 
     // Auto-generate code if not provided; normalize to uppercase
-    const normalizedCode = code && typeof code === 'string' && code.trim()
+    const userProvidedCode = code && typeof code === 'string' && code.trim();
+    const normalizedCode = userProvidedCode
       ? code.trim().toUpperCase()
       : await generateNextDistrictCode();
 
-    // Check if district code already exists
-    const existingDistrict = await District.findOne({ code: normalizedCode });
-    if (existingDistrict) {
-      return res.status(400).json({ message: "District with this code already exists" });
+    if (userProvidedCode) {
+      const existingDistrict = await District.findOne({ code: normalizedCode });
+      if (existingDistrict) {
+        return res.status(400).json({ message: "District with this code already exists" });
+      }
     }
 
-    const district = await District.create({
+    const district = await createDistrictWithRetry({
       name,
       code: normalizedCode,
       address,
@@ -86,7 +104,7 @@ export const createDistrict = async (req, res) => {
       settings: settings || {},
       createdBy: req.user.id,
       subscriptionStatus: 'pending'
-    });
+    }, { autoCode: !userProvidedCode });
 
     return res.status(201).json({
       message: "District created successfully",

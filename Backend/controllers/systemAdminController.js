@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import District from '../models/District.js';
-import { generateNextDistrictCode } from './districtController.js';
+import { generateNextDistrictCode, createDistrictWithRetry } from './districtController.js';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
@@ -21,6 +21,30 @@ const formatRoleName = (role) => {
   return String(role).replace(/([a-z])([A-Z])/g, '$1 $2');
 };
 
+// Escape HTML special characters to prevent injection when interpolating
+// user-controlled strings into email templates.
+const escapeHtml = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+// Only allow http(s) URLs to be embedded as href; fall back to '#' for anything else.
+const safeUrl = (value) => {
+  if (typeof value !== 'string') return '#';
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '#';
+    return parsed.toString();
+  } catch {
+    return '#';
+  }
+};
+
 // Resolve a human-readable organization label (district and/or school) for an invitee
 const resolveOrgLabel = async ({ districtId, schoolId }) => {
   const parts = [];
@@ -39,22 +63,29 @@ const resolveOrgLabel = async ({ districtId, schoolId }) => {
   return parts.join(' — ');
 };
 
-// Shared invitation email body with RADU logo and recipient's org context
+// Shared invitation email body with RADU logo and recipient's org context.
+// All user-controlled values are escaped before interpolation to prevent HTML
+// injection; registrationUrl is additionally validated to be an http(s) URL.
 const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLabel }) => {
-  let logoSrc;
+  let logoSrcRaw;
   try {
     const logoPath = path.join(process.cwd(), 'utils', 'radu-logo.png');
     const logoBuffer = fs.readFileSync(logoPath);
-    logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    logoSrcRaw = `data:image/png;base64,${logoBuffer.toString('base64')}`;
   } catch (_) {
-    logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
+    logoSrcRaw = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
   }
 
-  const displayRole = formatRoleName(role);
-  const greetingName = recipientName ? ` ${recipientName}` : '';
+  const logoSrc = escapeHtml(logoSrcRaw);
+  const displayRole = escapeHtml(formatRoleName(role));
+  const greetingName = recipientName ? ` ${escapeHtml(recipientName)}` : '';
   const orgLine = orgLabel
-    ? `<p>You will be joining <strong>${orgLabel}</strong>.</p>`
+    ? `<p>You will be joining <strong>${escapeHtml(orgLabel)}</strong>.</p>`
     : '';
+
+  const safeRegistrationUrl = safeUrl(registrationUrl);
+  const hrefUrl = escapeHtml(safeRegistrationUrl);
+  const visibleUrl = escapeHtml(safeRegistrationUrl);
 
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #ffffff;">
@@ -67,11 +98,11 @@ const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLab
       ${orgLine}
       <p>Please click the button below to set up your account and get started:</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
+        <a href="${hrefUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
       </div>
       <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
       <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-      <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
+      <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${visibleUrl}</p>
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
       <p style="font-size: 12px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
     </div>
@@ -706,12 +737,13 @@ export const cloneFromTemplate = async (req, res) => {
       }
     }
 
-    const resolvedCode = newDistrictData.code && typeof newDistrictData.code === 'string' && newDistrictData.code.trim()
+    const userProvidedCode = newDistrictData.code && typeof newDistrictData.code === 'string' && newDistrictData.code.trim();
+    const resolvedCode = userProvidedCode
       ? newDistrictData.code.trim().toUpperCase()
       : await generateNextDistrictCode();
 
     // Create new district with template settings (whitelist allowed fields)
-    const newDistrict = await District.create({
+    const newDistrict = await createDistrictWithRetry({
       name: newDistrictData.name,
       code: resolvedCode,
       address: newDistrictData.address,
@@ -726,7 +758,7 @@ export const cloneFromTemplate = async (req, res) => {
       templateSourceId: templateDistrictId,
       createdBy: req.user.id,
       subscriptionStatus: 'pending'
-    });
+    }, { autoCode: !userProvidedCode });
 
     return res.status(201).json({
       message: "District created from template successfully",

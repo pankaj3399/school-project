@@ -23,7 +23,7 @@ import { EditAdminDialog } from '@/components/EditAdminDialog';
 import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { US_STATES, COUNTRIES } from '@/lib/locations';
+import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -704,20 +704,45 @@ export default function ViewDistrict() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">State</Label>
-                                        <Select
-                                            value={editData?.state || ''}
-                                            onValueChange={(v) => setEditData({...editData, state: v})}
-                                        >
-                                            <SelectTrigger className="h-11 bg-white border-gray-200">
-                                                <SelectValue placeholder="Select state" />
-                                            </SelectTrigger>
-                                            <SelectContent className="max-h-72">
-                                                {US_STATES.map(s => (
-                                                    <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <Label className="text-sm font-bold text-gray-700">
+                                            {editData?.country === 'Canada' ? 'Province' : 'State / Region'}
+                                        </Label>
+                                        {editData?.country === 'USA' ? (
+                                            <Select
+                                                value={editData?.state || ''}
+                                                onValueChange={(v) => setEditData({...editData, state: v})}
+                                            >
+                                                <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                    <SelectValue placeholder="Select state" />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-72">
+                                                    {US_STATES.map(s => (
+                                                        <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : editData?.country === 'Canada' ? (
+                                            <Select
+                                                value={editData?.state || ''}
+                                                onValueChange={(v) => setEditData({...editData, state: v})}
+                                            >
+                                                <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                    <SelectValue placeholder="Select province" />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-72">
+                                                    {CANADA_PROVINCES.map(p => (
+                                                        <SelectItem key={p.abbreviation} value={p.name}>{p.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                value={editData?.state || ''}
+                                                onChange={(e) => setEditData({...editData, state: e.target.value})}
+                                                placeholder="State / Province / Region"
+                                                className="h-11 bg-white border-gray-200"
+                                            />
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
