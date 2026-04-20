@@ -185,8 +185,10 @@ const Analytics = () => {
                                         <CommandItem
                                             value="all-schools"
                                             onSelect={() => {
-                                                resetSchoolScopedState();
-                                                setSelectedSchoolId(null);
+                                                if (selectedSchoolId !== null) {
+                                                    resetSchoolScopedState();
+                                                    setSelectedSchoolId(null);
+                                                }
                                                 setSchoolPickerOpen(false);
                                             }}
                                             className="cursor-pointer"
@@ -204,8 +206,10 @@ const Analytics = () => {
                                                 key={school._id}
                                                 value={`${school.name} ${school._id}`}
                                                 onSelect={() => {
-                                                    resetSchoolScopedState();
-                                                    setSelectedSchoolId(school._id);
+                                                    if (selectedSchoolId !== school._id) {
+                                                        resetSchoolScopedState();
+                                                        setSelectedSchoolId(school._id);
+                                                    }
                                                     setSchoolPickerOpen(false);
                                                 }}
                                                 className="cursor-pointer"
@@ -303,45 +307,47 @@ const Analytics = () => {
                 )}
             </div>
 
-            {/* Stat cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                <StatCard
-                    title="Total Teachers"
-                    value={stats?.totalTeachers || 0}
-                    icon={<IconUserStar className="w-6 h-6" />}
-                    color="green"
-                />
-                <StatCard
-                    title="Total Students"
-                    value={stats?.totalStudents || 0}
-                    icon={<IconUsers className="w-6 h-6" />}
-                    color="blue"
-                />
-                <StatCard
-                    title="Total Tokens"
-                    value={stats?.totalPoints || 0}
-                    icon={<IconCoins className="w-6 h-6" />}
-                    color="yellow"
-                />
-                <StatCard
-                    title="Total Feedbacks"
-                    value={stats?.totalFeedbackCount || 0}
-                    icon={<IconMessage2 className="w-6 h-6" />}
-                    color="purple"
-                />
-                <StatCard
-                    title="Total Oopsies"
-                    value={stats?.totalDeductPoints || 0}
-                    icon={<IconAlertCircle className="w-6 h-6" />}
-                    color="orange"
-                />
-                <StatCard
-                    title="Total Withdrawals"
-                    value={stats?.totalWithdrawPoints || 0}
-                    icon={<IconArrowBackUp className="w-6 h-6" />}
-                    color="red"
-                />
-            </div>
+            {/* Stat cards — only render once real data is loaded to avoid flashing zeros */}
+            {!loading && stats && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <StatCard
+                        title="Total Teachers"
+                        value={stats.totalTeachers}
+                        icon={<IconUserStar className="w-6 h-6" />}
+                        color="green"
+                    />
+                    <StatCard
+                        title="Total Students"
+                        value={stats.totalStudents}
+                        icon={<IconUsers className="w-6 h-6" />}
+                        color="blue"
+                    />
+                    <StatCard
+                        title="Total Tokens"
+                        value={stats.totalPoints}
+                        icon={<IconCoins className="w-6 h-6" />}
+                        color="yellow"
+                    />
+                    <StatCard
+                        title="Total Feedbacks"
+                        value={stats.totalFeedbackCount}
+                        icon={<IconMessage2 className="w-6 h-6" />}
+                        color="purple"
+                    />
+                    <StatCard
+                        title="Total Oopsies"
+                        value={stats.totalDeductPoints}
+                        icon={<IconAlertCircle className="w-6 h-6" />}
+                        color="orange"
+                    />
+                    <StatCard
+                        title="Total Withdrawals"
+                        value={stats.totalWithdrawPoints}
+                        icon={<IconArrowBackUp className="w-6 h-6" />}
+                        color="red"
+                    />
+                </div>
+            )}
 
             {loading && <div className="text-center py-4 text-neutral-400">Loading analytics data...</div>}
 

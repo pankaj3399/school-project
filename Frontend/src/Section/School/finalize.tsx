@@ -248,17 +248,19 @@ const Finalize = () => {
           {isGenerating ? 'GENERATING...' : `EMAIL REPORTS (${selectedStudentsData.length})`}
         </Button>
 
-        <Button
-          variant="destructive"
-          className=" text-md col-span-1"
-          disabled={isGenerating || selectedStudentsData.length === 0}
-          onClick={() => {
-            setSelectedStudentsData([])
-            setSelectedStudents(new Set())
-          }}
-        >
-          Cancel
-        </Button>
+        {selectedStudentsData.length > 0 && (
+          <Button
+            variant="destructive"
+            className=" text-md col-span-1"
+            disabled={isGenerating}
+            onClick={() => {
+              setSelectedStudentsData([])
+              setSelectedStudents(new Set())
+            }}
+          >
+            {isGenerating ? 'Cancel' : 'Clear Selection'}
+          </Button>
+        )}
       </div>
 
       <div>

@@ -77,7 +77,13 @@ export const isAllowedImageUrl = (value) => {
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
   const host = parsed.hostname.toLowerCase();
-  if (host === 'res.cloudinary.com' || host.endsWith('.cloudinary.com')) return true;
   const path = parsed.pathname.toLowerCase();
-  return /\.(png|jpe?g|webp|gif|svg)$/.test(path);
+  const hasImageExtension = /\.(png|jpe?g|webp|gif|svg)$/.test(path);
+  const isCloudinaryHost = host === 'res.cloudinary.com' || host.endsWith('.cloudinary.com');
+  if (isCloudinaryHost) {
+    // Cloudinary delivery URLs always have an /image/ segment; require it so a
+    // non-image resource type (e.g. /raw/, /video/) cannot slip through.
+    return path.includes('/image/') || hasImageExtension;
+  }
+  return hasImageExtension;
 };

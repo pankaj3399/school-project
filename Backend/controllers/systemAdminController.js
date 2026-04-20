@@ -1095,11 +1095,17 @@ export const inviteAdmin = async (req, res) => {
       await sendEmail(email, INVITATION_EMAIL_SUBJECT, body, body, null);
     } catch (emailError) {
       console.error("Error sending invitation email:", emailError);
-      // We still return success but notify that email failed
-      return res.status(201).json({ 
-        success: true,
-        message: "Admin invited successfully, but invitation email failed to send.",
-        user: safeUser,
+      // Fail closed: if the invitation email can't be sent, roll back the
+      // newly-created admin so the caller can retry with a clean slate and we
+      // don't leave an orphaned account whose invite link was never delivered.
+      try {
+        await Admin.findByIdAndDelete(newUser._id);
+      } catch (rollbackError) {
+        console.error("Error rolling back invited admin after email failure:", rollbackError);
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send invitation email. Please retry the invitation.",
         emailError: emailError.message
       });
     }
@@ -1291,11 +1297,14 @@ export const reInviteAdmin = async (req, res) => {
       }
     }
 
-    // Generate a new registration token candidate but do NOT persist it yet —
-    // we only invalidate the old token after the new invitation email has
-    // actually been dispatched, so a failed email keeps the existing token usable.
     const registrationToken = crypto.randomBytes(32).toString('hex');
     const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Persist the new token before attempting delivery so a save failure aborts
+    // before any email is sent — avoids dispatching a link that isn't stored.
+    admin.registrationToken = registrationToken;
+    admin.registrationTokenExpires = registrationTokenExpires;
+    await admin.save();
 
     try {
       const baseUrl = resolveFrontendBaseUrl();
@@ -1315,14 +1324,10 @@ export const reInviteAdmin = async (req, res) => {
       console.error("Error sending re-invitation email:", emailError);
       return res.status(502).json({
         success: false,
-        message: "Failed to send invitation email. The previous invitation link (if any) is still valid.",
+        message: "Failed to send invitation email.",
         emailError: true
       });
     }
-
-    admin.registrationToken = registrationToken;
-    admin.registrationTokenExpires = registrationTokenExpires;
-    await admin.save();
 
     return res.status(200).json({
       success: true,
