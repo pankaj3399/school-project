@@ -753,6 +753,15 @@ export const cloneFromTemplate = async (req, res) => {
   try {
     const { templateDistrictId, newDistrictData } = req.body;
 
+    if (!newDistrictData || typeof newDistrictData !== 'object' || Array.isArray(newDistrictData)) {
+      return res.status(400).json({ message: "newDistrictData is required and must be an object." });
+    }
+
+    const trimmedName = typeof newDistrictData.name === 'string' ? newDistrictData.name.trim() : '';
+    if (!trimmedName) {
+      return res.status(400).json({ message: "District name is required and must be a non-empty string." });
+    }
+
     const template = await District.findById(templateDistrictId);
     if (!template) {
       return res.status(404).json({ message: "Template district not found" });
@@ -766,14 +775,14 @@ export const cloneFromTemplate = async (req, res) => {
       }
     }
 
-    const userProvidedCode = newDistrictData.code && typeof newDistrictData.code === 'string' && newDistrictData.code.trim();
+    const userProvidedCode = typeof newDistrictData.code === 'string' && newDistrictData.code.trim();
     const resolvedCode = userProvidedCode
       ? newDistrictData.code.trim().toUpperCase()
       : await generateNextDistrictCode();
 
     // Create new district with template settings (whitelist allowed fields)
     const newDistrict = await createDistrictWithRetry({
-      name: newDistrictData.name,
+      name: trimmedName,
       code: resolvedCode,
       address: newDistrictData.address,
       city: newDistrictData.city,
@@ -1282,15 +1291,12 @@ export const reInviteAdmin = async (req, res) => {
       }
     }
 
-    // Generate new registration token
+    // Generate a new registration token candidate but do NOT persist it yet —
+    // we only invalidate the old token after the new invitation email has
+    // actually been dispatched, so a failed email keeps the existing token usable.
     const registrationToken = crypto.randomBytes(32).toString('hex');
     const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    admin.registrationToken = registrationToken;
-    admin.registrationTokenExpires = registrationTokenExpires;
-    await admin.save();
-
-    // Send invitation email
     try {
       const baseUrl = resolveFrontendBaseUrl();
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
@@ -1307,12 +1313,16 @@ export const reInviteAdmin = async (req, res) => {
       await sendEmail(admin.email, INVITATION_EMAIL_SUBJECT, body, body, null);
     } catch (emailError) {
       console.error("Error sending re-invitation email:", emailError);
-      return res.status(200).json({ 
-        success: true,
-        message: "Invitation token regenerated, but email failed to send.",
-        emailError: true // Send a safe flag instead of the raw message
+      return res.status(502).json({
+        success: false,
+        message: "Failed to send invitation email. The previous invitation link (if any) is still valid.",
+        emailError: true
       });
     }
+
+    admin.registrationToken = registrationToken;
+    admin.registrationTokenExpires = registrationTokenExpires;
+    await admin.save();
 
     return res.status(200).json({
       success: true,

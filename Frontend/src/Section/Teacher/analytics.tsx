@@ -240,7 +240,13 @@ const Analytics = () => {
                 </Select>
 
                 {Array.isArray(students) && students.length > 0 && (
-                    <Popover open={isPopOverOpen} onOpenChange={setIsPopOverOpen}>
+                    <Popover
+                        open={isPopOverOpen}
+                        onOpenChange={(open) => {
+                            if (open) setFilteredStudents(students);
+                            setIsPopOverOpen(open);
+                        }}
+                    >
                         <div className="flex items-center gap-2">
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-[300px] justify-between">

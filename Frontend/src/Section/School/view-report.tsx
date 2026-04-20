@@ -75,8 +75,6 @@ export default function ViewReport({
   const { user } = useAuth();
   const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
 
-  const grades = GRADE_OPTIONS
-
   const handleSelectStudent = (studentId: string, studentData: any, gradeInfo:any) => {
     setSelectedStudents(prev => {
       const newSet = new Set(prev);
@@ -199,7 +197,7 @@ export default function ViewReport({
           return;
         }
         const response = await getReportDataStudentCombined(
-          grades,
+          GRADE_OPTIONS,
           selectedSchoolId || undefined
         );
         if (cancelled) return;

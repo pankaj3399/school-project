@@ -67,13 +67,13 @@ const SetupPage = () => {
     }
   };
 
-  const handleDownloadSnapshot = async () => {
-    if (loading) return;
+  const handleDownloadSnapshot = async (): Promise<boolean> => {
+    if (loading) return false;
     try {
       const resolvedSchoolId = selectedSchoolId || school?._id;
       if (!resolvedSchoolId) {
         toast({ title: "Export Failed", description: "No school selected.", variant: "destructive" });
-        return;
+        return false;
       }
 
       const report = await getReportDataStudentCombined(GRADE_OPTIONS, resolvedSchoolId);
@@ -134,24 +134,32 @@ const SetupPage = () => {
       XLSX.writeFile(workbook, fileName);
 
       toast({ title: "Snapshot Ready", description: "Your full-year snapshot has been downloaded." });
+      return true;
     } catch (error: any) {
       toast({
         title: "Export Failed",
         description: error?.message || "Could not build snapshot.",
         variant: "destructive",
       });
+      return false;
     }
   };
 
-  const handleDownloadWaitlist = async () => {
-    if (loading) return;
+  const handleDownloadWaitlist = async (): Promise<boolean> => {
+    if (loading) return false;
     let url: string | null = null;
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        toast({ title: "Export Failed", description: "You must be signed in to export the waitlist.", variant: "destructive" });
+        return false;
+      }
 
       const resolvedSchoolId = selectedSchoolId || school?._id;
-      if (!resolvedSchoolId) return;
+      if (!resolvedSchoolId) {
+        toast({ title: "Export Failed", description: "No school selected.", variant: "destructive" });
+        return false;
+      }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export${resolvedSchoolId ? `?schoolId=${encodeURIComponent(resolvedSchoolId)}` : ''}`, {
         method: 'GET',
@@ -168,10 +176,12 @@ const SetupPage = () => {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
+
       toast({ title: "Export Complete", description: "Your waitlist CSV has been downloaded successfully." });
+      return true;
     } catch (error) {
       toast({ title: "Export Failed", description: "Could not retrieve waitlist data.", variant: "destructive" });
+      return false;
     } finally {
       if (url) window.URL.revokeObjectURL(url);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileSpreadsheet, Rocket, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Eraser } from "lucide-react";
@@ -9,8 +9,8 @@ import { PasswordConfirmModal } from "@/Section/SystemAdmin/schools/PasswordConf
 
 interface LifecycleManagerProps {
   schoolId: string;
-  onDownloadWaitlist: () => Promise<void>;
-  onDownloadSnapshot: () => Promise<void>;
+  onDownloadWaitlist: () => Promise<boolean>;
+  onDownloadSnapshot: () => Promise<boolean>;
 }
 
 type Step = 'export' | 'reset-points' | 'promote' | 'finalize';
@@ -30,6 +30,10 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
   const [promotionResult, setPromotionResult] = useState<{ count: number } | null>(null);
   const { toast } = useToast();
   const canProceedToReset = isSnapshotDownloaded && isWaitlistDownloaded;
+  const currentSchoolIdRef = useRef(schoolId);
+  useEffect(() => {
+    currentSchoolIdRef.current = schoolId;
+  }, [schoolId]);
 
   const resetLifecycleState = () => {
     setIsSnapshotDownloaded(false);
@@ -46,15 +50,19 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
     resetLifecycleState();
   }, [schoolId]);
 
+  const isStale = (capturedSchoolId: string) => currentSchoolIdRef.current !== capturedSchoolId;
+
   const handleResetPointsWithPassword = async (password: string) => {
     if (!schoolId) {
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       throw new Error("School context is missing.");
     }
 
+    const capturedSchoolId = schoolId;
     setIsProcessing(true);
     try {
       const verify = await verifyCurrentUserPassword(password);
+      if (isStale(capturedSchoolId)) return;
       if (verify?.error) {
         if (verify.error instanceof Error) {
           throw verify.error;
@@ -65,7 +73,8 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
         throw new Error(message);
       }
 
-      const response = await resetPoints(schoolId);
+      const response = await resetPoints(capturedSchoolId);
+      if (isStale(capturedSchoolId)) return;
       if (response.error) {
         toast({ title: "Reset Failed", description: response.error, variant: "destructive" });
         throw new Error(response.error);
@@ -74,35 +83,43 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       setShowResetPasswordModal(false);
       setActiveStep('promote');
     } finally {
-      setIsProcessing(false);
+      if (!isStale(capturedSchoolId)) setIsProcessing(false);
     }
   };
 
   const handleDownloadSnapshot = async () => {
     if (isDownloadingSnapshot) return;
+    const capturedSchoolId = schoolId;
     setIsDownloadingSnapshot(true);
     try {
-      await onDownloadSnapshot();
-      setIsSnapshotDownloaded(true);
+      const ok = await onDownloadSnapshot();
+      if (isStale(capturedSchoolId)) return;
+      setIsSnapshotDownloaded(!!ok);
     } catch (err) {
+      console.error('Snapshot download failed:', err);
+      if (isStale(capturedSchoolId)) return;
       setIsSnapshotDownloaded(false);
-      throw err;
+      toast({ title: "Download Failed", description: "Failed to export snapshot.", variant: "destructive" });
     } finally {
-      setIsDownloadingSnapshot(false);
+      if (!isStale(capturedSchoolId)) setIsDownloadingSnapshot(false);
     }
   };
 
   const handleDownloadWaitlist = async () => {
     if (isDownloadingWaitlist) return;
+    const capturedSchoolId = schoolId;
     setIsDownloadingWaitlist(true);
     try {
-      await onDownloadWaitlist();
-      setIsWaitlistDownloaded(true);
+      const ok = await onDownloadWaitlist();
+      if (isStale(capturedSchoolId)) return;
+      setIsWaitlistDownloaded(!!ok);
     } catch (err) {
+      console.error('Waitlist download failed:', err);
+      if (isStale(capturedSchoolId)) return;
       setIsWaitlistDownloaded(false);
-      throw err;
+      toast({ title: "Download Failed", description: "Failed to export waitlist.", variant: "destructive" });
     } finally {
-      setIsDownloadingWaitlist(false);
+      if (!isStale(capturedSchoolId)) setIsDownloadingWaitlist(false);
     }
   };
 
@@ -112,9 +129,11 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       return;
     }
+    const capturedSchoolId = schoolId;
     setIsProcessing(true);
     try {
-      const response = await promote(schoolId);
+      const response = await promote(capturedSchoolId);
+      if (isStale(capturedSchoolId)) return;
       if (response.error) {
         toast({ title: "Promotion Failed", description: response.error, variant: "destructive" });
       } else {
@@ -124,9 +143,10 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
         toast({ title: "Promotion Successful", description: "Students advanced to the next grade." });
       }
     } catch (error) {
+      if (isStale(capturedSchoolId)) return;
       toast({ title: "Error", description: "Promotion operation failed.", variant: "destructive" });
     } finally {
-      setIsProcessing(false);
+      if (!isStale(capturedSchoolId)) setIsProcessing(false);
     }
   };
 

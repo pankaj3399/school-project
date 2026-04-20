@@ -9,7 +9,7 @@ import Feedback from "../models/Feedback.js";
 import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.js";
 import bcrypt from 'bcryptjs';
 import { escapeRegExp } from "../utils/stringUtils.js";
-import { uploadImageFromDataURI } from "../utils/cloudinary.js";
+import { uploadImageFromDataURI, uploadImageFromDataUriString, isAllowedImageUrl } from "../utils/cloudinary.js";
 
 // Shared helper to verify admin district scope
 const ensureAdminDistrictScope = async (userId) => {
@@ -391,13 +391,25 @@ export const updateDistrict = async (req, res) => {
 
     const { code, createdBy, createdAt, logo: bodyLogo, ...allowedUpdates } = req.body;
 
-    // If a file was uploaded via multer, push it to Cloudinary; otherwise accept a
-    // logo URL/string sent in the body (backward compatible with existing clients).
+    // If a file was uploaded via multer, push it to Cloudinary. Otherwise accept
+    // a logo string only after validating it: data URIs must be re-uploaded
+    // through Cloudinary (which enforces MIME/size limits) and external URLs
+    // must be http(s) pointing at an allowed image host/extension.
     if (req.file) {
       const logoUrl = await uploadImageFromDataURI(req.file);
       allowedUpdates.logo = logoUrl;
-    } else if (typeof bodyLogo === 'string') {
-      allowedUpdates.logo = bodyLogo;
+    } else if (typeof bodyLogo === 'string' && bodyLogo.length > 0) {
+      if (bodyLogo.startsWith('data:')) {
+        try {
+          allowedUpdates.logo = await uploadImageFromDataUriString(bodyLogo);
+        } catch (err) {
+          return res.status(400).json({ message: err.message || 'Invalid logo data URI.' });
+        }
+      } else if (isAllowedImageUrl(bodyLogo)) {
+        allowedUpdates.logo = bodyLogo;
+      } else {
+        return res.status(400).json({ message: 'Logo must be an http(s) image URL or a valid image data URI.' });
+      }
     }
 
     const district = await District.findByIdAndUpdate(

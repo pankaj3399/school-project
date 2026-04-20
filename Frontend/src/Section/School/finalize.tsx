@@ -78,9 +78,10 @@ const Finalize = () => {
       const start = Date.now()
       const check = () => {
         const chart = document.getElementById('graph')
-        const matchesStudent = chart?.getAttribute('data-student-id') === expectedStudentId
+        const renderToken = chart?.getAttribute('data-render-token') || ''
+        const tokenMatchesStudent = renderToken.startsWith(`${expectedStudentId}|`)
         const hasRenderedShape = !!chart?.querySelector('svg path, svg rect, svg line')
-        if (matchesStudent && hasRenderedShape) return resolve()
+        if (tokenMatchesStudent && hasRenderedShape) return resolve()
         if (Date.now() - start >= timeoutMs) {
           return reject(new Error('Chart did not render in time for the selected student.'))
         }
