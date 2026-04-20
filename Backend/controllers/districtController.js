@@ -9,6 +9,7 @@ import Feedback from "../models/Feedback.js";
 import { sendDistrictAdminRegistrationMail } from "../services/verificationMail.js";
 import bcrypt from 'bcryptjs';
 import { escapeRegExp } from "../utils/stringUtils.js";
+import { uploadImageFromDataURI, uploadImageFromDataUriString, isAllowedImageUrl } from "../utils/cloudinary.js";
 
 // Shared helper to verify admin district scope
 const ensureAdminDistrictScope = async (userId) => {
@@ -22,6 +23,50 @@ const ensureAdminDistrictScope = async (userId) => {
   if (!adminUser.districtId) return null;
   
   return adminUser;
+};
+
+// Generate the next sequential district code (D101, D102, ...).
+// Looks at existing D### codes and returns the next unused one.
+// Note: this is only a best-effort candidate — the unique index on District.code
+// is the real source of truth. Callers must retry on E11000 duplicate-key errors.
+export const generateNextDistrictCode = async () => {
+  const districts = await District.find({ code: /^D\d+$/ }).select('code').lean();
+  let maxNum = 100;
+  for (const d of districts) {
+    const n = parseInt(d.code.slice(1), 10);
+    if (!isNaN(n) && n > maxNum) maxNum = n;
+  }
+  return `D${maxNum + 1}`;
+};
+
+// Create a district with retry on duplicate-key errors for auto-generated codes.
+// When the code is user-supplied, duplicates surface as a ConflictError (HTTP 409)
+// so callers can return a client-facing 4xx rather than a 500. When auto-generated,
+// concurrent inserts racing the same candidate code are resolved by retrying with a fresh one.
+export const createDistrictWithRetry = async (payload, { autoCode }) => {
+  const MAX_ATTEMPTS = 5;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      return await District.create(payload);
+    } catch (err) {
+      const isDup = err?.code === 11000 && (err?.keyPattern?.code || err?.message?.includes('code'));
+      if (!isDup) throw err;
+      if (!autoCode) {
+        const conflict = new Error(`District with code "${payload.code}" already exists`);
+        conflict.name = 'ConflictError';
+        conflict.status = 409;
+        conflict.statusCode = 409;
+        conflict.cause = err;
+        throw conflict;
+      }
+      payload.code = await generateNextDistrictCode();
+    }
+  }
+  const allocError = new Error('Could not allocate a unique district code after multiple attempts');
+  allocError.name = 'ConflictError';
+  allocError.status = 409;
+  allocError.statusCode = 409;
+  throw allocError;
 };
 
 // Create a new district
@@ -41,23 +86,24 @@ export const createDistrict = async (req, res) => {
       settings
     } = req.body;
 
-    if (!code || typeof code !== 'string') {
-      return res.status(400).json({ message: "District code is required and must be a string" });
-    }
-
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ message: "District name is required and must be a non-empty string" });
     }
 
-    const normalizedCode = (code || '').trim().toUpperCase();
+    // Auto-generate code if not provided; normalize to uppercase
+    const userProvidedCode = code && typeof code === 'string' && code.trim();
+    const normalizedCode = userProvidedCode
+      ? code.trim().toUpperCase()
+      : await generateNextDistrictCode();
 
-    // Check if district code already exists
-    const existingDistrict = await District.findOne({ code: normalizedCode });
-    if (existingDistrict) {
-      return res.status(400).json({ message: "District with this code already exists" });
+    if (userProvidedCode) {
+      const existingDistrict = await District.findOne({ code: normalizedCode });
+      if (existingDistrict) {
+        return res.status(409).json({ message: "District with this code already exists" });
+      }
     }
 
-    const district = await District.create({
+    const district = await createDistrictWithRetry({
       name,
       code: normalizedCode,
       address,
@@ -71,7 +117,7 @@ export const createDistrict = async (req, res) => {
       settings: settings || {},
       createdBy: req.user.id,
       subscriptionStatus: 'pending'
-    });
+    }, { autoCode: !userProvidedCode });
 
     return res.status(201).json({
       message: "District created successfully",
@@ -79,6 +125,9 @@ export const createDistrict = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating district:", error);
+    if (error?.name === 'ConflictError' || error?.status === 409) {
+      return res.status(409).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Error creating district", error: error.message });
   }
 };
@@ -332,7 +381,7 @@ export const getDistrictById = async (req, res) => {
 export const updateDistrict = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     if (req.user.role === Role.Admin) {
       const adminUser = await ensureAdminDistrictScope(req.user.id);
       if (!adminUser || (adminUser.role !== Role.SystemAdmin && id !== adminUser.districtId.toString())) {
@@ -340,7 +389,28 @@ export const updateDistrict = async (req, res) => {
       }
     }
 
-    const { code, createdBy, createdAt, ...allowedUpdates } = req.body;
+    const { code, createdBy, createdAt, logo: bodyLogo, ...allowedUpdates } = req.body;
+
+    // If a file was uploaded via multer, push it to Cloudinary. Otherwise accept
+    // a logo string only after validating it: data URIs must be re-uploaded
+    // through Cloudinary (which enforces MIME/size limits) and external URLs
+    // must be http(s) pointing at an allowed image host/extension.
+    if (req.file) {
+      const logoUrl = await uploadImageFromDataURI(req.file);
+      allowedUpdates.logo = logoUrl;
+    } else if (typeof bodyLogo === 'string' && bodyLogo.length > 0) {
+      if (bodyLogo.startsWith('data:')) {
+        try {
+          allowedUpdates.logo = await uploadImageFromDataUriString(bodyLogo);
+        } catch (err) {
+          return res.status(400).json({ message: err.message || 'Invalid logo data URI.' });
+        }
+      } else if (isAllowedImageUrl(bodyLogo)) {
+        allowedUpdates.logo = bodyLogo;
+      } else {
+        return res.status(400).json({ message: 'Logo must be an http(s) image URL or a valid image data URI.' });
+      }
+    }
 
     const district = await District.findByIdAndUpdate(
       id,

@@ -1,16 +1,144 @@
 import mongoose from 'mongoose';
 import District from '../models/District.js';
+import { generateNextDistrictCode, createDistrictWithRetry } from './districtController.js';
 import School from '../models/School.js';
 import Teacher from '../models/Teacher.js';
 import Student from '../models/Student.js';
 import Admin from '../models/Admin.js';
 import { TermsOfUse, TermsAcceptance } from "../models/TermsOfUse.js";
 import crypto from 'crypto';
+import path from 'path';
+import fs from 'fs';
 import { escapeRegExp } from '../utils/stringUtils.js';
 import { Role, FormType } from "../enum.js";
 import PointsHistory from "../models/PointsHistory.js";
 import xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
+
+// Format internal role names for human display, e.g. "DistrictAdmin" -> "District Admin"
+const formatRoleName = (role) => {
+  if (!role) return '';
+  return String(role).replace(/([a-z])([A-Z])/g, '$1 $2');
+};
+
+// Escape HTML special characters to prevent injection when interpolating
+// user-controlled strings into email templates.
+const escapeHtml = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+// Only allow http(s) URLs to be embedded as href. Returns null when the input
+// is not a valid http(s) URL so callers can treat this as a send failure rather
+// than emailing an unusable link.
+const safeUrl = (value) => {
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+};
+
+// Resolve the frontend base URL used in invitation links. Fails closed when
+// FRONTEND_URL is missing, invalid, or points to localhost so invitees never
+// receive an unreachable link.
+const resolveFrontendBaseUrl = () => {
+  const raw = process.env.FRONTEND_URL;
+  if (!raw) {
+    throw new Error('FRONTEND_URL is not configured; cannot build invitation link.');
+  }
+  const valid = safeUrl(raw);
+  if (!valid) {
+    throw new Error('FRONTEND_URL is not a valid http(s) URL; cannot build invitation link.');
+  }
+  const host = new URL(valid).hostname.toLowerCase();
+  const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.local');
+  if (isLocalhost && process.env.NODE_ENV === 'production') {
+    throw new Error('FRONTEND_URL points to localhost in production; cannot build invitation link.');
+  }
+  return valid.replace(/\/$/, '');
+};
+
+// Resolve a human-readable organization label (district and/or school) for an invitee
+const resolveOrgLabel = async ({ districtId, schoolId }) => {
+  const parts = [];
+  try {
+    if (schoolId) {
+      const school = await School.findById(schoolId).select('name').lean();
+      if (school?.name) parts.push(school.name);
+    }
+    if (districtId) {
+      const district = await District.findById(districtId).select('name').lean();
+      if (district?.name) parts.push(district.name);
+    }
+  } catch (_) {
+    // Best-effort; missing data should not block the invitation
+  }
+  return parts.join(' — ');
+};
+
+// Read the embedded RADU logo once at module load so invitations don't block
+// the event loop on every send. Falls back to a hosted image if the file can't
+// be read at startup.
+const cachedLogoSrc = (() => {
+  try {
+    const logoPath = path.join(process.cwd(), 'utils', 'radu-logo.png');
+    const logoBuffer = fs.readFileSync(logoPath);
+    return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  } catch (_) {
+    return 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
+  }
+})();
+
+// Shared invitation email body with RADU logo and recipient's org context.
+// All user-controlled values are escaped before interpolation to prevent HTML
+// injection; registrationUrl is additionally validated to be an http(s) URL.
+const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLabel }) => {
+  const logoSrc = escapeHtml(cachedLogoSrc);
+  const displayRole = escapeHtml(formatRoleName(role));
+  const greetingName = recipientName ? ` ${escapeHtml(recipientName)}` : '';
+  const orgLine = orgLabel
+    ? `<p>You will be joining <strong>${escapeHtml(orgLabel)}</strong>.</p>`
+    : '';
+
+  const safeRegistrationUrl = safeUrl(registrationUrl);
+  if (!safeRegistrationUrl) {
+    throw new Error('Invalid registration URL; cannot build invitation email body.');
+  }
+  const hrefUrl = escapeHtml(safeRegistrationUrl);
+  const visibleUrl = escapeHtml(safeRegistrationUrl);
+
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #ffffff;">
+      <div style="text-align: center; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+        <img src="${logoSrc}" alt="RADU E-Token" style="max-height: 80px; max-width: 240px; object-fit: contain;" />
+      </div>
+      <h2 style="color: #00a58c; text-align: center; margin-top: 24px;">Invitation to join The RADU E-Token(&trade;) System</h2>
+      <p>Hello${greetingName},</p>
+      <p>You have been invited to join the RADU E-Token&trade; System as a <strong>${displayRole}</strong>.</p>
+      ${orgLine}
+      <p>Please click the button below to set up your account and get started:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${hrefUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
+      </div>
+      <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
+      <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${visibleUrl}</p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="font-size: 12px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
+    </div>
+  `;
+};
+
+const INVITATION_EMAIL_SUBJECT = "Invitation to join The RADU E-Token(\u2122) System";
 
 // Form Type Categories for aggregation
 const AWARD_TYPES = [FormType.AwardPoints, FormType.AwardPointsIEP, "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"];
@@ -625,6 +753,15 @@ export const cloneFromTemplate = async (req, res) => {
   try {
     const { templateDistrictId, newDistrictData } = req.body;
 
+    if (!newDistrictData || typeof newDistrictData !== 'object' || Array.isArray(newDistrictData)) {
+      return res.status(400).json({ message: "newDistrictData is required and must be an object." });
+    }
+
+    const trimmedName = typeof newDistrictData.name === 'string' ? newDistrictData.name.trim() : '';
+    if (!trimmedName) {
+      return res.status(400).json({ message: "District name is required and must be a non-empty string." });
+    }
+
     const template = await District.findById(templateDistrictId);
     if (!template) {
       return res.status(404).json({ message: "Template district not found" });
@@ -638,10 +775,15 @@ export const cloneFromTemplate = async (req, res) => {
       }
     }
 
+    const userProvidedCode = typeof newDistrictData.code === 'string' && newDistrictData.code.trim();
+    const resolvedCode = userProvidedCode
+      ? newDistrictData.code.trim().toUpperCase()
+      : await generateNextDistrictCode();
+
     // Create new district with template settings (whitelist allowed fields)
-    const newDistrict = await District.create({
-      name: newDistrictData.name,
-      code: newDistrictData.code?.toUpperCase(),
+    const newDistrict = await createDistrictWithRetry({
+      name: trimmedName,
+      code: resolvedCode,
       address: newDistrictData.address,
       city: newDistrictData.city,
       state: newDistrictData.state,
@@ -654,7 +796,7 @@ export const cloneFromTemplate = async (req, res) => {
       templateSourceId: templateDistrictId,
       createdBy: req.user.id,
       subscriptionStatus: 'pending'
-    });
+    }, { autoCode: !userProvidedCode });
 
     return res.status(201).json({
       message: "District created from template successfully",
@@ -662,6 +804,9 @@ export const cloneFromTemplate = async (req, res) => {
     });
   } catch (error) {
     console.error("Error cloning district:", error);
+    if (error?.name === 'ConflictError' || error?.status === 409) {
+      return res.status(409).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Error cloning district", error: error.message });
   }
 };
@@ -935,35 +1080,32 @@ export const inviteAdmin = async (req, res) => {
     // Send invitation email
     try {
       // Create the registration URL
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const baseUrl = resolveFrontendBaseUrl();
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(email)}&role=${role}`;
-      
-      const body = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 8px;">
-          <h2 style="color: #00a58c;">Invitation to Join RADU E-Token™</h2>
-          <p>Hello,</p>
-          <p>You have been invited to join the RADU E-Token™ System as a <strong>${role}</strong>.</p>
-          <p>Please click the button below to set up your account and get started:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
-          </div>
-          <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
-          <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #999;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
-        </div>
-      `;
+
+      const orgLabel = await resolveOrgLabel({ districtId, schoolId });
+      const body = buildInvitationEmailBody({
+        recipientName: newUser.name,
+        role,
+        registrationUrl,
+        orgLabel
+      });
 
       const { sendEmail } = await import("../services/mail.js");
-      await sendEmail(email, "Invitation to Join RADU E-Token™ System", body, body, null);
+      await sendEmail(email, INVITATION_EMAIL_SUBJECT, body, body, null);
     } catch (emailError) {
       console.error("Error sending invitation email:", emailError);
-      // We still return success but notify that email failed
-      return res.status(201).json({ 
-        success: true,
-        message: "Admin invited successfully, but invitation email failed to send.",
-        user: safeUser,
+      // Fail closed: if the invitation email can't be sent, roll back the
+      // newly-created admin so the caller can retry with a clean slate and we
+      // don't leave an orphaned account whose invite link was never delivered.
+      try {
+        await Admin.findByIdAndDelete(newUser._id);
+      } catch (rollbackError) {
+        console.error("Error rolling back invited admin after email failure:", rollbackError);
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send invitation email. Please retry the invitation.",
         emailError: emailError.message
       });
     }
@@ -1155,44 +1297,35 @@ export const reInviteAdmin = async (req, res) => {
       }
     }
 
-    // Generate new registration token
     const registrationToken = crypto.randomBytes(32).toString('hex');
     const registrationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
+    // Persist the new token before attempting delivery so a save failure aborts
+    // before any email is sent — avoids dispatching a link that isn't stored.
     admin.registrationToken = registrationToken;
     admin.registrationTokenExpires = registrationTokenExpires;
     await admin.save();
 
-    // Send invitation email
     try {
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const baseUrl = resolveFrontendBaseUrl();
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
-      
-      const body = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 8px;">
-          <h2 style="color: #00a58c;">Re-invitation to Join RADU E-Token™</h2>
-          <p>Hello ${admin.name},</p>
-          <p>You have been re-invited to join the RADU E-Token™ System as a <strong>${admin.role}</strong>.</p>
-          <p>Please click the button below to set up your account and get started:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${registrationUrl}" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Complete Registration</a>
-          </div>
-          <p style="color: #666; font-size: 14px;">This link will expire in 7 days.</p>
-          <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #00a58c; font-size: 14px;">${registrationUrl}</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #999;">&copy; ${new Date().getFullYear()} Affective Academy LLC. All rights reserved.</p>
-        </div>
-      `;
+
+      const orgLabel = await resolveOrgLabel({ districtId: admin.districtId, schoolId: admin.schoolId });
+      const body = buildInvitationEmailBody({
+        recipientName: admin.name,
+        role: admin.role,
+        registrationUrl,
+        orgLabel
+      });
 
       const { sendEmail } = await import("../services/mail.js");
-      await sendEmail(admin.email, "Re-invitation to Join RADU E-Token™ System", body, body, null);
+      await sendEmail(admin.email, INVITATION_EMAIL_SUBJECT, body, body, null);
     } catch (emailError) {
       console.error("Error sending re-invitation email:", emailError);
-      return res.status(200).json({ 
-        success: true,
-        message: "Invitation token regenerated, but email failed to send.",
-        emailError: true // Send a safe flag instead of the raw message
+      return res.status(502).json({
+        success: false,
+        message: "Failed to send invitation email.",
+        emailError: true
       });
     }
 

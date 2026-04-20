@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDistrictById, updateDistrict, deleteSchool, reInviteAdmin } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, ImageOff } from 'lucide-react';
+import { ArrowLeft, Building2, School, Users, Globe, MapPin, Mail, Phone, CheckCircle2, Loader2, ImageOff, Upload } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import { EditAdminDialog } from '@/components/EditAdminDialog';
 import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -37,6 +38,20 @@ export default function ViewDistrict() {
     const [editData, setEditData] = useState<any>(null);
     const [reinvitingIds, setReinvitingIds] = useState<Record<string, boolean>>({});
     const [logoLoadError, setLogoLoadError] = useState(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setLogoFile(file);
+            setLogoLoadError(false);
+            const reader = new FileReader();
+            reader.onloadend = () => setLogoPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
 
 
     useEffect(() => {
@@ -57,8 +72,11 @@ export default function ViewDistrict() {
                             address: response.district.address || '',
                             city: response.district.city || '',
                             zipCode: response.district.zipCode || '',
+                            state: response.district.state || '',
+                            country: response.district.country || 'USA',
                             subscriptionStatus: response.district.subscriptionStatus
                         });
+                        setLogoPreview(response.district.logo || null);
                     } else if (response.error) {
                         const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to load district data.");
                         toast({
@@ -96,9 +114,24 @@ export default function ViewDistrict() {
                 setSaving(false);
                 return;
             }
-            const response = await updateDistrict(id, editData, token);
+            let payload: FormData | any;
+            if (logoFile) {
+                payload = new FormData();
+                Object.entries(editData || {}).forEach(([k, v]) => {
+                    if (k === 'logo') return;
+                    if (v === undefined || v === null) return;
+                    payload.append(k, String(v));
+                });
+                payload.append('logo', logoFile);
+            } else {
+                payload = editData;
+            }
+            const response = await updateDistrict(id, payload, token);
             if (response.district) {
                 setData({ ...data, district: response.district });
+                setEditData((prev: any) => ({ ...prev, logo: response.district.logo || '' }));
+                setLogoFile(null);
+                setLogoPreview(response.district.logo || null);
                 toast({
                     title: "Success",
                     description: response.message || "District settings updated successfully.",
@@ -535,32 +568,44 @@ export default function ViewDistrict() {
 
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold text-gray-700">District Logo</Label>
-                                        <div className="flex gap-4">
-                                            <div className="flex-1">
-                                                <Input 
-                                                    value={editData?.logo} 
-                                                    onChange={(e) => {
-                                                        setEditData({...editData, logo: e.target.value});
-                                                        setLogoLoadError(false);
-                                                    }}
-                                                    placeholder="https://example.com/logo.png"
-                                                    className="h-11 bg-white border-gray-200"
-                                                />
-                                            </div>
-                                            {editData?.logo && /^(https:|data:)/i.test(editData.logo) && !logoLoadError ? (
-                                                <div className="h-11 w-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                                                    <img 
-                                                        src={editData.logo} 
-                                                        alt="Logo preview" 
+                                        <div className="flex items-center gap-4">
+                                            {logoPreview && !logoLoadError ? (
+                                                <div className="h-16 w-16 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                                                    <img
+                                                        src={logoPreview}
+                                                        alt="District logo"
                                                         className="max-h-full max-w-full object-contain"
                                                         onError={() => setLogoLoadError(true)}
                                                     />
                                                 </div>
-                                            ) : editData?.logo ? (
-                                                <div className="h-11 w-11 rounded-lg border border-red-100 bg-red-50 flex items-center justify-center text-red-400 shrink-0">
-                                                    <ImageOff className="h-5 w-5" />
+                                            ) : (
+                                                <div className="h-16 w-16 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-300 shrink-0">
+                                                    <ImageOff className="h-6 w-6" />
                                                 </div>
-                                            ) : null}
+                                            )}
+                                            <div className="flex flex-col gap-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="h-10"
+                                                >
+                                                    <Upload className="h-4 w-4 mr-2" />
+                                                    {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                                                </Button>
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleLogoChange}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+                                                {logoFile && (
+                                                    <span className="text-[11px] text-gray-500 truncate max-w-[220px]">
+                                                        {logoFile.name}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -632,8 +677,8 @@ export default function ViewDistrict() {
                                         <Label className="text-sm font-bold text-gray-700">Street Address</Label>
                                         <div className="relative">
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                            <Input 
-                                                value={editData?.address} 
+                                            <Input
+                                                value={editData?.address}
                                                 onChange={(e) => setEditData({...editData, address: e.target.value})}
                                                 placeholder="e.g. 100 Main St"
                                                 className="pl-10 h-11 bg-white border-gray-200"
@@ -642,9 +687,68 @@ export default function ViewDistrict() {
                                     </div>
 
                                     <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Country</Label>
+                                        <Select
+                                            value={editData?.country || 'USA'}
+                                            onValueChange={(v) => setEditData({...editData, country: v, state: ''})}
+                                        >
+                                            <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                <SelectValue placeholder="Select country" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {COUNTRIES.map(c => (
+                                                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">
+                                            {editData?.country === 'Canada' ? 'Province' : 'State / Region'}
+                                        </Label>
+                                        {editData?.country === 'USA' ? (
+                                            <Select
+                                                value={editData?.state || ''}
+                                                onValueChange={(v) => setEditData({...editData, state: v})}
+                                            >
+                                                <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                    <SelectValue placeholder="Select state" />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-72">
+                                                    {US_STATES.map(s => (
+                                                        <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : editData?.country === 'Canada' ? (
+                                            <Select
+                                                value={editData?.state || ''}
+                                                onValueChange={(v) => setEditData({...editData, state: v})}
+                                            >
+                                                <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                    <SelectValue placeholder="Select province" />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-72">
+                                                    {CANADA_PROVINCES.map(p => (
+                                                        <SelectItem key={p.abbreviation} value={p.name}>{p.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                value={editData?.state || ''}
+                                                onChange={(e) => setEditData({...editData, state: e.target.value})}
+                                                placeholder="State / Province / Region"
+                                                className="h-11 bg-white border-gray-200"
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
                                         <Label className="text-sm font-bold text-gray-700">City</Label>
-                                        <Input 
-                                            value={editData?.city} 
+                                        <Input
+                                            value={editData?.city}
                                             onChange={(e) => setEditData({...editData, city: e.target.value})}
                                             placeholder="e.g. Buffalo"
                                             className="h-11 bg-white border-gray-200"
@@ -653,8 +757,8 @@ export default function ViewDistrict() {
 
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold text-gray-700">Zip Code</Label>
-                                        <Input 
-                                            value={editData?.zipCode} 
+                                        <Input
+                                            value={editData?.zipCode}
                                             onChange={(e) => setEditData({...editData, zipCode: e.target.value})}
                                             placeholder="e.g. 14201"
                                             className="h-11 bg-white border-gray-200"

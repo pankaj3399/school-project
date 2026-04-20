@@ -3,6 +3,9 @@ import { getReportDataStudentCombined } from '@/api';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { GRADE_OPTIONS } from '@/lib/types';
+import { useSchool } from '@/context/SchoolContext';
+import { useAuth } from '@/authContext';
+import { Role } from '@/enum';
 
 type ReportData = {
   gradeData: {
@@ -67,9 +70,10 @@ export default function ViewReport({
 }) {
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData | null>(null);
- 
-
-  const grades = GRADE_OPTIONS
+  const [reportError, setReportError] = useState<string | null>(null);
+  const { selectedSchoolId } = useSchool();
+  const { user } = useAuth();
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
 
   const handleSelectStudent = (studentId: string, studentData: any, gradeInfo:any) => {
     setSelectedStudents(prev => {
@@ -179,18 +183,46 @@ export default function ViewReport({
   };
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       setLoading(true);
+      setReportError(null);
       try {
-        const response = await getReportDataStudentCombined(grades);
-        setReportData(response);
-      } catch (error) {
+        if (isMultiSchoolUser && !selectedSchoolId) {
+          if (cancelled) return;
+          setReportData(null);
+          setSelectedStudents(new Set());
+          setSelectedStudentsData([]);
+          setLoading(false);
+          return;
+        }
+        const response = await getReportDataStudentCombined(
+          GRADE_OPTIONS,
+          selectedSchoolId || undefined
+        );
+        if (cancelled) return;
+        if (response?.error) {
+          setReportData(null);
+          setReportError(response.error || 'Failed to load reports');
+        } else {
+          setReportData(response);
+        }
+        setSelectedStudents(new Set());
+        setSelectedStudentsData([]);
+      } catch (error: any) {
+        if (cancelled) return;
         console.error(error);
+        setReportData(null);
+        setReportError(error?.message || 'Failed to load reports');
+        setSelectedStudents(new Set());
+        setSelectedStudentsData([]);
       }
+      if (cancelled) return;
       setLoading(false);
     };
     fetchData();
-  }, []);
+    return () => { cancelled = true; };
+  }, [selectedSchoolId, isMultiSchoolUser]);
 
 
   if (loading) {
@@ -218,7 +250,21 @@ export default function ViewReport({
         </span>
       </div>
 
-      
+
+
+      {reportError && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-red-600">
+          {reportError}
+        </div>
+      )}
+
+      {!reportError && (!reportData?.gradeData || reportData.gradeData.length === 0) && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+          {isMultiSchoolUser && !selectedSchoolId
+            ? "Select a school to load reports."
+            : "No students or grades available for this school yet."}
+        </div>
+      )}
 
       {reportData?.gradeData && reportData?.gradeData.length > 0 && reportData?.gradeData.map((gradeInfo) => (
         gradeInfo.teachers.length > 0 ? (

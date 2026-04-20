@@ -27,11 +27,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { getAllSchools, deleteSchool } from '@/api';
+import { getAllSchools, deleteSchool, getDistricts } from '@/api';
 import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
 import { PasswordConfirmModal } from './PasswordConfirmModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SchoolData {
     _id: string;
@@ -56,6 +57,8 @@ export default function SchoolsList() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [schoolToDelete, setSchoolToDelete] = useState<{ id: string; name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [districts, setDistricts] = useState<{ _id: string; name: string }[]>([]);
+    const [districtFilter, setDistrictFilter] = useState<string>('all');
     const { toast } = useToast();
 
     const fetchSchools = useCallback(async () => {
@@ -88,6 +91,28 @@ export default function SchoolsList() {
     useEffect(() => {
         fetchSchools();
     }, [fetchSchools]);
+
+    useEffect(() => {
+        const fetchDistrictList = async () => {
+            if (!user) return;
+            const token = getAuthToken(user);
+            if (!token) return;
+
+            const PAGE_SIZE = 100;
+            const all: { _id: string; name: string }[] = [];
+            let page = 1;
+            while (true) {
+                const data = await getDistricts(token, { page, limit: PAGE_SIZE });
+                if (!Array.isArray(data?.districts)) break;
+                all.push(...data.districts.map((d: any) => ({ _id: d._id, name: d.name })));
+                const totalPages = data?.pagination?.pages;
+                if (!totalPages || page >= totalPages || data.districts.length < PAGE_SIZE) break;
+                page += 1;
+            }
+            setDistricts(all);
+        };
+        fetchDistrictList();
+    }, [user]);
 
     const handleDelete = async (id: string, name: string, password?: string) => {
         let toastShown = false;
@@ -131,11 +156,15 @@ export default function SchoolsList() {
     const filteredSchools = schools.filter(school => {
         const searchText = searchTerm.toLowerCase();
         const districtName = school.districtId?.name || school.district || "";
-        return (
+        const matchesSearch = (
             school.name.toLowerCase().includes(searchText) ||
             districtName.toLowerCase().includes(searchText) ||
             (school.state || "").toLowerCase().includes(searchText)
         );
+        const matchesDistrict =
+            districtFilter === 'all' ||
+            school.districtId?._id === districtFilter;
+        return matchesSearch && matchesDistrict;
     });
 
     return (
@@ -145,24 +174,37 @@ export default function SchoolsList() {
                     <h1 className="text-3xl font-bold text-gray-900">Schools</h1>
                     <p className="text-gray-500 mt-2">Manage all registered schools across all districts.</p>
                 </div>
-                <Button 
+                <Button
                     onClick={() => navigate('/system-admin/schools/new')}
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
                 >
                     <Plus className="mr-2 h-4 w-4" />
-                    New School
+                    Add School
                 </Button>
             </div>
 
-            <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-100">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-100">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input 
-                        placeholder="Search by name, district, or state..." 
-                        className="pl-10 border-gray-200 focus:ring-[#00a58c]" 
+                    <Input
+                        placeholder="Search by name, district, or state..."
+                        className="pl-10 border-gray-200 focus:ring-[#00a58c]"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                </div>
+                <div className="md:w-64">
+                    <Select value={districtFilter} onValueChange={setDistrictFilter}>
+                        <SelectTrigger className="border-gray-200 focus:ring-[#00a58c]">
+                            <SelectValue placeholder="Filter by district" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Districts</SelectItem>
+                            {districts.map(d => (
+                                <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
 

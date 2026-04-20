@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
 
 export default function AddDistrict() {
     const navigate = useNavigate();
@@ -20,26 +21,37 @@ export default function AddDistrict() {
     const [existingDistricts, setExistingDistricts] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         name: '',
-        code: '',
         state: '',
         city: '',
+        country: 'USA',
         contactName: '',
         contactEmail: ''
     });
 
     useEffect(() => {
+        let cancelled = false;
         const fetchDistricts = async () => {
             try {
                 const token = getAuthToken(user);
-                if (token) {
-                    const res = await getDistricts(token);
-                    if (res.districts) setExistingDistricts(res.districts);
+                if (!token) return;
+                const limit = 100;
+                const collected: any[] = [];
+                let page = 1;
+                while (true) {
+                    const res = await getDistricts(token, { page, limit });
+                    if (cancelled) return;
+                    const pageDistricts: any[] = res?.districts || [];
+                    collected.push(...pageDistricts);
+                    if (pageDistricts.length < limit) break;
+                    page += 1;
                 }
+                if (!cancelled) setExistingDistricts(collected);
             } catch (err) {
-                console.error('Failed to load districts for template selector:', err);
+                if (!cancelled) console.error('Failed to load districts for template selector:', err);
             }
         };
         fetchDistricts();
+        return () => { cancelled = true; };
     }, [user]);
 
 
@@ -48,9 +60,25 @@ export default function AddDistrict() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const isUsCountry = formData.country === 'USA';
+    const isCanada = formData.country === 'Canada';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
+        if (!formData.state || !formData.state.trim()) {
+            toast({
+                title: "State Required",
+                description: isCanada
+                    ? "Please select a province."
+                    : isUsCountry
+                        ? "Please select a state."
+                        : "Please enter a state, province, or region.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (formData.contactEmail && !emailRegex.test(formData.contactEmail)) {
@@ -174,30 +202,75 @@ export default function AddDistrict() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="code" className="text-sm font-bold text-gray-700">District ID / Code</Label>
+                                <Label className="text-sm font-bold text-gray-700">District ID / Code</Label>
                                 <Input
-                                    id="code"
-                                    name="code"
-                                    placeholder="e.g. SPS-001"
-                                    value={formData.code}
-                                    onChange={handleChange}
-                                    required
-                                    className="uppercase font-mono border-gray-200 focus:ring-[#00a58c] h-11 font-bold"
+                                    value="Auto-generated (D101, D102, …)"
+                                    disabled
+                                    className="font-mono border-gray-200 bg-gray-50 text-gray-500 h-11"
                                 />
-                                <p className="text-[10px] text-gray-400 font-medium">MUST BE UNIQUE ACROSS THE SYSTEM</p>
+                                <p className="text-[10px] text-gray-400 font-medium">ASSIGNED AUTOMATICALLY AFTER CREATION</p>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="state" className="text-sm font-bold text-gray-700">State</Label>
-                                <Input
-                                    id="state"
-                                    name="state"
-                                    placeholder="e.g. California"
-                                    value={formData.state}
-                                    onChange={handleChange}
-                                    required
-                                    className="border-gray-200 focus:ring-[#00a58c] h-11"
-                                />
+                                <Label htmlFor="country" className="text-sm font-bold text-gray-700">Country</Label>
+                                <Select
+                                    value={formData.country}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, country: val, state: '' }))}
+                                >
+                                    <SelectTrigger id="country" className="border-gray-200 focus:ring-[#00a58c] h-11">
+                                        <SelectValue placeholder="Select country" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {COUNTRIES.map(c => (
+                                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="state" className="text-sm font-bold text-gray-700">
+                                    {isCanada ? 'Province' : 'State / Region'}
+                                </Label>
+                                {isUsCountry ? (
+                                    <Select
+                                        value={formData.state}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                                    >
+                                        <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
+                                            <SelectValue placeholder="Select state" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-72">
+                                            {US_STATES.map(s => (
+                                                <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : isCanada ? (
+                                    <Select
+                                        value={formData.state}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                                    >
+                                        <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
+                                            <SelectValue placeholder="Select province" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-72">
+                                            {CANADA_PROVINCES.map(p => (
+                                                <SelectItem key={p.abbreviation} value={p.name}>{p.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        id="state"
+                                        name="state"
+                                        placeholder="State / Province / Region"
+                                        value={formData.state}
+                                        onChange={handleChange}
+                                        required
+                                        className="border-gray-200 focus:ring-[#00a58c] h-11"
+                                    />
+                                )}
                             </div>
 
                             <div className="space-y-2">

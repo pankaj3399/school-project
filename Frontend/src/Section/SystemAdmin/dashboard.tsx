@@ -39,10 +39,6 @@ type DistrictAnalyticsRow = {
     schoolCount: number;
     teacherCount: number;
     studentCount: number;
-    totalTokens: number;
-    withdrawals: number;
-    oopsies: number;
-    feedbacks: number;
 };
 
 type ChartDataRow = {
@@ -53,9 +49,6 @@ type ChartDataRow = {
     schools: number;
     teachers: number;
     students: number;
-    tokens: number;
-    oopsies: number;
-    withdrawals: number;
 };
 
 const metricsConfig = {
@@ -64,9 +57,6 @@ const metricsConfig = {
     schools: { label: "Schools", color: "#8b5cf6", defaultVisible: true },
     teachers: { label: "Teachers", color: "#06b6d4", defaultVisible: true },
     students: { label: "Students", color: "#6366f1", defaultVisible: true },
-    tokens: { label: "Tokens", color: "#10b981", defaultVisible: false },
-    oopsies: { label: "Oopsies", color: "#ef4444", defaultVisible: false },
-    withdrawals: { label: "Withdrawals", color: "#3b82f6", defaultVisible: false },
 } as const;
 
 type MetricKey = keyof typeof metricsConfig;
@@ -77,7 +67,6 @@ type SchoolStatRow = {
     name: string;
     teacherCount: number;
     studentCount: number;
-    totalTokens: number;
 };
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -159,58 +148,34 @@ export default function SystemAdminDashboard() {
 
     const cards = [
         {
-            title: "Total countries",
+            title: "Total Countries",
             value: stats?.totalCountries || 0,
             icon: Globe,
-            color: "text-orange-500",
-            subLabel: "Total Teachers",
-            shortLabel: "Teachers",
-            subValue: stats?.totalTeachers || 0
         },
         {
-            title: "Total states",
+            title: "Total States",
             value: stats?.totalStates || 0,
             icon: Map,
-            color: "text-blue-500",
-            subLabel: "Total Students",
-            shortLabel: "Students",
-            subValue: stats?.totalStudents || 0
         },
         {
             title: "Total Districts",
             value: stats?.totalDistricts || 0,
             icon: Building2,
-            color: "text-amber-500",
-            subLabel: "Total Tokens",
-            shortLabel: "Tokens",
-            subValue: stats?.totalTokensEarned || 0
         },
         {
             title: "Total Schools",
             value: stats?.totalSchools || 0,
             icon: School,
-            color: "text-indigo-500",
-            subLabel: "Total Feedbacks",
-            shortLabel: "Feedbacks",
-            subValue: stats?.totalFeedbacks || 0
         },
         {
-            title: "Total teachers",
+            title: "Total Teachers",
             value: stats?.totalTeachers || 0,
             icon: Users,
-            color: "text-green-500",
-            subLabel: "Total Oopsies",
-            shortLabel: "Oopsies",
-            subValue: stats?.totalOopsies || 0
         },
         {
-            title: "Total students",
+            title: "Total Students",
             value: stats?.totalStudents || 0,
             icon: GraduationCap,
-            color: "text-red-500",
-            subLabel: "Total Withdrawals",
-            shortLabel: "Withdrawals",
-            subValue: stats?.totalWithdrawals || 0
         }
     ];
 
@@ -264,10 +229,6 @@ export default function SystemAdminDashboard() {
         return [...schoolStats].sort((a, b) => b.studentCount - a.studentCount).slice(0, 5);
     }, [schoolStats]);
 
-    const topSchoolsByTokens = useMemo(() => {
-        return [...schoolStats].sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 5);
-    }, [schoolStats]);
-
 
     interface RankBoxProps<T> {
         title: string;
@@ -314,7 +275,7 @@ export default function SystemAdminDashboard() {
             <div className="bg-[#5B4365] text-white">
                 <div className="max-w-7xl mx-auto px-8 py-3 flex justify-between items-center">
                     <div className="text-sm">
-                        <h2 className="font-bold text-xl uppercase tracking-wider mb-1">System Overview</h2>
+                        <h2 className="font-bold text-xl uppercase tracking-wider mb-1">Overview</h2>
                         <p className="text-gray-300 text-xs">Totals, rankings, and historical growth for states, districts and schools</p>
                     </div>
                 </div>
@@ -330,20 +291,21 @@ export default function SystemAdminDashboard() {
 
                 {/* Stats Grid top header */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    {cards.map((card, index) => (
-                        <Card key={index} className="border-0 shadow-sm ring-1 ring-gray-100 flex flex-col items-center justify-between p-4 text-center min-h-[160px] bg-white">
-                            <h4 className={`text-[10px] font-bold uppercase mb-1 tracking-wider ${card.color}`}>{card.title}</h4>
-                            <span className="text-gray-400 text-[10px] mb-2 font-medium italic">{card.subLabel}</span>
-                            <div className="flex flex-col items-center flex-1 justify-center">
-                                <div className={'text-gray-900 text-3xl font-black'}>
+                    {cards.map((card, index) => {
+                        const Icon = card.icon;
+                        return (
+                            <Card
+                                key={index}
+                                className="border border-gray-200 rounded-2xl shadow-sm flex flex-col items-center justify-center p-5 text-center bg-white aspect-square"
+                            >
+                                <Icon className="h-7 w-7 text-gray-700 mb-2" strokeWidth={1.5} />
+                                <h4 className="text-xs font-semibold text-gray-700 mb-2">{card.title}</h4>
+                                <div className="text-gray-900 text-3xl font-bold">
                                     {loading ? "..." : (card.value || 0).toLocaleString()}
                                 </div>
-                            </div>
-                            <div className="mt-3 text-[10px] font-bold text-gray-500 border-t pt-2 w-full">
-                                {card.shortLabel}: {loading ? "..." : (card.subValue || 0).toLocaleString()}
-                            </div>
-                        </Card>
-                    ))}
+                            </Card>
+                        );
+                    })}
                 </div>
 
                 {/* Main Middle Section */}
@@ -409,7 +371,7 @@ export default function SystemAdminDashboard() {
                                 </div>
                                 
                                 {/* Checkboxes */}
-                                <div className="grid grid-cols-4 gap-x-2 gap-y-2 text-[10px] font-bold text-gray-500 mt-4 pt-4 border-t w-full">
+                                <div className="grid grid-cols-5 gap-x-2 gap-y-2 text-[10px] font-bold text-gray-500 mt-4 pt-4 border-t w-full">
                                     {(Object.entries(metricsConfig) as [MetricKey, typeof metricsConfig[MetricKey]][]).map(([key, config]) => (
                                         <label key={key} className="flex items-center gap-1.5 cursor-pointer hover:text-gray-800 transition-colors">
                                             <input
@@ -468,17 +430,11 @@ export default function SystemAdminDashboard() {
                             labelKey="name" 
                             valueKey="teacherCount" 
                         />
-                        <RankBox 
-                            title="Schools By Active Students" 
-                            data={topSchoolsByStudents} 
-                            labelKey="name" 
-                            valueKey="studentCount" 
-                        />
-                        <RankBox 
-                            title="Schools By Tokens Issued" 
-                            data={topSchoolsByTokens} 
-                            labelKey="name" 
-                            valueKey="totalTokens" 
+                        <RankBox
+                            title="Schools By Active Students"
+                            data={topSchoolsByStudents}
+                            labelKey="name"
+                            valueKey="studentCount"
                         />
                     </div>
                 </div>
@@ -513,10 +469,6 @@ export default function SystemAdminDashboard() {
                                             <th scope="col" className="pb-3 font-medium text-right">Schools</th>
                                             <th scope="col" className="pb-3 font-medium text-right">Teachers</th>
                                             <th scope="col" className="pb-3 font-medium text-right">Students</th>
-                                            <th scope="col" className="pb-3 font-medium text-right">Tokens</th>
-                                            <th scope="col" className="pb-3 font-medium text-right">Withdrawals</th>
-                                            <th scope="col" className="pb-3 font-medium text-right">Oopsies</th>
-                                            <th scope="col" className="pb-3 font-medium text-right">Feedbacks</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -538,10 +490,6 @@ export default function SystemAdminDashboard() {
                                                 <td className="py-3 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>
-                                                <td className="py-3 text-right font-semibold text-[#00a58c]">{d.totalTokens.toLocaleString()}</td>
-                                                <td className="py-3 text-right font-semibold text-blue-600">{d.withdrawals.toLocaleString()}</td>
-                                                <td className="py-3 text-right font-semibold text-red-500">{d.oopsies.toLocaleString()}</td>
-                                                <td className="py-3 text-right font-semibold text-amber-600">{d.feedbacks.toLocaleString()}</td>
                                             </tr>
                                         ))}
                                     </tbody>

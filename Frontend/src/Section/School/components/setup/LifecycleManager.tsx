@@ -1,46 +1,125 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Rocket, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Eraser } from "lucide-react";
+import { Download, FileSpreadsheet, Rocket, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Eraser } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { promote, resetPoints } from "@/api";
+import { promote, resetPoints, verifyCurrentUserPassword } from "@/api";
 import { cn } from "@/lib/utils";
+import { PasswordConfirmModal } from "@/Section/SystemAdmin/schools/PasswordConfirmModal";
 
 interface LifecycleManagerProps {
   schoolId: string;
-  onDownloadWaitlist: () => Promise<void>;
+  onDownloadWaitlist: () => Promise<boolean>;
+  onDownloadSnapshot: () => Promise<boolean>;
 }
 
 type Step = 'export' | 'reset-points' | 'promote' | 'finalize';
 
-export const LifecycleManager: React.FC<LifecycleManagerProps> = ({ 
-  schoolId, 
-  onDownloadWaitlist 
+export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
+  schoolId,
+  onDownloadWaitlist,
+  onDownloadSnapshot
 }) => {
   const [activeStep, setActiveStep] = useState<Step>('export');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDownloadingSnapshot, setIsDownloadingSnapshot] = useState(false);
+  const [isDownloadingWaitlist, setIsDownloadingWaitlist] = useState(false);
+  const [isSnapshotDownloaded, setIsSnapshotDownloaded] = useState(false);
+  const [isWaitlistDownloaded, setIsWaitlistDownloaded] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [promotionResult, setPromotionResult] = useState<{ count: number } | null>(null);
   const { toast } = useToast();
+  const canProceedToReset = isSnapshotDownloaded && isWaitlistDownloaded;
+  const currentSchoolIdRef = useRef(schoolId);
+  useEffect(() => {
+    currentSchoolIdRef.current = schoolId;
+  }, [schoolId]);
 
-  const handleResetPoints = async () => {
-    if (isProcessing) return;
+  const resetLifecycleState = () => {
+    setIsSnapshotDownloaded(false);
+    setIsWaitlistDownloaded(false);
+    setIsDownloadingSnapshot(false);
+    setIsDownloadingWaitlist(false);
+    setShowResetPasswordModal(false);
+    setPromotionResult(null);
+    setIsProcessing(false);
+    setActiveStep('export');
+  };
+
+  useEffect(() => {
+    resetLifecycleState();
+  }, [schoolId]);
+
+  const isStale = (capturedSchoolId: string) => currentSchoolIdRef.current !== capturedSchoolId;
+
+  const handleResetPointsWithPassword = async (password: string) => {
     if (!schoolId) {
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
-      return;
+      throw new Error("School context is missing.");
     }
+
+    const capturedSchoolId = schoolId;
     setIsProcessing(true);
     try {
-      const response = await resetPoints(schoolId);
+      const verify = await verifyCurrentUserPassword(password);
+      if (isStale(capturedSchoolId)) return;
+      if (verify?.error) {
+        if (verify.error instanceof Error) {
+          throw verify.error;
+        }
+        const message = typeof verify.error === 'string'
+          ? verify.error
+          : (verify.error as any)?.message || "Password verification failed. Please try again.";
+        throw new Error(message);
+      }
+
+      const response = await resetPoints(capturedSchoolId);
+      if (isStale(capturedSchoolId)) return;
       if (response.error) {
         toast({ title: "Reset Failed", description: response.error, variant: "destructive" });
-      } else {
-        toast({ title: "Points Cleared", description: "All student points and history have been reset." });
-        setActiveStep('promote');
+        throw new Error(response.error);
       }
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to reset points.", variant: "destructive" });
+      toast({ title: "Points Cleared", description: "All student points and history have been reset." });
+      setShowResetPasswordModal(false);
+      setActiveStep('promote');
     } finally {
-      setIsProcessing(false);
+      if (!isStale(capturedSchoolId)) setIsProcessing(false);
+    }
+  };
+
+  const handleDownloadSnapshot = async () => {
+    if (isDownloadingSnapshot) return;
+    const capturedSchoolId = schoolId;
+    setIsDownloadingSnapshot(true);
+    try {
+      const ok = await onDownloadSnapshot();
+      if (isStale(capturedSchoolId)) return;
+      setIsSnapshotDownloaded(!!ok);
+    } catch (err) {
+      console.error('Snapshot download failed:', err);
+      if (isStale(capturedSchoolId)) return;
+      setIsSnapshotDownloaded(false);
+      toast({ title: "Download Failed", description: "Failed to export snapshot.", variant: "destructive" });
+    } finally {
+      if (!isStale(capturedSchoolId)) setIsDownloadingSnapshot(false);
+    }
+  };
+
+  const handleDownloadWaitlist = async () => {
+    if (isDownloadingWaitlist) return;
+    const capturedSchoolId = schoolId;
+    setIsDownloadingWaitlist(true);
+    try {
+      const ok = await onDownloadWaitlist();
+      if (isStale(capturedSchoolId)) return;
+      setIsWaitlistDownloaded(!!ok);
+    } catch (err) {
+      console.error('Waitlist download failed:', err);
+      if (isStale(capturedSchoolId)) return;
+      setIsWaitlistDownloaded(false);
+      toast({ title: "Download Failed", description: "Failed to export waitlist.", variant: "destructive" });
+    } finally {
+      if (!isStale(capturedSchoolId)) setIsDownloadingWaitlist(false);
     }
   };
 
@@ -50,9 +129,11 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       toast({ title: "Error", description: "School context is missing.", variant: "destructive" });
       return;
     }
+    const capturedSchoolId = schoolId;
     setIsProcessing(true);
     try {
-      const response = await promote(schoolId);
+      const response = await promote(capturedSchoolId);
+      if (isStale(capturedSchoolId)) return;
       if (response.error) {
         toast({ title: "Promotion Failed", description: response.error, variant: "destructive" });
       } else {
@@ -62,9 +143,10 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
         toast({ title: "Promotion Successful", description: "Students advanced to the next grade." });
       }
     } catch (error) {
+      if (isStale(capturedSchoolId)) return;
       toast({ title: "Error", description: "Promotion operation failed.", variant: "destructive" });
     } finally {
-      setIsProcessing(false);
+      if (!isStale(capturedSchoolId)) setIsProcessing(false);
     }
   };
 
@@ -128,14 +210,42 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
               <div className="space-y-2">
                 <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 1: Data Preservation</h3>
                 <p className="text-neutral-500 leading-relaxed">
-                  Export your current student roster and waitlist. This snapshot ensures you have a record of the graduating year's performance.
+                  Export a full-year snapshot (students, teachers, and points history) and your waiting list before starting the rollover.
                 </p>
               </div>
-              <div className="flex gap-4 pt-4">
-                <Button onClick={onDownloadWaitlist} variant="outline" className="h-14 px-8 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold">
-                  <Download className="w-4 h-4" /> Export Snapshots
+              <div className="flex flex-wrap justify-center gap-3 pt-4">
+                <Button
+                  onClick={handleDownloadSnapshot}
+                  disabled={isDownloadingSnapshot}
+                  variant="outline"
+                  className="h-14 px-6 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold"
+                >
+                  {isSnapshotDownloaded ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <FileSpreadsheet className="w-4 h-4" />}
+                  {isDownloadingSnapshot
+                    ? "Preparing snapshot..."
+                    : isSnapshotDownloaded
+                      ? "Snapshot Downloaded"
+                      : "Download Full-Year Snapshot"}
                 </Button>
-                <Button onClick={() => setActiveStep('reset-points')} className="h-14 px-10 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 gap-2 font-bold shadow-lg shadow-neutral-900/10">
+                <Button
+                  onClick={handleDownloadWaitlist}
+                  disabled={isDownloadingWaitlist}
+                  variant="outline"
+                  className="h-14 px-6 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold"
+                >
+                  {isWaitlistDownloaded ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Download className="w-4 h-4" />}
+                  {isDownloadingWaitlist
+                    ? "Preparing waiting list..."
+                    : isWaitlistDownloaded
+                      ? "Waiting List Downloaded"
+                      : "Download Waiting List"}
+                </Button>
+                <Button
+                  onClick={() => setActiveStep('reset-points')}
+                  disabled={!canProceedToReset}
+                  title={!canProceedToReset ? "Download both the snapshot and waiting list before continuing." : undefined}
+                  className="h-14 px-10 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 gap-2 font-bold shadow-lg shadow-neutral-900/10 disabled:opacity-50"
+                >
                   Next Step <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -166,8 +276,8 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                 <Button onClick={() => setActiveStep('promote')} disabled={isProcessing} variant="ghost" className="h-14 px-8 rounded-2xl font-bold text-neutral-400">
                   Skip this step
                 </Button>
-                <Button 
-                  onClick={handleResetPoints} 
+                <Button
+                  onClick={() => setShowResetPasswordModal(true)}
                   disabled={isProcessing}
                   className="h-14 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold gap-3 shadow-lg shadow-amber-600/20"
                 >
@@ -255,7 +365,7 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
               </div>
 
               <div className="pt-6">
-                <Button onClick={() => setActiveStep('export')} className="h-14 px-12 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 font-bold shadow-xl">
+                <Button onClick={resetLifecycleState} className="h-14 px-12 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 font-bold shadow-xl">
                   Finish Maintenance
                 </Button>
               </div>
@@ -263,6 +373,16 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
           )}
         </div>
       </CardContent>
+
+      <PasswordConfirmModal
+        isOpen={showResetPasswordModal}
+        onClose={() => setShowResetPasswordModal(false)}
+        onConfirm={handleResetPointsWithPassword}
+        title="Clear All Points"
+        description="This permanently deletes all point history and resets balances to zero. Enter your password to confirm."
+        confirmText="Clear All Points"
+        isLoading={isProcessing}
+      />
     </Card>
   );
 };

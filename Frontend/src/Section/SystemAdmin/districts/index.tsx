@@ -162,7 +162,7 @@ export default function DistrictsList() {
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
                 >
                     <Plus className="mr-2 h-4 w-4" />
-                    New District
+                    Add District
                 </Button>
             </div>
 
@@ -223,7 +223,7 @@ export default function DistrictsList() {
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="secondary" className="bg-gray-100 text-gray-700 hover:bg-gray-100 border-0">
-                                                {district.state}
+                                                {district.state && district.state !== 'N/A' ? district.state : '—'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>

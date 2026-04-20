@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import EducationYearChart from "./component/new-chart"
 import { useEffect, useState } from "react"
-import { getCurrentUser, getCurrrentSchool, getStudents, sendReportImage } from "@/api"
+import { getCurrrentSchool, getStudents, sendReportImage } from "@/api"
 import { useSchool } from "@/context/SchoolContext"
 import { useAuth } from "@/authContext"
 import { Role } from "@/enum"
@@ -12,6 +12,13 @@ import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
 import ViewReport from "./view-report"
 import Modal from "./Modal"
+
+interface ReportResult {
+  error?: string;
+  success?: boolean;
+  data?: unknown;
+  [key: string]: unknown;
+}
 
 // Add these type declarations
 type SelectedStudentData = {
@@ -59,26 +66,29 @@ const Finalize = () => {
   const [schoolData, setSchoolData] = useState<any>({})
   const [selectedStudentsData, setSelectedStudentsData] = useState<SelectedStudentData>([])
   const [progress, setProgress] = useState(0)
-  const [resetting, setResetting] = useState(false)
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [_, setGeneratedPDFs] = useState<{ fileName: string, pdf: jsPDF, toTeacher: string }[]>([])
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
-  const [user, setUser] = useState<any>({})
   const { selectedSchoolId } = useSchool()
   const { user: authUser } = useAuth()
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-  useEffect(()=>{
-    const getUserData = async () => {
-      const token = localStorage.getItem("token")
-      const user = await getCurrentUser(token ?? "")
-      
-      setUser(user.user)
-    }
-
-    getUserData()
-  },[])
+  const waitForChartReady = (expectedStudentId: string, timeoutMs = 5000, intervalMs = 50) =>
+    new Promise<void>((resolve, reject) => {
+      const start = Date.now()
+      const check = () => {
+        const chart = document.getElementById('graph')
+        const renderToken = chart?.getAttribute('data-render-token') || ''
+        const tokenMatchesStudent = renderToken.startsWith(`${expectedStudentId}|`)
+        const hasRenderedShape = !!chart?.querySelector('svg path, svg rect, svg line')
+        if (tokenMatchesStudent && hasRenderedShape) return resolve()
+        if (Date.now() - start >= timeoutMs) {
+          return reject(new Error('Chart did not render in time for the selected student.'))
+        }
+        setTimeout(check, intervalMs)
+      }
+      check()
+    })
 
   // Reset student selection when school changes
   useEffect(() => {
@@ -89,21 +99,30 @@ const Finalize = () => {
 
   const generateRewardPDF = async (student: any) => {
     const barChart = document.getElementById('graph')
-    if (barChart) {
-      const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
-      const formdata = new FormData();
-      // Convert image data URL to Blob
-      const imageBlob = await (await fetch(src)).blob();
-      formdata.append('file', imageBlob, 'chart.png');
-      
-      // Stringify objects before appending
-      formdata.append('studentData', JSON.stringify(student));
-      formdata.append('schoolData', JSON.stringify(schoolData));
-      formdata.append('teacherData', JSON.stringify(student.teacher[0]));
-      
-      await sendReportImage(formdata, student.teacher[0].email || "");
+    if (!barChart) {
+      throw new Error(`Chart element not found; cannot generate report for ${student.studentInfo?.name || 'student'}.`);
     }
-    
+
+    const teacher = Array.isArray(student.teacher) && student.teacher.length > 0 ? student.teacher[0] : null;
+    if (!teacher) {
+      throw new Error(`No teacher assigned for ${student.studentInfo?.name || 'student'}; cannot send report.`);
+    }
+    if (!teacher.email) {
+      throw new Error(`Teacher for ${student.studentInfo?.name || 'student'} has no email on file.`);
+    }
+
+    const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
+    const formdata = new FormData();
+    const imageBlob = await (await fetch(src)).blob();
+    formdata.append('file', imageBlob, 'chart.png');
+    formdata.append('studentData', JSON.stringify(student));
+    formdata.append('schoolData', JSON.stringify({ school: schoolData }));
+    formdata.append('teacherData', JSON.stringify(teacher));
+
+    const result = (await sendReportImage(formdata, teacher.email)) as ReportResult;
+    if (result.error) {
+      throw new Error(result.error);
+    }
   }
 
   const generateAllReports = async () => {
@@ -111,28 +130,45 @@ const Finalize = () => {
     setProgress(0)
     setGeneratedPDFs([])
     setShowModal(false)
-  
+
+    let successCount = 0;
+    const failures: string[] = [];
+
     try {
       for (let i = 0; i < selectedStudentsData.length; i++) {
-        // Update student ID and wait for chart to update
-        setStudentId(selectedStudentsData[i].studentInfo._id)
-        await delay(2000) // Wait for chart to update
-  
-        // Generate PDF
-        await generateRewardPDF(selectedStudentsData[i])
+        const current = selectedStudentsData[i];
+        setStudentId(current.studentInfo._id)
+
+        try {
+          await waitForChartReady(current.studentInfo._id)
+          await generateRewardPDF(current)
+          successCount += 1;
+        } catch (err: any) {
+          console.error('Error sending report for student:', current.studentInfo?.name, err);
+          failures.push(`${current.studentInfo?.name || 'Unknown'}: ${err?.message || 'Failed to send'}`);
+        }
+
         setProgress(((i + 1) / selectedStudentsData.length) * 100)
       }
-      toast({
-        title: "Success",
-        description: `Generated ${selectedStudentsData.length} reports successfully`,
-      })
-    } catch (error) {
-      console.error('Error sending report:', error);
-      toast({
-        title: "Error",
-        description: `Failed to send reports`,
-        variant: "destructive"
-      });
+
+      if (successCount > 0 && failures.length === 0) {
+        toast({
+          title: "Success",
+          description: `Generated ${successCount} report${successCount === 1 ? '' : 's'} successfully`,
+        })
+      } else if (successCount > 0) {
+        toast({
+          title: "Partial success",
+          description: `${successCount} sent, ${failures.length} failed. First error: ${failures[0]}`,
+          variant: "destructive"
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: failures[0] || "Failed to send reports",
+          variant: "destructive"
+        })
+      }
     } finally {
       setIsGenerating(false)
       setProgress(0)
@@ -199,7 +235,7 @@ const Finalize = () => {
       
       <div className="grid grid-cols-4 gap-4 w-full">
         <div className="col-span-4">
-          <p>*Note: After you click on the button EMAIL REPORTS, you will receive an individual report per student in your email. Please allow a few moments so we can build the reports</p>
+          <p>*Note: After you click on the button EMAIL REPORTS, each student's report is emailed to their assigned teacher. Please allow a few moments so we can build the reports.</p>
         </div>
 
         
@@ -207,26 +243,24 @@ const Finalize = () => {
         <Button 
           className="bg-[#00a58c] hover:bg-[#00a58c] text-md col-span-1"
           onClick={() => setShowModal(true)}
-          disabled={isGenerating || selectedStudentsData.length === 0 || resetting}
+          disabled={isGenerating || selectedStudentsData.length === 0}
         >
           {isGenerating ? 'GENERATING...' : `EMAIL REPORTS (${selectedStudentsData.length})`}
         </Button>
 
-        <Button 
-          variant="destructive"
-          className=" text-md col-span-1"
-          disabled={isGenerating || resetting}
-          onClick={() => {
-            setResetting(true)
-           setSelectedStudentsData([])
-            setSelectedStudents(new Set())
-            setResetting(false)
-          }}
-        >
-          {
-            resetting ? 'Cancelling..' : 'Cancel'
-          }
-        </Button>
+        {selectedStudentsData.length > 0 && (
+          <Button
+            variant="destructive"
+            className=" text-md col-span-1"
+            disabled={isGenerating}
+            onClick={() => {
+              setSelectedStudentsData([])
+              setSelectedStudents(new Set())
+            }}
+          >
+            {isGenerating ? 'Cancel' : 'Clear Selection'}
+          </Button>
+        )}
       </div>
 
       <div>
@@ -238,7 +272,7 @@ const Finalize = () => {
         />
       </div>
       <div className="opacity-0">
-        <EducationYearChart slimLines studentId={studentId} />
+        <EducationYearChart slimLines studentId={studentId} schoolId={selectedSchoolId || undefined} />
       </div>
 
       <Modal
@@ -246,7 +280,7 @@ const Finalize = () => {
         onClose={() => setShowModal(false)}
         onConfirm={() => generateAllReports()}
         title="Email Reports"
-        description={`You are about to email ${selectedStudentsData.length} reports to ${user.email || "your email"}. Are you sure you want to proceed?`}
+        description={`You are about to email ${selectedStudentsData.length} report${selectedStudentsData.length === 1 ? '' : 's'} to each student's assigned teacher. Are you sure you want to proceed?`}
         callToAction='Confirm'
         confirmDisabled={isGenerating}
       />

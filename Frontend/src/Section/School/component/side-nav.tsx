@@ -7,7 +7,7 @@ import { useAuth } from '@/authContext';
 import { Role } from '@/enum';
 
 const navItems = [
-  { href: '/system-admin', label: 'System Overview', icon: LayoutDashboard, roles: [Role.SystemAdmin] },
+  { href: '/system-admin', label: 'Overview', icon: LayoutDashboard, roles: [Role.SystemAdmin] },
   { href: '/analytics', label: 'Analytics', icon: School },
   { href: '/system-admin/districts', label: 'Districts', icon: Building2, roles: [Role.SystemAdmin] },
   { href: '/system-admin/schools', label: 'Schools', icon: School, roles: [Role.SystemAdmin] },

@@ -131,18 +131,27 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
+  // Marker the consumer (finalize.tsx) polls to know the chart has
+  // committed the dataset for a particular student. Set only AFTER the async
+  // fetch resolves and chartData is updated.
+  const [renderToken, setRenderToken] = useState<string>("");
 
 
   // Get data based on selected month
 
 
   useEffect(() => {
+    let active = true;
     const fetchData = async () => {
       const data = await generateData(selectedMonth, studentId, schoolId);
+      if (!active) return;
       setChartData(data);
+      setRenderToken(`${studentId || ''}|${schoolId || ''}|${selectedMonth ?? ''}`);
     }
 
+    setRenderToken("");
     fetchData();
+    return () => { active = false; };
   }, [selectedMonth, studentId, schoolId])
 
 
@@ -166,7 +175,7 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
         ))}
       </div>
 
-      <div id="graph" className="w-full h-[450px] ">
+      <div id="graph" data-student-id={studentId || ''} data-render-token={renderToken} className="w-full h-[450px] ">
         <ResponsiveContainer width="100%" height="100%"   >
           <ComposedChart
             data={chartData}

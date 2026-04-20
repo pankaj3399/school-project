@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Loading from "../Loading";
-import { getCurrrentSchool } from "@/api";
+import { getCurrrentSchool, getReportDataStudentCombined } from "@/api";
 import PasswordConfirmationModal from "./PasswordConfirmationModal";
 import { useSchool } from "@/context/SchoolContext";
 import { useAuth } from "@/authContext";
@@ -9,6 +9,8 @@ import { Role } from "@/enum";
 import { LifecycleManager } from "./components/setup/LifecycleManager";
 import { DangerZone } from "./components/setup/DangerZone";
 import { Sparkles, School } from "lucide-react";
+import { GRADE_OPTIONS } from "@/lib/types";
+import * as XLSX from "xlsx";
 
 const SetupPage = () => {
   const [loading, setLoading] = useState(true);
@@ -65,15 +67,99 @@ const SetupPage = () => {
     }
   };
 
-  const handleDownloadWaitlist = async () => {
-    if (loading) return;
+  const handleDownloadSnapshot = async (): Promise<boolean> => {
+    if (loading) return false;
+    try {
+      const resolvedSchoolId = selectedSchoolId || school?._id;
+      if (!resolvedSchoolId) {
+        toast({ title: "Export Failed", description: "No school selected.", variant: "destructive" });
+        return false;
+      }
+
+      const report = await getReportDataStudentCombined(GRADE_OPTIONS, resolvedSchoolId);
+      if (report?.error || !report?.gradeData) {
+        throw new Error(report?.error || "Unable to load snapshot data.");
+      }
+
+      const studentRows: any[] = [];
+      const teacherRows: any[] = [];
+      const historyRows: any[] = [];
+      const seenTeachers = new Set<string>();
+
+      report.gradeData.forEach((gradeInfo: any) => {
+        (gradeInfo.teachers || []).forEach((t: any) => {
+          if (t?._id && !seenTeachers.has(t._id)) {
+            seenTeachers.add(t._id);
+            teacherRows.push({
+              Name: t.name || "",
+              Subject: t.subject || "",
+              Type: t.type || "",
+              Grade: t.grade || gradeInfo.grade || "",
+            });
+          }
+        });
+
+        (gradeInfo.students || []).forEach((entry: any) => {
+          const s = entry.student || {};
+          studentRows.push({
+            Name: s.name || "",
+            Grade: s.grade || gradeInfo.grade || "",
+            "Student Email": s.email || "",
+            "Parent Email": s.parentEmail || "",
+            "Total Points": s.points ?? 0,
+            eTokens: entry.totalPoints?.eToken ?? 0,
+            Oopsies: Math.abs(entry.totalPoints?.oopsies ?? 0),
+            Withdrawals: Math.abs(entry.totalPoints?.withdraw ?? 0),
+          });
+
+          (entry.history || []).forEach((h: any) => {
+            historyRows.push({
+              Student: s.name || "",
+              Grade: s.grade || gradeInfo.grade || "",
+              Date: h.submittedAt ? new Date(h.submittedAt).toLocaleString() : "",
+              Action: h.formType || "",
+              Points: h.points ?? 0,
+              "Submitted By": h.submittedByName || "",
+            });
+          });
+        });
+      });
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(studentRows), "Students");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(teacherRows), "Teachers");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(historyRows), "Points History");
+
+      const fileName = `full-year-snapshot-${new Date().toISOString().split("T")[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      toast({ title: "Snapshot Ready", description: "Your full-year snapshot has been downloaded." });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Export Failed",
+        description: error?.message || "Could not build snapshot.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const handleDownloadWaitlist = async (): Promise<boolean> => {
+    if (loading) return false;
     let url: string | null = null;
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        toast({ title: "Export Failed", description: "You must be signed in to export the waitlist.", variant: "destructive" });
+        return false;
+      }
 
       const resolvedSchoolId = selectedSchoolId || school?._id;
-      if (!resolvedSchoolId) return;
+      if (!resolvedSchoolId) {
+        toast({ title: "Export Failed", description: "No school selected.", variant: "destructive" });
+        return false;
+      }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist/export${resolvedSchoolId ? `?schoolId=${encodeURIComponent(resolvedSchoolId)}` : ''}`, {
         method: 'GET',
@@ -90,10 +176,12 @@ const SetupPage = () => {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
+
       toast({ title: "Export Complete", description: "Your waitlist CSV has been downloaded successfully." });
+      return true;
     } catch (error) {
       toast({ title: "Export Failed", description: "Could not retrieve waitlist data.", variant: "destructive" });
+      return false;
     } finally {
       if (url) window.URL.revokeObjectURL(url);
     }
@@ -147,9 +235,10 @@ const SetupPage = () => {
                     <div className="h-6 w-1 bg-blue-500 rounded-full" />
                     <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Annual Transition Wizard</h2>
                   </div>
-                  <LifecycleManager 
+                  <LifecycleManager
                     schoolId={selectedSchoolId || school?._id || ""}
                     onDownloadWaitlist={handleDownloadWaitlist}
+                    onDownloadSnapshot={handleDownloadSnapshot}
                   />
                 </div>
 
