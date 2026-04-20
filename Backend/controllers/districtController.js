@@ -40,7 +40,8 @@ export const generateNextDistrictCode = async () => {
 };
 
 // Create a district with retry on duplicate-key errors for auto-generated codes.
-// When the code is user-supplied, duplicates fail fast (no retry). When auto-generated,
+// When the code is user-supplied, duplicates surface as a ConflictError (HTTP 409)
+// so callers can return a client-facing 4xx rather than a 500. When auto-generated,
 // concurrent inserts racing the same candidate code are resolved by retrying with a fresh one.
 export const createDistrictWithRetry = async (payload, { autoCode }) => {
   const MAX_ATTEMPTS = 5;
@@ -49,11 +50,23 @@ export const createDistrictWithRetry = async (payload, { autoCode }) => {
       return await District.create(payload);
     } catch (err) {
       const isDup = err?.code === 11000 && (err?.keyPattern?.code || err?.message?.includes('code'));
-      if (!isDup || !autoCode) throw err;
+      if (!isDup) throw err;
+      if (!autoCode) {
+        const conflict = new Error(`District with code "${payload.code}" already exists`);
+        conflict.name = 'ConflictError';
+        conflict.status = 409;
+        conflict.statusCode = 409;
+        conflict.cause = err;
+        throw conflict;
+      }
       payload.code = await generateNextDistrictCode();
     }
   }
-  throw new Error('Could not allocate a unique district code after multiple attempts');
+  const allocError = new Error('Could not allocate a unique district code after multiple attempts');
+  allocError.name = 'ConflictError';
+  allocError.status = 409;
+  allocError.statusCode = 409;
+  throw allocError;
 };
 
 // Create a new district
@@ -112,6 +125,9 @@ export const createDistrict = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating district:", error);
+    if (error?.name === 'ConflictError' || error?.status === 409) {
+      return res.status(409).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Error creating district", error: error.message });
   }
 };

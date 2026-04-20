@@ -89,6 +89,12 @@ const Analytics = () => {
         setStudentId("");
         setStudentName("");
 
+        if (isMultiSchoolUser && !selectedSchoolId) {
+            setStudents([]);
+            setFilteredStudents([]);
+            return;
+        }
+
         let active = true;
         const fetchStudents = async () => {
             const token = localStorage.getItem("token");
@@ -100,10 +106,16 @@ const Analytics = () => {
 
         fetchStudents();
         return () => { active = false; };
-    }, [effectiveSchoolId]);
+    }, [effectiveSchoolId, isMultiSchoolUser, selectedSchoolId]);
 
     // Fetch stats whenever the school scope changes
     useEffect(() => {
+        if (isMultiSchoolUser && !selectedSchoolId) {
+            setStats(null);
+            setLoading(false);
+            return;
+        }
+
         let active = true;
         const fetchStats = async () => {
             setLoading(true);
@@ -126,7 +138,15 @@ const Analytics = () => {
 
         fetchStats();
         return () => { active = false; };
-    }, [effectiveSchoolId]);
+    }, [effectiveSchoolId, isMultiSchoolUser, selectedSchoolId]);
+
+    const resetSchoolScopedState = () => {
+        setStudentId("");
+        setStudentName("");
+        setStudents([]);
+        setFilteredStudents([]);
+        setStats(null);
+    };
 
     return (
         <div className="p-6 space-y-8">
@@ -168,6 +188,7 @@ const Analytics = () => {
                                         <CommandItem
                                             value="all-schools"
                                             onSelect={() => {
+                                                resetSchoolScopedState();
                                                 setSelectedSchoolId(null);
                                                 setSchoolPickerOpen(false);
                                             }}
@@ -186,6 +207,7 @@ const Analytics = () => {
                                                 key={school._id}
                                                 value={`${school.name} ${school._id}`}
                                                 onSelect={() => {
+                                                    resetSchoolScopedState();
                                                     setSelectedSchoolId(school._id);
                                                     setSchoolPickerOpen(false);
                                                 }}

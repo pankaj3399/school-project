@@ -70,6 +70,7 @@ export default function ViewReport({
 }) {
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
   const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
@@ -186,6 +187,7 @@ export default function ViewReport({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setReportError(null);
       try {
         if (isMultiSchoolUser && !selectedSchoolId) {
           setReportData(null);
@@ -200,14 +202,18 @@ export default function ViewReport({
         );
         if (response?.error) {
           setReportData(null);
+          setReportError(response.error || 'Failed to load reports');
         } else {
           setReportData(response);
         }
         setSelectedStudents(new Set());
         setSelectedStudentsData([]);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setReportData(null);
+        setReportError(error?.message || 'Failed to load reports');
+        setSelectedStudents(new Set());
+        setSelectedStudentsData([]);
       }
       setLoading(false);
     };
@@ -242,7 +248,13 @@ export default function ViewReport({
 
 
 
-      {(!reportData?.gradeData || reportData.gradeData.length === 0) && (
+      {reportError && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-red-600">
+          {reportError}
+        </div>
+      )}
+
+      {!reportError && (!reportData?.gradeData || reportData.gradeData.length === 0) && (
         <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
           {isMultiSchoolUser && !selectedSchoolId
             ? "Select a school to load reports."

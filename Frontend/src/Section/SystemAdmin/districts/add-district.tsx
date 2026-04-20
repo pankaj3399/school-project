@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { US_STATES, COUNTRIES } from '@/lib/locations';
+import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
 
 export default function AddDistrict() {
     const navigate = useNavigate();
@@ -50,14 +50,19 @@ export default function AddDistrict() {
     };
 
     const isUsCountry = formData.country === 'USA';
+    const isCanada = formData.country === 'Canada';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (isUsCountry && !formData.state) {
+        if (!formData.state || !formData.state.trim()) {
             toast({
                 title: "State Required",
-                description: "Please select a state.",
+                description: isCanada
+                    ? "Please select a province."
+                    : isUsCountry
+                        ? "Please select a state."
+                        : "Please enter a state, province, or region.",
                 variant: "destructive"
             });
             return;
@@ -199,7 +204,7 @@ export default function AddDistrict() {
                                 <Label htmlFor="country" className="text-sm font-bold text-gray-700">Country</Label>
                                 <Select
                                     value={formData.country}
-                                    onValueChange={(val) => setFormData(prev => ({ ...prev, country: val }))}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, country: val, state: '' }))}
                                 >
                                     <SelectTrigger id="country" className="border-gray-200 focus:ring-[#00a58c] h-11">
                                         <SelectValue placeholder="Select country" />
@@ -214,7 +219,7 @@ export default function AddDistrict() {
 
                             <div className="space-y-2">
                                 <Label htmlFor="state" className="text-sm font-bold text-gray-700">
-                                    State{isUsCountry ? '' : ' (US only)'}
+                                    {isCanada ? 'Province' : 'State / Region'}
                                 </Label>
                                 {isUsCountry ? (
                                     <Select
@@ -230,13 +235,28 @@ export default function AddDistrict() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                ) : isCanada ? (
+                                    <Select
+                                        value={formData.state}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                                    >
+                                        <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
+                                            <SelectValue placeholder="Select province" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-72">
+                                            {CANADA_PROVINCES.map(p => (
+                                                <SelectItem key={p.abbreviation} value={p.name}>{p.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 ) : (
                                     <Input
                                         id="state"
                                         name="state"
-                                        placeholder="State / Province / Region (optional)"
+                                        placeholder="State / Province / Region"
                                         value={formData.state}
                                         onChange={handleChange}
+                                        required
                                         className="border-gray-200 focus:ring-[#00a58c] h-11"
                                     />
                                 )}

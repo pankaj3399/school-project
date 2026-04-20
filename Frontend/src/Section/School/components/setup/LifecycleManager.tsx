@@ -24,9 +24,12 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDownloadingSnapshot, setIsDownloadingSnapshot] = useState(false);
   const [isDownloadingWaitlist, setIsDownloadingWaitlist] = useState(false);
+  const [isSnapshotDownloaded, setIsSnapshotDownloaded] = useState(false);
+  const [isWaitlistDownloaded, setIsWaitlistDownloaded] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [promotionResult, setPromotionResult] = useState<{ count: number } | null>(null);
   const { toast } = useToast();
+  const canProceedToReset = isSnapshotDownloaded && isWaitlistDownloaded;
 
   const handleResetPointsWithPassword = async (password: string) => {
     if (!schoolId) {
@@ -59,6 +62,10 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
     setIsDownloadingSnapshot(true);
     try {
       await onDownloadSnapshot();
+      setIsSnapshotDownloaded(true);
+    } catch (err) {
+      setIsSnapshotDownloaded(false);
+      throw err;
     } finally {
       setIsDownloadingSnapshot(false);
     }
@@ -69,6 +76,10 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
     setIsDownloadingWaitlist(true);
     try {
       await onDownloadWaitlist();
+      setIsWaitlistDownloaded(true);
+    } catch (err) {
+      setIsWaitlistDownloaded(false);
+      throw err;
     } finally {
       setIsDownloadingWaitlist(false);
     }
@@ -168,8 +179,12 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                   variant="outline"
                   className="h-14 px-6 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  {isDownloadingSnapshot ? "Preparing snapshot..." : "Download Full-Year Snapshot"}
+                  {isSnapshotDownloaded ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <FileSpreadsheet className="w-4 h-4" />}
+                  {isDownloadingSnapshot
+                    ? "Preparing snapshot..."
+                    : isSnapshotDownloaded
+                      ? "Snapshot Downloaded"
+                      : "Download Full-Year Snapshot"}
                 </Button>
                 <Button
                   onClick={handleDownloadWaitlist}
@@ -177,10 +192,19 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                   variant="outline"
                   className="h-14 px-6 rounded-2xl gap-2 border-neutral-200 hover:bg-neutral-50 font-bold"
                 >
-                  <Download className="w-4 h-4" />
-                  {isDownloadingWaitlist ? "Preparing waiting list..." : "Download Waiting List"}
+                  {isWaitlistDownloaded ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Download className="w-4 h-4" />}
+                  {isDownloadingWaitlist
+                    ? "Preparing waiting list..."
+                    : isWaitlistDownloaded
+                      ? "Waiting List Downloaded"
+                      : "Download Waiting List"}
                 </Button>
-                <Button onClick={() => setActiveStep('reset-points')} className="h-14 px-10 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 gap-2 font-bold shadow-lg shadow-neutral-900/10">
+                <Button
+                  onClick={() => setActiveStep('reset-points')}
+                  disabled={!canProceedToReset}
+                  title={!canProceedToReset ? "Download both the snapshot and waiting list before continuing." : undefined}
+                  className="h-14 px-10 rounded-2xl bg-neutral-900 text-white hover:bg-neutral-800 gap-2 font-bold shadow-lg shadow-neutral-900/10 disabled:opacity-50"
+                >
                   Next Step <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>

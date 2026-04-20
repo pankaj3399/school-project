@@ -690,7 +690,7 @@ export default function ViewDistrict() {
                                         <Label className="text-sm font-bold text-gray-700">Country</Label>
                                         <Select
                                             value={editData?.country || 'USA'}
-                                            onValueChange={(v) => setEditData({...editData, country: v})}
+                                            onValueChange={(v) => setEditData({...editData, country: v, state: ''})}
                                         >
                                             <SelectTrigger className="h-11 bg-white border-gray-200">
                                                 <SelectValue placeholder="Select country" />

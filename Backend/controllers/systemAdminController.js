@@ -33,15 +33,17 @@ const escapeHtml = (value) => {
     .replace(/'/g, '&#39;');
 };
 
-// Only allow http(s) URLs to be embedded as href; fall back to '#' for anything else.
+// Only allow http(s) URLs to be embedded as href. Returns null when the input
+// is not a valid http(s) URL so callers can treat this as a send failure rather
+// than emailing an unusable link.
 const safeUrl = (value) => {
-  if (typeof value !== 'string') return '#';
+  if (typeof value !== 'string') return null;
   try {
     const parsed = new URL(value);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '#';
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
     return parsed.toString();
   } catch {
-    return '#';
+    return null;
   }
 };
 
@@ -84,6 +86,9 @@ const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLab
     : '';
 
   const safeRegistrationUrl = safeUrl(registrationUrl);
+  if (!safeRegistrationUrl) {
+    throw new Error('Invalid registration URL; cannot build invitation email body.');
+  }
   const hrefUrl = escapeHtml(safeRegistrationUrl);
   const visibleUrl = escapeHtml(safeRegistrationUrl);
 
@@ -766,6 +771,9 @@ export const cloneFromTemplate = async (req, res) => {
     });
   } catch (error) {
     console.error("Error cloning district:", error);
+    if (error?.name === 'ConflictError' || error?.status === 409) {
+      return res.status(409).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Error cloning district", error: error.message });
   }
 };

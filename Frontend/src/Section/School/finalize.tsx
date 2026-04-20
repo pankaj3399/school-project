@@ -13,6 +13,13 @@ import { useToast } from "@/hooks/use-toast"
 import ViewReport from "./view-report"
 import Modal from "./Modal"
 
+interface ReportResult {
+  error?: string;
+  success?: boolean;
+  data?: unknown;
+  [key: string]: unknown;
+}
+
 // Add these type declarations
 type SelectedStudentData = {
   data: any[];
@@ -59,7 +66,6 @@ const Finalize = () => {
   const [schoolData, setSchoolData] = useState<any>({})
   const [selectedStudentsData, setSelectedStudentsData] = useState<SelectedStudentData>([])
   const [progress, setProgress] = useState(0)
-  const [resetting, setResetting] = useState(false)
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [_, setGeneratedPDFs] = useState<{ fileName: string, pdf: jsPDF, toTeacher: string }[]>([])
   const { toast } = useToast()
@@ -67,7 +73,19 @@ const Finalize = () => {
   const [user, setUser] = useState<any>({})
   const { selectedSchoolId } = useSchool()
   const { user: authUser } = useAuth()
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+  const waitForChartReady = (timeoutMs = 5000, intervalMs = 50) =>
+    new Promise<void>((resolve) => {
+      const start = Date.now()
+      const check = () => {
+        const chart = document.getElementById('graph')
+        const hasRenderedShape = !!chart?.querySelector('svg path, svg rect, svg line')
+        if (hasRenderedShape) return resolve()
+        if (Date.now() - start >= timeoutMs) return resolve()
+        setTimeout(check, intervalMs)
+      }
+      check()
+    })
 
   useEffect(()=>{
     const getUserData = async () => {
@@ -109,9 +127,9 @@ const Finalize = () => {
     formdata.append('schoolData', JSON.stringify({ school: schoolData }));
     formdata.append('teacherData', JSON.stringify(teacher));
 
-    const result = await sendReportImage(formdata, teacher.email);
-    if ((result as any)?.error) {
-      throw new Error((result as any).error);
+    const result = (await sendReportImage(formdata, teacher.email)) as ReportResult;
+    if (result.error) {
+      throw new Error(result.error);
     }
   }
 
@@ -128,7 +146,7 @@ const Finalize = () => {
       for (let i = 0; i < selectedStudentsData.length; i++) {
         const current = selectedStudentsData[i];
         setStudentId(current.studentInfo._id)
-        await delay(2000) // Wait for chart to update
+        await waitForChartReady()
 
         try {
           await generateRewardPDF(current)
@@ -233,25 +251,21 @@ const Finalize = () => {
         <Button 
           className="bg-[#00a58c] hover:bg-[#00a58c] text-md col-span-1"
           onClick={() => setShowModal(true)}
-          disabled={isGenerating || selectedStudentsData.length === 0 || resetting}
+          disabled={isGenerating || selectedStudentsData.length === 0}
         >
           {isGenerating ? 'GENERATING...' : `EMAIL REPORTS (${selectedStudentsData.length})`}
         </Button>
 
-        <Button 
+        <Button
           variant="destructive"
           className=" text-md col-span-1"
-          disabled={isGenerating || resetting}
+          disabled={isGenerating || selectedStudentsData.length === 0}
           onClick={() => {
-            setResetting(true)
-           setSelectedStudentsData([])
+            setSelectedStudentsData([])
             setSelectedStudents(new Set())
-            setResetting(false)
           }}
         >
-          {
-            resetting ? 'Cancelling..' : 'Cancel'
-          }
+          Cancel
         </Button>
       </div>
 
