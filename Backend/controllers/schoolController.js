@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Role } from "../enum.js";
 import bcrypt from "bcryptjs";
 import School from "../models/School.js";
+import District from "../models/District.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
@@ -264,9 +265,18 @@ export const updateSchool = async (req, res) => {
         logoUrl = await uploadImageFromDataURI(logo);
       const updatePayload = {
         name, address, city, district,
-        districtId: req.body.districtId || undefined,
         state, zipCode, country, timeZone, domain,
       };
+      if (req.body.districtId) {
+        if (!mongoose.Types.ObjectId.isValid(req.body.districtId)) {
+          return res.status(400).json({ message: "Invalid districtId." });
+        }
+        const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
+        if (!districtDoc) {
+          return res.status(400).json({ message: "District not found." });
+        }
+        updatePayload.districtId = districtDoc._id;
+      }
       if (logoUrl) updatePayload.logo = logoUrl;
       const updatedSchool = await School.findByIdAndUpdate(
         req.params.id,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -50,8 +50,10 @@ export default function ViewTeachers() {
   const { toast } = useToast();
   const [customGrade, setCustomGrade] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const fetchRequestRef = useRef(0);
 
   const fetchTeachers = async () => {
+    const requestId = ++fetchRequestRef.current;
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -61,11 +63,12 @@ export default function ViewTeachers() {
           description: "No token found.",
           variant: "destructive",
         });
-        setLoading(false);
+        if (requestId === fetchRequestRef.current) setLoading(false);
         return;
       }
 
       if (requiresSchoolSelection) {
+        if (requestId !== fetchRequestRef.current) return;
         setTeachers([]);
         setLoading(false);
         return;
@@ -76,9 +79,8 @@ export default function ViewTeachers() {
         : undefined;
 
       const data = await getTeachers(effectiveSchoolId);
-      console.log("API Response:", data); // Debug log
+      if (requestId !== fetchRequestRef.current) return;
 
-      // Handle different response structures
       let teachersArray = [];
       if (Array.isArray(data)) {
         teachersArray = data;
@@ -90,18 +92,13 @@ export default function ViewTeachers() {
         teachersArray = data.data;
       }
 
-      console.log("Processed teachers array:", teachersArray); // Debug log
-
-      if (teachersArray.length === 0) {
-        console.warn("No teachers found in response");
-      }
-
       setTeachers(
         teachersArray.sort(
           (a: any, b: any) => a.name?.localeCompare(b.name) || 0
         )
       );
     } catch (error) {
+      if (requestId !== fetchRequestRef.current) return;
       console.error("Error fetching teachers:", error);
       toast({
         title: "Error",
@@ -109,12 +106,20 @@ export default function ViewTeachers() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (requestId === fetchRequestRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Clear stale UI state so no teacher / pending delete from the previous school lingers.
+    setEditingTeacher(null);
+    setShowModal(false);
+    setTeacherToDelete(null);
+    setTeachers([]);
     fetchTeachers();
+    return () => {
+      fetchRequestRef.current += 1;
+    };
   }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection]);
 
   const navigate = useNavigate();

@@ -195,8 +195,11 @@ export default function SchoolPage() {
       formData.append("name", schoolName);
       formData.append("address", address);
       formData.append("city", city);
-      formData.append("district", district);
-      if (districtId) formData.append("districtId", districtId);
+      if (districtId) {
+        formData.append("districtId", districtId);
+      } else if (district) {
+        formData.append("district", district);
+      }
       formData.append("state", state);
       formData.append("zipCode", zipCode);
       formData.append("country", country);

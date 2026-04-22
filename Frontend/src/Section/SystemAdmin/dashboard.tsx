@@ -580,9 +580,10 @@ export default function SystemAdminDashboard() {
                                     </div>
                                 </div>
 
-                                {/* School level */}
+                                {/* Top schools (leaderboard — backend caps this list; not a full rollup) */}
                                 <div>
-                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">School</h4>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Top Schools</h4>
+                                    <p className="text-xs text-gray-400 mb-2">Leaderboard of the most active schools — not a full list.</p>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead>
@@ -599,7 +600,7 @@ export default function SystemAdminDashboard() {
                                                     </tr>
                                                 ) : schoolStats.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan={3} className="py-4 text-center text-gray-400">No school data yet.</td>
+                                                        <td colSpan={3} className="py-4 text-center text-gray-400">No top schools yet.</td>
                                                     </tr>
                                                 ) : schoolStats.map((s) => (
                                                     <tr key={s._id} className="border-b last:border-0">

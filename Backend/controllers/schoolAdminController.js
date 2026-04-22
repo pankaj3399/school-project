@@ -1,4 +1,5 @@
 import School from "../models/School.js";
+import District from "../models/District.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
@@ -85,6 +86,27 @@ export const addSchool = async (req, res) => {
   if (locationError) {
     return res.status(locationError.status).json({ message: locationError.message });
   }
+
+  // Resolve & authorize districtId before create.
+  let resolvedDistrictId;
+  if (req.body.districtId) {
+    if (!mongoose.Types.ObjectId.isValid(req.body.districtId)) {
+      return res.status(400).json({ message: "Invalid districtId." });
+    }
+    const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
+    if (!districtDoc) {
+      return res.status(404).json({ message: "District not found." });
+    }
+    if (req.user.role !== Role.SystemAdmin) {
+      const requester = await Admin.findById(req.user.id).select('districtId').lean();
+      const requesterDistrictId = requester?.districtId?.toString() || '';
+      if (requesterDistrictId !== districtDoc._id.toString()) {
+        return res.status(403).json({ message: "You can only create schools inside your own district." });
+      }
+    }
+    resolvedDistrictId = districtDoc._id;
+  }
+
   try {
     const existingSchool = await School.findOne({ createdBy: req.user.id });
     if (existingSchool) {
@@ -98,7 +120,7 @@ export const addSchool = async (req, res) => {
       address,
       city,
       district,
-      districtId: req.body.districtId || undefined,
+      districtId: resolvedDistrictId,
       logo: logoUrl,
       timeZone,
       createdBy: req.user.id,

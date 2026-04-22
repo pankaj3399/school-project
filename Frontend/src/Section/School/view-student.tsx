@@ -35,6 +35,10 @@ export default function ViewStudents() {
 
   useEffect(() => {
     const requestId = ++fetchRequestRef.current;
+    // Clear any modal / pending-delete state that referred to the previous school's students.
+    setEditingStudent(null);
+    setShowModal(false);
+    setStudentToDelete(null);
     const fetchStudents = async () => {
       try {
         setLoading(true)
