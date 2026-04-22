@@ -15,6 +15,7 @@ import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import Otp from "../models/Otp.js";
 import { sendEmail } from "../services/mail.js";
 import ParentVerification from "../models/ParentVerification.js";
+import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
 
 const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
@@ -80,6 +81,10 @@ export const addSchool = async (req, res) => {
   const { name, address, city, district, state, zipCode, country, timeZone, domain } =
     req.body;
   const logo = req.file;
+  const locationError = validateSchoolLocation({ city, zipCode, address });
+  if (locationError) {
+    return res.status(locationError.status).json({ message: locationError.message });
+  }
   try {
     const existingSchool = await School.findOne({ createdBy: req.user.id });
     if (existingSchool) {
@@ -93,6 +98,7 @@ export const addSchool = async (req, res) => {
       address,
       city,
       district,
+      districtId: req.body.districtId || undefined,
       logo: logoUrl,
       timeZone,
       createdBy: req.user.id,

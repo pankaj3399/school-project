@@ -418,6 +418,7 @@ export const getDashboardStats = async (req, res) => {
     return res.status(200).json({
       stats: {
         totalCountries,
+        countries: distinctCountries.filter(Boolean),
         totalStates,
         totalDistricts,
         activeDistricts,

@@ -29,6 +29,7 @@ export default function SchoolPage() {
   const [schoolName, setSchoolName] = useState("");
   const [address, setAddress] = useState("");
   const [district, setDistrict] = useState("");
+  const [districtId, setDistrictId] = useState<string>("");
   const [logo, setLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
@@ -59,7 +60,7 @@ export default function SchoolPage() {
 
   useEffect(() => {
     if (districtIdFromQuery) {
-      setDistrict(districtIdFromQuery);
+      setDistrictId(districtIdFromQuery);
     }
   }, [districtIdFromQuery])
 
@@ -99,7 +100,8 @@ export default function SchoolPage() {
           setAddress("");
           setCity("");
           setZipCode("");
-          setDistrict(districtIdFromQuery || "");
+          setDistrict("");
+          setDistrictId(districtIdFromQuery || "");
           setState("AL");
           setCountry("United States");
           setTimezone("UTC-5");
@@ -115,7 +117,10 @@ export default function SchoolPage() {
           setCity(data.school.city || "");
           setZipCode(data.school.zipCode || "");
           if (!districtIdFromQuery) {
-            setDistrict(data.school.district);
+            setDistrict(data.school.district || "");
+            setDistrictId(
+              data.school.districtId?._id || data.school.districtId || ""
+            );
           }
           setState(data.school.state || "AL");
           setCountry(data.school.country || "United States");
@@ -130,6 +135,10 @@ export default function SchoolPage() {
           setCity("");
           setZipCode("");
           setDistrict("");
+          setDistrictId("");
+          setState("AL");
+          setCountry("United States");
+          setTimezone("UTC-5");
         };
 
         if (!isNotFoundError) {
@@ -187,6 +196,7 @@ export default function SchoolPage() {
       formData.append("address", address);
       formData.append("city", city);
       formData.append("district", district);
+      if (districtId) formData.append("districtId", districtId);
       formData.append("state", state);
       formData.append("zipCode", zipCode);
       formData.append("country", country);

@@ -230,10 +230,14 @@ export default function SystemAdminDashboard() {
     }, [schoolStats]);
 
     // Per-state rollup derived from district analytics (districts + schools + teachers + students per state)
+    const normalizeState = (raw: string | null | undefined) => {
+        const trimmed = (raw || '').trim();
+        return !trimmed || trimmed.toUpperCase() === 'N/A' ? 'Unknown' : trimmed;
+    };
     const stateRollup = useMemo(() => {
         const map = new Map<string, { state: string; districtCount: number; schoolCount: number; teacherCount: number; studentCount: number }>();
         districtAnalytics.forEach((d) => {
-            const key = d.state && d.state !== 'N/A' ? d.state : 'Unknown';
+            const key = normalizeState(d.state);
             const entry = map.get(key) || { state: key, districtCount: 0, schoolCount: 0, teacherCount: 0, studentCount: 0 };
             entry.districtCount += 1;
             entry.schoolCount += d.schoolCount || 0;
@@ -488,7 +492,11 @@ export default function SystemAdminDashboard() {
                                             </thead>
                                             <tbody>
                                                 <tr className="border-b last:border-0">
-                                                    <td className="py-2 font-medium text-gray-900">USA</td>
+                                                    <td className="py-2 font-medium text-gray-900">
+                                                        {stats && Array.isArray(stats.countries) && stats.totalCountries === 1 && stats.countries[0]
+                                                            ? stats.countries[0]
+                                                            : 'All countries'}
+                                                    </td>
                                                     <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalStates || 0).toLocaleString()}</td>
                                                     <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalDistricts || 0).toLocaleString()}</td>
                                                     <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalSchools || 0).toLocaleString()}</td>

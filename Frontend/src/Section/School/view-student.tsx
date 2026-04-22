@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { getStudents, deleteStudent, updateStudent, sendVerificationMail } from "@/api"
@@ -7,9 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "./Modal"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { useSchool } from "@/context/SchoolContext"
-import { useAuth } from "@/authContext"
-import { Role } from "@/enum"
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
@@ -23,8 +21,7 @@ import { GRADE_OPTIONS } from "@/lib/types"
 const STUDENT_GRADES = GRADE_OPTIONS
 
 export default function ViewStudents() {
-  const { user } = useAuth()
-  const { selectedSchoolId } = useSchool()
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
   const [students, setStudents] = useState<any[]>([])
   const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,11 +31,10 @@ export default function ViewStudents() {
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
   const [sendingVerification, setSendingVerification] = useState<string | null>(null);
   const { toast } = useToast()
-
-  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
-  const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
+  const fetchRequestRef = useRef(0);
 
   useEffect(() => {
+    const requestId = ++fetchRequestRef.current;
     const fetchStudents = async () => {
       try {
         setLoading(true)
@@ -49,11 +45,12 @@ export default function ViewStudents() {
             description: "No token found.",
             variant: "destructive",
           })
-          setLoading(false)
+          if (requestId === fetchRequestRef.current) setLoading(false)
           return
         }
 
         if (requiresSchoolSelection) {
+          if (requestId !== fetchRequestRef.current) return
           setStudents([])
           setFilteredStudents([])
           setLoading(false)
@@ -65,6 +62,7 @@ export default function ViewStudents() {
           : undefined;
 
         const data = await getStudents(token, effectiveSchoolId)
+        if (requestId !== fetchRequestRef.current) return
 
         if (data.error) {
           toast({
@@ -83,6 +81,7 @@ export default function ViewStudents() {
         setFilteredStudents(sortedStudents)
         setLoading(false)
       } catch (error) {
+        if (requestId !== fetchRequestRef.current) return
         console.error("Unexpected error fetching student data (local/runtime error):", error)
         toast({
           title: "Runtime Error",
@@ -94,7 +93,10 @@ export default function ViewStudents() {
     }
 
     fetchStudents()
-  }, [selectedSchoolId, user, toast])
+    return () => {
+      fetchRequestRef.current += 1;
+    };
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection, toast])
 
 
   useEffect(() => {

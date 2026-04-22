@@ -6,6 +6,7 @@ import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import Admin from "../models/Admin.js";
+import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
 export const getAllSchools = async (req, res) => {
     try {
       let filter = {};
@@ -224,16 +225,9 @@ export const updateSchool = async (req, res) => {
     const { name, address, city, district, state, zipCode, country, timeZone, domain } = req.body;
     const logo = req.file;
 
-    const cityPattern = /^[A-Za-zÀ-ɏ\s.'-]{0,100}$/;
-    const zipPattern = /^[A-Za-z0-9\s-]{0,10}$/;
-    if (city && !cityPattern.test(city)) {
-      return res.status(400).json({ message: "City must contain only letters, spaces, hyphens, or apostrophes and be at most 100 characters." });
-    }
-    if (zipCode && !zipPattern.test(zipCode)) {
-      return res.status(400).json({ message: "Zip code must be at most 10 alphanumeric characters." });
-    }
-    if (address && String(address).length > 200) {
-      return res.status(400).json({ message: "Address must be at most 200 characters." });
+    const locationError = validateSchoolLocation({ city, zipCode, address });
+    if (locationError) {
+      return res.status(locationError.status).json({ message: locationError.message });
     }
 
     try {
@@ -246,6 +240,10 @@ export const updateSchool = async (req, res) => {
         if (!adminUser || !school || schoolDistrictId !== adminDistrictId) {
           return res.status(403).json({ message: "Access denied. School is outside your district." });
         }
+        // Non-SystemAdmin must not be able to reassign a school to a different district.
+        if (req.body.districtId && String(req.body.districtId) !== adminDistrictId) {
+          return res.status(403).json({ message: "Only a system administrator can reassign a school to a different district." });
+        }
       } else if (req.user.role === Role.SchoolAdmin) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
@@ -254,6 +252,10 @@ export const updateSchool = async (req, res) => {
 
         if (!isCreator && !isAssigned) {
            return res.status(403).json({ message: "Access denied. You can only update your own school." });
+        }
+        // School admins can never reassign the district either.
+        if (req.body.districtId && school && String(req.body.districtId) !== String(school.districtId || "")) {
+          return res.status(403).json({ message: "Only a system administrator can reassign a school to a different district." });
         }
       }
       // Note: SystemAdmin has global access

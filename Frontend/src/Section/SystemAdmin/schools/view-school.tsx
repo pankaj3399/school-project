@@ -168,7 +168,7 @@ const ViewSchool = () => {
             data.append('name', formData.name);
             data.append('address', formData.address);
             data.append('city', formData.city);
-            data.append('district', formData.districtId);
+            data.append('districtId', formData.districtId);
             data.append('state', formData.state);
             data.append('zipCode', formData.zipCode);
             data.append('country', formData.country);
