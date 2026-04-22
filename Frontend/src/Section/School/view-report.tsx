@@ -153,7 +153,7 @@ export default function ViewReport({
       const newStudentsData: SelectedStudentData = [];
       
       reportData?.gradeData.forEach(gradeInfo => {
-        if (gradeInfo.teachers.length > 0) {
+        if (gradeInfo.students.length > 0) {
           gradeInfo.students.forEach(studentData => {
             newSelectedStudents.add(studentData.student._id);
             newStudentsData.push({
@@ -267,13 +267,16 @@ export default function ViewReport({
       )}
 
       {reportData?.gradeData && reportData?.gradeData.length > 0 && reportData?.gradeData.map((gradeInfo) => (
-        gradeInfo.teachers.length > 0 ? (
+        gradeInfo.students.length > 0 ? (
           <div key={gradeInfo.grade} className="bg-white rounded-lg shadow-md p-6 space-y-4">
             {/* Teacher Info Header */}
             <div className="border-b pb-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-800">
-                  Grade {gradeInfo.grade}  -  {gradeInfo.teachers[0].name} ({gradeInfo.teachers[0].subject})
+                  Grade {gradeInfo.grade}
+                  {gradeInfo.teachers[0]
+                    ? `  -  ${gradeInfo.teachers[0].name} (${gradeInfo.teachers[0].subject})`
+                    : ''}
                 </h2>
             {gradeInfo.students.length > 0 && <Checkbox
                 checked={gradeInfo.students.every((s:any) => selectedStudents.has(s.student._id))}

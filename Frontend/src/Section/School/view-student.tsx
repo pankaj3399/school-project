@@ -11,6 +11,13 @@ import { useSchool } from "@/context/SchoolContext"
 import { useAuth } from "@/authContext"
 import { Role } from "@/enum"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { GRADE_OPTIONS } from "@/lib/types"
 
 const STUDENT_GRADES = GRADE_OPTIONS
@@ -28,6 +35,9 @@ export default function ViewStudents() {
   const [sendingVerification, setSendingVerification] = useState<string | null>(null);
   const { toast } = useToast()
 
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -42,8 +52,15 @@ export default function ViewStudents() {
           return
         }
 
-        const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
-          ? (selectedSchoolId || undefined) 
+        if (requiresSchoolSelection) {
+          setStudents([])
+          setFilteredStudents([])
+          setLoading(false)
+          return
+        }
+
+        const effectiveSchoolId = isMultiSchoolUser
+          ? (selectedSchoolId || undefined)
           : undefined;
 
         const data = await getStudents(token, effectiveSchoolId)
@@ -201,6 +218,14 @@ export default function ViewStudents() {
   };
 
   const navigate = useNavigate();
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to view students.
+      </div>
+    )
+  }
+
   if (loading) {
     return <Loading />
   }
@@ -229,19 +254,17 @@ export default function ViewStudents() {
         </div>
       </div>
 
-      {/* Move Edit Form to top */}
-      {editingStudent && (
-        <div className="mb-8 p-5 border rounded-xl bg-gray-50">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">Edit Student</h2>
-            <Button
-              variant="outline"
-              onClick={() => setEditingStudent(null)}
-              className="text-gray-500"
-            >
-              ✕
-            </Button>
-          </div>
+      <Dialog
+        open={!!editingStudent}
+        onOpenChange={(open) => {
+          if (!open) setEditingStudent(null)
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          {editingStudent && (
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -384,24 +407,25 @@ export default function ViewStudents() {
             <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e) => setEditingStudent({ ...editingStudent, sendNotifications: e as boolean })} className="mt-2" />
             <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to Parents/Guardians.</span>
 
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"
-              >
-                Save
-              </button>
-              <button
+            <DialogFooter className="gap-2">
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setEditingStudent(null)}
-                className="px-6 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
               >
                 Cancel
-              </button>
-            </div>
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#00a58c] hover:bg-[#008f7a] text-white"
+              >
+                Save
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="mb-4">
         <Select

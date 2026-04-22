@@ -728,6 +728,7 @@ export const getPointHistory = async (req, res) => {
         });
 
       case Role.Admin:
+      case Role.SystemAdmin:
         // SystemAdmin/Admin see everything or filtered by schoolId
         const { schoolId } = req.query;
         if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {

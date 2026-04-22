@@ -77,7 +77,7 @@ const getSchoolIdFromUser = async (req) => {
 };
 
 export const addSchool = async (req, res) => {
-  const { name, address, district, state, country, timeZone, domain } =
+  const { name, address, city, district, state, zipCode, country, timeZone, domain } =
     req.body;
   const logo = req.file;
   try {
@@ -91,11 +91,13 @@ export const addSchool = async (req, res) => {
     const newSchool = await School.create({
       name,
       address,
+      city,
       district,
       logo: logoUrl,
       timeZone,
       createdBy: req.user.id,
       state,
+      zipCode,
       country,
       domain,
     });

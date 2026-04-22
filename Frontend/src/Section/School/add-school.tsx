@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
@@ -36,12 +36,16 @@ export default function SchoolPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const districtIdFromQuery = searchParams.get("districtId");
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
+  const isCreateMode = location.pathname.endsWith("/schools/new");
 
+  const [city, setCity] = useState("");
   const [state, setState] = useState("AL");
+  const [zipCode, setZipCode] = useState("");
   const [country, setCountry] = useState("United States");
   const [timezone, setTimezone] = useState("UTC-5"); // Default to Eastern Time
 
@@ -90,10 +94,12 @@ export default function SchoolPage() {
         }
 
         const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
-        if (isAdmin && !selectedSchoolId) {
+        if (isCreateMode || (isAdmin && !selectedSchoolId)) {
           setSchool(null);
           setSchoolName("");
           setAddress("");
+          setCity("");
+          setZipCode("");
           setDistrict(districtIdFromQuery || "");
           setState("AL");
           setCountry("United States");
@@ -107,6 +113,8 @@ export default function SchoolPage() {
         if (data.school) {
           setSchoolName(data.school.name);
           setAddress(data.school.address);
+          setCity(data.school.city || "");
+          setZipCode(data.school.zipCode || "");
           if (!districtIdFromQuery) {
             setDistrict(data.school.district);
           }
@@ -137,7 +145,7 @@ export default function SchoolPage() {
     };
 
     fetchSchool();
-  }, [toast, selectedSchoolId, user, districtIdFromQuery]);
+  }, [toast, selectedSchoolId, user, districtIdFromQuery, isCreateMode]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -176,8 +184,10 @@ export default function SchoolPage() {
       const formData = new FormData();
       formData.append("name", schoolName);
       formData.append("address", address);
+      formData.append("city", city);
       formData.append("district", district);
       formData.append("state", state);
+      formData.append("zipCode", zipCode);
       formData.append("country", country);
       formData.append("timeZone", timezone);
       if (logo) {
@@ -216,6 +226,14 @@ export default function SchoolPage() {
   const formFields = (
     <>
       <div>
+        <Label htmlFor="city">City</Label>
+        <Input
+          id="city"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+        />
+      </div>
+      <div>
         <Label htmlFor="state">State</Label>
         <Select
           value={state}
@@ -232,6 +250,14 @@ export default function SchoolPage() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div>
+        <Label htmlFor="zipCode">Zip Code</Label>
+        <Input
+          id="zipCode"
+          value={zipCode}
+          onChange={(e) => setZipCode(e.target.value)}
+        />
       </div>
       <div>
         <Label htmlFor="timezone">Time Zone</Label>
@@ -279,11 +305,13 @@ export default function SchoolPage() {
             <div className="flex flex-col items-center text-center text-sm w-60">
               <p className="">{school.district}</p>
               <h2 className="text-lg font-semibold">{school.name}</h2>
-              <p className="text-sm">{school.createdBy.name?.toUpperCase()}</p>
-              <div className="flex gap-1 text-xs">
-                <p className="">{school.address},</p>
-                <p className="">{school.state}, {school.country}</p>
-              </div>
+              {school.address && <p className="text-xs">{school.address}</p>}
+              {(school.city || school.state || school.zipCode) && (
+                <p className="text-xs">
+                  {[school.city, school.state, school.zipCode].filter(Boolean).join(", ")}
+                </p>
+              )}
+              {school.country && <p className="text-xs">{school.country}</p>}
             </div>
           </div>
 

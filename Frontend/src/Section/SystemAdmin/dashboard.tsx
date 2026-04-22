@@ -5,7 +5,7 @@ import {
     School,
     Users,
     GraduationCap,
-    Map,
+    Map as MapIcon,
     AlertCircle,
     Globe
 } from 'lucide-react';
@@ -155,7 +155,7 @@ export default function SystemAdminDashboard() {
         {
             title: "Total States",
             value: stats?.totalStates || 0,
-            icon: Map,
+            icon: MapIcon,
         },
         {
             title: "Total Districts",
@@ -229,6 +229,21 @@ export default function SystemAdminDashboard() {
         return [...schoolStats].sort((a, b) => b.studentCount - a.studentCount).slice(0, 5);
     }, [schoolStats]);
 
+    // Per-state rollup derived from district analytics (districts + schools + teachers + students per state)
+    const stateRollup = useMemo(() => {
+        const map = new Map<string, { state: string; districtCount: number; schoolCount: number; teacherCount: number; studentCount: number }>();
+        districtAnalytics.forEach((d) => {
+            const key = d.state && d.state !== 'N/A' ? d.state : 'Unknown';
+            const entry = map.get(key) || { state: key, districtCount: 0, schoolCount: 0, teacherCount: 0, studentCount: 0 };
+            entry.districtCount += 1;
+            entry.schoolCount += d.schoolCount || 0;
+            entry.teacherCount += d.teacherCount || 0;
+            entry.studentCount += d.studentCount || 0;
+            map.set(key, entry);
+        });
+        return Array.from(map.values()).sort((a, b) => b.districtCount - a.districtCount);
+    }, [districtAnalytics]);
+
 
     interface RankBoxProps<T> {
         title: string;
@@ -251,10 +266,12 @@ export default function SystemAdminDashboard() {
                             const val = Number(item[valueKey]) || 0;
                             const maxValue = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
                             const pct = (val / maxValue) * 100;
+                            const rawLabel = item[labelKey];
+                            const labelText = rawLabel && String(rawLabel).trim() && String(rawLabel) !== 'N/A' ? String(rawLabel) : 'Unknown';
                             return (
                                 <div key={i} className="flex flex-col gap-1 text-xs">
                                     <div className="flex justify-between items-center text-gray-700 font-medium">
-                                        <span className="truncate pr-2">{String(item[labelKey]) || "Unknown"}</span>
+                                        <span className="truncate pr-2">{labelText}</span>
                                         <span>{val} {labelSuffix}</span>
                                     </div>
                                     <div className="w-full bg-gray-100 rounded-full h-2">
@@ -296,11 +313,11 @@ export default function SystemAdminDashboard() {
                         return (
                             <Card
                                 key={index}
-                                className="border border-gray-200 rounded-2xl shadow-sm flex flex-col items-center justify-center p-5 text-center bg-white aspect-square"
+                                className="border-2 border-gray-400 rounded-2xl shadow-sm flex flex-col items-center justify-center p-5 text-center bg-white aspect-square"
                             >
-                                <Icon className="h-7 w-7 text-gray-700 mb-2" strokeWidth={1.5} />
-                                <h4 className="text-xs font-semibold text-gray-700 mb-2">{card.title}</h4>
-                                <div className="text-gray-900 text-3xl font-bold">
+                                <Icon className="h-9 w-9 text-gray-700 mb-2" strokeWidth={1.75} />
+                                <h4 className="text-sm font-semibold text-gray-700 mb-2">{card.title}</h4>
+                                <div className="text-gray-900 text-4xl font-bold">
                                     {loading ? "..." : (card.value || 0).toLocaleString()}
                                 </div>
                             </Card>
@@ -439,6 +456,146 @@ export default function SystemAdminDashboard() {
                     </div>
                 </div>
 
+                {/* Usage Matrix — hierarchical rollup (Country → State → District → School) */}
+                <Card className="border-2 border-gray-400 shadow-sm rounded-2xl">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                            <Globe className="h-5 w-5 text-gray-500" />
+                            Usage Matrix
+                        </CardTitle>
+                        <CardDescription>Totals grouped by country, state, district and school.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+                        {loading ? (
+                            <div className="h-32 flex items-center justify-center text-gray-400">Loading...</div>
+                        ) : (
+                            <>
+                                {/* Country level */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Country</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b text-left text-gray-500">
+                                                    <th scope="col" className="pb-2 font-medium">Country</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">States</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Districts</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Schools</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Teachers</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Students</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr className="border-b last:border-0">
+                                                    <td className="py-2 font-medium text-gray-900">USA</td>
+                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalStates || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalDistricts || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalSchools || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalTeachers || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalStudents || 0).toLocaleString()}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* State level */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">State</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b text-left text-gray-500">
+                                                    <th scope="col" className="pb-2 font-medium">State</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Districts</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Schools</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Teachers</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Students</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {stateRollup.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={5} className="py-4 text-center text-gray-400">No state data yet.</td>
+                                                    </tr>
+                                                ) : stateRollup.map((s) => (
+                                                    <tr key={s.state} className="border-b last:border-0">
+                                                        <td className="py-2 font-medium text-gray-900">{s.state}</td>
+                                                        <td className="py-2 text-right text-gray-900">{s.districtCount.toLocaleString()}</td>
+                                                        <td className="py-2 text-right text-gray-900">{s.schoolCount.toLocaleString()}</td>
+                                                        <td className="py-2 text-right text-gray-900">{s.teacherCount.toLocaleString()}</td>
+                                                        <td className="py-2 text-right text-gray-900">{s.studentCount.toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* District level */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">District</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b text-left text-gray-500">
+                                                    <th scope="col" className="pb-2 font-medium">District</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Schools</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Teachers</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Students</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {districtAnalytics.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={4} className="py-4 text-center text-gray-400">No district data yet.</td>
+                                                    </tr>
+                                                ) : districtAnalytics.map((d) => (
+                                                    <tr key={d.districtId} className="border-b last:border-0">
+                                                        <td className="py-2 font-medium text-gray-900">{d.name}</td>
+                                                        <td className="py-2 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
+                                                        <td className="py-2 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
+                                                        <td className="py-2 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* School level */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">School</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b text-left text-gray-500">
+                                                    <th scope="col" className="pb-2 font-medium">School</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Teachers</th>
+                                                    <th scope="col" className="pb-2 font-medium text-right">Students</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {schoolStats.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={3} className="py-4 text-center text-gray-400">No school data yet.</td>
+                                                    </tr>
+                                                ) : schoolStats.map((s) => (
+                                                    <tr key={s._id} className="border-b last:border-0">
+                                                        <td className="py-2 font-medium text-gray-900">{s.name}</td>
+                                                        <td className="py-2 text-right text-gray-900">{s.teacherCount.toLocaleString()}</td>
+                                                        <td className="py-2 text-right text-gray-900">{s.studentCount.toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* District-Level Analytics */}
                 <Card className="border-0 shadow-sm ring-1 ring-gray-100">
                     <CardHeader>
@@ -486,7 +643,7 @@ export default function SystemAdminDashboard() {
                                                     </Link>
                                                     <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
                                                 </td>
-                                                <td className="py-3 text-gray-600">{d.state || '—'}</td>
+                                                <td className="py-3 text-gray-600">{d.state && d.state !== 'N/A' ? d.state : '—'}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>

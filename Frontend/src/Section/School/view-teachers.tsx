@@ -29,6 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { GRADE_OPTIONS } from "@/lib/types";
 
@@ -47,6 +54,9 @@ export default function ViewTeachers() {
   const [customGrade, setCustomGrade] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
+
   const fetchTeachers = async () => {
     try {
       setLoading(true);
@@ -61,8 +71,14 @@ export default function ViewTeachers() {
         return;
       }
 
-      const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
-        ? (selectedSchoolId || undefined) 
+      if (requiresSchoolSelection) {
+        setTeachers([]);
+        setLoading(false);
+        return;
+      }
+
+      const effectiveSchoolId = isMultiSchoolUser
+        ? (selectedSchoolId || undefined)
         : undefined;
 
       const data = await getTeachers(effectiveSchoolId);
@@ -213,6 +229,14 @@ export default function ViewTeachers() {
     return matchesGrade && matchesType;
   });
 
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to view teachers.
+      </div>
+    );
+  }
+
   if (loading) {
     return <Loading />;
   }
@@ -234,9 +258,17 @@ export default function ViewTeachers() {
         </div>
       </div>
 
-      {editingTeacher && (
-        <div className="mt-8 p-5 border rounded-xl bg-gray-50">
-          <h2 className="text-2xl font-bold mb-4">Edit Teacher</h2>
+      <Dialog
+        open={!!editingTeacher}
+        onOpenChange={(open) => {
+          if (!open) setEditingTeacher(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Teacher</DialogTitle>
+          </DialogHeader>
+          {editingTeacher && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -378,24 +410,25 @@ export default function ViewTeachers() {
               />
               <span className="text-sm ml-2">Receive Emails</span>
             </div>
-            <div className="flex space-x-4">
-              <Button
-                type="submit"
-                className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"
-              >
-                Save
-              </Button>
+            <DialogFooter className="gap-2">
               <Button
                 type="button"
+                variant="outline"
                 onClick={() => setEditingTeacher(null)}
-                className="px-6 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
               >
                 Cancel
               </Button>
-            </div>
+              <Button
+                type="submit"
+                className="bg-[#00a58c] hover:bg-[#008f7a] text-white"
+              >
+                Save
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="flex gap-4 my-6">
         <div className="w-48">

@@ -21,7 +21,11 @@ export function Breadcrumb() {
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
-          
+
+          if (segment === "new") {
+            label = "Add";
+          }
+
           const validParentContexts = ["system-admin", "districts", "schools"];
           
           // Force details label for any segment under districts/schools if it's the last segment

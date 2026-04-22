@@ -19,10 +19,19 @@ interface School {
   domain?: string;
 }
 
+interface DistrictOption {
+  _id: string;
+  name: string;
+}
+
 interface SchoolContextType {
   selectedSchoolId: string | null;
   setSelectedSchoolId: (id: string | null) => void;
+  selectedDistrictId: string | null;
+  setSelectedDistrictId: (id: string | null) => void;
   schools: School[];
+  districts: DistrictOption[];
+  schoolsInSelectedDistrict: School[];
   selectedSchool: School | null;
   loading: boolean;
 }
@@ -36,8 +45,31 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(() => {
     return localStorage.getItem('selectedSchoolId');
   });
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(() => {
+    return localStorage.getItem('selectedDistrictId');
+  });
 
   const selectedSchool = selectedSchoolId ? (schools.find(s => s._id === selectedSchoolId) ?? null) : null;
+
+  const districts: DistrictOption[] = React.useMemo(() => {
+    const seen = new Map<string, DistrictOption>();
+    schools.forEach((s) => {
+      const id = typeof s.districtId === 'object' && s.districtId ? s.districtId._id : (s.districtId as unknown as string | undefined);
+      const name = typeof s.districtId === 'object' && s.districtId ? s.districtId.name : (s.district || '');
+      if (id && !seen.has(id)) {
+        seen.set(id, { _id: id, name: name || 'Unknown district' });
+      }
+    });
+    return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [schools]);
+
+  const schoolsInSelectedDistrict: School[] = React.useMemo(() => {
+    if (!selectedDistrictId) return schools;
+    return schools.filter((s) => {
+      const id = typeof s.districtId === 'object' && s.districtId ? s.districtId._id : (s.districtId as unknown as string | undefined);
+      return id === selectedDistrictId;
+    });
+  }, [schools, selectedDistrictId]);
 
   useEffect(() => {
     if (selectedSchoolId) {
@@ -46,6 +78,25 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       localStorage.removeItem('selectedSchoolId');
     }
   }, [selectedSchoolId]);
+
+  useEffect(() => {
+    if (selectedDistrictId) {
+      localStorage.setItem('selectedDistrictId', selectedDistrictId);
+    } else {
+      localStorage.removeItem('selectedDistrictId');
+    }
+  }, [selectedDistrictId]);
+
+  // When the district changes, if the current school no longer belongs to it, clear school.
+  useEffect(() => {
+    if (!selectedDistrictId || !selectedSchoolId) return;
+    const stillValid = schools.some((s) => {
+      if (s._id !== selectedSchoolId) return false;
+      const id = typeof s.districtId === 'object' && s.districtId ? s.districtId._id : (s.districtId as unknown as string | undefined);
+      return id === selectedDistrictId;
+    });
+    if (!stillValid) setSelectedSchoolId(null);
+  }, [selectedDistrictId, selectedSchoolId, schools]);
 
   useEffect(() => {
     if (!user) {
@@ -123,7 +174,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user]);
 
   return (
-    <SchoolContext.Provider value={{ selectedSchoolId, setSelectedSchoolId, schools, selectedSchool, loading }}>
+    <SchoolContext.Provider value={{ selectedSchoolId, setSelectedSchoolId, selectedDistrictId, setSelectedDistrictId, schools, districts, schoolsInSelectedDistrict, selectedSchool, loading }}>
       {children}
     </SchoolContext.Provider>
   );

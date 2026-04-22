@@ -478,9 +478,10 @@ export const submitFormAdmin = async (
   }
 };
 
-export const getPointHistory = async (token: string, page: number, limit: number = 20) => {
+export const getPointHistory = async (token: string, page: number, limit: number = 20, schoolId?: string) => {
   try {
-    const response = await axios.get(`${API_URL}/form/getPointHistory?page=${page}&limit=${limit}`, {
+    const schoolParam = schoolId ? `&schoolId=${encodeURIComponent(schoolId)}` : '';
+    const response = await axios.get(`${API_URL}/form/getPointHistory?page=${page}&limit=${limit}${schoolParam}`, {
       headers: { token },
     });
     return response.data;
@@ -489,9 +490,10 @@ export const getPointHistory = async (token: string, page: number, limit: number
   }
 };
 
-export const getFilteredPointHistory = async (token: string, studentId: string) => {
+export const getFilteredPointHistory = async (token: string, studentId: string, schoolId?: string) => {
   try {
-    const response = await axios.get(`${API_URL}/form/getFilteredPointHistory?studentId=${studentId}`, {
+    const schoolParam = schoolId ? `&schoolId=${encodeURIComponent(schoolId)}` : '';
+    const response = await axios.get(`${API_URL}/form/getFilteredPointHistory?studentId=${studentId}${schoolParam}`, {
       headers: { token },
     });
     return response.data;

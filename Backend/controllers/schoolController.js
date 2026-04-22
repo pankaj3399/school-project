@@ -221,7 +221,7 @@ export const getCurrentSchool = async (req, res) => {
 };
 
 export const updateSchool = async (req, res) => {
-    const { name, address, district, state, country, timeZone, domain } = req.body;
+    const { name, address, city, district, state, zipCode, country, timeZone, domain } = req.body;
     const logo = req.file;
   
     try {
@@ -252,13 +252,13 @@ export const updateSchool = async (req, res) => {
       if(logoUrl)
        updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address, district, districtId: req.body.districtId || undefined, logo: logoUrl, state, country, timeZone, domain },
+        { name, address, city, district, districtId: req.body.districtId || undefined, logo: logoUrl, state, zipCode, country, timeZone, domain },
         { new: true }
       ).populate('districtId').populate('createdBy');
       else
       updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address,district, state, country, timeZone, domain },
+        { name, address, city, district, state, zipCode, country, timeZone, domain },
         { new: true }
       ).populate('createdBy');
   
