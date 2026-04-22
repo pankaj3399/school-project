@@ -236,14 +236,20 @@ export const updateSchool = async (req, res) => {
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
-        const adminDistrictId = adminUser.districtId?.toString() || "";
-        const schoolDistrictId = school.districtId?.toString() || "";
-        if (!adminUser || !school || schoolDistrictId !== adminDistrictId) {
+        if (!adminUser || !school) {
           return res.status(403).json({ message: "Access denied. School is outside your district." });
         }
-        // Non-SystemAdmin must not be able to reassign a school to a different district.
-        if (req.body.districtId && String(req.body.districtId) !== adminDistrictId) {
-          return res.status(403).json({ message: "Only a system administrator can reassign a school to a different district." });
+        // A user flagged as Admin in the JWT may still hold adminUser.role === SystemAdmin in
+        // the DB; treat them as a global admin and skip both ownership + reassignment guards.
+        if (adminUser.role !== Role.SystemAdmin) {
+          const adminDistrictId = adminUser.districtId?.toString() || "";
+          const schoolDistrictId = school.districtId?.toString() || "";
+          if (schoolDistrictId !== adminDistrictId) {
+            return res.status(403).json({ message: "Access denied. School is outside your district." });
+          }
+          if (req.body.districtId && String(req.body.districtId) !== adminDistrictId) {
+            return res.status(403).json({ message: "Only a system administrator can reassign a school to a different district." });
+          }
         }
       } else if (req.user.role === Role.SchoolAdmin) {
         const adminUser = await Admin.findById(req.user.id);

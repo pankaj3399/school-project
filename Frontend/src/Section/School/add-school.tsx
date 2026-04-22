@@ -195,11 +195,10 @@ export default function SchoolPage() {
       formData.append("name", schoolName);
       formData.append("address", address);
       formData.append("city", city);
-      if (districtId) {
-        formData.append("districtId", districtId);
-      } else if (district) {
-        formData.append("district", district);
-      }
+      // Always send legacy district string when we have one so school.district remains populated
+      // for display; districtId is the authoritative relation when a real district was picked.
+      if (district) formData.append("district", district);
+      if (districtId) formData.append("districtId", districtId);
       formData.append("state", state);
       formData.append("zipCode", zipCode);
       formData.append("country", country);

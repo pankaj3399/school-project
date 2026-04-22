@@ -98,10 +98,13 @@ export const addSchool = async (req, res) => {
       return res.status(404).json({ message: "District not found." });
     }
     if (req.user.role !== Role.SystemAdmin) {
-      const requester = await Admin.findById(req.user.id).select('districtId').lean();
-      const requesterDistrictId = requester?.districtId?.toString() || '';
-      if (requesterDistrictId !== districtDoc._id.toString()) {
-        return res.status(403).json({ message: "You can only create schools inside your own district." });
+      const requester = await Admin.findById(req.user.id).select('districtId role').lean();
+      const isGlobalAdmin = requester?.role === Role.SystemAdmin;
+      if (!isGlobalAdmin) {
+        const requesterDistrictId = requester?.districtId?.toString() || '';
+        if (requesterDistrictId !== districtDoc._id.toString()) {
+          return res.status(403).json({ message: "You can only create schools inside your own district." });
+        }
       }
     }
     resolvedDistrictId = districtDoc._id;

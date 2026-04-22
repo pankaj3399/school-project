@@ -29,6 +29,8 @@ type StateAnalyticsRow = {
     districtCount: number;
     activeDistrictCount: number;
     schoolCount: number;
+    teacherCount?: number;
+    studentCount?: number;
 };
 
 type DistrictAnalyticsRow = {
@@ -229,24 +231,25 @@ export default function SystemAdminDashboard() {
         return [...schoolStats].sort((a, b) => b.studentCount - a.studentCount).slice(0, 5);
     }, [schoolStats]);
 
-    // Per-state rollup derived from district analytics (districts + schools + teachers + students per state)
+    // Per-state rollup derived from stateAnalytics (covers ALL districts — active + inactive — so
+    // it reconciles with country-level totals). districtAnalytics is active-only and would skew totals.
     const normalizeState = (raw: string | null | undefined) => {
         const trimmed = (raw || '').trim();
         return !trimmed || trimmed.toUpperCase() === 'N/A' ? 'Unknown' : trimmed;
     };
     const stateRollup = useMemo(() => {
         const map = new Map<string, { state: string; districtCount: number; schoolCount: number; teacherCount: number; studentCount: number }>();
-        districtAnalytics.forEach((d) => {
-            const key = normalizeState(d.state);
+        stateAnalytics.forEach((s) => {
+            const key = normalizeState(s.state);
             const entry = map.get(key) || { state: key, districtCount: 0, schoolCount: 0, teacherCount: 0, studentCount: 0 };
-            entry.districtCount += 1;
-            entry.schoolCount += d.schoolCount || 0;
-            entry.teacherCount += d.teacherCount || 0;
-            entry.studentCount += d.studentCount || 0;
+            entry.districtCount += s.districtCount || 0;
+            entry.schoolCount += s.schoolCount || 0;
+            entry.teacherCount += s.teacherCount || 0;
+            entry.studentCount += s.studentCount || 0;
             map.set(key, entry);
         });
         return Array.from(map.values()).sort((a, b) => b.districtCount - a.districtCount);
-    }, [districtAnalytics]);
+    }, [stateAnalytics]);
 
 
     interface RankBoxProps<T> {
@@ -665,7 +668,7 @@ export default function SystemAdminDashboard() {
                                                     </Link>
                                                     <span className="ml-2 text-xs text-gray-400 font-mono">{d.code}</span>
                                                 </td>
-                                                <td className="py-3 text-gray-600">{d.state && d.state !== 'N/A' ? d.state : '—'}</td>
+                                                <td className="py-3 text-gray-600">{(() => { const n = normalizeState(d.state); return n === 'Unknown' ? '—' : n; })()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
                                                 <td className="py-3 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>

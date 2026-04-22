@@ -172,7 +172,7 @@ export default function ViewStudents() {
   }
 
   const handleSendVerification = async (email: string, studentId: string, isStudent = false) => {
-    setSendingVerification(`${studentId}-${email}`);
+    setSendingVerification(studentId);
     try {
       const data = await sendVerificationMail({
         email,
@@ -310,10 +310,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.email}`}
+                  disabled={sendingVerification === editingStudent._id}
                   onClick={() => handleSendVerification(editingStudent.email, editingStudent._id, true)}
                 >
-                  {sendingVerification === `${editingStudent._id}-${editingStudent.email}`
+                  {sendingVerification === editingStudent._id
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -365,10 +365,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.parentEmail}`}
+                  disabled={sendingVerification === editingStudent._id}
                   onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id)}
                 >
-                  {sendingVerification === `${editingStudent._id}-${editingStudent.parentEmail}`
+                  {sendingVerification === editingStudent._id
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -396,10 +396,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.standard}`}
+                  disabled={sendingVerification === editingStudent._id}
                   onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id)}
                 >
-                  {sendingVerification === `${editingStudent._id}-${editingStudent.standard}`
+                  {sendingVerification === editingStudent._id
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
