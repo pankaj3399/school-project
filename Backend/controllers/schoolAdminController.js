@@ -93,21 +93,26 @@ export const addSchool = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.body.districtId)) {
       return res.status(400).json({ message: "Invalid districtId." });
     }
-    const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
-    if (!districtDoc) {
-      return res.status(404).json({ message: "District not found." });
-    }
-    if (req.user.role !== Role.SystemAdmin) {
-      const requester = await Admin.findById(req.user.id).select('districtId role').lean();
-      const isGlobalAdmin = requester?.role === Role.SystemAdmin;
-      if (!isGlobalAdmin) {
-        const requesterDistrictId = requester?.districtId?.toString() || '';
-        if (requesterDistrictId !== districtDoc._id.toString()) {
-          return res.status(403).json({ message: "You can only create schools inside your own district." });
+    try {
+      const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
+      if (!districtDoc) {
+        return res.status(404).json({ message: "District not found." });
+      }
+      if (req.user.role !== Role.SystemAdmin) {
+        const requester = await Admin.findById(req.user.id).select('districtId role').lean();
+        const isGlobalAdmin = requester?.role === Role.SystemAdmin;
+        if (!isGlobalAdmin) {
+          const requesterDistrictId = requester?.districtId?.toString() || '';
+          if (requesterDistrictId !== districtDoc._id.toString()) {
+            return res.status(403).json({ message: "You can only create schools inside your own district." });
+          }
         }
       }
+      resolvedDistrictId = districtDoc._id;
+    } catch (err) {
+      console.error('Error resolving district for addSchool:', err);
+      return res.status(500).json({ message: "Error resolving district.", error: err.message });
     }
-    resolvedDistrictId = districtDoc._id;
   }
 
   try {

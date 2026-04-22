@@ -279,7 +279,7 @@ export const updateSchool = async (req, res) => {
         }
         const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
         if (!districtDoc) {
-          return res.status(400).json({ message: "District not found." });
+          return res.status(404).json({ message: "District not found." });
         }
         updatePayload.districtId = districtDoc._id;
       }

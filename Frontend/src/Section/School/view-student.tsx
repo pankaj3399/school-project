@@ -171,8 +171,8 @@ export default function ViewStudents() {
     }
   }
 
-  const handleSendVerification = async (email: string, studentId: string, isStudent = false) => {
-    setSendingVerification(studentId);
+  const handleSendVerification = async (email: string, studentId: string, isStudent = false, slot: 'student' | 'parent1' | 'parent2' = 'student') => {
+    setSendingVerification(`${studentId}-${slot}`);
     try {
       const data = await sendVerificationMail({
         email,
@@ -264,7 +264,11 @@ export default function ViewStudents() {
       <Dialog
         open={!!editingStudent}
         onOpenChange={(open) => {
-          if (!open) setEditingStudent(null)
+          if (!open) {
+            // Defer unmount until the Radix close animation completes (~200ms)
+            // so the form contents don't vanish mid-animation.
+            setTimeout(() => setEditingStudent(null), 200)
+          }
         }}
       >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -290,10 +294,6 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4">
-
-
-            </div>
-            <div className="mb-4">
               <label className="block text-sm font-medium">Email</label>
               <div className="flex gap-2">
                 <input
@@ -310,10 +310,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === editingStudent._id}
-                  onClick={() => handleSendVerification(editingStudent.email, editingStudent._id, true)}
+                  disabled={sendingVerification === `${editingStudent._id}-student`}
+                  onClick={() => handleSendVerification(editingStudent.email, editingStudent._id, true, 'student')}
                 >
-                  {sendingVerification === editingStudent._id
+                  {sendingVerification === `${editingStudent._id}-student`
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -365,10 +365,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === editingStudent._id}
-                  onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id)}
+                  disabled={sendingVerification === `${editingStudent._id}-parent1`}
+                  onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id, false, 'parent1')}
                 >
-                  {sendingVerification === editingStudent._id
+                  {sendingVerification === `${editingStudent._id}-parent1`
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -396,10 +396,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === editingStudent._id}
-                  onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id)}
+                  disabled={sendingVerification === `${editingStudent._id}-parent2`}
+                  onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id, false, 'parent2')}
                 >
-                  {sendingVerification === editingStudent._id
+                  {sendingVerification === `${editingStudent._id}-parent2`
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -481,7 +481,7 @@ export default function ViewStudents() {
                   <TableCell>
                     <button
                       onClick={() => setEditingStudent(student)}
-                      className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#00a58c]"
+                      className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#008f76] focus:outline-none focus:ring-2 focus:ring-[#00a58c]/40 rounded"
                     >
                       Edit
                     </button>

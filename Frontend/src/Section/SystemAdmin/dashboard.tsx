@@ -89,6 +89,7 @@ export default function SystemAdminDashboard() {
     const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
     const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
     const [districtError, setDistrictError] = useState<string | null>(null);
+    const [stateError, setStateError] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartDataRow[]>([]);
     const [schoolStats, setSchoolStats] = useState<SchoolStatRow[]>([]);
 
@@ -123,8 +124,13 @@ export default function SystemAdminDashboard() {
                     }
                     if (Array.isArray(geo.stateAnalytics)) {
                         setStateAnalytics(geo.stateAnalytics);
+                        setStateError(null);
+                    } else if (geo.error) {
+                        setStateAnalytics([]);
+                        setStateError(typeof geo.error === 'string' ? geo.error : 'Could not load state analytics');
                     } else {
                         setStateAnalytics([]);
+                        setStateError('Could not load state analytics');
                     }
                     if (Array.isArray(distComp.districtStats)) {
                         setDistrictAnalytics(distComp.districtStats);
@@ -526,9 +532,9 @@ export default function SystemAdminDashboard() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {districtError ? (
+                                                {stateError ? (
                                                     <tr>
-                                                        <td colSpan={5} className="py-4 text-center text-amber-700">{districtError}</td>
+                                                        <td colSpan={5} className="py-4 text-center text-amber-700">{stateError}</td>
                                                     </tr>
                                                 ) : stateRollup.length === 0 ? (
                                                     <tr>

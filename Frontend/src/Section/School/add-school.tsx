@@ -13,6 +13,7 @@ import { Role } from "@/enum";
 import AllCharts from "./component/all-charts";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { TIMEZONE_OPTIONS } from "@/lib/luxon";
+import { validateSchoolLocation } from "@/lib/schoolLocationValidator";
 
 const STATE_OPTIONS = [
   'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC',
@@ -172,6 +173,10 @@ export default function SchoolPage() {
       newErrors.logo = "Logo is required";
     }
 
+    const locationErrors = validateSchoolLocation({ city, zipCode, address });
+    if (locationErrors.city) newErrors.city = locationErrors.city;
+    if (locationErrors.zipCode) newErrors.zipCode = locationErrors.zipCode;
+    if (locationErrors.address) newErrors.address = locationErrors.address;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -243,8 +248,14 @@ export default function SchoolPage() {
         <Input
           id="city"
           value={city}
-          onChange={(e) => setCity(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setCity(v);
+            const err = validateSchoolLocation({ city: v }).city;
+            setErrors((prev) => ({ ...prev, city: err || "" }));
+          }}
         />
+        {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
       </div>
       <div>
         <Label htmlFor="state">State</Label>
@@ -269,8 +280,14 @@ export default function SchoolPage() {
         <Input
           id="zipCode"
           value={zipCode}
-          onChange={(e) => setZipCode(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setZipCode(v);
+            const err = validateSchoolLocation({ zipCode: v }).zipCode;
+            setErrors((prev) => ({ ...prev, zipCode: err || "" }));
+          }}
         />
+        {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
       </div>
       <div>
         <Label htmlFor="timezone">Time Zone</Label>

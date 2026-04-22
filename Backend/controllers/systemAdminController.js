@@ -511,13 +511,17 @@ export const getStateLevelStats = async (req, res) => {
       }
     ]);
 
+    // Keep falsy keys (null/'') bucketed under 'Unknown' so schools under state-less districts
+    // are still counted — otherwise the 'Unknown' row in stateAnalytics always shows 0.
     const schoolCountMap = schoolsByState.reduce((acc, item) => {
-      if (item._id) acc[item._id] = item;
+      const key = item._id ?? 'Unknown';
+      acc[key] = item;
       return acc;
     }, {});
 
     const stateAnalytics = stateStats.map(state => {
-      const counts = schoolCountMap[state._id] || { schoolCount: 0, teacherCount: 0, studentCount: 0 };
+      const lookupKey = state._id ?? 'Unknown';
+      const counts = schoolCountMap[lookupKey] || { schoolCount: 0, teacherCount: 0, studentCount: 0 };
       return {
         state: state._id || 'Unknown',
         districtCount: state.districtCount,
