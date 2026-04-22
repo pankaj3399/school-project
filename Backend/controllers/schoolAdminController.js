@@ -1,4 +1,5 @@
 import School from "../models/School.js";
+import District from "../models/District.js";
 import bcrypt from "bcryptjs";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
@@ -15,6 +16,7 @@ import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import Otp from "../models/Otp.js";
 import { sendEmail } from "../services/mail.js";
 import ParentVerification from "../models/ParentVerification.js";
+import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
 
 const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
@@ -77,9 +79,42 @@ const getSchoolIdFromUser = async (req) => {
 };
 
 export const addSchool = async (req, res) => {
-  const { name, address, district, state, country, timeZone, domain } =
+  const { name, address, city, district, state, zipCode, country, timeZone, domain } =
     req.body;
   const logo = req.file;
+  const locationError = validateSchoolLocation({ city, zipCode, address });
+  if (locationError) {
+    return res.status(locationError.status).json({ message: locationError.message });
+  }
+
+  // Resolve & authorize districtId before create.
+  let resolvedDistrictId;
+  if (req.body.districtId) {
+    if (!mongoose.Types.ObjectId.isValid(req.body.districtId)) {
+      return res.status(400).json({ message: "Invalid districtId." });
+    }
+    try {
+      const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
+      if (!districtDoc) {
+        return res.status(404).json({ message: "District not found." });
+      }
+      if (req.user.role !== Role.SystemAdmin) {
+        const requester = await Admin.findById(req.user.id).select('districtId role').lean();
+        const isGlobalAdmin = requester?.role === Role.SystemAdmin;
+        if (!isGlobalAdmin) {
+          const requesterDistrictId = requester?.districtId?.toString() || '';
+          if (requesterDistrictId !== districtDoc._id.toString()) {
+            return res.status(403).json({ message: "You can only create schools inside your own district." });
+          }
+        }
+      }
+      resolvedDistrictId = districtDoc._id;
+    } catch (err) {
+      console.error('Error resolving district for addSchool:', err);
+      return res.status(500).json({ message: "Error resolving district.", error: err.message });
+    }
+  }
+
   try {
     const existingSchool = await School.findOne({ createdBy: req.user.id });
     if (existingSchool) {
@@ -91,11 +126,14 @@ export const addSchool = async (req, res) => {
     const newSchool = await School.create({
       name,
       address,
+      city,
       district,
+      districtId: resolvedDistrictId,
       logo: logoUrl,
       timeZone,
       createdBy: req.user.id,
       state,
+      zipCode,
       country,
       domain,
     });

@@ -418,6 +418,7 @@ export const getDashboardStats = async (req, res) => {
     return res.status(200).json({
       stats: {
         totalCountries,
+        countries: distinctCountries.filter(Boolean),
         totalStates,
         totalDistricts,
         activeDistricts,
@@ -470,7 +471,7 @@ export const getStateLevelStats = async (req, res) => {
 
     const schoolMatchStage = isSystemAdmin ? [] : [{ $match: { districtId: userDistrictId } }];
 
-    // Get school counts per state
+    // Get school + teacher + student counts per state (includes schools under inactive districts)
     const schoolsByState = await School.aggregate([
       ...schoolMatchStage,
       {
@@ -483,24 +484,53 @@ export const getStateLevelStats = async (req, res) => {
       },
       { $unwind: { path: '$district', preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: 'teachers',
+          localField: '_id',
+          foreignField: 'schoolId',
+          pipeline: [{ $count: 'count' }],
+          as: 'teachers'
+        }
+      },
+      {
+        $lookup: {
+          from: 'students',
+          localField: '_id',
+          foreignField: 'schoolId',
+          pipeline: [{ $count: 'count' }],
+          as: 'students'
+        }
+      },
+      {
         $group: {
           _id: '$district.state',
-          schoolCount: { $sum: 1 }
+          schoolCount: { $sum: 1 },
+          teacherCount: { $sum: { $ifNull: [{ $arrayElemAt: ['$teachers.count', 0] }, 0] } },
+          studentCount: { $sum: { $ifNull: [{ $arrayElemAt: ['$students.count', 0] }, 0] } }
         }
       }
     ]);
 
+    // Keep falsy keys (null/'') bucketed under 'Unknown' so schools under state-less districts
+    // are still counted — otherwise the 'Unknown' row in stateAnalytics always shows 0.
     const schoolCountMap = schoolsByState.reduce((acc, item) => {
-      if (item._id) acc[item._id] = item.schoolCount;
+      const key = item._id ?? 'Unknown';
+      acc[key] = item;
       return acc;
     }, {});
 
-    const stateAnalytics = stateStats.map(state => ({
-      state: state._id || 'Unknown',
-      districtCount: state.districtCount,
-      activeDistrictCount: state.activeCount,
-      schoolCount: schoolCountMap[state._id] || 0
-    }));
+    const stateAnalytics = stateStats.map(state => {
+      const lookupKey = state._id ?? 'Unknown';
+      const counts = schoolCountMap[lookupKey] || { schoolCount: 0, teacherCount: 0, studentCount: 0 };
+      return {
+        state: state._id || 'Unknown',
+        districtCount: state.districtCount,
+        activeDistrictCount: state.activeCount,
+        schoolCount: counts.schoolCount || 0,
+        teacherCount: counts.teacherCount || 0,
+        studentCount: counts.studentCount || 0,
+      };
+    });
 
     return res.status(200).json({ stateAnalytics });
   } catch (error) {

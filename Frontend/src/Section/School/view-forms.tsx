@@ -33,13 +33,23 @@ export default function ViewForms() {
     setDeleteModal({ form: null, open: false })
   }
 
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin
+  const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token')!
-        
-        const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
-          ? (selectedSchoolId || undefined) 
+
+        if (requiresSchoolSelection) {
+          setForms([])
+          setGroupedForms({ special: [], byGrade: {} })
+          setStudents([])
+          return
+        }
+
+        const effectiveSchoolId = isMultiSchoolUser
+          ? (selectedSchoolId || undefined)
           : undefined;
 
         const [formsData, studentsData] = await Promise.all([
@@ -228,6 +238,14 @@ export default function ViewForms() {
       </CardContent>
     </Card>
   )
+
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to view forms.
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto p-4">

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/authContext"
+import { useSchool } from "@/context/SchoolContext"
+import { Role } from "@/enum"
 import { timezoneManager } from "@/lib/luxon"
 import { useSearchParams } from "react-router-dom"
 import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
@@ -32,8 +34,12 @@ export default function ViewPointHistoryTeacher() {
   const [studentId, setStudentId] = useState<string>("")
   const [studentName, setStudentName] = useState<string>("")
   const { user } = useAuth();
+  const { selectedSchoolId } = useSchool();
   const [searchParams] = useSearchParams();
   const formTypeFromUrl = searchParams.get('formType') || '';
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
+  const effectiveSchoolId = isMultiSchoolUser ? (selectedSchoolId || undefined) : undefined;
 
   // Pagination state
   const [pagination, setPagination] = useState<PaginationData>({
@@ -46,13 +52,13 @@ export default function ViewPointHistoryTeacher() {
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token')
-      const resTeacher = await getStudents(token ?? "")
+      const resTeacher = await getStudents(token ?? "", effectiveSchoolId)
       const list = Array.isArray(resTeacher?.students) ? resTeacher.students : []
       setStudents(list)
       setfilteredStudents(list)
     }
     fetchData()
-  }, [])
+  }, [effectiveSchoolId])
 
   const fetchStudents = async (page: number = 1) => {
     try {
@@ -98,8 +104,14 @@ export default function ViewPointHistoryTeacher() {
           });
         }
       } else {
+        if (requiresSchoolSelection) {
+          setShowPointHistory([]);
+          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: pagination.itemsPerPage });
+          setLoading(false);
+          return;
+        }
         // Use the original pagination API for unfiltered data
-        data = await getPointHistory(token, page, pagination.itemsPerPage);
+        data = await getPointHistory(token, page, pagination.itemsPerPage, effectiveSchoolId);
 
         // Handle pagination data
         if (data.pagination) {
@@ -124,7 +136,7 @@ export default function ViewPointHistoryTeacher() {
 
   useEffect(() => {
     fetchStudents()
-  }, [formTypeFromUrl]) // Reload when formType changes
+  }, [formTypeFromUrl, effectiveSchoolId]) // Reload when formType or school changes
 
   useEffect(() => {
     setShowPointHistory(filteredPointHistory);
@@ -165,6 +177,14 @@ export default function ViewPointHistoryTeacher() {
       return "Award Points with Individualized Education Plan (IEP)";
     }
     return formType
+  }
+
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to view point history.
+      </div>
+    )
   }
 
   if (loading) {
@@ -228,7 +248,7 @@ export default function ViewPointHistoryTeacher() {
                       console.log('Token not provided')
                       return
                     }
-                    const data = await getFilteredPointHistory(token, s._id)
+                    const data = await getFilteredPointHistory(token, s._id, effectiveSchoolId)
                     // getFilteredPointHistory doesn't aggregate, so we need client-side aggregation
                     const aggregated = aggregateHistoryData(data.pointHistory || []);
                     setFilteredPointHistory(aggregated)

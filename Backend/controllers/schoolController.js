@@ -2,10 +2,12 @@ import mongoose from "mongoose";
 import { Role } from "../enum.js";
 import bcrypt from "bcryptjs";
 import School from "../models/School.js";
+import District from "../models/District.js";
 import { uploadImageFromDataURI } from "../utils/cloudinary.js"
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import Admin from "../models/Admin.js";
+import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
 export const getAllSchools = async (req, res) => {
     try {
       let filter = {};
@@ -221,46 +223,72 @@ export const getCurrentSchool = async (req, res) => {
 };
 
 export const updateSchool = async (req, res) => {
-    const { name, address, district, state, country, timeZone, domain } = req.body;
+    const { name, address, city, district, state, zipCode, country, timeZone, domain } = req.body;
     const logo = req.file;
-  
+
+    const locationError = validateSchoolLocation({ city, zipCode, address });
+    if (locationError) {
+      return res.status(locationError.status).json({ message: locationError.message });
+    }
+
     try {
       // Role-based access control
       if (req.user.role === Role.Admin) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
-        const adminDistrictId = adminUser.districtId?.toString() || "";
-        const schoolDistrictId = school.districtId?.toString() || "";
-        if (!adminUser || !school || schoolDistrictId !== adminDistrictId) {
+        if (!adminUser || !school) {
           return res.status(403).json({ message: "Access denied. School is outside your district." });
+        }
+        // A user flagged as Admin in the JWT may still hold adminUser.role === SystemAdmin in
+        // the DB; treat them as a global admin and skip both ownership + reassignment guards.
+        if (adminUser.role !== Role.SystemAdmin) {
+          const adminDistrictId = adminUser.districtId?.toString() || "";
+          const schoolDistrictId = school.districtId?.toString() || "";
+          if (schoolDistrictId !== adminDistrictId) {
+            return res.status(403).json({ message: "Access denied. School is outside your district." });
+          }
+          if (req.body.districtId && String(req.body.districtId) !== adminDistrictId) {
+            return res.status(403).json({ message: "Only a system administrator can reassign a school to a different district." });
+          }
         }
       } else if (req.user.role === Role.SchoolAdmin) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
         const isCreator = school && school.createdBy.toString() === req.user.id;
         const isAssigned = adminUser && adminUser.schoolId && adminUser.schoolId.toString() === req.params.id;
-        
+
         if (!isCreator && !isAssigned) {
            return res.status(403).json({ message: "Access denied. You can only update your own school." });
+        }
+        // School admins can never reassign the district either.
+        if (req.body.districtId && school && String(req.body.districtId) !== String(school.districtId || "")) {
+          return res.status(403).json({ message: "Only a system administrator can reassign a school to a different district." });
         }
       }
       // Note: SystemAdmin has global access
       let logoUrl = null;
       if(logo)
         logoUrl = await uploadImageFromDataURI(logo);
-      let updatedSchool;
-      if(logoUrl)
-       updatedSchool = await School.findByIdAndUpdate(
+      const updatePayload = {
+        name, address, city, district,
+        state, zipCode, country, timeZone, domain,
+      };
+      if (req.body.districtId) {
+        if (!mongoose.Types.ObjectId.isValid(req.body.districtId)) {
+          return res.status(400).json({ message: "Invalid districtId." });
+        }
+        const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
+        if (!districtDoc) {
+          return res.status(404).json({ message: "District not found." });
+        }
+        updatePayload.districtId = districtDoc._id;
+      }
+      if (logoUrl) updatePayload.logo = logoUrl;
+      const updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address, district, districtId: req.body.districtId || undefined, logo: logoUrl, state, country, timeZone, domain },
+        updatePayload,
         { new: true }
       ).populate('districtId').populate('createdBy');
-      else
-      updatedSchool = await School.findByIdAndUpdate(
-        req.params.id,
-        { name, address,district, state, country, timeZone, domain },
-        { new: true }
-      ).populate('createdBy');
   
       if (!updatedSchool) return res.status(404).json({ message: "School not found." });
   

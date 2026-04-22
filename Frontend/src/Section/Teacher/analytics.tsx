@@ -16,50 +16,40 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, ChevronsUpDown, School as SchoolIcon, X } from "lucide-react";
 import {
-    IconUserStar,
-    IconUsers,
-    IconCoins,
-    IconMessage2,
-    IconAlertCircle,
-    IconArrowBackUp,
-} from "@tabler/icons-react";
+    Check,
+    ChevronsUpDown,
+    School as SchoolIcon,
+    X,
+    Users,
+    GraduationCap,
+    Coins,
+    MessageSquare,
+    AlertTriangle,
+    Undo2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import EducationYearChart from "../School/component/new-chart";
 import StudentRanks from "../School/component/StudentRanks";
 import TeacherRanks from "../School/component/TeacherRanks";
 
-type StatCardColor = "blue" | "green" | "yellow" | "red" | "orange" | "purple";
-
 const StatCard = ({
     title,
     value,
     icon,
-    color,
 }: {
     title: string;
     value: number;
     icon: React.ReactNode;
-    color: StatCardColor;
 }) => {
-    const colorMap: Record<StatCardColor, string> = {
-        blue: "bg-blue-50 text-blue-600",
-        green: "bg-green-50 text-green-600",
-        yellow: "bg-yellow-50 text-yellow-600",
-        red: "bg-red-50 text-red-600",
-        orange: "bg-orange-50 text-orange-600",
-        purple: "bg-purple-50 text-purple-600",
-    };
-
     return (
-        <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl">
-            <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className={`p-2.5 rounded-xl mb-3 ${colorMap[color]}`}>{icon}</div>
-                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
+        <Card className="border-2 border-gray-400 shadow-sm bg-white overflow-hidden rounded-2xl aspect-square">
+            <CardContent className="p-5 flex flex-col items-center justify-center text-center h-full">
+                <div className="text-gray-700 mb-2">{icon}</div>
+                <div className="text-sm font-semibold text-gray-700 mb-2">
                     {title}
                 </div>
-                <div className="text-2xl font-black text-neutral-900 leading-none">
+                <div className="text-gray-900 text-3xl font-bold leading-none">
                     {(value || 0).toLocaleString()}
                 </div>
             </CardContent>
@@ -145,14 +135,22 @@ const Analytics = () => {
         setIsPopOverOpen(false);
     };
 
+    const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
+
     return (
-        <div className="p-6 space-y-8">
+        <div className="bg-gray-50 min-h-screen p-6 space-y-8">
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
                 <p className="text-neutral-500 text-sm">
                     Performance overview across tokens, feedback, oopsies, and withdrawals.
                 </p>
             </div>
+
+            {requiresSchoolSelection && (
+                <div className="p-8 text-center text-neutral-500 bg-white rounded-2xl border-2 border-gray-300">
+                    Please select a district and school from the top-right picker to view analytics.
+                </div>
+            )}
 
             {/* Filter bar */}
             <div className="flex flex-wrap gap-4 items-center">
@@ -170,37 +168,22 @@ const Analytics = () => {
                                     <span className="truncate">
                                         {selectedSchoolId
                                             ? schools.find((s) => s._id === selectedSchoolId)?.name || "Select school..."
-                                            : "All Schools"}
+                                            : "Select school..."}
                                     </span>
                                 </div>
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[280px] p-0" align="start">
-                            <Command>
+                            <Command
+                                filter={(value, search) =>
+                                    value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                                }
+                            >
                                 <CommandInput placeholder="Search schools..." className="h-9" />
                                 <CommandList>
                                     <CommandEmpty>No school found.</CommandEmpty>
                                     <CommandGroup>
-                                        <CommandItem
-                                            value="all-schools"
-                                            onSelect={() => {
-                                                if (selectedSchoolId !== null) {
-                                                    resetSchoolScopedState();
-                                                    setSelectedSchoolId(null);
-                                                }
-                                                setSchoolPickerOpen(false);
-                                            }}
-                                            className="cursor-pointer"
-                                        >
-                                            <Check
-                                                className={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    !selectedSchoolId ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            All Schools
-                                        </CommandItem>
                                         {schools.map((school) => (
                                             <CommandItem
                                                 key={school._id}
@@ -313,38 +296,32 @@ const Analytics = () => {
                     <StatCard
                         title="Total Teachers"
                         value={stats.totalTeachers}
-                        icon={<IconUserStar className="w-6 h-6" />}
-                        color="green"
+                        icon={<Users className="h-9 w-9" strokeWidth={1.75} />}
                     />
                     <StatCard
                         title="Total Students"
                         value={stats.totalStudents}
-                        icon={<IconUsers className="w-6 h-6" />}
-                        color="blue"
+                        icon={<GraduationCap className="h-9 w-9" strokeWidth={1.75} />}
                     />
                     <StatCard
                         title="Total Tokens"
                         value={stats.totalPoints}
-                        icon={<IconCoins className="w-6 h-6" />}
-                        color="yellow"
+                        icon={<Coins className="h-9 w-9" strokeWidth={1.75} />}
                     />
                     <StatCard
                         title="Total Feedbacks"
                         value={stats.totalFeedbackCount}
-                        icon={<IconMessage2 className="w-6 h-6" />}
-                        color="purple"
+                        icon={<MessageSquare className="h-9 w-9" strokeWidth={1.75} />}
                     />
                     <StatCard
                         title="Total Oopsies"
                         value={stats.totalDeductPoints}
-                        icon={<IconAlertCircle className="w-6 h-6" />}
-                        color="orange"
+                        icon={<AlertTriangle className="h-9 w-9" strokeWidth={1.75} />}
                     />
                     <StatCard
                         title="Total Withdrawals"
                         value={stats.totalWithdrawPoints}
-                        icon={<IconArrowBackUp className="w-6 h-6" />}
-                        color="red"
+                        icon={<Undo2 className="h-9 w-9" strokeWidth={1.75} />}
                     />
                 </div>
             )}

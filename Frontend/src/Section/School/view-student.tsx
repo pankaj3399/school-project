@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { getStudents, deleteStudent, updateStudent, sendVerificationMail } from "@/api"
@@ -7,17 +7,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "./Modal"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { useSchool } from "@/context/SchoolContext"
-import { useAuth } from "@/authContext"
-import { Role } from "@/enum"
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { GRADE_OPTIONS } from "@/lib/types"
 
 const STUDENT_GRADES = GRADE_OPTIONS
 
 export default function ViewStudents() {
-  const { user } = useAuth()
-  const { selectedSchoolId } = useSchool()
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
   const [students, setStudents] = useState<any[]>([])
   const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,10 +31,17 @@ export default function ViewStudents() {
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
   const [sendingVerification, setSendingVerification] = useState<string | null>(null);
   const { toast } = useToast()
+  const fetchRequestRef = useRef(0);
 
   useEffect(() => {
+    const requestId = ++fetchRequestRef.current;
+    // Clear any modal / pending-delete state that referred to the previous school's students.
+    setEditingStudent(null);
+    setShowModal(false);
+    setStudentToDelete(null);
     const fetchStudents = async () => {
       try {
+        setLoading(true)
         const token = localStorage.getItem("token")
         if (!token) {
           toast({
@@ -38,15 +49,24 @@ export default function ViewStudents() {
             description: "No token found.",
             variant: "destructive",
           })
+          if (requestId === fetchRequestRef.current) setLoading(false)
+          return
+        }
+
+        if (requiresSchoolSelection) {
+          if (requestId !== fetchRequestRef.current) return
+          setStudents([])
+          setFilteredStudents([])
           setLoading(false)
           return
         }
 
-        const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
-          ? (selectedSchoolId || undefined) 
+        const effectiveSchoolId = isMultiSchoolUser
+          ? (selectedSchoolId || undefined)
           : undefined;
 
         const data = await getStudents(token, effectiveSchoolId)
+        if (requestId !== fetchRequestRef.current) return
 
         if (data.error) {
           toast({
@@ -65,6 +85,7 @@ export default function ViewStudents() {
         setFilteredStudents(sortedStudents)
         setLoading(false)
       } catch (error) {
+        if (requestId !== fetchRequestRef.current) return
         console.error("Unexpected error fetching student data (local/runtime error):", error)
         toast({
           title: "Runtime Error",
@@ -76,7 +97,10 @@ export default function ViewStudents() {
     }
 
     fetchStudents()
-  }, [selectedSchoolId, user, toast])
+    return () => {
+      fetchRequestRef.current += 1;
+    };
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection, toast])
 
 
   useEffect(() => {
@@ -147,8 +171,8 @@ export default function ViewStudents() {
     }
   }
 
-  const handleSendVerification = async (email: string, studentId: string, isStudent = false) => {
-    setSendingVerification(`${studentId}-${email}`);
+  const handleSendVerification = async (email: string, studentId: string, isStudent = false, slot: 'student' | 'parent1' | 'parent2' = 'student') => {
+    setSendingVerification(`${studentId}-${slot}`);
     try {
       const data = await sendVerificationMail({
         email,
@@ -201,6 +225,14 @@ export default function ViewStudents() {
   };
 
   const navigate = useNavigate();
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to view students.
+      </div>
+    )
+  }
+
   if (loading) {
     return <Loading />
   }
@@ -229,19 +261,21 @@ export default function ViewStudents() {
         </div>
       </div>
 
-      {/* Move Edit Form to top */}
-      {editingStudent && (
-        <div className="mb-8 p-5 border rounded-xl bg-gray-50">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">Edit Student</h2>
-            <Button
-              variant="outline"
-              onClick={() => setEditingStudent(null)}
-              className="text-gray-500"
-            >
-              ✕
-            </Button>
-          </div>
+      <Dialog
+        open={!!editingStudent}
+        onOpenChange={(open) => {
+          if (!open) {
+            // Defer unmount until the Radix close animation completes (~200ms)
+            // so the form contents don't vanish mid-animation.
+            setTimeout(() => setEditingStudent(null), 200)
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          {editingStudent && (
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -260,10 +294,6 @@ export default function ViewStudents() {
               />
             </div>
             <div className="mb-4">
-
-
-            </div>
-            <div className="mb-4">
               <label className="block text-sm font-medium">Email</label>
               <div className="flex gap-2">
                 <input
@@ -280,10 +310,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.email}`}
-                  onClick={() => handleSendVerification(editingStudent.email, editingStudent._id, true)}
+                  disabled={sendingVerification === `${editingStudent._id}-student`}
+                  onClick={() => handleSendVerification(editingStudent.email, editingStudent._id, true, 'student')}
                 >
-                  {sendingVerification === `${editingStudent._id}-${editingStudent.email}`
+                  {sendingVerification === `${editingStudent._id}-student`
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -335,10 +365,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.parentEmail}`}
-                  onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id)}
+                  disabled={sendingVerification === `${editingStudent._id}-parent1`}
+                  onClick={() => handleSendVerification(editingStudent.parentEmail, editingStudent._id, false, 'parent1')}
                 >
-                  {sendingVerification === `${editingStudent._id}-${editingStudent.parentEmail}`
+                  {sendingVerification === `${editingStudent._id}-parent1`
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -366,10 +396,10 @@ export default function ViewStudents() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={sendingVerification === `${editingStudent._id}-${editingStudent.standard}`}
-                  onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id)}
+                  disabled={sendingVerification === `${editingStudent._id}-parent2`}
+                  onClick={() => handleSendVerification(editingStudent.standard, editingStudent._id, false, 'parent2')}
                 >
-                  {sendingVerification === `${editingStudent._id}-${editingStudent.standard}`
+                  {sendingVerification === `${editingStudent._id}-parent2`
                     ? "Sending..."
                     : "Verify Email"}
                 </Button>
@@ -384,24 +414,25 @@ export default function ViewStudents() {
             <Checkbox checked={editingStudent.sendNotifications} onCheckedChange={(e) => setEditingStudent({ ...editingStudent, sendNotifications: e as boolean })} className="mt-2" />
             <span className="text-sm ml-2 gap-x-1 inline-block text-semibold">Send email notification to Parents/Guardians.</span>
 
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"
-              >
-                Save
-              </button>
-              <button
+            <DialogFooter className="gap-2">
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setEditingStudent(null)}
-                className="px-6 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
               >
                 Cancel
-              </button>
-            </div>
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#00a58c] hover:bg-[#008f7a] text-white"
+              >
+                Save
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="mb-4">
         <Select
@@ -450,7 +481,7 @@ export default function ViewStudents() {
                   <TableCell>
                     <button
                       onClick={() => setEditingStudent(student)}
-                      className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#00a58c]"
+                      className="mr-2 px-4 py-2 text-white bg-[#00a58c] hover:bg-[#008f76] focus:outline-none focus:ring-2 focus:ring-[#00a58c]/40 rounded"
                     >
                       Edit
                     </button>

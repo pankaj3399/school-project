@@ -1,3 +1,4 @@
+import xlsx from 'xlsx';
 import Waitlist from '../models/Waitlist.js';
 import { sendEmail } from '../services/nodemailer.js';
 
@@ -140,25 +141,30 @@ export const exportWaitlistData = async (req, res) => {
   try {
     const subscribers = await Waitlist.find({}).sort({ createdAt: -1 });
 
-    const headers = ['Email', 'Joined At'];
-    const csvRows = [headers.join(',')];
+    const sanitizeCell = (value) => {
+      const str = String(value ?? '');
+      return /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+    };
 
-    subscribers.forEach(sub => {
-      const email = `"${sub.email.replace(/"/g, '""')}"`;
-      const date = `"${new Date(sub.createdAt).toISOString()}"`;
-      csvRows.push(`${email},${date}`);
-    });
+    const rows = subscribers.map(sub => ({
+      Email: sanitizeCell(sub.email),
+      'Joined At': new Date(sub.createdAt).toISOString(),
+    }));
 
-    const csvContent = csvRows.join('\n');
+    const workbook = xlsx.utils.book_new();
+    const sheet = xlsx.utils.json_to_sheet(rows, { header: ['Email', 'Joined At'] });
+    xlsx.utils.book_append_sheet(workbook, sheet, 'Waiting List');
 
-    res.header('Content-Type', 'text/csv');
-    res.header('Content-Disposition', 'attachment; filename=waitlist.csv');
-    res.send(csvContent);
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.header('Content-Disposition', 'attachment; filename=waitlist.xlsx');
+    res.send(buffer);
 
   } catch (error) {
     console.error('Export waitlist error:', error);
-    res.status(500).json({ 
-      message: 'Failed to export waitlist data' 
+    res.status(500).json({
+      message: 'Failed to export waitlist data'
     });
   }
 };

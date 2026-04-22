@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -19,9 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Modal from "./Modal";
 import { useNavigate } from "react-router-dom";
-import { useSchool } from "@/context/SchoolContext";
-import { useAuth } from "@/authContext";
-import { Role } from "@/enum";
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
 import {
   Select,
   SelectContent,
@@ -29,12 +27,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { GRADE_OPTIONS } from "@/lib/types";
 
 export default function ViewTeachers() {
-  const { user } = useAuth();
-  const { selectedSchoolId } = useSchool();
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
@@ -46,8 +50,10 @@ export default function ViewTeachers() {
   const { toast } = useToast();
   const [customGrade, setCustomGrade] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const fetchRequestRef = useRef(0);
 
   const fetchTeachers = async () => {
+    const requestId = ++fetchRequestRef.current;
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -57,18 +63,24 @@ export default function ViewTeachers() {
           description: "No token found.",
           variant: "destructive",
         });
+        if (requestId === fetchRequestRef.current) setLoading(false);
+        return;
+      }
+
+      if (requiresSchoolSelection) {
+        if (requestId !== fetchRequestRef.current) return;
+        setTeachers([]);
         setLoading(false);
         return;
       }
 
-      const effectiveSchoolId = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) 
-        ? (selectedSchoolId || undefined) 
+      const effectiveSchoolId = isMultiSchoolUser
+        ? (selectedSchoolId || undefined)
         : undefined;
 
       const data = await getTeachers(effectiveSchoolId);
-      console.log("API Response:", data); // Debug log
+      if (requestId !== fetchRequestRef.current) return;
 
-      // Handle different response structures
       let teachersArray = [];
       if (Array.isArray(data)) {
         teachersArray = data;
@@ -80,18 +92,13 @@ export default function ViewTeachers() {
         teachersArray = data.data;
       }
 
-      console.log("Processed teachers array:", teachersArray); // Debug log
-
-      if (teachersArray.length === 0) {
-        console.warn("No teachers found in response");
-      }
-
       setTeachers(
         teachersArray.sort(
           (a: any, b: any) => a.name?.localeCompare(b.name) || 0
         )
       );
     } catch (error) {
+      if (requestId !== fetchRequestRef.current) return;
       console.error("Error fetching teachers:", error);
       toast({
         title: "Error",
@@ -99,13 +106,21 @@ export default function ViewTeachers() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (requestId === fetchRequestRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Clear stale UI state so no teacher / pending delete from the previous school lingers.
+    setEditingTeacher(null);
+    setShowModal(false);
+    setTeacherToDelete(null);
+    setTeachers([]);
     fetchTeachers();
-  }, [selectedSchoolId, user]);
+    return () => {
+      fetchRequestRef.current += 1;
+    };
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection]);
 
   const navigate = useNavigate();
 
@@ -213,6 +228,14 @@ export default function ViewTeachers() {
     return matchesGrade && matchesType;
   });
 
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to view teachers.
+      </div>
+    );
+  }
+
   if (loading) {
     return <Loading />;
   }
@@ -234,9 +257,17 @@ export default function ViewTeachers() {
         </div>
       </div>
 
-      {editingTeacher && (
-        <div className="mt-8 p-5 border rounded-xl bg-gray-50">
-          <h2 className="text-2xl font-bold mb-4">Edit Teacher</h2>
+      <Dialog
+        open={!!editingTeacher}
+        onOpenChange={(open) => {
+          if (!open) setEditingTeacher(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Teacher</DialogTitle>
+          </DialogHeader>
+          {editingTeacher && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -378,24 +409,25 @@ export default function ViewTeachers() {
               />
               <span className="text-sm ml-2">Receive Emails</span>
             </div>
-            <div className="flex space-x-4">
-              <Button
-                type="submit"
-                className="px-6 py-2 text-white bg-green-500 rounded hover:bg-green-600"
-              >
-                Save
-              </Button>
+            <DialogFooter className="gap-2">
               <Button
                 type="button"
+                variant="outline"
                 onClick={() => setEditingTeacher(null)}
-                className="px-6 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
               >
                 Cancel
               </Button>
-            </div>
+              <Button
+                type="submit"
+                className="bg-[#00a58c] hover:bg-[#008f7a] text-white"
+              >
+                Save
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="flex gap-4 my-6">
         <div className="w-48">

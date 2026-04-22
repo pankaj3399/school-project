@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback, ReactNode } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { getCurrrentSchool, getStats, getDistricts, updateSchool, getAnalyticsData } from '@/api'
+import { getCurrrentSchool, getStats, getDistricts, updateSchool } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconChevronRight, IconShieldCheck, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
+import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconShieldCheck, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
 import { EditAdminDialog } from '@/components/EditAdminDialog'
 import { Role } from '@/enum'
@@ -14,8 +14,6 @@ import StudentRanks from '../../School/component/StudentRanks'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { reInviteAdmin } from '@/api'
 import { cn } from "@/lib/utils"
@@ -41,18 +39,6 @@ const US_STATES = [
 ];
 
 const COUNTRIES = ["United States", "Canada", "Other"];
-
-interface ChartDataPoint {
-    date: string;
-    points: number;
-    label?: string;
-}
-
-interface AnalyticsData {
-    awardPoints: ChartDataPoint[];
-    deductPoints: ChartDataPoint[];
-    withdrawPoints: ChartDataPoint[];
-}
 
 type StatCardColor = 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'purple';
 
@@ -101,30 +87,22 @@ const ViewSchool = () => {
     const [logoFile, setLogoFile] = useState<File | null>(null)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const requestRef = useRef(0)
     const navigate = useNavigate()
     const { toast } = useToast()
-    const requestRef = useRef(0)
-    const analyticsRequestRef = useRef(0)
     const [imageLoadError, setImageLoadError] = useState(false)
 
     // Analytics state
-    const [period, setPeriod] = useState<string>("1W")
-    const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
-    const [analyticsLoading, setAnalyticsLoading] = useState(false)
-    const [detailView, setDetailView] = useState<{
-        type: 'award' | 'deduct' | 'withdraw' | null;
-        data: ChartDataPoint[];
-        title: string;
-        color: string;
-        icon: string;
-    } | null>(null);
+    const [period, setPeriod] = useState<string>("1Y")
 
     // Form state for settings
     const [formData, setFormData] = useState({
         name: '',
         address: '',
+        city: '',
         districtId: '',
         state: '',
+        zipCode: '',
         country: '',
         domain: '',
         logo: ''
@@ -155,8 +133,10 @@ const ViewSchool = () => {
                 setFormData({
                     name: schoolRes.school.name || '',
                     address: schoolRes.school.address || '',
+                    city: schoolRes.school.city || '',
                     districtId: schoolRes.school.districtId?._id || schoolRes.school.districtId || '',
                     state: schoolRes.school.state || 'CO',
+                    zipCode: schoolRes.school.zipCode || '',
                     country: schoolRes.school.country || 'United States',
                     domain: schoolRes.school.domain || '',
                     logo: schoolRes.school.logo || ''
@@ -174,41 +154,9 @@ const ViewSchool = () => {
         }
     }, [id])
 
-    const fetchAnalytics = useCallback(async () => {
-        if (!id || activeTab !== 'dashboard') return
-        const requestId = ++analyticsRequestRef.current
-        setAnalyticsLoading(true)
-        try {
-            const data = await getAnalyticsData({
-                period,
-                schoolId: id
-            })
-            if (requestId !== analyticsRequestRef.current) return
-
-            if (data.success) {
-                setAnalyticsData(data.data)
-            } else {
-                setAnalyticsData(null)
-            }
-        } catch (error) {
-            console.error("Error fetching analytics:", error)
-            if (requestId === analyticsRequestRef.current) {
-                setAnalyticsData(null)
-            }
-        } finally {
-            if (requestId === analyticsRequestRef.current) {
-                setAnalyticsLoading(false)
-            }
-        }
-    }, [id, activeTab, period])
-
     useEffect(() => {
         fetchData()
     }, [fetchData])
-
-    useEffect(() => {
-        fetchAnalytics()
-    }, [fetchAnalytics])
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -219,8 +167,10 @@ const ViewSchool = () => {
             const data = new FormData();
             data.append('name', formData.name);
             data.append('address', formData.address);
-            data.append('district', formData.districtId);
+            data.append('city', formData.city);
+            data.append('districtId', formData.districtId);
             data.append('state', formData.state);
+            data.append('zipCode', formData.zipCode);
             data.append('country', formData.country);
             data.append('domain', formData.domain);
             
@@ -298,83 +248,6 @@ const ViewSchool = () => {
         }
     };
 
-    const formatDateLabel = (dateStr: string, period: string) => {
-        const [year, month, day] = dateStr.split('-').map(Number)
-        const date = new Date(Date.UTC(year, month - 1, day))
-        if (period === "1W") {
-            return date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
-        }
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
-    }
-
-    const processChartData = (data: ChartDataPoint[], period: string) => {
-        if (!data) return []
-        return data.map(d => ({
-            ...d,
-            label: formatDateLabel(d.date, period)
-        }))
-    }
-
-    const PointsChart = ({
-        data,
-        title,
-        color,
-        icon,
-        type
-    }: {
-        data: ChartDataPoint[];
-        title: string;
-        color: string;
-        icon: string;
-        type: 'award' | 'deduct' | 'withdraw';
-    }) => {
-        const processedData = processChartData(data, period)
-        return (
-            <Card className="border-neutral-200 shadow-sm rounded-2xl overflow-hidden">
-                <CardHeader className="bg-neutral-50/50 border-b p-4 flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img src={icon} alt="" className="w-10 h-10 object-contain" />
-                        <CardTitle className="text-lg font-bold text-neutral-900">{title}</CardTitle>
-                    </div>
-                    <Button
-                        onClick={() => setDetailView({ type, data, title, color, icon })}
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl h-8 px-4"
-                    >
-                        View Details
-                    </Button>
-                </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="h-[240px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={processedData}>
-                                <XAxis 
-                                    dataKey="label" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    className="text-[10px] text-neutral-400"
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    className="text-[10px] text-neutral-400"
-                                />
-                                <Tooltip />
-                                <Bar 
-                                    dataKey="points" 
-                                    fill={color} 
-                                    radius={[4, 4, 0, 0]} 
-                                    barSize={period === "1W" ? 32 : 12}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </CardContent>
-            </Card>
-        )
-    }
-
     if (loading) return (
         <div className="p-8 flex items-center gap-3 text-neutral-500">
             <div className="w-5 h-5 border-2 border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
@@ -412,9 +285,18 @@ const ViewSchool = () => {
                         <h1 className="text-2xl font-bold text-neutral-900">{school.name}</h1>
                         <div className="flex items-center gap-2 text-neutral-500 mt-1">
                             <span className="text-sm font-medium">{school.districtId?.name || school.district || 'Unassigned District'}</span>
-                            <IconChevronRight className="w-4 h-4 text-neutral-300" />
-                            <span className="text-sm">{school.state}</span>
                         </div>
+                        {school.address && (
+                            <p className="text-sm text-neutral-600 mt-1">{school.address}</p>
+                        )}
+                        {(school.city || school.state || school.zipCode) && (
+                            <p className="text-sm text-neutral-600">
+                                {[school.city, school.state, school.zipCode].filter(Boolean).join(", ")}
+                            </p>
+                        )}
+                        {school.country && (
+                            <p className="text-sm text-neutral-600">{school.country}</p>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -455,7 +337,7 @@ const ViewSchool = () => {
                     <div className='grid grid-cols-1 lg:grid-cols-6 gap-6 items-start'>
                         {/* LEFT: Students */}
                         <div className="lg:col-span-1">
-                            <StudentRanks studentId="" schoolId={id} />
+                            <StudentRanks studentId="" schoolId={id} period={period} />
                         </div>
 
                         {/* MIDDLE: Charts */}
@@ -482,41 +364,11 @@ const ViewSchool = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Detailed Analytics Charts */}
-                            {analyticsLoading ? (
-                                <div className="flex items-center justify-center h-[400px] text-neutral-400">Loading analytics...</div>
-                            ) : analyticsData ? (
-                                <div className="space-y-6">
-                                    <PointsChart
-                                        data={analyticsData.awardPoints}
-                                        title="Tokens Awarded"
-                                        color="#4CAF50"
-                                        icon="/etoken.svg"
-                                        type="award"
-                                    />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <PointsChart
-                                            data={analyticsData.withdrawPoints}
-                                            title="Withdrawals"
-                                            color="#3d59f5"
-                                            icon="/Withdraw.svg"
-                                            type="withdraw"
-                                        />
-                                        <PointsChart
-                                            data={analyticsData.deductPoints}
-                                            title="Oopsies"
-                                            color="#f44336"
-                                            icon="/oopsie.svg"
-                                            type="deduct"
-                                        />
-                                    </div>
-                                </div>
-                            ) : null}
                         </div>
 
                         {/* RIGHT: Teachers */}
                         <div className="lg:col-span-1">
-                            <TeacherRanks studentId='' schoolId={id} />
+                            <TeacherRanks studentId='' schoolId={id} period={period} />
                         </div>
                     </div>
                 </TabsContent>
@@ -726,10 +578,29 @@ const ViewSchool = () => {
                                         <label className="text-sm font-semibold text-neutral-700">Street Address</label>
                                         <div className="relative">
                                             <IconMapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                                            <Input 
-                                                value={formData.address} 
+                                            <Input
+                                                value={formData.address}
                                                 onChange={e => setFormData({...formData, address: e.target.value})}
                                                 className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11 pl-10"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-neutral-700">City</label>
+                                            <Input
+                                                value={formData.city}
+                                                onChange={e => setFormData({...formData, city: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-neutral-700">Zip Code</label>
+                                            <Input
+                                                value={formData.zipCode}
+                                                onChange={e => setFormData({...formData, zipCode: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11"
                                             />
                                         </div>
                                     </div>
@@ -826,62 +697,6 @@ const ViewSchool = () => {
                 </TabsContent>
             </Tabs>
 
-            {/* Detail View Dialog */}
-            <Dialog open={!!detailView} onOpenChange={() => setDetailView(null)}>
-                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
-                    <DialogHeader className="border-b pb-4 mb-4">
-                        <div className="flex items-center gap-4">
-                            <img src={detailView?.icon} alt="" className="w-12 h-12" />
-                            <DialogTitle className="text-2xl font-bold">{detailView?.title} - Detailed View</DialogTitle>
-                        </div>
-                    </DialogHeader>
-
-                    {detailView && (
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between bg-neutral-50 p-4 rounded-xl">
-                                <div className="text-sm font-medium text-neutral-500">History for {period === "1W" ? "Last Week" : "Selected Period"}</div>
-                                <div className="text-sm text-neutral-400">Analysis for {school?.name}</div>
-                            </div>
-
-                            <div className="h-[450px] w-full border border-neutral-100 p-6 rounded-2xl bg-white shadow-sm">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        data={processChartData(detailView.data, period)}
-                                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                                    >
-                                        <XAxis
-                                            dataKey="label"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            angle={period === "1W" ? 0 : -45}
-                                            textAnchor={period === "1W" ? "middle" : "end"}
-                                            height={period === "1W" ? 30 : 60}
-                                            className="text-xs font-medium text-neutral-400"
-                                        />
-                                        <YAxis axisLine={false} tickLine={false} className="text-xs font-medium text-neutral-400" />
-                                        <Tooltip 
-                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                            cursor={{ fill: '#f8f9fa' }}
-                                        />
-                                        <Bar
-                                            dataKey="points"
-                                            fill={detailView.color}
-                                            radius={[8, 8, 0, 0]}
-                                            barSize={period === "1W" ? 60 : 30}
-                                            label={{
-                                                position: "top",
-                                                fill: "#17171e",
-                                                fontWeight: 600,
-                                                fontSize: 12
-                                            }}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }

@@ -9,12 +9,13 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-    Search, 
-    Plus, 
-    MoreHorizontal, 
-    Building2, 
-    Users, 
+import {
+    Search,
+    Plus,
+    MoreHorizontal,
+    Building2,
+    Users,
+    GraduationCap,
     School,
     Trash2,
     Eye,
@@ -235,6 +236,10 @@ export default function DistrictsList() {
                                                 <div className="flex items-center gap-1" title="Teachers">
                                                     <Users className="h-3.5 w-3.5" />
                                                     <span className="font-semibold">{district.teacherCount || 0}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1" title="Students">
+                                                    <GraduationCap className="h-3.5 w-3.5" />
+                                                    <span className="font-semibold">{district.studentCount || 0}</span>
                                                 </div>
                                             </div>
                                         </TableCell>
