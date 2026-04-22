@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useMatch, useNavigate, useSearchParams } from "react-router-dom";
 import Loading from "../Loading";
 import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
@@ -36,12 +36,11 @@ export default function SchoolPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const districtIdFromQuery = searchParams.get("districtId");
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
-  const isCreateMode = location.pathname.endsWith("/schools/new");
+  const isCreateMode = Boolean(useMatch("/system-admin/schools/new"));
 
   const [city, setCity] = useState("");
   const [state, setState] = useState("AL");
@@ -128,6 +127,8 @@ export default function SchoolPage() {
           setSchool(null);
           setSchoolName("");
           setAddress("");
+          setCity("");
+          setZipCode("");
           setDistrict("");
         };
 

@@ -267,7 +267,8 @@ export default function SystemAdminDashboard() {
                             const maxValue = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
                             const pct = (val / maxValue) * 100;
                             const rawLabel = item[labelKey];
-                            const labelText = rawLabel && String(rawLabel).trim() && String(rawLabel) !== 'N/A' ? String(rawLabel) : 'Unknown';
+                            const trimmed = rawLabel != null ? String(rawLabel).trim() : '';
+                            const labelText = trimmed !== '' && trimmed !== 'N/A' ? trimmed : 'Unknown';
                             return (
                                 <div key={i} className="flex flex-col gap-1 text-xs">
                                     <div className="flex justify-between items-center text-gray-700 font-medium">
@@ -488,11 +489,11 @@ export default function SystemAdminDashboard() {
                                             <tbody>
                                                 <tr className="border-b last:border-0">
                                                     <td className="py-2 font-medium text-gray-900">USA</td>
-                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalStates || 0).toLocaleString()}</td>
-                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalDistricts || 0).toLocaleString()}</td>
-                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalSchools || 0).toLocaleString()}</td>
-                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalTeachers || 0).toLocaleString()}</td>
-                                                    <td className="py-2 text-right text-gray-900">{(stats?.totalStudents || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalStates || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalDistricts || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalSchools || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalTeachers || 0).toLocaleString()}</td>
+                                                    <td className="py-2 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalStudents || 0).toLocaleString()}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -514,7 +515,11 @@ export default function SystemAdminDashboard() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {stateRollup.length === 0 ? (
+                                                {districtError ? (
+                                                    <tr>
+                                                        <td colSpan={5} className="py-4 text-center text-amber-700">{districtError}</td>
+                                                    </tr>
+                                                ) : stateRollup.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={5} className="py-4 text-center text-gray-400">No state data yet.</td>
                                                     </tr>
@@ -546,7 +551,11 @@ export default function SystemAdminDashboard() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {districtAnalytics.length === 0 ? (
+                                                {districtError ? (
+                                                    <tr>
+                                                        <td colSpan={4} className="py-4 text-center text-amber-700">{districtError}</td>
+                                                    </tr>
+                                                ) : districtAnalytics.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={4} className="py-4 text-center text-gray-400">No district data yet.</td>
                                                     </tr>
@@ -576,7 +585,11 @@ export default function SystemAdminDashboard() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {schoolStats.length === 0 ? (
+                                                {error ? (
+                                                    <tr>
+                                                        <td colSpan={3} className="py-4 text-center text-amber-700">{error}</td>
+                                                    </tr>
+                                                ) : schoolStats.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={3} className="py-4 text-center text-gray-400">No school data yet.</td>
                                                     </tr>

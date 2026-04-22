@@ -41,6 +41,7 @@ export default function ViewStudents() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
+        setLoading(true)
         const token = localStorage.getItem("token")
         if (!token) {
           toast({

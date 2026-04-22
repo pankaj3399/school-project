@@ -141,8 +141,13 @@ export const exportWaitlistData = async (req, res) => {
   try {
     const subscribers = await Waitlist.find({}).sort({ createdAt: -1 });
 
+    const sanitizeCell = (value) => {
+      const str = String(value ?? '');
+      return /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+    };
+
     const rows = subscribers.map(sub => ({
-      Email: sub.email,
+      Email: sanitizeCell(sub.email),
       'Joined At': new Date(sub.createdAt).toISOString(),
     }));
 

@@ -223,7 +223,19 @@ export const getCurrentSchool = async (req, res) => {
 export const updateSchool = async (req, res) => {
     const { name, address, city, district, state, zipCode, country, timeZone, domain } = req.body;
     const logo = req.file;
-  
+
+    const cityPattern = /^[A-Za-zÀ-ɏ\s.'-]{0,100}$/;
+    const zipPattern = /^[A-Za-z0-9\s-]{0,10}$/;
+    if (city && !cityPattern.test(city)) {
+      return res.status(400).json({ message: "City must contain only letters, spaces, hyphens, or apostrophes and be at most 100 characters." });
+    }
+    if (zipCode && !zipPattern.test(zipCode)) {
+      return res.status(400).json({ message: "Zip code must be at most 10 alphanumeric characters." });
+    }
+    if (address && String(address).length > 200) {
+      return res.status(400).json({ message: "Address must be at most 200 characters." });
+    }
+
     try {
       // Role-based access control
       if (req.user.role === Role.Admin) {
@@ -239,7 +251,7 @@ export const updateSchool = async (req, res) => {
         const school = await School.findById(req.params.id);
         const isCreator = school && school.createdBy.toString() === req.user.id;
         const isAssigned = adminUser && adminUser.schoolId && adminUser.schoolId.toString() === req.params.id;
-        
+
         if (!isCreator && !isAssigned) {
            return res.status(403).json({ message: "Access denied. You can only update your own school." });
         }
@@ -248,19 +260,17 @@ export const updateSchool = async (req, res) => {
       let logoUrl = null;
       if(logo)
         logoUrl = await uploadImageFromDataURI(logo);
-      let updatedSchool;
-      if(logoUrl)
-       updatedSchool = await School.findByIdAndUpdate(
+      const updatePayload = {
+        name, address, city, district,
+        districtId: req.body.districtId || undefined,
+        state, zipCode, country, timeZone, domain,
+      };
+      if (logoUrl) updatePayload.logo = logoUrl;
+      const updatedSchool = await School.findByIdAndUpdate(
         req.params.id,
-        { name, address, city, district, districtId: req.body.districtId || undefined, logo: logoUrl, state, zipCode, country, timeZone, domain },
+        updatePayload,
         { new: true }
       ).populate('districtId').populate('createdBy');
-      else
-      updatedSchool = await School.findByIdAndUpdate(
-        req.params.id,
-        { name, address, city, district, state, zipCode, country, timeZone, domain },
-        { new: true }
-      ).populate('createdBy');
   
       if (!updatedSchool) return res.status(404).json({ message: "School not found." });
   

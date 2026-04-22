@@ -99,8 +99,10 @@ const ViewSchool = () => {
     const [formData, setFormData] = useState({
         name: '',
         address: '',
+        city: '',
         districtId: '',
         state: '',
+        zipCode: '',
         country: '',
         domain: '',
         logo: ''
@@ -131,8 +133,10 @@ const ViewSchool = () => {
                 setFormData({
                     name: schoolRes.school.name || '',
                     address: schoolRes.school.address || '',
+                    city: schoolRes.school.city || '',
                     districtId: schoolRes.school.districtId?._id || schoolRes.school.districtId || '',
                     state: schoolRes.school.state || 'CO',
+                    zipCode: schoolRes.school.zipCode || '',
                     country: schoolRes.school.country || 'United States',
                     domain: schoolRes.school.domain || '',
                     logo: schoolRes.school.logo || ''
@@ -163,8 +167,10 @@ const ViewSchool = () => {
             const data = new FormData();
             data.append('name', formData.name);
             data.append('address', formData.address);
+            data.append('city', formData.city);
             data.append('district', formData.districtId);
             data.append('state', formData.state);
+            data.append('zipCode', formData.zipCode);
             data.append('country', formData.country);
             data.append('domain', formData.domain);
             
@@ -572,10 +578,29 @@ const ViewSchool = () => {
                                         <label className="text-sm font-semibold text-neutral-700">Street Address</label>
                                         <div className="relative">
                                             <IconMapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                                            <Input 
-                                                value={formData.address} 
+                                            <Input
+                                                value={formData.address}
                                                 onChange={e => setFormData({...formData, address: e.target.value})}
                                                 className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11 pl-10"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-neutral-700">City</label>
+                                            <Input
+                                                value={formData.city}
+                                                onChange={e => setFormData({...formData, city: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-neutral-700">Zip Code</label>
+                                            <Input
+                                                value={formData.zipCode}
+                                                onChange={e => setFormData({...formData, zipCode: e.target.value})}
+                                                className="rounded-xl border-neutral-300 focus:ring-[#00a58c] h-11"
                                             />
                                         </div>
                                     </div>

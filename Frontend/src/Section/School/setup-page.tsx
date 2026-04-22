@@ -177,7 +177,7 @@ const SetupPage = () => {
       a.click();
       document.body.removeChild(a);
 
-      toast({ title: "Export Complete", description: "Your waitlist CSV has been downloaded successfully." });
+      toast({ title: "Export Complete", description: "Your waitlist has been downloaded as an XLSX file." });
       return true;
     } catch (error) {
       toast({ title: "Export Failed", description: "Could not retrieve waitlist data.", variant: "destructive" });
