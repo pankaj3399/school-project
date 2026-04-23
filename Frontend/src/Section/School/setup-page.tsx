@@ -129,8 +129,8 @@ const SetupPage = () => {
               "SUBMITTED BY": h.submittedByName || "",
             });
 
-            if (h.submittedBy && AWARD_FORM_TYPES.has(h.formType)) {
-              const key = String(h.submittedBy);
+            if (h.submittedById && AWARD_FORM_TYPES.has(h.formType)) {
+              const key = String(h.submittedById);
               awardedByTeacher.set(key, (awardedByTeacher.get(key) || 0) + (h.points ?? 0));
             }
           });

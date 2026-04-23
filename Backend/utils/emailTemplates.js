@@ -10,16 +10,26 @@ import { emailSignature } from './emailSignature.js';
 const MAX_LOGO_BYTES = 100 * 1024; // ~100KB
 // Raster-only: SVG data URIs can carry <script>, foreignObject, and other
 // executable content, so we refuse them for email embedding.
-const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/;
+// Strict base64 shape: groups of 4 valid chars, with an optional final group
+// of 2–3 chars followed by the matching 1–2 '=' pad chars. Padding is only
+// permitted at the very end — interior '=' is rejected.
+const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
+// Trusted hosts for logo URLs. Extend this list if another CDN is onboarded.
+const TRUSTED_LOGO_HOSTS = new Set([
+  'res.cloudinary.com',
+]);
+
 const sanitizeLogoValue = (raw) => {
   if (typeof raw !== 'string') return null;
   const value = raw.trim();
   if (!value) return null;
   if (/[\x00-\x1F\x7F]/.test(value)) return null;
-  if (/^https?:\/\//i.test(value)) {
+  if (/^https:\/\//i.test(value)) {
     try {
       const parsed = new URL(value);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+      if (parsed.protocol !== 'https:') return null;
+      if (!TRUSTED_LOGO_HOSTS.has(parsed.hostname.toLowerCase())) return null;
       return parsed.toString();
     } catch {
       return null;
@@ -30,6 +40,7 @@ const sanitizeLogoValue = (raw) => {
     const base64 = value.split(',', 2)[1] || '';
     const padding = (base64.match(/=+$/) || [''])[0].length;
     const decodedBytes = Math.floor((base64.length * 3) / 4) - padding;
+    if (!Number.isFinite(decodedBytes) || decodedBytes <= 0) return null;
     if (decodedBytes > MAX_LOGO_BYTES) return null;
     return value;
   }
