@@ -9,7 +9,7 @@ import { Role } from "@/enum";
 import { LifecycleManager } from "./components/setup/LifecycleManager";
 import { DangerZone } from "./components/setup/DangerZone";
 import { Sparkles, School } from "lucide-react";
-import { GRADE_OPTIONS } from "@/lib/types";
+import { GRADE_OPTIONS, FormType } from "@/lib/types";
 import * as XLSX from "xlsx";
 
 const SetupPage = () => {
@@ -85,7 +85,7 @@ const SetupPage = () => {
       const historyRows: any[] = [];
       const teacherInfo = new Map<string, { name: string; subject: string; grade: string; email: string }>();
       const awardedByTeacher = new Map<string, number>();
-      const AWARD_FORM_TYPES = new Set(["AwardPoints", "AwardPointsIEP", "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]);
+      const AWARD_FORM_TYPES = new Set([FormType.AwardPoints, FormType.AwardPointsIEP]);
 
       report.gradeData.forEach((gradeInfo: any) => {
         (gradeInfo.teachers || []).forEach((t: any) => {

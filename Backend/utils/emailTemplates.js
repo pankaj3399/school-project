@@ -8,7 +8,9 @@ import { emailSignature } from './emailSignature.js';
 // outbound payload small and prevents unvalidated strings (javascript:, file:,
 // control chars) from being interpolated into <img src="...">.
 const MAX_LOGO_BYTES = 100 * 1024; // ~100KB
-const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/;
+// Raster-only: SVG data URIs can carry <script>, foreignObject, and other
+// executable content, so we refuse them for email embedding.
+const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/;
 const sanitizeLogoValue = (raw) => {
   if (typeof raw !== 'string') return null;
   const value = raw.trim();
