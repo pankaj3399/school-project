@@ -128,7 +128,7 @@ const SetupPage = () => {
             historyRows.push({
               DATE: datePart,
               TIME: timePart,
-              STUDENT: s.name || "",
+              STUDENT: h.submittedForName || s.name || "",
               GRADE: s.grade || gradeInfo.grade || "",
               ACTION: h.formType || "",
               POINTS: h.points ?? 0,
@@ -137,6 +137,14 @@ const SetupPage = () => {
 
             if (h.submittedById && AWARD_FORM_TYPES.has(h.formType)) {
               const key = String(h.submittedById);
+              if (!teacherInfo.has(key)) {
+                teacherInfo.set(key, {
+                  name: h.submittedByName || "",
+                  subject: h.submittedBySubject || "",
+                  grade: "",
+                  email: "",
+                });
+              }
               awardedByTeacher.set(key, (awardedByTeacher.get(key) || 0) + (h.points ?? 0));
             }
           });

@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { timezoneManager } from './luxon.js';
 import { emailSignature } from './emailSignature.js';
+import { TRUSTED_LOGO_HOSTS } from './trustedLogoHosts.js';
 
 // Bounds and validation for logos embedded in outbound email HTML. Keeps the
 // outbound payload small and prevents unvalidated strings (javascript:, file:,
@@ -14,19 +15,6 @@ const MAX_LOGO_BYTES = 100 * 1024; // ~100KB
 // of 2–3 chars followed by the matching 1–2 '=' pad chars. Padding is only
 // permitted at the very end — interior '=' is rejected.
 const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-
-// Trusted hosts for logo URLs. Defaults cover the CDNs we host logos on today;
-// override in deployment via the TRUSTED_LOGO_HOSTS env var (comma-separated
-// hostnames, case-insensitive). Empty / whitespace-only entries are dropped.
-const DEFAULT_TRUSTED_LOGO_HOSTS = ['res.cloudinary.com'];
-export const TRUSTED_LOGO_HOSTS = new Set(
-  (process.env.TRUSTED_LOGO_HOSTS
-    ? process.env.TRUSTED_LOGO_HOSTS.split(',')
-    : DEFAULT_TRUSTED_LOGO_HOSTS
-  )
-    .map((h) => (typeof h === 'string' ? h.trim().toLowerCase() : ''))
-    .filter((h) => h.length > 0)
-);
 
 const sanitizeLogoValue = (raw) => {
   if (typeof raw !== 'string') return null;
