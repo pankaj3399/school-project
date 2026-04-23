@@ -82,19 +82,19 @@ const SetupPage = () => {
       }
 
       const studentRows: any[] = [];
-      const teacherRows: any[] = [];
       const historyRows: any[] = [];
-      const seenTeachers = new Set<string>();
+      const teacherInfo = new Map<string, { name: string; subject: string; grade: string; email: string }>();
+      const awardedByTeacher = new Map<string, number>();
+      const AWARD_FORM_TYPES = new Set(["AwardPoints", "AwardPointsIEP", "Award Points", "AWARD POINTS WITH INDIVIDUALIZED EDUCATION PLAN (IEP)"]);
 
       report.gradeData.forEach((gradeInfo: any) => {
         (gradeInfo.teachers || []).forEach((t: any) => {
-          if (t?._id && !seenTeachers.has(t._id)) {
-            seenTeachers.add(t._id);
-            teacherRows.push({
-              Name: t.name || "",
-              Subject: t.subject || "",
-              Type: t.type || "",
-              Grade: t.grade || gradeInfo.grade || "",
+          if (t?._id && !teacherInfo.has(t._id)) {
+            teacherInfo.set(t._id, {
+              name: t.name || "",
+              subject: t.subject || "",
+              grade: t.grade || gradeInfo.grade || "",
+              email: t.email || "",
             });
           }
         });
@@ -102,28 +102,47 @@ const SetupPage = () => {
         (gradeInfo.students || []).forEach((entry: any) => {
           const s = entry.student || {};
           studentRows.push({
-            Name: s.name || "",
-            Grade: s.grade || gradeInfo.grade || "",
-            "Student Email": s.email || "",
-            "Parent Email": s.parentEmail || "",
-            "Total Points": s.points ?? 0,
-            eTokens: entry.totalPoints?.eToken ?? 0,
-            Oopsies: Math.abs(entry.totalPoints?.oopsies ?? 0),
-            Withdrawals: Math.abs(entry.totalPoints?.withdraw ?? 0),
+            "STUDENT NAME": s.name || "",
+            "STUDENT EMAIL": s.email || "",
+            "GUARDIAN EMAIL": [s.parentEmail, s.standard].filter(Boolean).join(", "),
+            GRADE: s.grade || gradeInfo.grade || "",
+            ETOKENS: entry.totalPoints?.eToken ?? 0,
+            FEEDBACKS: Array.isArray(entry.feedback) ? entry.feedback.length : 0,
+            OOPSIES: Math.abs(entry.totalPoints?.oopsies ?? 0),
+            WITHDRAWALS: Math.abs(entry.totalPoints?.withdraw ?? 0),
           });
 
           (entry.history || []).forEach((h: any) => {
+            const when = h.submittedAt ? new Date(h.submittedAt) : null;
             historyRows.push({
-              Student: s.name || "",
-              Grade: s.grade || gradeInfo.grade || "",
-              Date: h.submittedAt ? new Date(h.submittedAt).toLocaleString() : "",
-              Action: h.formType || "",
-              Points: h.points ?? 0,
-              "Submitted By": h.submittedByName || "",
+              DATE: when ? when.toLocaleDateString() : "",
+              TIME: when ? when.toLocaleTimeString() : "",
+              STUDENT: s.name || "",
+              GRADE: s.grade || gradeInfo.grade || "",
+              ACTION: h.formType || "",
+              POINTS: h.points ?? 0,
+              "SUBMITTED BY": h.submittedByName || "",
             });
+
+            if (h.submittedBy && AWARD_FORM_TYPES.has(h.formType)) {
+              const key = String(h.submittedBy);
+              awardedByTeacher.set(key, (awardedByTeacher.get(key) || 0) + (h.points ?? 0));
+            }
           });
         });
       });
+
+      const teacherRows = Array.from(teacherInfo.entries())
+        .map(([id, t]) => ({
+          NAME: t.name,
+          SUBJECT: t.subject,
+          GRADE: t.grade,
+          EMAIL: t.email,
+          "AWARDED TOKEN": awardedByTeacher.get(id) || 0,
+        }))
+        .sort((a, b) => a.NAME.localeCompare(b.NAME));
+
+      studentRows.sort((a, b) => (a["STUDENT NAME"] || "").localeCompare(b["STUDENT NAME"] || ""));
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(studentRows), "Students");

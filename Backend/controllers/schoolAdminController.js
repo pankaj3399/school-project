@@ -274,6 +274,29 @@ export const getStats = async (req, res) => {
     const studentFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
     const pointsFilter = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
 
+    // Optional filter: restrict stats to a specific student's points/feedback.
+    const { studentId, period } = req.query;
+    if (studentId) {
+      if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        return res.status(400).json({ message: "Invalid Student ID format" });
+      }
+      pointsFilter.submittedForId = new mongoose.Types.ObjectId(studentId);
+    }
+
+    // Optional filter: restrict points/feedback aggregation to a time range.
+    // Mirrors the period values used by Rankings (1W / 1M / 3M / 6M / 1Y).
+    if (period && period !== "1Y") {
+      const now = new Date();
+      const since = new Date(now);
+      switch (period) {
+        case "1W": since.setDate(since.getDate() - 7); break;
+        case "1M": since.setMonth(since.getMonth() - 1); break;
+        case "3M": since.setMonth(since.getMonth() - 3); break;
+        case "6M": since.setMonth(since.getMonth() - 6); break;
+      }
+      pointsFilter.submittedAt = { $gte: since, $lte: now };
+    }
+
     const totalTeachers = await Teacher.countDocuments(teacherFilter);
     const totalStudents = await Student.countDocuments(studentFilter);
 

@@ -85,6 +85,18 @@ const resolveOrgLabel = async ({ districtId, schoolId }) => {
   return parts.join(' — ');
 };
 
+// Best-effort fetch of a school's logo URL so invitations can brand the email
+// with both the RADU logo (left) and the school logo (right).
+const resolveSchoolLogo = async (schoolId) => {
+  if (!schoolId) return null;
+  try {
+    const school = await School.findById(schoolId).select('logo').lean();
+    return school?.logo || null;
+  } catch (_) {
+    return null;
+  }
+};
+
 // Read the embedded RADU logo once at module load so invitations don't block
 // the event loop on every send. Falls back to a hosted image if the file can't
 // be read at startup.
@@ -101,8 +113,9 @@ const cachedLogoSrc = (() => {
 // Shared invitation email body with RADU logo and recipient's org context.
 // All user-controlled values are escaped before interpolation to prevent HTML
 // injection; registrationUrl is additionally validated to be an http(s) URL.
-const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLabel }) => {
-  const logoSrc = escapeHtml(cachedLogoSrc);
+const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLabel, schoolLogo }) => {
+  const raduLogoSrc = escapeHtml(cachedLogoSrc);
+  const schoolLogoSrc = schoolLogo ? escapeHtml(schoolLogo) : null;
   const displayRole = escapeHtml(formatRoleName(role));
   const greetingName = recipientName ? ` ${escapeHtml(recipientName)}` : '';
   const orgLine = orgLabel
@@ -116,11 +129,26 @@ const buildInvitationEmailBody = ({ recipientName, role, registrationUrl, orgLab
   const hrefUrl = escapeHtml(safeRegistrationUrl);
   const visibleUrl = escapeHtml(safeRegistrationUrl);
 
+  // Logos are rendered with identical size constraints so RADU and the school
+  // logo appear balanced — matches the twin-logo layout used by the
+  // verification email template in utils/emailTemplates.js.
+  const logoStyle = 'height: 80px; max-width: 160px; object-fit: contain;';
+  const schoolLogoBlock = schoolLogoSrc
+    ? `<img src="${schoolLogoSrc}" alt="School Logo" style="${logoStyle}" />`
+    : `<span style="display:inline-block; width: 160px;"></span>`;
+
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #ffffff;">
-      <div style="text-align: center; padding-bottom: 16px; border-bottom: 1px solid #eee;">
-        <img src="${logoSrc}" alt="RADU E-Token" style="max-height: 80px; max-width: 240px; object-fit: contain;" />
-      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-bottom: 1px solid #eee; padding-bottom: 16px;">
+        <tr>
+          <td align="left" valign="middle" style="width: 50%;">
+            <img src="${raduLogoSrc}" alt="RADU E-Token" style="${logoStyle}" />
+          </td>
+          <td align="right" valign="middle" style="width: 50%;">
+            ${schoolLogoBlock}
+          </td>
+        </tr>
+      </table>
       <h2 style="color: #00a58c; text-align: center; margin-top: 24px;">Invitation to join The RADU E-Token(&trade;) System</h2>
       <p>Hello${greetingName},</p>
       <p>You have been invited to join the RADU E-Token&trade; System as a <strong>${displayRole}</strong>.</p>
@@ -1114,11 +1142,13 @@ export const inviteAdmin = async (req, res) => {
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(email)}&role=${role}`;
 
       const orgLabel = await resolveOrgLabel({ districtId, schoolId });
+      const schoolLogo = await resolveSchoolLogo(schoolId);
       const body = buildInvitationEmailBody({
         recipientName: newUser.name,
         role,
         registrationUrl,
-        orgLabel
+        orgLabel,
+        schoolLogo
       });
 
       const { sendEmail } = await import("../services/mail.js");
@@ -1341,11 +1371,13 @@ export const reInviteAdmin = async (req, res) => {
       const registrationUrl = `${baseUrl}/admin/complete-registration?token=${registrationToken}&email=${encodeURIComponent(admin.email)}&role=${admin.role}`;
 
       const orgLabel = await resolveOrgLabel({ districtId: admin.districtId, schoolId: admin.schoolId });
+      const schoolLogo = await resolveSchoolLogo(admin.schoolId);
       const body = buildInvitationEmailBody({
         recipientName: admin.name,
         role: admin.role,
         registrationUrl,
-        orgLabel
+        orgLabel,
+        schoolLogo
       });
 
       const { sendEmail } = await import("../services/mail.js");

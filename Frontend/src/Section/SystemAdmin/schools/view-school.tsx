@@ -4,7 +4,8 @@ import { getCurrrentSchool, getStats, getDistricts, updateSchool } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { IconSettings, IconLayoutDashboard, IconUsers, IconUserStar, IconCoins, IconArrowBackUp, IconMessage2, IconAlertCircle, IconCheck, IconShieldCheck, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
+import { IconSettings, IconLayoutDashboard, IconAlertCircle, IconCheck, IconShieldCheck, IconMapPin, IconSchool, IconPhoto, IconUpload } from '@tabler/icons-react'
+import { Users, GraduationCap, Coins, MessageSquare, AlertTriangle, Undo2 } from 'lucide-react'
 import { InviteAdminDialog } from '@/components/InviteAdminDialog'
 import { EditAdminDialog } from '@/components/EditAdminDialog'
 import { Role } from '@/enum'
@@ -40,33 +41,21 @@ const US_STATES = [
 
 const COUNTRIES = ["United States", "Canada", "Other"];
 
-type StatCardColor = 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'purple';
-
 interface StatCardProps {
     title: string;
     value: number;
     icon: ReactNode;
-    color: StatCardColor;
 }
 
-const StatCard = ({ title, value, icon, color }: StatCardProps) => {
-    const colorMap: Record<StatCardColor, string> = {
-        blue: "bg-blue-50 text-blue-600",
-        green: "bg-green-50 text-green-600",
-        yellow: "bg-yellow-50 text-yellow-600",
-        red: "bg-red-50 text-red-600",
-        orange: "bg-orange-50 text-orange-600",
-        purple: "bg-purple-50 text-purple-600",
-    }
-
+const StatCard = ({ title, value, icon }: StatCardProps) => {
     return (
-        <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl">
-            <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className={`p-2.5 rounded-xl mb-3 ${colorMap[color]}`}>
-                    {icon}
+        <Card className="border-2 border-gray-400 shadow-sm bg-white overflow-hidden rounded-2xl aspect-square">
+            <CardContent className="p-5 flex flex-col items-center justify-center text-center h-full">
+                <div className="text-gray-700 mb-2">{icon}</div>
+                <div className="text-sm font-semibold text-gray-700 mb-2">{title}</div>
+                <div className="text-gray-900 text-3xl font-bold leading-none">
+                    {(value || 0).toLocaleString()}
                 </div>
-                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{title}</div>
-                <div className="text-2xl font-black text-neutral-900 leading-none">{value.toLocaleString()}</div>
             </CardContent>
         </Card>
     )
@@ -325,13 +314,13 @@ const ViewSchool = () => {
 
                 <TabsContent value="dashboard" className="space-y-8 outline-none">
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                        <StatCard title="Total Teachers" value={stats?.totalTeachers || 0} icon={<IconUserStar className="w-6 h-6" />} color="green" />
-                        <StatCard title="Total Students" value={stats?.totalStudents || 0} icon={<IconUsers className="w-6 h-6" />} color="blue" />
-                        <StatCard title="Total Tokens" value={stats?.totalPoints || 0} icon={<IconCoins className="w-6 h-6" />} color="yellow" />
-                        <StatCard title="Total Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<IconMessage2 className="w-6 h-6" />} color="purple" />
-                        <StatCard title="Total Oopsies" value={stats?.totalDeductPoints || 0} icon={<IconAlertCircle className="w-6 h-6" />} color="orange" />
-                        <StatCard title="Total Withdrawals" value={stats?.totalWithdrawPoints || 0} icon={<IconArrowBackUp className="w-6 h-6" />} color="red" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <StatCard title="Total Teachers" value={stats?.totalTeachers || 0} icon={<Users className="h-9 w-9" strokeWidth={1.75} />} />
+                        <StatCard title="Total Students" value={stats?.totalStudents || 0} icon={<GraduationCap className="h-9 w-9" strokeWidth={1.75} />} />
+                        <StatCard title="Total Tokens" value={stats?.totalPoints || 0} icon={<Coins className="h-9 w-9" strokeWidth={1.75} />} />
+                        <StatCard title="Total Feedbacks" value={stats?.totalFeedbackCount || 0} icon={<MessageSquare className="h-9 w-9" strokeWidth={1.75} />} />
+                        <StatCard title="Total Oopsies" value={stats?.totalDeductPoints || 0} icon={<AlertTriangle className="h-9 w-9" strokeWidth={1.75} />} />
+                        <StatCard title="Total Withdrawals" value={stats?.totalWithdrawPoints || 0} icon={<Undo2 className="h-9 w-9" strokeWidth={1.75} />} />
                     </div>
 
                     <div className='grid grid-cols-1 lg:grid-cols-6 gap-6 items-start'>
@@ -468,11 +457,11 @@ const ViewSchool = () => {
                         </CardHeader>
                         <CardContent className="p-8">
                             <form onSubmit={handleUpdate} className="space-y-8 max-w-3xl">
-                                {/* Branding & Identity Section */}
+                                {/* General Info Section */}
                                 <div className="space-y-6">
                                     <h3 className="text-sm font-bold text-[#00a58c] uppercase tracking-[0.2em] flex items-center gap-2">
                                         <div className="w-1 h-4 bg-[#00a58c] rounded-full" />
-                                        Branding & Identity
+                                        General Info
                                     </h3>
                                     
                                     <div className="flex flex-col md:flex-row items-start gap-8 bg-neutral-50/50 p-6 rounded-2xl border border-neutral-100">

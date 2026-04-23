@@ -6,6 +6,8 @@ import Loading from "../Loading"
 import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "./Modal"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -26,6 +28,7 @@ export default function ViewStudents() {
   const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedGrade, setSelectedGrade] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState<string>("")
   const [editingStudent, setEditingStudent] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
@@ -104,12 +107,19 @@ export default function ViewStudents() {
 
 
   useEffect(() => {
-    if (selectedGrade === "all") {
-      setFilteredStudents(students)
-    } else {
-      setFilteredStudents(students.filter(student => student.grade === selectedGrade))
-    }
-  }, [selectedGrade, students])
+    const query = searchQuery.trim().toLowerCase()
+    const byGrade = selectedGrade === "all"
+      ? students
+      : students.filter(student => student.grade === selectedGrade)
+    const result = query
+      ? byGrade.filter((student) => {
+          const name = (student.name || "").toLowerCase()
+          const email = (student.email || "").toLowerCase()
+          return name.includes(query) || email.includes(query)
+        })
+      : byGrade
+    setFilteredStudents(result)
+  }, [selectedGrade, searchQuery, students])
 
 
 
@@ -434,7 +444,7 @@ export default function ViewStudents() {
         </DialogContent>
       </Dialog>
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Select
           value={selectedGrade}
           onValueChange={setSelectedGrade}
@@ -451,6 +461,15 @@ export default function ViewStudents() {
             ))}
           </SelectContent>
         </Select>
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search students by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
       {filteredStudents.length === 0 ? (
         <div className="text-center">

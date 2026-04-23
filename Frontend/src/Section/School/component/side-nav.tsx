@@ -1,6 +1,6 @@
 //school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School, Building2, Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, Paperclip, SettingsIcon, LayoutDashboard} from 'lucide-react';
+import { School, Building2, Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, History, Paperclip, SettingsIcon, LayoutDashboard} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/authContext';
@@ -14,7 +14,7 @@ const navItems = [
   { href: '/teacher', label: 'Teachers', icon: Users },
   { href: '/students', label: 'Students', icon: BookOpen },
   { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
-  { href: '/history', label: 'Point History', icon: ClipboardIcon },
+  { href: '/history', label: 'Point History', icon: History },
   { href: '/print-report', label: 'Print Report', icon: Paperclip },
   { href: '/setup', label: 'Setup', icon: SettingsIcon },
 ];

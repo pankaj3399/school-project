@@ -502,10 +502,15 @@ export const getFilteredPointHistory = async (token: string, studentId: string, 
   }
 };
 
-export const getStats = async (schoolId?: string) => {
+export const getStats = async (schoolId?: string, opts?: { studentId?: string; period?: string }) => {
   try {
     const token = getToken();
-    const url = schoolId ? `${API_URL}/schoolAdmin/stats?schoolId=${schoolId}` : `${API_URL}/schoolAdmin/stats`;
+    const params = new URLSearchParams();
+    if (schoolId) params.set("schoolId", schoolId);
+    if (opts?.studentId) params.set("studentId", opts.studentId);
+    if (opts?.period) params.set("period", opts.period);
+    const qs = params.toString();
+    const url = qs ? `${API_URL}/schoolAdmin/stats?${qs}` : `${API_URL}/schoolAdmin/stats`;
     const response = await axios.get(url, {
       headers: { token },
     });
@@ -1290,7 +1295,7 @@ export const inviteAdmin = async (data: {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
-export const completeAdminRegistration = async (data: { token: string; password: string; name?: string; termsAccepted?: boolean; termsVersion?: string }) => {
+export const completeAdminRegistration = async (data: { token: string; email: string; password: string; name?: string; termsAccepted?: boolean; termsVersion?: string }) => {
   try {
     const response = await axios.post(`${API_URL}/system-admin/complete-registration`, data);
     return response.data;
