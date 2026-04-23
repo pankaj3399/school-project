@@ -104,7 +104,7 @@ const SetupPage = () => {
           studentRows.push({
             "STUDENT NAME": s.name || "",
             "STUDENT EMAIL": s.email || "",
-            "GUARDIAN EMAIL": [s.parentEmail, s.standard].filter(Boolean).join(", "),
+            "GUARDIAN EMAIL": [s.parentEmail].filter(Boolean).join(", "),
             GRADE: s.grade || gradeInfo.grade || "",
             ETOKENS: entry.totalPoints?.eToken ?? 0,
             FEEDBACKS: Array.isArray(entry.feedback) ? entry.feedback.length : 0,
@@ -114,11 +114,17 @@ const SetupPage = () => {
 
           (entry.history || []).forEach((h: any) => {
             const when = h.submittedAt ? new Date(h.submittedAt) : null;
-            // ISO-like formatting so the exported DATE/TIME are identical
-            // across user locales (e.g., en-US vs en-GB).
-            const iso = when && !Number.isNaN(when.getTime()) ? when.toISOString() : "";
-            const datePart = iso ? iso.split("T")[0] : "";
-            const timePart = iso ? iso.split("T")[1].slice(0, 8) : "";
+            // Use the Date object's LOCAL fields (not toISOString, which
+            // converts to UTC and can shift the DATE/TIME across midnight)
+            // so the export reflects the submitter's local time.
+            const valid = !!(when && !Number.isNaN(when.getTime()));
+            const pad = (n: number) => String(n).padStart(2, "0");
+            const datePart = valid
+              ? `${when!.getFullYear()}-${pad(when!.getMonth() + 1)}-${pad(when!.getDate())}`
+              : "";
+            const timePart = valid
+              ? `${pad(when!.getHours())}:${pad(when!.getMinutes())}:${pad(when!.getSeconds())}`
+              : "";
             historyRows.push({
               DATE: datePart,
               TIME: timePart,
