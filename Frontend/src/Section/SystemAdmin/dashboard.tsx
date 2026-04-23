@@ -489,7 +489,14 @@ export default function SystemAdminDashboard() {
                                         </tr>
 
                                         {/* By District */}
-                                        {districtError ? (
+                                        {error ? (
+                                            <tr className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By District</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{error}</td>
+                                            </tr>
+                                        ) : districtError ? (
                                             <tr className="border-b border-gray-200">
                                                 <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By District</div>
