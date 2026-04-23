@@ -86,6 +86,7 @@ const SetupPage = () => {
       const teacherInfo = new Map<string, { name: string; subject: string; grade: string; email: string }>();
       const awardedByTeacher = new Map<string, number>();
       const AWARD_FORM_TYPES = new Set([FormType.AwardPoints, FormType.AwardPointsIEP]);
+      const pad = (n: number): string => String(n).padStart(2, "0");
 
       report.gradeData.forEach((gradeInfo: any) => {
         (gradeInfo.teachers || []).forEach((t: any) => {
@@ -118,7 +119,6 @@ const SetupPage = () => {
             // converts to UTC and can shift the DATE/TIME across midnight)
             // so the export reflects the submitter's local time.
             const valid = !!(when && !Number.isNaN(when.getTime()));
-            const pad = (n: number) => String(n).padStart(2, "0");
             const datePart = valid
               ? `${when!.getFullYear()}-${pad(when!.getMonth() + 1)}-${pad(when!.getDate())}`
               : "";
