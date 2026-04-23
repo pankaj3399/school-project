@@ -9,7 +9,7 @@ import { Role } from "@/enum";
 import { LifecycleManager } from "./components/setup/LifecycleManager";
 import { DangerZone } from "./components/setup/DangerZone";
 import { Sparkles, School } from "lucide-react";
-import { GRADE_OPTIONS } from "@/lib/types";
+import { GRADE_OPTIONS, FormType } from "@/lib/types";
 import * as XLSX from "xlsx";
 
 const SetupPage = () => {
@@ -82,48 +82,103 @@ const SetupPage = () => {
       }
 
       const studentRows: any[] = [];
-      const teacherRows: any[] = [];
       const historyRows: any[] = [];
-      const seenTeachers = new Set<string>();
+      const teacherInfo = new Map<string, { name: string; subject: string; grades: Set<string>; email: string }>();
+      const awardedByTeacher = new Map<string, number>();
+      const AWARD_FORM_TYPES = new Set([FormType.AwardPoints, FormType.AwardPointsIEP]);
+      const pad = (n: number): string => String(n).padStart(2, "0");
 
       report.gradeData.forEach((gradeInfo: any) => {
         (gradeInfo.teachers || []).forEach((t: any) => {
-          if (t?._id && !seenTeachers.has(t._id)) {
-            seenTeachers.add(t._id);
-            teacherRows.push({
-              Name: t.name || "",
-              Subject: t.subject || "",
-              Type: t.type || "",
-              Grade: t.grade || gradeInfo.grade || "",
+          if (t?._id == null) return;
+          const id = String(t._id);
+          const existing = teacherInfo.get(id);
+          const gradeValue = t.grade || gradeInfo.grade || "";
+          if (!existing) {
+            const grades = new Set<string>();
+            if (gradeValue) grades.add(gradeValue);
+            teacherInfo.set(id, {
+              name: t.name || "",
+              subject: t.subject || "",
+              grades,
+              email: t.email || "",
             });
+          } else {
+            if (t.name) existing.name = t.name;
+            if (t.subject) existing.subject = t.subject;
+            if (t.email) existing.email = t.email;
+            if (gradeValue) existing.grades.add(gradeValue);
           }
         });
 
         (gradeInfo.students || []).forEach((entry: any) => {
           const s = entry.student || {};
           studentRows.push({
-            Name: s.name || "",
-            Grade: s.grade || gradeInfo.grade || "",
-            "Student Email": s.email || "",
-            "Parent Email": s.parentEmail || "",
-            "Total Points": s.points ?? 0,
-            eTokens: entry.totalPoints?.eToken ?? 0,
-            Oopsies: Math.abs(entry.totalPoints?.oopsies ?? 0),
-            Withdrawals: Math.abs(entry.totalPoints?.withdraw ?? 0),
+            "STUDENT NAME": s.name || "",
+            "STUDENT EMAIL": s.email || "",
+            "GUARDIAN EMAIL": [s.parentEmail].filter(Boolean).join(", "),
+            GRADE: s.grade || gradeInfo.grade || "",
+            ETOKENS: entry.totalPoints?.eToken ?? 0,
+            FEEDBACKS: Array.isArray(entry.feedback) ? entry.feedback.length : 0,
+            OOPSIES: Math.abs(entry.totalPoints?.oopsies ?? 0),
+            WITHDRAWALS: Math.abs(entry.totalPoints?.withdraw ?? 0),
           });
 
           (entry.history || []).forEach((h: any) => {
+            const when = h.submittedAt ? new Date(h.submittedAt) : null;
+            // Use the Date object's LOCAL fields (not toISOString, which
+            // converts to UTC and can shift the DATE/TIME across midnight)
+            // so the export reflects the submitter's local time.
+            const valid = !!(when && !Number.isNaN(when.getTime()));
+            const datePart = valid
+              ? `${when!.getFullYear()}-${pad(when!.getMonth() + 1)}-${pad(when!.getDate())}`
+              : "";
+            const timePart = valid
+              ? `${pad(when!.getHours())}:${pad(when!.getMinutes())}:${pad(when!.getSeconds())}`
+              : "";
             historyRows.push({
-              Student: s.name || "",
-              Grade: s.grade || gradeInfo.grade || "",
-              Date: h.submittedAt ? new Date(h.submittedAt).toLocaleString() : "",
-              Action: h.formType || "",
-              Points: h.points ?? 0,
-              "Submitted By": h.submittedByName || "",
+              DATE: datePart,
+              TIME: timePart,
+              STUDENT: h.submittedForName || s.name || "",
+              GRADE: s.grade || gradeInfo.grade || "",
+              ACTION: h.formType || "",
+              POINTS: h.points ?? 0,
+              "SUBMITTED BY": h.submittedByName || "",
             });
+
+            if (h.submittedById != null && AWARD_FORM_TYPES.has(h.formType)) {
+              const id = String(h.submittedById);
+              const historicalGrade = s.grade || gradeInfo.grade || "";
+              const existing = teacherInfo.get(id);
+              if (!existing) {
+                const grades = new Set<string>();
+                if (historicalGrade) grades.add(historicalGrade);
+                teacherInfo.set(id, {
+                  name: h.submittedByName || "",
+                  subject: h.submittedBySubject || "",
+                  grades,
+                  email: "",
+                });
+              } else if (historicalGrade) {
+                existing.grades.add(historicalGrade);
+              }
+              awardedByTeacher.set(id, (awardedByTeacher.get(id) || 0) + (h.points ?? 0));
+            }
           });
         });
       });
+
+      const teacherRows = Array.from(teacherInfo.entries())
+        .map(([id, t]) => ({
+          NAME: t.name,
+          SUBJECT: t.subject,
+          GRADE: Array.from(t.grades).sort().join(", "),
+          EMAIL: t.email,
+          "AWARDED TOKEN": awardedByTeacher.get(id) || 0,
+        }))
+        .sort((a, b) => a.NAME.localeCompare(b.NAME));
+
+      studentRows.sort((a, b) => (a["STUDENT NAME"] || "").localeCompare(b["STUDENT NAME"] || ""));
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(studentRows), "Students");

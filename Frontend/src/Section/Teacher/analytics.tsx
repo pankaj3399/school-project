@@ -98,15 +98,24 @@ const Analytics = () => {
         return () => { active = false; };
     }, [effectiveSchoolId, isMultiSchoolUser, selectedSchoolId]);
 
-    // Fetch stats whenever the school scope changes. Multi-school users with no
-    // selected school see the aggregate "All Schools" view, so we intentionally
-    // let getStats run with an undefined scope.
+    // Fetch stats whenever the school scope, selected student, or period
+    // changes. Multi-school users must pick a school first — we don't fetch
+    // aggregate data because the UI renders a "select a school" prompt in
+    // that state. Passing studentId and period keeps the top stat cards in
+    // sync with the Student and Period filters.
+    const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
     useEffect(() => {
+        if (requiresSchoolSelection && !effectiveSchoolId) {
+            setStats(null);
+            setLoading(false);
+            return;
+        }
+
         let active = true;
         const fetchStats = async () => {
             setLoading(true);
             try {
-                const res = await getStats(effectiveSchoolId);
+                const res = await getStats(effectiveSchoolId, { studentId: studentId || undefined, period });
                 if (!active) return;
                 if (!res?.error) {
                     setStats(res);
@@ -124,7 +133,7 @@ const Analytics = () => {
 
         fetchStats();
         return () => { active = false; };
-    }, [effectiveSchoolId]);
+    }, [effectiveSchoolId, studentId, period, requiresSchoolSelection]);
 
     const resetSchoolScopedState = () => {
         setStudentId("");
@@ -134,8 +143,6 @@ const Analytics = () => {
         setStats(null);
         setIsPopOverOpen(false);
     };
-
-    const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
 
     return (
         <div className="bg-gray-50 min-h-screen p-6 space-y-8">

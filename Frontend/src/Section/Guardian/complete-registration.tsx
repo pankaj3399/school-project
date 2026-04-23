@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { completeGuardianRegistration, getCurrentTerms } from "@/api";
 import Loading from "../Loading";
 import { CheckCircle2, ChevronRight, FileText } from "lucide-react";
+import { PasswordField } from "@/components/PasswordField";
+import { validatePassword } from "@/lib/password";
 import TermsPage from "@/components/TermsPage";
 
 export default function CompleteGuardianRegistration() {
@@ -26,6 +28,7 @@ export default function CompleteGuardianRegistration() {
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const [termsError, setTermsError] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     password: "",
@@ -70,15 +73,6 @@ export default function CompleteGuardianRegistration() {
     );
   }
 
-  const validatePassword = (pass: string) => {
-    if (pass.length < 8) return "Password must be at least 8 characters long.";
-    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter.";
-    if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter.";
-    if (!/[0-9]/.test(pass)) return "Password must contain at least one number.";
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character.";
-    return "";
-  };
-
   const handleProceed = () => {
     if (termsAccepted) {
       setStep(2);
@@ -87,16 +81,26 @@ export default function CompleteGuardianRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordError) {
+    if (passwordError || confirmPasswordError) {
       toast({
         title: "Validation Error",
-        description: passwordError,
+        description: passwordError || confirmPasswordError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.password || !formData.confirmPassword) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter and confirm your password.",
         variant: "destructive",
       });
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
       toast({
         title: "Error",
         description: "Passwords do not match",
@@ -117,9 +121,13 @@ export default function CompleteGuardianRegistration() {
       });
 
       if (result.error) {
+        const errorMessage =
+          typeof result.error === "string"
+            ? result.error
+            : result.error?.message || result.message || "Registration failed.";
         toast({
           title: "Registration Failed",
-          description: result.error || result.message || "Registration failed.",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
@@ -154,9 +162,6 @@ export default function CompleteGuardianRegistration() {
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
               Welcome to RADU E-Token™
             </CardTitle>
-            <p className="text-gray-500 mt-2">
-              Before we get started, please review and accept our Terms of Use.
-            </p>
           </CardHeader>
           <CardContent className="p-8">
             <div className="max-h-[400px] overflow-y-auto mb-8 p-4 border rounded-xl bg-gray-50/50 scrollbar-thin scrollbar-thumb-[#00a58c]">
@@ -171,20 +176,33 @@ export default function CompleteGuardianRegistration() {
                 className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
               />
               <div className="grid gap-1.5 leading-none">
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  I Agree that I read and accept the{" "}
-                  <a 
-                    href="/terms" 
-                    target="_blank" 
+                <div className="text-sm font-medium leading-none">
+                  <Label
+                    htmlFor="terms"
+                    className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    I agree to the
+                  </Label>
+                  {" "}
+                  <a
+                    href="/terms"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"
                   >
-                    Terms & conditions of use
+                    Terms of Service
                   </a>
-                </Label>
+                  {" "}and{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#00a58c] font-bold hover:underline"
+                  >
+                    Privacy Policy
+                  </a>
+                  .
+                </div>
               </div>
             </div>
 
@@ -246,39 +264,42 @@ export default function CompleteGuardianRegistration() {
                   className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-600 ml-1">Create Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => {
-                    setFormData({ ...formData, password: e.target.value });
-                    setPasswordError(validatePassword(e.target.value));
-                  }}
-                  required
-                  className={`rounded-xl py-6 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
-                  aria-invalid={!!passwordError}
-                />
-                {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-600 ml-1">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  required
-                  className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
-                />
-              </div>
-              <Button 
-                type="submit" 
+              <PasswordField
+                id="password"
+                label="Create Password"
+                value={formData.password}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, password: value }));
+                  setPasswordError(validatePassword(value));
+                  if (formData.confirmPassword && value !== formData.confirmPassword) {
+                    setConfirmPasswordError("Passwords do not match.");
+                  } else {
+                    setConfirmPasswordError("");
+                  }
+                }}
+                error={passwordError}
+                showRequirements
+                autoComplete="new-password"
+              />
+              <PasswordField
+                id="confirmPassword"
+                label="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, confirmPassword: value }));
+                  if (formData.password && value !== formData.password) {
+                    setConfirmPasswordError("Passwords do not match.");
+                  } else {
+                    setConfirmPasswordError("");
+                  }
+                }}
+                error={confirmPasswordError}
+                autoComplete="new-password"
+              />
+              <Button
+                type="submit"
                 className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl mt-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-                disabled={loading}
+                disabled={loading || !!passwordError || !!confirmPasswordError || !formData.password || !formData.confirmPassword}
               >
                 {loading ? "Creating Account..." : "Finish Registration"}
               </Button>

@@ -9,12 +9,11 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-    Search, 
-    Plus, 
-    MoreHorizontal, 
+import {
+    Search,
+    Plus,
+    MoreHorizontal,
     Trash2,
-    Eye,
     Edit,
     AlertCircle
 } from 'lucide-react';
@@ -268,9 +267,6 @@ export default function SchoolsList() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-48">
                                                     <DropdownMenuItem onClick={() => navigate(`/system-admin/schools/${school._id}`)}>
-                                                        <Eye className="mr-2 h-4 w-4 text-gray-400" /> Analytics
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => navigate(`/system-admin/schools/${school._id}?tab=settings`)}>
                                                         <Edit className="mr-2 h-4 w-4 text-gray-400" /> Settings
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />

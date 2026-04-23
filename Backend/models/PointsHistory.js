@@ -60,5 +60,8 @@ const PointsHistorySchema = new mongoose.Schema({
 PointsHistorySchema.index({ submittedForId: 1 });
 PointsHistorySchema.index({ submittedById: 1 });
 PointsHistorySchema.index({ schoolId: 1, submittedAt: 1 });
+// Supports schoolAdminController.getStats aggregation which filters by
+// schoolId + submittedForId + optional submittedAt range.
+PointsHistorySchema.index({ schoolId: 1, submittedForId: 1, submittedAt: 1 });
 
 export default mongoose.models.PointsHistory || mongoose.model('PointsHistory', PointsHistorySchema)

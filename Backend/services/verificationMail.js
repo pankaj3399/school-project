@@ -1,5 +1,5 @@
 import { Role } from "../enum.js";
-import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
+import { getVerificationEmailTemplate, sanitizeLogoValue } from "../utils/emailTemplates.js";
 import { sendEmail } from "./mail.js";
 import path from 'path';
 import fs from 'fs';
@@ -129,6 +129,8 @@ export const sendOnboardingEmail = async (user, schoolLogo = null) => {
             logoSrc = 'https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png';
         }
 
+        const safeSchoolLogo = sanitizeLogoValue(schoolLogo);
+
         const emailHTML = `
             <!DOCTYPE html>
             <html>
@@ -209,7 +211,7 @@ export const sendOnboardingEmail = async (user, schoolLogo = null) => {
                 <div class="header">
                     <img src="${logoSrc}" alt="RADU Framework Logo" class="logo-left">
                     <h1 class="title">Welcome</h1>
-                    ${schoolLogo ? `<img src="${schoolLogo}" alt="School Logo" class="logo-right">` : '<div class="logo-right"></div>'}
+                    ${safeSchoolLogo ? `<img src="${safeSchoolLogo}" alt="School Logo" class="logo-right">` : '<div class="logo-right"></div>'}
                 </div>
                 
                 <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">

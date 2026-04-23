@@ -66,6 +66,7 @@ export default function SchoolPage() {
   }, [districtIdFromQuery])
 
   useEffect(() => {
+    if (isCreateMode) return;
     const fetchStats = async () => {
       const res = await getStats(selectedSchoolId || undefined)
       setStats({
@@ -78,7 +79,7 @@ export default function SchoolPage() {
       })
     }
     fetchStats()
-  }, [selectedSchoolId])
+  }, [selectedSchoolId, isCreateMode])
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -321,7 +322,7 @@ export default function SchoolPage() {
 
   if (loading) return <Loading />;
 
-  if (school) {
+  if (school && !isCreateMode) {
     return (
       <div className="grid grid-cols-1 place-items-center">
         <div className="flex w-full">

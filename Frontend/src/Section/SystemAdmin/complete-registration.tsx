@@ -10,18 +10,21 @@ import { FileText, CheckCircle2, ChevronRight } from "lucide-react";
 import { completeAdminRegistration, getCurrentTerms } from "@/api";
 import Loading from "../Loading";
 import TermsPage from "@/components/TermsPage";
+import { PasswordField } from "@/components/PasswordField";
+import { validatePassword } from "@/lib/password";
 
 export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
   const role = searchParams.get("role");
-  
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     password: "",
+    confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -29,6 +32,7 @@ export default function CompleteAdminRegistration() {
   const [termsLoaded, setTermsLoaded] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -59,15 +63,6 @@ export default function CompleteAdminRegistration() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validatePassword = (pass: string) => {
-    if (pass.length < 8) return "Password must be at least 8 characters long.";
-    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter.";
-    if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter.";
-    if (!/[0-9]/.test(pass)) return "Password must contain at least one number.";
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character.";
-    return "";
-  };
-
   const handleProceed = () => {
     if (termsAccepted && termsLoaded && !termsError) {
       setShowForm(true);
@@ -76,18 +71,22 @@ export default function CompleteAdminRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
+    if (!token || !email) {
       toast({
         title: "Error",
-        description: "Invalid or missing registration token.",
+        description: "Invalid or missing registration link.",
         variant: "destructive",
       });
       return;
     }
-    
+
     const pError = validatePassword(formData.password);
     if (pError) {
       setPasswordError(pError);
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
       return;
     }
 
@@ -104,9 +103,11 @@ export default function CompleteAdminRegistration() {
       }
       const data = await completeAdminRegistration({
         token,
+        email,
         termsAccepted,
         termsVersion: termsVersion,
-        ...formData
+        name: formData.name,
+        password: formData.password,
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
         toast({
@@ -135,7 +136,7 @@ export default function CompleteAdminRegistration() {
 
   if (initialLoading) return <Loading />;
 
-  if (!token) {
+  if (!token || !email) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent mb-4">
@@ -163,37 +164,47 @@ export default function CompleteAdminRegistration() {
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
               Welcome to RADU E-Token™
             </CardTitle>
-            <p className="text-gray-500 mt-2">
-              Review and accept the Terms of Use to complete your {role || "Administrator"} setup for {email}.
-            </p>
           </CardHeader>
           <CardContent className="p-8">
             <div className="max-h-[400px] overflow-y-auto mb-8 p-4 border rounded-xl bg-gray-50/50 scrollbar-thin scrollbar-thumb-[#00a58c]">
               <TermsPage isRegistration={true} terms={fetchedTerms} />
             </div>
-            
+
             <div className="flex items-start space-x-3 mb-8 p-4 bg-[#f8fdfc] rounded-lg border border-[#e6f6f4]">
-              <Checkbox 
-                id="terms" 
+              <Checkbox
+                id="terms"
                 checked={termsAccepted}
                 onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
                 className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
               />
               <div className="grid gap-1.5 leading-none">
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  I Agree that I read and accept the{" "}
-                  <a 
-                    href="/terms" 
-                    target="_blank" 
+                <div className="text-sm font-medium leading-none">
+                  <Label
+                    htmlFor="terms"
+                    className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    I agree to the
+                  </Label>
+                  {" "}
+                  <a
+                    href="/terms"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"
                   >
-                    Terms & conditions of use
+                    Terms of Service
                   </a>
-                </Label>
+                  {" "}and{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#00a58c] font-bold hover:underline"
+                  >
+                    Privacy Policy
+                  </a>
+                  .
+                </div>
               </div>
             </div>
 
@@ -247,28 +258,42 @@ export default function CompleteAdminRegistration() {
                 className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-600 ml-1">Create Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => {
-                  handleChange(e);
-                  const err = validatePassword(e.target.value);
-                  setPasswordError(err);
-                }}
-                required
-                className={`rounded-xl py-6 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
-              />
-              {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
-            </div>
-            <Button 
-              type="submit" 
+            <PasswordField
+              id="password"
+              label="Create Password"
+              value={formData.password}
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, password: value }));
+                setPasswordError(validatePassword(value));
+                if (formData.confirmPassword && value !== formData.confirmPassword) {
+                  setConfirmPasswordError("Passwords do not match.");
+                } else {
+                  setConfirmPasswordError("");
+                }
+              }}
+              error={passwordError}
+              showRequirements
+              autoComplete="new-password"
+            />
+            <PasswordField
+              id="confirmPassword"
+              label="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, confirmPassword: value }));
+                if (formData.password && value !== formData.password) {
+                  setConfirmPasswordError("Passwords do not match.");
+                } else {
+                  setConfirmPasswordError("");
+                }
+              }}
+              error={confirmPasswordError}
+              autoComplete="new-password"
+            />
+            <Button
+              type="submit"
               className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl mt-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-              disabled={loading}
+              disabled={loading || !!passwordError || !!confirmPasswordError || !formData.password || !formData.confirmPassword}
             >
               {loading ? "Completing Setup..." : "Finish Registration"}
             </Button>
