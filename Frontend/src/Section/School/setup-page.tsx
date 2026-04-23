@@ -103,8 +103,11 @@ const SetupPage = () => {
               grades,
               email: t.email || "",
             });
-          } else if (gradeValue) {
-            existing.grades.add(gradeValue);
+          } else {
+            if (t.name) existing.name = t.name;
+            if (t.subject) existing.subject = t.subject;
+            if (t.email) existing.email = t.email;
+            if (gradeValue) existing.grades.add(gradeValue);
           }
         });
 
