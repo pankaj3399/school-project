@@ -83,20 +83,28 @@ const SetupPage = () => {
 
       const studentRows: any[] = [];
       const historyRows: any[] = [];
-      const teacherInfo = new Map<string, { name: string; subject: string; grade: string; email: string }>();
+      const teacherInfo = new Map<string, { name: string; subject: string; grades: Set<string>; email: string }>();
       const awardedByTeacher = new Map<string, number>();
       const AWARD_FORM_TYPES = new Set([FormType.AwardPoints, FormType.AwardPointsIEP]);
       const pad = (n: number): string => String(n).padStart(2, "0");
 
       report.gradeData.forEach((gradeInfo: any) => {
         (gradeInfo.teachers || []).forEach((t: any) => {
-          if (t?._id && !teacherInfo.has(t._id)) {
-            teacherInfo.set(t._id, {
+          if (t?._id == null) return;
+          const id = String(t._id);
+          const existing = teacherInfo.get(id);
+          const gradeValue = t.grade || gradeInfo.grade || "";
+          if (!existing) {
+            const grades = new Set<string>();
+            if (gradeValue) grades.add(gradeValue);
+            teacherInfo.set(id, {
               name: t.name || "",
               subject: t.subject || "",
-              grade: t.grade || gradeInfo.grade || "",
+              grades,
               email: t.email || "",
             });
+          } else if (gradeValue) {
+            existing.grades.add(gradeValue);
           }
         });
 
@@ -135,17 +143,23 @@ const SetupPage = () => {
               "SUBMITTED BY": h.submittedByName || "",
             });
 
-            if (h.submittedById && AWARD_FORM_TYPES.has(h.formType)) {
-              const key = String(h.submittedById);
-              if (!teacherInfo.has(key)) {
-                teacherInfo.set(key, {
+            if (h.submittedById != null && AWARD_FORM_TYPES.has(h.formType)) {
+              const id = String(h.submittedById);
+              const historicalGrade = s.grade || gradeInfo.grade || "";
+              const existing = teacherInfo.get(id);
+              if (!existing) {
+                const grades = new Set<string>();
+                if (historicalGrade) grades.add(historicalGrade);
+                teacherInfo.set(id, {
                   name: h.submittedByName || "",
                   subject: h.submittedBySubject || "",
-                  grade: "",
+                  grades,
                   email: "",
                 });
+              } else if (historicalGrade) {
+                existing.grades.add(historicalGrade);
               }
-              awardedByTeacher.set(key, (awardedByTeacher.get(key) || 0) + (h.points ?? 0));
+              awardedByTeacher.set(id, (awardedByTeacher.get(id) || 0) + (h.points ?? 0));
             }
           });
         });
@@ -155,7 +169,7 @@ const SetupPage = () => {
         .map(([id, t]) => ({
           NAME: t.name,
           SUBJECT: t.subject,
-          GRADE: t.grade,
+          GRADE: Array.from(t.grades).sort().join(", "),
           EMAIL: t.email,
           "AWARDED TOKEN": awardedByTeacher.get(id) || 0,
         }))
