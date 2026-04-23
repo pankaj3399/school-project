@@ -285,7 +285,11 @@ export const getStats = async (req, res) => {
 
     // Optional filter: restrict points/feedback aggregation to a time range.
     // Mirrors the period values used by Rankings (1W / 1M / 3M / 6M / 1Y).
-    if (period && period !== "1Y") {
+    const ALLOWED_PERIODS = new Set(["1W", "1M", "3M", "6M", "1Y"]);
+    if (period !== undefined && period !== "" && !ALLOWED_PERIODS.has(period)) {
+      return res.status(400).json({ message: "Invalid period value. Must be one of: 1W, 1M, 3M, 6M, 1Y." });
+    }
+    if (period) {
       const now = new Date();
       const since = new Date(now);
       switch (period) {
@@ -293,6 +297,7 @@ export const getStats = async (req, res) => {
         case "1M": since.setMonth(since.getMonth() - 1); break;
         case "3M": since.setMonth(since.getMonth() - 3); break;
         case "6M": since.setMonth(since.getMonth() - 6); break;
+        case "1Y": since.setFullYear(since.getFullYear() - 1); break;
       }
       pointsFilter.submittedAt = { $gte: since, $lte: now };
     }

@@ -4,11 +4,16 @@
 // Empty / whitespace-only entries are dropped.
 const DEFAULT_TRUSTED_LOGO_HOSTS = ['res.cloudinary.com'];
 
-export const TRUSTED_LOGO_HOSTS = new Set(
-  (process.env.TRUSTED_LOGO_HOSTS
-    ? process.env.TRUSTED_LOGO_HOSTS.split(',')
-    : DEFAULT_TRUSTED_LOGO_HOSTS
-  )
-    .map((h) => (typeof h === 'string' ? h.trim().toLowerCase() : ''))
-    .filter((h) => h.length > 0)
-);
+const envValue = process.env.TRUSTED_LOGO_HOSTS;
+const source = envValue !== undefined ? envValue.split(',') : DEFAULT_TRUSTED_LOGO_HOSTS;
+const parsed = source
+  .map((h) => (typeof h === 'string' ? h.trim().toLowerCase() : ''))
+  .filter((h) => h.length > 0);
+
+if (envValue !== undefined && parsed.length === 0) {
+  console.warn(
+    '[trustedLogoHosts] TRUSTED_LOGO_HOSTS is set but resolves to no valid hostnames; remote logo URLs will be rejected.'
+  );
+}
+
+export const TRUSTED_LOGO_HOSTS = new Set(parsed);

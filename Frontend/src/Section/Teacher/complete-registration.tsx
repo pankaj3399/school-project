@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, CheckCircle2, ChevronRight } from "lucide-react";
+import { FileText, CheckCircle2, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { completeTeacherRegistration, getCurrentTerms } from "@/api";
 import Loading from "../Loading";
 import TermsPage from "@/components/TermsPage";
@@ -19,14 +19,18 @@ export default function CompleteTeacherRegistration() {
   const [formData, setFormData] = useState({
     name: "",
     password: "",
+    confirmPassword: "",
     subject: ""
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [termsVersion, setTermsVersion] = useState("");
   const [termsLoaded, setTermsLoaded] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -82,7 +86,17 @@ export default function CompleteTeacherRegistration() {
       });
       return;
     }
-    
+
+    const pError = validatePassword(formData.password);
+    if (pError) {
+      setPasswordError(pError);
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (!termsVersion) {
@@ -94,11 +108,12 @@ export default function CompleteTeacherRegistration() {
         setLoading(false);
         return;
       }
+      const { confirmPassword: _confirmPassword, ...payload } = formData;
       const data = await completeTeacherRegistration({
         token,
         termsAccepted,
         termsVersion: termsVersion,
-        ...formData
+        ...payload
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
         toast({
@@ -155,9 +170,6 @@ export default function CompleteTeacherRegistration() {
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
               Welcome to RADU E-Token™
             </CardTitle>
-            <p className="text-gray-500 mt-2">
-              Before completing your registration, please review and accept our Terms of Use.
-            </p>
           </CardHeader>
           <CardContent className="p-8">
             <div className="max-h-[400px] overflow-y-auto mb-8 p-4 border rounded-xl bg-gray-50/50 scrollbar-thin scrollbar-thumb-[#00a58c]">
@@ -172,20 +184,33 @@ export default function CompleteTeacherRegistration() {
                 className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
               />
               <div className="grid gap-1.5 leading-none">
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  I Agree that I read and accept the{" "}
-                  <a 
-                    href="/terms" 
-                    target="_blank" 
+                <div className="text-sm font-medium leading-none">
+                  <Label
+                    htmlFor="terms"
+                    className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    I agree to the
+                  </Label>
+                  {" "}
+                  <a
+                    href="/terms"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"
                   >
-                    Terms & conditions of use
+                    Terms of Service
                   </a>
-                </Label>
+                  {" "}and{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#00a58c] font-bold hover:underline"
+                  >
+                    Privacy Policy
+                  </a>
+                  .
+                </div>
               </div>
             </div>
 
@@ -233,21 +258,79 @@ export default function CompleteTeacherRegistration() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-600 ml-1">Create Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => {
-                  handleChange(e);
-                  setPasswordError(validatePassword(e.target.value));
-                }}
-                required
-                className={`rounded-xl py-6 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
-                aria-invalid={!!passwordError}
-              />
+              <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs text-gray-600 leading-relaxed">
+                <p className="font-semibold text-gray-700 mb-1">Password must contain:</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  <li>At least 8 characters</li>
+                  <li>1 uppercase letter</li>
+                  <li>1 lowercase letter</li>
+                  <li>1 number</li>
+                  <li>1 special character</li>
+                </ul>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => {
+                    handleChange(e);
+                    const err = validatePassword(e.target.value);
+                    setPasswordError(err);
+                    if (formData.confirmPassword && e.target.value !== formData.confirmPassword) {
+                      setConfirmPasswordError("Passwords do not match.");
+                    } else {
+                      setConfirmPasswordError("");
+                    }
+                  }}
+                  required
+                  className={`rounded-xl py-6 pr-12 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
+                  aria-invalid={!!passwordError}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-gray-600 ml-1">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (formData.password && e.target.value !== formData.password) {
+                      setConfirmPasswordError("Passwords do not match.");
+                    } else {
+                      setConfirmPasswordError("");
+                    }
+                  }}
+                  required
+                  className={`rounded-xl py-6 pr-12 focus:ring-[#00a58c] ${confirmPasswordError ? 'border-red-500' : 'border-gray-200'}`}
+                  aria-invalid={!!confirmPasswordError}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {confirmPasswordError && <p className="text-xs text-red-500 mt-1 ml-1">{confirmPasswordError}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="subject" className="text-gray-600 ml-1">Subject Area</Label>
@@ -261,10 +344,10 @@ export default function CompleteTeacherRegistration() {
                 className="rounded-xl py-6 focus:ring-[#00a58c] border-gray-200"
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl mt-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-              disabled={loading}
+              disabled={loading || !!passwordError || !!confirmPasswordError || !formData.password || !formData.confirmPassword}
             >
               {loading ? "Creating Account..." : "Finish Registration"}
             </Button>

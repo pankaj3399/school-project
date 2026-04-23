@@ -80,18 +80,10 @@ export default function CompleteAdminRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
+    if (!token || !email) {
       toast({
         title: "Error",
-        description: "Invalid or missing registration token.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!email) {
-      toast({
-        title: "Error",
-        description: "Missing email in registration link.",
+        description: "Invalid or missing registration link.",
         variant: "destructive",
       });
       return;
@@ -153,7 +145,7 @@ export default function CompleteAdminRegistration() {
 
   if (initialLoading) return <Loading />;
 
-  if (!token) {
+  if (!token || !email) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent mb-4">
@@ -195,11 +187,14 @@ export default function CompleteAdminRegistration() {
                 className="mt-1 border-[#00a58c] data-[state=checked]:bg-[#00a58c]"
               />
               <div className="grid gap-1.5 leading-none">
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  I agree to the{" "}
+                <div className="text-sm font-medium leading-none">
+                  <Label
+                    htmlFor="terms"
+                    className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    I agree to the
+                  </Label>
+                  {" "}
                   <a
                     href="/terms"
                     target="_blank"
@@ -218,7 +213,7 @@ export default function CompleteAdminRegistration() {
                     Privacy Policy
                   </a>
                   .
-                </Label>
+                </div>
               </div>
             </div>
 

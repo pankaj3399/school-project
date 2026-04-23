@@ -470,14 +470,14 @@ export default function SystemAdminDashboard() {
                                     <tbody>
                                         {/* By Country */}
                                         <tr className="border-b border-gray-200">
-                                            <td className="py-3 px-4">
+                                            <th scope="row" className="py-3 px-4 text-left font-normal">
                                                 <div className="font-semibold text-gray-900">By Country</div>
                                                 <div className="text-xs text-gray-500">
                                                     {stats && Array.isArray(stats.countries) && stats.totalCountries === 1 && stats.countries[0]
                                                         ? stats.countries[0]
                                                         : 'All countries'}
                                                 </div>
-                                            </td>
+                                            </th>
                                             <td className="py-3 px-4 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalStates || 0).toLocaleString()}</td>
                                             <td className="py-3 px-4 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalDistricts || 0).toLocaleString()}</td>
                                             <td className="py-3 px-4 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalSchools || 0).toLocaleString()}</td>
@@ -488,24 +488,26 @@ export default function SystemAdminDashboard() {
                                         {/* By District */}
                                         {districtError ? (
                                             <tr className="border-b border-gray-200">
-                                                <td className="py-3 px-4">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By District</div>
-                                                </td>
+                                                </th>
                                                 <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{districtError}</td>
                                             </tr>
                                         ) : districtAnalytics.length === 0 ? (
                                             <tr className="border-b border-gray-200">
-                                                <td className="py-3 px-4">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By District</div>
-                                                </td>
+                                                </th>
                                                 <td colSpan={5} className="py-3 px-4 text-center text-gray-400">No district data yet.</td>
                                             </tr>
-                                        ) : districtAnalytics.map((d, i) => (
+                                        ) : districtAnalytics.map((d) => (
                                             <tr key={d.districtId} className="border-b border-gray-200">
-                                                <td className="py-3 px-4">
-                                                    {i === 0 && <div className="font-semibold text-gray-900">By District</div>}
-                                                    <div className="text-xs text-gray-600">{d.name}</div>
-                                                </td>
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By District</div>
+                                                    <div className="text-xs text-gray-600">
+                                                        {d.state ? `${d.state} — ${d.name}` : d.name}
+                                                    </div>
+                                                </th>
                                                 <td className="py-3 px-4 text-right text-gray-400">—</td>
                                                 {/* Self-referential: the row *is* this district, so don't restate "1". */}
                                                 <td className="py-3 px-4 text-right text-gray-400">—</td>
@@ -518,17 +520,17 @@ export default function SystemAdminDashboard() {
                                         {/* By School */}
                                         {schoolStats.length === 0 ? (
                                             <tr>
-                                                <td className="py-3 px-4">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By School</div>
-                                                </td>
+                                                </th>
                                                 <td colSpan={5} className="py-3 px-4 text-center text-gray-400">No school data yet.</td>
                                             </tr>
                                         ) : schoolStats.map((s, i) => (
                                             <tr key={s._id} className={i < schoolStats.length - 1 ? 'border-b border-gray-200' : ''}>
-                                                <td className="py-3 px-4">
-                                                    {i === 0 && <div className="font-semibold text-gray-900">By School</div>}
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By School</div>
                                                     <div className="text-xs text-gray-600">{s.name}</div>
-                                                </td>
+                                                </th>
                                                 <td className="py-3 px-4 text-right text-gray-400">—</td>
                                                 <td className="py-3 px-4 text-right text-gray-400">—</td>
                                                 <td className="py-3 px-4 text-right text-gray-400">—</td>

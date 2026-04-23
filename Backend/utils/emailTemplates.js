@@ -14,7 +14,7 @@ const MAX_LOGO_BYTES = 100 * 1024; // ~100KB
 // Strict base64 shape: groups of 4 valid chars, with an optional final group
 // of 2–3 chars followed by the matching 1–2 '=' pad chars. Padding is only
 // permitted at the very end — interior '=' is rejected.
-const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/i;
 
 const sanitizeLogoValue = (raw) => {
   if (typeof raw !== 'string') return null;
