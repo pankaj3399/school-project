@@ -29,6 +29,7 @@ export default function ViewStudents() {
   const [loading, setLoading] = useState(true)
   const [selectedGrade, setSelectedGrade] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
+  const [debouncedQuery, setDebouncedQuery] = useState<string>("")
   const [editingStudent, setEditingStudent] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null)
@@ -106,8 +107,15 @@ export default function ViewStudents() {
   }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection, toast])
 
 
+  // Debounce the search input so each keystroke doesn't re-filter large
+  // rosters — the filter effect below reads debouncedQuery, not the raw value.
   useEffect(() => {
-    const query = searchQuery.trim().toLowerCase()
+    const id = setTimeout(() => setDebouncedQuery(searchQuery), 250)
+    return () => clearTimeout(id)
+  }, [searchQuery])
+
+  useEffect(() => {
+    const query = debouncedQuery.trim().toLowerCase()
     const byGrade = selectedGrade === "all"
       ? students
       : students.filter(student => student.grade === selectedGrade)
@@ -119,7 +127,7 @@ export default function ViewStudents() {
         })
       : byGrade
     setFilteredStudents(result)
-  }, [selectedGrade, searchQuery, students])
+  }, [selectedGrade, debouncedQuery, students])
 
 
 

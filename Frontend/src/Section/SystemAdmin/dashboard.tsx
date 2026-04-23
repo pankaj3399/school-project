@@ -507,7 +507,8 @@ export default function SystemAdminDashboard() {
                                                     <div className="text-xs text-gray-600">{d.name}</div>
                                                 </td>
                                                 <td className="py-3 px-4 text-right text-gray-400">—</td>
-                                                <td className="py-3 px-4 text-right text-gray-900">1</td>
+                                                {/* Self-referential: the row *is* this district, so don't restate "1". */}
+                                                <td className="py-3 px-4 text-right text-gray-400">—</td>
                                                 <td className="py-3 px-4 text-right text-gray-900">{d.schoolCount.toLocaleString()}</td>
                                                 <td className="py-3 px-4 text-right text-gray-900">{d.teacherCount.toLocaleString()}</td>
                                                 <td className="py-3 px-4 text-right text-gray-900">{d.studentCount.toLocaleString()}</td>

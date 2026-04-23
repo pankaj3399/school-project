@@ -114,9 +114,14 @@ const SetupPage = () => {
 
           (entry.history || []).forEach((h: any) => {
             const when = h.submittedAt ? new Date(h.submittedAt) : null;
+            // ISO-like formatting so the exported DATE/TIME are identical
+            // across user locales (e.g., en-US vs en-GB).
+            const iso = when && !Number.isNaN(when.getTime()) ? when.toISOString() : "";
+            const datePart = iso ? iso.split("T")[0] : "";
+            const timePart = iso ? iso.split("T")[1].slice(0, 8) : "";
             historyRows.push({
-              DATE: when ? when.toLocaleDateString() : "",
-              TIME: when ? when.toLocaleTimeString() : "",
+              DATE: datePart,
+              TIME: timePart,
               STUDENT: s.name || "",
               GRADE: s.grade || gradeInfo.grade || "",
               ACTION: h.formType || "",

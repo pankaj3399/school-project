@@ -4,7 +4,38 @@ import fs from 'fs';
 import { timezoneManager } from './luxon.js';
 import { emailSignature } from './emailSignature.js';
 
+// Bounds and validation for logos embedded in outbound email HTML. Keeps the
+// outbound payload small and prevents unvalidated strings (javascript:, file:,
+// control chars) from being interpolated into <img src="...">.
+const MAX_LOGO_BYTES = 100 * 1024; // ~100KB
+const SAFE_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/;
+const sanitizeLogoValue = (raw) => {
+  if (typeof raw !== 'string') return null;
+  const value = raw.trim();
+  if (!value) return null;
+  if (/[\x00-\x1F\x7F]/.test(value)) return null;
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+      return parsed.toString();
+    } catch {
+      return null;
+    }
+  }
+  if (value.toLowerCase().startsWith('data:')) {
+    if (!SAFE_DATA_URI_RE.test(value)) return null;
+    const base64 = value.split(',', 2)[1] || '';
+    const padding = (base64.match(/=+$/) || [''])[0].length;
+    const decodedBytes = Math.floor((base64.length * 3) / 4) - padding;
+    if (decodedBytes > MAX_LOGO_BYTES) return null;
+    return value;
+  }
+  return null;
+};
+
 export const getVerificationEmailTemplate = (signature, role, otp, url, email, toVerify = null, isStudent = false, tempPass = null, schoolLogo = null, schoolTimezone = 'UTC+0') => {
+  const safeSchoolLogo = sanitizeLogoValue(schoolLogo);
   const description = role === Role.Teacher
     ? tempPass ? "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to access your teacher account and start using the E-Token system. Use the temporary password provided to log in for the first time. You can change it later." : "Your account has been created by the system Manager of the RADU E-Token System. Please verify your email address to enable your E-Token system account and get updates."
     : isStudent
@@ -89,7 +120,7 @@ export const getVerificationEmailTemplate = (signature, role, otp, url, email, t
       <div class="header">
         <img src="${logoSrc}" alt="RADU Framework Logo" class="logo-left">
         <h1 class="title">Email Verification</h1>
-        ${schoolLogo ? `<img src="${schoolLogo}" alt="School Logo" class="logo-right">` : '<div class="logo-right"></div>'}
+        ${safeSchoolLogo ? `<img src="${safeSchoolLogo}" alt="School Logo" class="logo-right">` : '<div class="logo-right"></div>'}
       </div>
       
       <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
