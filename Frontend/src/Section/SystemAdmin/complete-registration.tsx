@@ -297,6 +297,8 @@ export default function CompleteAdminRegistration() {
                     }
                   }}
                   required
+                  aria-invalid={Boolean(passwordError)}
+                  aria-describedby={passwordError ? "password-error" : undefined}
                   className={`rounded-xl py-6 pr-12 focus:ring-[#00a58c] ${passwordError ? 'border-red-500' : 'border-gray-200'}`}
                 />
                 <button
@@ -308,7 +310,7 @@ export default function CompleteAdminRegistration() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {passwordError && <p className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
+              {passwordError && <p id="password-error" className="text-xs text-red-500 mt-1 ml-1">{passwordError}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-gray-600 ml-1">Confirm Password</Label>
@@ -328,6 +330,8 @@ export default function CompleteAdminRegistration() {
                     }
                   }}
                   required
+                  aria-invalid={Boolean(confirmPasswordError)}
+                  aria-describedby={confirmPasswordError ? "confirm-password-error" : undefined}
                   className={`rounded-xl py-6 pr-12 focus:ring-[#00a58c] ${confirmPasswordError ? 'border-red-500' : 'border-gray-200'}`}
                 />
                 <button
@@ -339,7 +343,7 @@ export default function CompleteAdminRegistration() {
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {confirmPasswordError && <p className="text-xs text-red-500 mt-1 ml-1">{confirmPasswordError}</p>}
+              {confirmPasswordError && <p id="confirm-password-error" className="text-xs text-red-500 mt-1 ml-1">{confirmPasswordError}</p>}
             </div>
             <Button
               type="submit"

@@ -90,16 +90,26 @@ export default function CompleteGuardianRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordError) {
+    if (passwordError || confirmPasswordError) {
       toast({
         title: "Validation Error",
-        description: passwordError,
+        description: passwordError || confirmPasswordError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.password || !formData.confirmPassword) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter and confirm your password.",
         variant: "destructive",
       });
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
       toast({
         title: "Error",
         description: "Passwords do not match",
@@ -334,10 +344,10 @@ export default function CompleteGuardianRegistration() {
                 </div>
                 {confirmPasswordError && <p className="text-xs text-red-500 mt-1 ml-1">{confirmPasswordError}</p>}
               </div>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-[#00a58c] hover:bg-[#007a68] text-white py-6 text-lg font-semibold rounded-xl mt-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-                disabled={loading}
+                disabled={loading || !!passwordError || !!confirmPasswordError || !formData.password || !formData.confirmPassword}
               >
                 {loading ? "Creating Account..." : "Finish Registration"}
               </Button>

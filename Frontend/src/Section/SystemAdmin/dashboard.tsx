@@ -68,6 +68,9 @@ type SchoolStatRow = {
     name: string;
     teacherCount: number;
     studentCount: number;
+    district?: string;
+    state?: string;
+    parentName?: string;
 };
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -518,26 +521,37 @@ export default function SystemAdminDashboard() {
                                         ))}
 
                                         {/* By School */}
-                                        {schoolStats.length === 0 ? (
+                                        {error ? (
+                                            <tr>
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By School</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{error}</td>
+                                            </tr>
+                                        ) : schoolStats.length === 0 ? (
                                             <tr>
                                                 <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By School</div>
                                                 </th>
                                                 <td colSpan={5} className="py-3 px-4 text-center text-gray-400">No school data yet.</td>
                                             </tr>
-                                        ) : schoolStats.map((s, i) => (
-                                            <tr key={s._id} className={i < schoolStats.length - 1 ? 'border-b border-gray-200' : ''}>
-                                                <th scope="row" className="py-3 px-4 text-left font-normal">
-                                                    <div className="font-semibold text-gray-900">By School</div>
-                                                    <div className="text-xs text-gray-600">{s.name}</div>
-                                                </th>
-                                                <td className="py-3 px-4 text-right text-gray-400">—</td>
-                                                <td className="py-3 px-4 text-right text-gray-400">—</td>
-                                                <td className="py-3 px-4 text-right text-gray-400">—</td>
-                                                <td className="py-3 px-4 text-right text-gray-900">{s.teacherCount.toLocaleString()}</td>
-                                                <td className="py-3 px-4 text-right text-gray-900">{s.studentCount.toLocaleString()}</td>
-                                            </tr>
-                                        ))}
+                                        ) : schoolStats.map((s, i) => {
+                                            const parentParts = [s.state, s.district || s.parentName].filter(Boolean);
+                                            const label = parentParts.length > 0 ? `${parentParts.join(' — ')} — ${s.name}` : s.name;
+                                            return (
+                                                <tr key={s._id} className={i < schoolStats.length - 1 ? 'border-b border-gray-200' : ''}>
+                                                    <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                        <div className="font-semibold text-gray-900">By School</div>
+                                                        <div className="text-xs text-gray-600">{label}</div>
+                                                    </th>
+                                                    <td className="py-3 px-4 text-right text-gray-400">—</td>
+                                                    <td className="py-3 px-4 text-right text-gray-400">—</td>
+                                                    <td className="py-3 px-4 text-right text-gray-400">—</td>
+                                                    <td className="py-3 px-4 text-right text-gray-900">{s.teacherCount.toLocaleString()}</td>
+                                                    <td className="py-3 px-4 text-right text-gray-900">{s.studentCount.toLocaleString()}</td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

@@ -108,12 +108,13 @@ export default function CompleteTeacherRegistration() {
         setLoading(false);
         return;
       }
-      const { confirmPassword: _confirmPassword, ...payload } = formData;
       const data = await completeTeacherRegistration({
         token,
         termsAccepted,
-        termsVersion: termsVersion,
-        ...payload
+        termsVersion,
+        name: formData.name,
+        password: formData.password,
+        subject: formData.subject,
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
         toast({

@@ -2,6 +2,7 @@
 import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 import { timezoneManager } from "./luxon.js";
+import { sanitizeLogoValue } from "./emailTemplates.js";
 
 export const emailGenerator = async (
   form,
@@ -30,6 +31,13 @@ export const emailGenerator = async (
     schoolTimezone,
     "MM/dd/yyyy"
   );
+
+  // Sanitize school logo before interpolating into email HTML. Returns null
+  // for untrusted/invalid values; render an empty placeholder in that case.
+  const safeSchoolLogo = sanitizeLogoValue(school.logo);
+  const schoolLogoImg = safeSchoolLogo
+    ? `<img src="${safeSchoolLogo}" alt="School Logo" class="logo-right">`
+    : `<div class="logo-right"></div>`;
 
   // Keep track of emails already queued to prevent double sending
   const sentEmails = new Set();
@@ -134,9 +142,7 @@ export const emailGenerator = async (
                               "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
                             }" alt="RADU Logo" class="logo-left">
                             <h1 class="title">Award Points</h1>
-                            <img src="${
-                              school.logo
-                            }" alt="School Logo" class="logo-right">
+                            ${schoolLogoImg}
                         </div>
 
                         <div class="date-line">
@@ -175,7 +181,7 @@ export const emailGenerator = async (
         teacher.name,
         teacher?.subject || "N/A",
         currentDateFormatted,
-        school.logo,
+        safeSchoolLogo,
         school.name,
         teacher.email,
         student.parentEmail
@@ -282,9 +288,7 @@ export const emailGenerator = async (
                               "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
                             }" alt="RADU Logo" class="logo-left">
                             <h1 class="title">Feedback Note</h1>
-                            <img src="${
-                              school.logo
-                            }" alt="School Logo" class="logo-right">
+                            ${schoolLogoImg}
                         </div>
 
                         <div class="date-line">
@@ -411,9 +415,7 @@ export const emailGenerator = async (
                               "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
                             }" alt="RADU Logo" class="logo-left">
                             <h1 class="title">Oopsie Points</h1>
-                            <img src="${
-                              school.logo
-                            }" alt="School Logo" class="logo-right">
+                            ${schoolLogoImg}
                         </div>
 
                         <div class="date-line">
@@ -535,9 +537,7 @@ export const emailGenerator = async (
                               "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
                             }" alt="RADU Logo" class="logo-left">
                             <h1 class="title">Points Withdrawal</h1>
-                            <img src="${
-                              school.logo
-                            }" alt="School Logo" class="logo-right">
+                            ${schoolLogoImg}
                         </div>
 
                         <div class="date-line">
@@ -703,6 +703,11 @@ export const reportEmailGenerator = async (
       "MM/dd/yyyy"
     );
 
+    const safeReportSchoolLogo = sanitizeLogoValue(schData?.school?.logo);
+    const reportSchoolLogoImg = safeReportSchoolLogo
+      ? `<img src="${safeReportSchoolLogo}" alt="School Logo" class="logo-right">`
+      : `<div class="logo-right"></div>`;
+
     subject = `RADU E-Token Report for ${attachmentName
       .replace("Etoken Report-", "")
       .replace(".pdf", "")
@@ -798,9 +803,7 @@ export const reportEmailGenerator = async (
                     "https://res.cloudinary.com/dudd4jaav/image/upload/v1745082211/E-TOKEN_transparent_1_dehagf.png"
                   }" alt="RADU Logo" class="logo-left">
                   <h1 class="title">E-Token Report</h1>
-                  <img src="${
-                    schData.school.logo
-                  }" alt="School Logo" class="logo-right">
+                  ${reportSchoolLogoImg}
               </div>
 
               <div class="report-content">
