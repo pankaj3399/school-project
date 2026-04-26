@@ -46,12 +46,15 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
   const [contactRole, setContactRole] = useState('Leadership');
   const [logoSchoolId, setLogoSchoolId] = useState<string>('');
   const { toast } = useToast();
-  const isDistrictLevelInvite = role === Role.DistrictAdmin || role === Role.Admin;
+  // Mirror the same default the payload uses so picker visibility and the
+  // submitted role can never disagree.
+  const effectiveRole: RoleType = role ?? Role.Admin;
+  const isDistrictLevelInvite = effectiveRole === Role.DistrictAdmin || effectiveRole === Role.Admin;
   const showLogoSchoolPicker = isDistrictLevelInvite && Array.isArray(schools) && schools.length > 0;
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (role === Role.SchoolAdmin) {
+    if (effectiveRole === Role.SchoolAdmin) {
       if (!schoolId) {
         toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
         return;
@@ -70,7 +73,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
         phone,
         position,
         contactRole,
-        role: role || Role.Admin,
+        role: effectiveRole,
         ...(schoolId ? { schoolId } : {}),
         ...(districtId ? { districtId } : {}),
         ...(showLogoSchoolPicker && logoSchoolId ? { logoSchoolId } : {}),
@@ -115,9 +118,9 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleInvite}>
           <DialogHeader>
-            <DialogTitle>Invite {role === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
+            <DialogTitle>Invite {effectiveRole === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
             <DialogDescription>
-              Send an invitation to a new {role === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
+              Send an invitation to a new {effectiveRole === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

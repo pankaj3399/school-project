@@ -113,18 +113,31 @@ const Finalize = () => {
     return formdata;
   }
 
-  const generateRewardPDF = async (student: any, recipients: string[]) => {
+  const generateRewardPDF = async (student: any, recipients: { email: string; required: boolean }[]) => {
     const barChart = document.getElementById('graph')
     if (!barChart) {
       throw new Error(`Chart element not found; cannot generate report for ${student.studentInfo?.name || 'student'}.`);
     }
 
-    for (const email of recipients) {
-      const formdata = await buildReportFormData(student, barChart);
+    // Build the report payload once; reuse it for each recipient so an optional
+    // recipient failure can't trigger duplicate work or retries.
+    const formdata = await buildReportFormData(student, barChart);
+
+    const requiredFailures: string[] = [];
+    const optionalFailures: string[] = [];
+    for (const { email, required } of recipients) {
       const result = (await sendReportImage(formdata, email)) as ReportResult;
       if (result.error) {
-        throw new Error(result.error);
+        if (required) requiredFailures.push(`${email}: ${result.error}`);
+        else optionalFailures.push(`${email}: ${result.error}`);
       }
+    }
+
+    if (optionalFailures.length > 0) {
+      console.warn('Optional recipient delivery failed:', optionalFailures);
+    }
+    if (requiredFailures.length > 0) {
+      throw new Error(requiredFailures.join('; '));
     }
   }
 
@@ -138,12 +151,24 @@ const Finalize = () => {
       })
     }
 
-    const recipients = [SUPPORT_REPORT_EMAIL, ...(includeAnTeacher ? [anTeacherEmail] : [])];
+    // Dedupe by normalized email so we never send the same address twice when
+    // the AN teacher and the support address coincide.
+    const seen = new Set<string>();
+    const recipients: { email: string; required: boolean }[] = [];
+    const addRecipient = (email: string, required: boolean) => {
+      const key = email.trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      recipients.push({ email, required });
+    };
+    addRecipient(SUPPORT_REPORT_EMAIL, true);
+    if (includeAnTeacher) addRecipient(anTeacherEmail, false);
 
     setIsGenerating(true)
     setProgress(0)
     setGeneratedPDFs([])
     setShowModal(false)
+    setAlsoSendToAnTeacher(false)
 
     let successCount = 0;
     const failures: string[] = [];

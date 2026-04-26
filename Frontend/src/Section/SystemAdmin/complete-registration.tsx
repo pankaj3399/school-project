@@ -17,14 +17,20 @@ export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token")?.trim() || null;
   // Some email clients un-encode `%2B` back to `+`, which URLSearchParams then
-  // turns into a literal space. If the value looks like an email with a space
-  // immediately before `@`, treat that space as the original `+`.
+  // turns into a literal space. Restore those plus signs in the local-part
+  // (everything before "@"), leaving the domain untouched. This recovers all
+  // plus-aliases (e.g. "first tag@example.com" → "first+tag@example.com"),
+  // not just the single space immediately before the "@".
   const rawEmail = searchParams.get("email");
   const email = (() => {
     if (!rawEmail) return null;
     const trimmed = rawEmail.trim();
     if (!trimmed) return null;
-    return /\s@/.test(trimmed) ? trimmed.replace(/\s(?=@)/g, "+") : trimmed;
+    const atIndex = trimmed.indexOf("@");
+    if (atIndex === -1) return trimmed;
+    const localPart = trimmed.slice(0, atIndex).replace(/\s+/g, "+");
+    const domain = trimmed.slice(atIndex);
+    return `${localPart}${domain}`;
   })();
   const role = searchParams.get("role");
 

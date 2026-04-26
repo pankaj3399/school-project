@@ -4,13 +4,14 @@ export function Breadcrumb() {
   const location = useLocation();
   const pathname = location.pathname;
   const allSegments = pathname.split("/").filter(Boolean);
-  // Drop the "system-admin" container segment from the rendered crumbs so
-  // SystemAdmin pages read the same as other roles ("Home / Districts" rather
-  // than "Home / System Admin / Districts"). We still build hrefs from the
-  // original path so each crumb links to the real route.
+  // Drop the leading "system-admin" container segment from the rendered crumbs
+  // so SystemAdmin pages read the same as other roles ("Home / Districts"
+  // rather than "Home / System Admin / Districts"). Only the position-0 match
+  // is dropped — a later "system-admin" segment (e.g. inside a slug) is left
+  // intact. Hrefs are still built from the original path.
   const pathSegments = allSegments
     .map((segment, index) => ({ segment, originalIndex: index }))
-    .filter(({ segment }) => segment !== "system-admin");
+    .filter(({ segment, originalIndex }) => !(originalIndex === 0 && segment === "system-admin"));
 
   return (
     <nav className="text-sm breadcrumbs">
