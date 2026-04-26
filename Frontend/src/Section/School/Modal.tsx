@@ -1,5 +1,5 @@
 import React from "react";
-//test
+
 interface ModalBaseProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,7 +67,7 @@ const Modal: React.FC<ModalProps> = ({
             <span>{checkboxLabel}</span>
           </label>
         ) : (
-          <div className="mb-2" />
+          <div className="mb-6" />
         )}
         <div className="flex justify-between space-x-4">
           <button

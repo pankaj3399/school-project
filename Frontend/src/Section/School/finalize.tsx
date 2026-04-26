@@ -119,13 +119,13 @@ const Finalize = () => {
       throw new Error(`Chart element not found; cannot generate report for ${student.studentInfo?.name || 'student'}.`);
     }
 
-    // Build the report payload once; reuse it for each recipient so an optional
-    // recipient failure can't trigger duplicate work or retries.
-    const formdata = await buildReportFormData(student, barChart);
-
+    // FormData / Blob streams aren't safely reusable across multiple POSTs
+    // (axios will consume the stream on the first send), so build a fresh
+    // payload per recipient.
     const requiredFailures: string[] = [];
     const optionalFailures: string[] = [];
     for (const { email, required } of recipients) {
+      const formdata = await buildReportFormData(student, barChart);
       const result = (await sendReportImage(formdata, email)) as ReportResult;
       if (result.error) {
         if (required) requiredFailures.push(`${email}: ${result.error}`);
@@ -242,8 +242,12 @@ const Finalize = () => {
 
         setStudents(resTeacher.students || [])
         setSchoolData(school.school || {})
-        const anTeacher = (school.admins || []).find((a: any) => a?.position === 'AN Teacher');
-        setAnTeacherEmail(anTeacher?.email || "")
+        const adminsList = Array.isArray(school?.admins) ? school.admins : [];
+        const anTeacher = adminsList.find((a: any) =>
+          a && typeof a === 'object' && typeof a.position === 'string' && a.position === 'AN Teacher'
+        );
+        const anTeacherEmailValue = anTeacher && typeof anTeacher.email === 'string' ? anTeacher.email : "";
+        setAnTeacherEmail(anTeacherEmailValue)
       } catch (error: any) {
         console.error("Error fetching finalize data:", error);
         

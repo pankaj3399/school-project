@@ -34,7 +34,8 @@ export function Breadcrumb() {
             label = "Add";
           }
 
-          const validParentContexts = ["system-admin", "districts", "schools"];
+          // Only contexts whose child crumb gets relabeled below.
+          const validParentContexts = ["districts", "schools"];
           
           // Force details label for any segment under districts/schools if it's the last segment
           if (parentSegment !== undefined && validParentContexts.includes(parentSegment) && isLast && !["new", "import", "bulk-import"].includes(segment)) {

@@ -182,12 +182,12 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
               <div className="grid gap-2">
                 <Label htmlFor="logoSchool">Email Logo (Optional)</Label>
                 <Select value={logoSchoolId || 'none'} onValueChange={(v) => setLogoSchoolId(v === 'none' ? '' : v)}>
-                  <SelectTrigger>
+                  <SelectTrigger id="logoSchool">
                     <SelectValue placeholder="Use district logo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Use district logo</SelectItem>
-                    {schools!.map((s) => (
+                    {(schools ?? []).map((s) => (
                       <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
