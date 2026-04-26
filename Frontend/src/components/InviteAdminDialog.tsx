@@ -28,9 +28,14 @@ interface InviteAdminDialogProps {
   schoolId?: string;
   role?: RoleType;
   label?: string;
+  // When provided and the role is district-level (DistrictAdmin/Admin), the
+  // inviter can pick which school's logo should appear in the invitation
+  // email's branding header. Useful when a District Admin should be branded
+  // with a specific school's logo even though they aren't assigned to one.
+  schools?: Array<{ _id: string; name: string }>;
 }
 
-export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteAdminDialogProps) {
+export function InviteAdminDialog({ districtId, schoolId, role, label, schools }: InviteAdminDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,7 +44,10 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState('Other');
   const [contactRole, setContactRole] = useState('Leadership');
+  const [logoSchoolId, setLogoSchoolId] = useState<string>('');
   const { toast } = useToast();
+  const isDistrictLevelInvite = role === Role.DistrictAdmin || role === Role.Admin;
+  const showLogoSchoolPicker = isDistrictLevelInvite && Array.isArray(schools) && schools.length > 0;
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +73,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
         role: role || Role.Admin,
         ...(schoolId ? { schoolId } : {}),
         ...(districtId ? { districtId } : {}),
+        ...(showLogoSchoolPicker && logoSchoolId ? { logoSchoolId } : {}),
       });
 
       if (response.error) {
@@ -83,6 +92,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
       setPhone('');
       setPosition('Other');
       setContactRole('Leadership');
+      setLogoSchoolId('');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -164,6 +174,24 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
                 </Select>
               </div>
             </div>
+
+            {showLogoSchoolPicker && (
+              <div className="grid gap-2">
+                <Label htmlFor="logoSchool">Email Logo (Optional)</Label>
+                <Select value={logoSchoolId || 'none'} onValueChange={(v) => setLogoSchoolId(v === 'none' ? '' : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Use district logo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Use district logo</SelectItem>
+                    {schools!.map((s) => (
+                      <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">Pick a school whose logo should appear in the invitation email instead of the district's.</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

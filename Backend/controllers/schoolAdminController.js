@@ -846,15 +846,6 @@ export const genreport = async (req, res) => {
       email,
       { stdData, schData, tchData }
     );
-    if (req.user.role == "SchoolAdmin") {
-
-      await reportEmailGenerator(
-        gen,
-        `Etoken Report-${stdData.studentInfo.name}-As Of ${formattedDate}.pdf`,
-        schData.school.createdBy.email,
-        { stdData, schData, tchData }
-      );
-    }
 
     return res
       .status(200)

@@ -119,8 +119,8 @@ const StudentRanks = ({ studentId, schoolId, period = "1W" }: { studentId: strin
                         </div>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <div className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-[300px] w-full overflow-y-auto">
+                            <ResponsiveContainer width="100%" height={Math.max(300, students.length * 28)}>
                                 <BarChart
                                     data={students}
                                     layout="vertical"
@@ -135,6 +135,7 @@ const StudentRanks = ({ studentId, schoolId, period = "1W" }: { studentId: strin
                                         width={80}
                                         axisLine={false}
                                         tickLine={false}
+                                        interval={0}
                                     />
                                     <Tooltip 
                                         cursor={{ fill: 'transparent' }}

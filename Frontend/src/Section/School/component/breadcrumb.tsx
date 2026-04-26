@@ -3,7 +3,14 @@ import { Link, useLocation } from "react-router-dom";
 export function Breadcrumb() {
   const location = useLocation();
   const pathname = location.pathname;
-  const pathSegments = pathname.split("/").filter(Boolean);
+  const allSegments = pathname.split("/").filter(Boolean);
+  // Drop the "system-admin" container segment from the rendered crumbs so
+  // SystemAdmin pages read the same as other roles ("Home / Districts" rather
+  // than "Home / System Admin / Districts"). We still build hrefs from the
+  // original path so each crumb links to the real route.
+  const pathSegments = allSegments
+    .map((segment, index) => ({ segment, originalIndex: index }))
+    .filter(({ segment }) => segment !== "system-admin");
 
   return (
     <nav className="text-sm breadcrumbs">
@@ -13,10 +20,10 @@ export function Breadcrumb() {
             Home
           </Link>
         </li>
-        {pathSegments.map((segment, index) => {
-          const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
+        {pathSegments.map(({ segment, originalIndex }, index) => {
+          const href = `/${allSegments.slice(0, originalIndex + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
-          const parentSegment = pathSegments[index - 1];
+          const parentSegment = originalIndex > 0 ? allSegments[originalIndex - 1] : undefined;
           let label = segment
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -29,7 +36,7 @@ export function Breadcrumb() {
           const validParentContexts = ["system-admin", "districts", "schools"];
           
           // Force details label for any segment under districts/schools if it's the last segment
-          if (validParentContexts.includes(parentSegment) && isLast && !["new", "import", "bulk-import"].includes(segment)) {
+          if (parentSegment !== undefined && validParentContexts.includes(parentSegment) && isLast && !["new", "import", "bulk-import"].includes(segment)) {
             if (parentSegment === "schools") {
               label = "School Details";
             } else if (parentSegment === "districts") {

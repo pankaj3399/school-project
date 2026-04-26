@@ -15,8 +15,17 @@ import { validatePassword } from "@/lib/password";
 
 export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
-  const email = searchParams.get("email");
+  const token = searchParams.get("token")?.trim() || null;
+  // Some email clients un-encode `%2B` back to `+`, which URLSearchParams then
+  // turns into a literal space. If the value looks like an email with a space
+  // immediately before `@`, treat that space as the original `+`.
+  const rawEmail = searchParams.get("email");
+  const email = (() => {
+    if (!rawEmail) return null;
+    const trimmed = rawEmail.trim();
+    if (!trimmed) return null;
+    return /\s@/.test(trimmed) ? trimmed.replace(/\s(?=@)/g, "+") : trimmed;
+  })();
   const role = searchParams.get("role");
 
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -102,11 +111,11 @@ export default function CompleteAdminRegistration() {
         return;
       }
       const data = await completeAdminRegistration({
-        token,
-        email,
+        token: token.trim(),
+        email: email.trim(),
         termsAccepted,
         termsVersion: termsVersion,
-        name: formData.name,
+        name: formData.name.trim(),
         password: formData.password,
       });
       if (!data.error && !data.message?.toLowerCase().includes('error')) {
