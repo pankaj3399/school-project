@@ -19,7 +19,7 @@ const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', '
 const generateData = async (month: string | null = null, studentId: string | null = null, schoolId?: string) => {
   let data: any[] = [];
   try {
-    let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId) : await getHistoryOfYear(schoolId);
+    let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId, schoolId) : await getHistoryOfYear(schoolId);
 
 
     if (!month) {

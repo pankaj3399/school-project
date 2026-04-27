@@ -20,6 +20,8 @@ interface ReportResult {
   [key: string]: unknown;
 }
 
+const SUPPORT_REPORT_EMAIL = "support@theraduetoken.com";
+
 // Add these type declarations
 type SelectedStudentData = {
   data: any[];
@@ -70,6 +72,8 @@ const Finalize = () => {
   const [_, setGeneratedPDFs] = useState<{ fileName: string, pdf: jsPDF, toTeacher: string }[]>([])
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
+  const [anTeacherEmail, setAnTeacherEmail] = useState<string>("")
+  const [alsoSendToAnTeacher, setAlsoSendToAnTeacher] = useState(false)
   const { selectedSchoolId } = useSchool()
   const { user: authUser } = useAuth()
 
@@ -97,39 +101,74 @@ const Finalize = () => {
     setStudentId("");
   }, [selectedSchoolId]);
 
-  const generateRewardPDF = async (student: any) => {
-    const barChart = document.getElementById('graph')
-    if (!barChart) {
-      throw new Error(`Chart element not found; cannot generate report for ${student.studentInfo?.name || 'student'}.`);
-    }
-
+  const buildReportFormData = async (student: any, barChart: HTMLElement) => {
     const teacher = Array.isArray(student.teacher) && student.teacher.length > 0 ? student.teacher[0] : null;
-    if (!teacher) {
-      throw new Error(`No teacher assigned for ${student.studentInfo?.name || 'student'}; cannot send report.`);
-    }
-    if (!teacher.email) {
-      throw new Error(`Teacher for ${student.studentInfo?.name || 'student'} has no email on file.`);
-    }
-
     const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
     const formdata = new FormData();
     const imageBlob = await (await fetch(src)).blob();
     formdata.append('file', imageBlob, 'chart.png');
     formdata.append('studentData', JSON.stringify(student));
     formdata.append('schoolData', JSON.stringify({ school: schoolData }));
-    formdata.append('teacherData', JSON.stringify(teacher));
+    formdata.append('teacherData', JSON.stringify(teacher || {}));
+    return formdata;
+  }
 
-    const result = (await sendReportImage(formdata, teacher.email)) as ReportResult;
-    if (result.error) {
-      throw new Error(result.error);
+  const generateRewardPDF = async (student: any, recipients: { email: string; required: boolean }[]) => {
+    const barChart = document.getElementById('graph')
+    if (!barChart) {
+      throw new Error(`Chart element not found; cannot generate report for ${student.studentInfo?.name || 'student'}.`);
+    }
+
+    // FormData / Blob streams aren't safely reusable across multiple POSTs
+    // (axios will consume the stream on the first send), so build a fresh
+    // payload per recipient.
+    const requiredFailures: string[] = [];
+    const optionalFailures: string[] = [];
+    for (const { email, required } of recipients) {
+      const formdata = await buildReportFormData(student, barChart);
+      const result = (await sendReportImage(formdata, email)) as ReportResult;
+      if (result.error) {
+        if (required) requiredFailures.push(`${email}: ${result.error}`);
+        else optionalFailures.push(`${email}: ${result.error}`);
+      }
+    }
+
+    if (optionalFailures.length > 0) {
+      console.warn('Optional recipient delivery failed:', optionalFailures);
+    }
+    if (requiredFailures.length > 0) {
+      throw new Error(requiredFailures.join('; '));
     }
   }
 
   const generateAllReports = async () => {
+    const includeAnTeacher = alsoSendToAnTeacher && !!anTeacherEmail;
+    if (alsoSendToAnTeacher && !anTeacherEmail) {
+      toast({
+        title: "AN teacher not found",
+        description: "This school has no AN Teacher on file. Reports will be sent to support only.",
+        variant: "destructive"
+      })
+    }
+
+    // Dedupe by normalized email so we never send the same address twice when
+    // the AN teacher and the support address coincide.
+    const seen = new Set<string>();
+    const recipients: { email: string; required: boolean }[] = [];
+    const addRecipient = (email: string, required: boolean) => {
+      const key = email.trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      recipients.push({ email, required });
+    };
+    addRecipient(SUPPORT_REPORT_EMAIL, true);
+    if (includeAnTeacher) addRecipient(anTeacherEmail, false);
+
     setIsGenerating(true)
     setProgress(0)
     setGeneratedPDFs([])
     setShowModal(false)
+    setAlsoSendToAnTeacher(false)
 
     let successCount = 0;
     const failures: string[] = [];
@@ -141,7 +180,7 @@ const Finalize = () => {
 
         try {
           await waitForChartReady(current.studentInfo._id)
-          await generateRewardPDF(current)
+          await generateRewardPDF(current, recipients)
           successCount += 1;
         } catch (err: any) {
           console.error('Error sending report for student:', current.studentInfo?.name, err);
@@ -190,6 +229,7 @@ const Finalize = () => {
         if (isAdmin && !selectedSchoolId) {
           setStudents([])
           setSchoolData({})
+          setAnTeacherEmail("")
           return;
         }
 
@@ -202,6 +242,12 @@ const Finalize = () => {
 
         setStudents(resTeacher.students || [])
         setSchoolData(school.school || {})
+        const adminsList = Array.isArray(school?.admins) ? school.admins : [];
+        const anTeacher = adminsList.find((a: any) =>
+          a && typeof a === 'object' && typeof a.position === 'string' && a.position === 'AN Teacher'
+        );
+        const anTeacherEmailValue = anTeacher && typeof anTeacher.email === 'string' ? anTeacher.email : "";
+        setAnTeacherEmail(anTeacherEmailValue)
       } catch (error: any) {
         console.error("Error fetching finalize data:", error);
         
@@ -222,6 +268,7 @@ const Finalize = () => {
         setStudents([]);
         setSchoolData(null);
         setSelectedStudentsData([]);
+        setAnTeacherEmail("");
       }
     }
     fetchData()
@@ -235,7 +282,7 @@ const Finalize = () => {
       
       <div className="grid grid-cols-4 gap-4 w-full">
         <div className="col-span-4">
-          <p>*Note: After you click on the button EMAIL REPORTS, each student's report is emailed to their assigned teacher. Please allow a few moments so we can build the reports.</p>
+          <p>*Note: After you click on the button EMAIL REPORTS, each student's report is emailed to {SUPPORT_REPORT_EMAIL}. You can optionally also send a copy to the AN Teacher of this school. Please allow a few moments so we can build the reports.</p>
         </div>
 
         
@@ -277,12 +324,23 @@ const Finalize = () => {
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false)
+          setAlsoSendToAnTeacher(false)
+        }}
         onConfirm={() => generateAllReports()}
         title="Email Reports"
-        description={`You are about to email ${selectedStudentsData.length} report${selectedStudentsData.length === 1 ? '' : 's'} to each student's assigned teacher. Are you sure you want to proceed?`}
+        description={`You are about to email ${selectedStudentsData.length} report${selectedStudentsData.length === 1 ? '' : 's'} to ${SUPPORT_REPORT_EMAIL}. Are you sure you want to proceed?`}
         callToAction='Confirm'
         confirmDisabled={isGenerating}
+        checkboxLabel={
+          anTeacherEmail
+            ? `Also send the report to the AN teacher (${anTeacherEmail})?`
+            : 'Also send the report to the AN teacher of this school? (No AN Teacher on file)'
+        }
+        checkboxChecked={alsoSendToAnTeacher}
+        onCheckboxChange={setAlsoSendToAnTeacher}
+        checkboxDisabled={isGenerating || !anTeacherEmail}
       />
 
       <LoadingModal isOpen={isGenerating} progress={progress} />

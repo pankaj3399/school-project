@@ -38,6 +38,14 @@ const userSchema = new mongoose.Schema({
     ref: 'District',
     default: null,
   },
+  // Optional school whose logo should be used in invitation emails. Used
+  // when an admin (e.g. a District Admin) should be branded with a specific
+  // school's logo even though they're not assigned to that school.
+  logoSchoolId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    default: null,
+  },
   registrationToken: {
     type: String,
     default: null

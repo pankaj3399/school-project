@@ -163,6 +163,7 @@ export const addTeacher = async (
     recieveMails: boolean;
     type: string;
     grade: string | null;
+    schoolId?: string | null;
   },
   token: string,
 ) => {
@@ -677,12 +678,12 @@ export const getHistoryOfYear = async (schoolId?: string) => {
   }
 };
 
-export const getHistoryOfYearByStudent = async (id: string) => {
+export const getHistoryOfYearByStudent = async (id: string, schoolId?: string) => {
   try {
     const token = getToken();
     const response = await axios.post(
       `${API_URL}/school/getYearPointsHistory/${id}`,
-      {},
+      schoolId ? { schoolId } : {},
       {
         headers: {
           token,
@@ -1274,16 +1275,17 @@ export const updateTerms = async (data: any, token: string) => {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }
 };
-export const inviteAdmin = async (data: { 
-  email: string; 
-  name: string; 
-  role: string; 
-  schoolId?: string; 
+export const inviteAdmin = async (data: {
+  email: string;
+  name: string;
+  role: string;
+  schoolId?: string;
   districtId?: string;
   address?: string;
   phone?: string;
   position?: string;
   contactRole?: string;
+  logoSchoolId?: string;
 }) => {
   try {
     const token = getToken();

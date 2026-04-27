@@ -28,9 +28,14 @@ interface InviteAdminDialogProps {
   schoolId?: string;
   role?: RoleType;
   label?: string;
+  // When provided and the role is district-level (DistrictAdmin/Admin), the
+  // inviter can pick which school's logo should appear in the invitation
+  // email's branding header. Useful when a District Admin should be branded
+  // with a specific school's logo even though they aren't assigned to one.
+  schools?: Array<{ _id: string; name: string }>;
 }
 
-export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteAdminDialogProps) {
+export function InviteAdminDialog({ districtId, schoolId, role, label, schools }: InviteAdminDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,11 +44,17 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState('Other');
   const [contactRole, setContactRole] = useState('Leadership');
+  const [logoSchoolId, setLogoSchoolId] = useState<string>('');
   const { toast } = useToast();
+  // Mirror the same default the payload uses so picker visibility and the
+  // submitted role can never disagree.
+  const effectiveRole: RoleType = role ?? Role.Admin;
+  const isDistrictLevelInvite = effectiveRole === Role.DistrictAdmin || effectiveRole === Role.Admin;
+  const showLogoSchoolPicker = isDistrictLevelInvite && Array.isArray(schools) && schools.length > 0;
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (role === Role.SchoolAdmin) {
+    if (effectiveRole === Role.SchoolAdmin) {
       if (!schoolId) {
         toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
         return;
@@ -62,9 +73,10 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
         phone,
         position,
         contactRole,
-        role: role || Role.Admin,
+        role: effectiveRole,
         ...(schoolId ? { schoolId } : {}),
         ...(districtId ? { districtId } : {}),
+        ...(showLogoSchoolPicker && logoSchoolId ? { logoSchoolId } : {}),
       });
 
       if (response.error) {
@@ -83,6 +95,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
       setPhone('');
       setPosition('Other');
       setContactRole('Leadership');
+      setLogoSchoolId('');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -105,9 +118,9 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleInvite}>
           <DialogHeader>
-            <DialogTitle>Invite {role === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
+            <DialogTitle>Invite {effectiveRole === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
             <DialogDescription>
-              Send an invitation to a new {role === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
+              Send an invitation to a new {effectiveRole === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -164,6 +177,24 @@ export function InviteAdminDialog({ districtId, schoolId, role, label }: InviteA
                 </Select>
               </div>
             </div>
+
+            {showLogoSchoolPicker && (
+              <div className="grid gap-2">
+                <Label htmlFor="logoSchool">Email Logo (Optional)</Label>
+                <Select value={logoSchoolId || 'none'} onValueChange={(v) => setLogoSchoolId(v === 'none' ? '' : v)}>
+                  <SelectTrigger id="logoSchool">
+                    <SelectValue placeholder="Use district logo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Use district logo</SelectItem>
+                    {(schools ?? []).map((s) => (
+                      <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">Pick a school whose logo should appear in the invitation email instead of the district's.</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

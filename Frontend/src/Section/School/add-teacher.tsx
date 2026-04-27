@@ -9,6 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Loading from "../Loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GRADE_OPTIONS } from "@/lib/types";
+import { useSchool } from "@/context/SchoolContext";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 
 export default function AddTeacher() {
   const [formData, setFormData] = useState({
@@ -21,6 +24,8 @@ export default function AddTeacher() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { selectedSchoolId } = useSchool();
+  const { user: authUser } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -53,12 +58,24 @@ export default function AddTeacher() {
         setLoading(false);
         return;
       }
+
+      const isElevatedAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
+      if (isElevatedAdmin && !selectedSchoolId) {
+        toast({
+          title: "Error",
+          description: "Please select a school before inviting a teacher.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const teacherData = {
         email,
         recieveMails: checkbox,
         type,
         grade: type === 'Lead' ? (formData.grade === 'OTHER' ? customGrade : formData.grade) : null,
-        token,
+        ...(selectedSchoolId ? { schoolId: selectedSchoolId } : {}),
       };
       const response = await addTeacher(teacherData, token);
       if (!response.error) {
