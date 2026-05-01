@@ -91,6 +91,7 @@ export default function SystemAdminDashboard() {
     const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
     const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
     const [districtError, setDistrictError] = useState<string | null>(null);
+    const [stateError, setStateError] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartDataRow[]>([]);
     const [schoolStats, setSchoolStats] = useState<SchoolStatRow[]>([]);
 
@@ -125,8 +126,13 @@ export default function SystemAdminDashboard() {
                     }
                     if (Array.isArray(geo.stateAnalytics)) {
                         setStateAnalytics(geo.stateAnalytics);
+                        setStateError(null);
+                    } else if (geo.error) {
+                        setStateAnalytics([]);
+                        setStateError(typeof geo.error === 'string' ? geo.error : 'Could not load state analytics');
                     } else {
                         setStateAnalytics([]);
+                        setStateError('Could not load state analytics');
                     }
                     if (Array.isArray(distComp.districtStats)) {
                         setDistrictAnalytics(distComp.districtStats);
@@ -495,6 +501,13 @@ export default function SystemAdminDashboard() {
                                                     <div className="font-semibold text-gray-900">By State</div>
                                                 </th>
                                                 <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{error}</td>
+                                            </tr>
+                                        ) : stateError ? (
+                                            <tr className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{stateError}</td>
                                             </tr>
                                         ) : stateAnalytics.length === 0 ? (
                                             <tr className="border-b border-gray-200">

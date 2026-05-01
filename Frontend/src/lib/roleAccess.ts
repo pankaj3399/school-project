@@ -44,6 +44,7 @@ export function classifyRole(user: ClassifiableUser): AccessRole | null {
       return 'Administrator';
     case Role.Admin:
     case Role.SchoolAdmin:
+    case Role.DistrictAdmin:
       return 'SystemManager';
     case Role.Teacher:
       return user.type === 'Lead' ? 'LeadTeacher' : 'TeamMember';
