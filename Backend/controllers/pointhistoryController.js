@@ -92,20 +92,28 @@ const getSchoolIdFromUser = async (req) => {
       error.status = 403;
       throw error;
     }
-    const schoolId = req.query.schoolId || req.body.schoolId;
-    if (!schoolId) {
+
+    const requestedSchoolId = req.query.schoolId || req.body.schoolId;
+
+    // School-level admin fallback: no explicit selection -> use their assigned school.
+    if (!requestedSchoolId) {
+      if (adminUser.schoolId) {
+        return adminUser.schoolId;
+      }
+      // District-level admin (no schoolId on record) must select one.
       const error = new Error("School ID is required for analytics.");
       error.status = 400;
       throw error;
     }
-    // Verify this school belongs to the admin's district
-    const schoolExists = await School.exists({ _id: schoolId, districtId: adminUser.districtId });
+
+    // Explicit selection: keep district-membership validation regardless of admin scope.
+    const schoolExists = await School.exists({ _id: requestedSchoolId, districtId: adminUser.districtId });
     if (!schoolExists) {
       const error = new Error("Access denied. School is outside your district.");
       error.status = 403;
       throw error;
     }
-    return schoolId;
+    return requestedSchoolId;
   }
 
   // Try finding user as admin first

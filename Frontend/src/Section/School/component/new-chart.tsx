@@ -20,6 +20,7 @@ const generateData = async (month: string | null = null, studentId: string | nul
   let data: any[] = [];
   try {
     let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId, schoolId) : await getHistoryOfYear(schoolId);
+    const rows = Array.isArray(res?.data) ? res.data : [];
 
 
     if (!month) {
@@ -35,7 +36,7 @@ const generateData = async (month: string | null = null, studentId: string | nul
         redTrend: 0
       }));
       // Monthly aggregated data
-      res.data.forEach((monthData: any) => {
+      rows.forEach((monthData: any) => {
         const index = months.indexOf(monthData.month);
         data[index] = {
           month: monthData.month,
@@ -61,7 +62,7 @@ const generateData = async (month: string | null = null, studentId: string | nul
         redTrend: 0
       }));
       // Daily data for the selected month
-      const monthData = res.data.find((monthData: any) => monthData.month === month);
+      const monthData = rows.find((monthData: any) => monthData.month === month);
       let formattedDayData = data
       formattedDayData = formattedDayData.map((dayData: any) => {
         return {

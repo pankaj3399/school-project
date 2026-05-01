@@ -488,6 +488,35 @@ export default function SystemAdminDashboard() {
                                             <td className="py-3 px-4 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalStudents || 0).toLocaleString()}</td>
                                         </tr>
 
+                                        {/* By State */}
+                                        {error ? (
+                                            <tr className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{error}</td>
+                                            </tr>
+                                        ) : stateAnalytics.length === 0 ? (
+                                            <tr className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-gray-400">No state data yet.</td>
+                                            </tr>
+                                        ) : stateAnalytics.map((s, idx) => (
+                                            <tr key={`${s.state ?? 'Unknown'}-${idx}`} className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                    <div className="text-xs text-gray-600">{s.state || 'Unknown'}</div>
+                                                </th>
+                                                <td className="py-3 px-4 text-right text-gray-400">—</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.districtCount || 0).toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.schoolCount || 0).toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.teacherCount || 0).toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.studentCount || 0).toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+
                                         {/* By District */}
                                         {error ? (
                                             <tr className="border-b border-gray-200">

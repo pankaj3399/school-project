@@ -4,19 +4,19 @@ import { School, Building2, Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon,
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/authContext';
-import { Role } from '@/enum';
+import { canAccess, type TabKey } from '@/lib/roleAccess';
 
-const navItems = [
-  { href: '/system-admin', label: 'Overview', icon: LayoutDashboard, roles: [Role.SystemAdmin] },
-  { href: '/analytics', label: 'Analytics', icon: School },
-  { href: '/system-admin/districts', label: 'Districts', icon: Building2, roles: [Role.SystemAdmin] },
-  { href: '/system-admin/schools', label: 'Schools', icon: School, roles: [Role.SystemAdmin] },
-  { href: '/teacher', label: 'Teachers', icon: Users },
-  { href: '/students', label: 'Students', icon: BookOpen },
-  { href: '/viewforms', label: 'Forms', icon: ClipboardIcon },
-  { href: '/history', label: 'Point History', icon: History },
-  { href: '/print-report', label: 'Print Report', icon: Paperclip },
-  { href: '/setup', label: 'Setup', icon: SettingsIcon },
+const navItems: { href: string; label: string; icon: any; tab: TabKey }[] = [
+  { href: '/system-admin', label: 'Overview', icon: LayoutDashboard, tab: 'overview' },
+  { href: '/analytics', label: 'Analytics', icon: School, tab: 'analytics' },
+  { href: '/system-admin/districts', label: 'Districts', icon: Building2, tab: 'districts' },
+  { href: '/system-admin/schools', label: 'Schools', icon: School, tab: 'schools' },
+  { href: '/teacher', label: 'Teachers', icon: Users, tab: 'teachers' },
+  { href: '/students', label: 'Students', icon: BookOpen, tab: 'students' },
+  { href: '/viewforms', label: 'Forms', icon: ClipboardIcon, tab: 'forms' },
+  { href: '/history', label: 'Point History', icon: History, tab: 'pointHistory' },
+  { href: '/print-report', label: 'Print Report', icon: Paperclip, tab: 'printReport' },
+  { href: '/setup', label: 'Setup', icon: SettingsIcon, tab: 'setup' },
 ];
 
 export function SideNav() {
@@ -24,12 +24,7 @@ export function SideNav() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const filteredItems = navItems.filter(item => {
-    if (item.roles) {
-      return !!user && (item.roles as string[]).includes(user.role);
-    }
-    return true;
-  });
+  const filteredItems = navItems.filter((item) => canAccess(user, item.tab));
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
