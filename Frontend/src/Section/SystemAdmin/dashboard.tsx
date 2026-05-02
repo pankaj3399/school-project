@@ -125,7 +125,18 @@ export default function SystemAdminDashboard() {
                         setError("Failed to load dashboard metrics");
                     }
                     if (Array.isArray(geo.stateAnalytics)) {
-                        setStateAnalytics(geo.stateAnalytics);
+                        const cleaned: StateAnalyticsRow[] = (geo.stateAnalytics as unknown[])
+                            .filter((row): row is Record<string, unknown> =>
+                                row != null && typeof row === 'object' && typeof (row as { state?: unknown }).state === 'string' && !!(row as { state: string }).state)
+                            .map((row) => ({
+                                state: String(row.state),
+                                districtCount: Number(row.districtCount) || 0,
+                                activeDistrictCount: Number(row.activeDistrictCount) || 0,
+                                schoolCount: Number(row.schoolCount) || 0,
+                                teacherCount: Number(row.teacherCount) || 0,
+                                studentCount: Number(row.studentCount) || 0,
+                            }));
+                        setStateAnalytics(cleaned);
                         setStateError(null);
                     } else if (geo.error) {
                         setStateAnalytics([]);

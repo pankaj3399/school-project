@@ -22,7 +22,7 @@ export type AccessRole =
 
 // Source of truth — copy of the spec's Access Matrix on page 4 of
 // `System Overview-NOTES 4_29_2026.pdf`.
-export const accessMatrix: Record<TabKey, AccessRole[]> = {
+export const accessMatrix: Readonly<Record<TabKey, ReadonlyArray<AccessRole>>> = {
   overview:     ['Administrator'],
   analytics:    ['Administrator'],
   districts:    ['Administrator'],
