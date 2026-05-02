@@ -92,20 +92,28 @@ const getSchoolIdFromUser = async (req) => {
       error.status = 403;
       throw error;
     }
-    const schoolId = req.query.schoolId || req.body.schoolId;
-    if (!schoolId) {
+
+    const requestedSchoolId = req.query.schoolId || req.body.schoolId;
+
+    // School-level admin fallback: no explicit selection -> use their assigned school.
+    if (!requestedSchoolId) {
+      if (adminUser.schoolId) {
+        return adminUser.schoolId;
+      }
+      // District-level admin (no schoolId on record) must select one.
       const error = new Error("School ID is required for analytics.");
       error.status = 400;
       throw error;
     }
-    // Verify this school belongs to the admin's district
-    const schoolExists = await School.exists({ _id: schoolId, districtId: adminUser.districtId });
+
+    // Explicit selection: keep district-membership validation regardless of admin scope.
+    const schoolExists = await School.exists({ _id: requestedSchoolId, districtId: adminUser.districtId });
     if (!schoolExists) {
       const error = new Error("Access denied. School is outside your district.");
       error.status = 403;
       throw error;
     }
-    return schoolId;
+    return requestedSchoolId;
   }
 
   // Try finding user as admin first
@@ -760,7 +768,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
         return res.status(403).json({
           message: "Access denied: You don't have permission to view this student's data",
           requestedStudent: studentId,
-          accessibleStudents: teacherData.studentIds.map(id => id.toString())
+          accessibleStudentCount: teacherData.studentIds.length
         });
       }
     }
@@ -1040,28 +1048,17 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     const schoolTimezone = await getSchoolTimezone(schoolId);
     console.log("School timezone:", schoolTimezone);
 
-    // TEMPORARILY DISABLED - Check if teacher has access to this student
+    // Check if teacher has access to this student
     if (teacherData) {
-      console.log("Checking teacher access...");
-      console.log("Requested student ID:", studentId);
-      console.log("Teacher's accessible student IDs:", teacherData.studentIds);
-      console.log("Accessible IDs as strings:", teacherData.studentIds.map(id => id.toString()));
-
       const hasAccess = teacherData.studentIds.some(id => id.toString() === studentId);
-      console.log("Has access:", hasAccess);
-
       if (!hasAccess) {
-        console.log("ACCESS DENIED - Teacher cannot access this student");
-        // Re-enable this after debugging
-        console.log("🚨 WOULD DENY ACCESS BUT ALLOWING FOR DEBUG 🚨");
-        // return res.status(403).json({
-        //   message: "Access denied: You don't have permission to view this student's data",
-        //   requestedStudent: studentId,
-        //   accessibleStudents: teacherData.studentIds.map(id => id.toString())
-        // });
+        return res.status(403).json({
+          message: "Access denied: You don't have permission to view this student's data",
+          requestedStudent: studentId,
+          accessibleStudentCount: teacherData.studentIds.length
+        });
       }
     }
-    console.log("ACCESS GRANTED for student:", studentId);
 
     const today = getSchoolCurrentTime(schoolTimezone);
     console.log("Today in school timezone:", today);
@@ -1258,7 +1255,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     console.error("=== ERROR in getHistoricalPointsDataByStudentId ===");
     console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
-    res.status(500).json({ message: error.message });
+    const status = error.status || error.statusCode || 500;
+    res.status(status).json({ message: error.message });
   }
 };
 

@@ -76,6 +76,11 @@ const Finalize = () => {
   const [alsoSendToAnTeacher, setAlsoSendToAnTeacher] = useState(false)
   const { selectedSchoolId } = useSchool()
   const { user: authUser } = useAuth()
+  const authSchoolId =
+    typeof authUser?.schoolId === 'string'
+      ? authUser.schoolId
+      : authUser?.schoolId?._id;
+  const effectiveSchoolId = selectedSchoolId || authSchoolId;
 
   const waitForChartReady = (expectedStudentId: string, timeoutMs = 5000, intervalMs = 50) =>
     new Promise<void>((resolve, reject) => {
@@ -226,15 +231,15 @@ const Finalize = () => {
         const token = localStorage.getItem("token")
         
         const isAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
-        if (isAdmin && !selectedSchoolId) {
+        if (isAdmin && !effectiveSchoolId) {
           setStudents([])
           setSchoolData({})
           setAnTeacherEmail("")
           return;
         }
 
-        const resTeacher = await getStudents(token ?? "", selectedSchoolId || undefined)
-        const school = await getCurrrentSchool(token ?? "", selectedSchoolId || undefined)
+        const resTeacher = await getStudents(token ?? "", effectiveSchoolId || undefined)
+        const school = await getCurrrentSchool(token ?? "", effectiveSchoolId || undefined)
 
         if (resTeacher.error) {
            throw new Error(resTeacher.error);
@@ -272,7 +277,7 @@ const Finalize = () => {
       }
     }
     fetchData()
-  }, [selectedSchoolId, authUser, toast])
+  }, [effectiveSchoolId, authUser, toast])
 
   return (
     <div className="flex flex-col justify-center min-h-[80vh] gap-8">
@@ -319,7 +324,7 @@ const Finalize = () => {
         />
       </div>
       <div className="opacity-0">
-        <EducationYearChart slimLines studentId={studentId} schoolId={selectedSchoolId || undefined} />
+        <EducationYearChart slimLines studentId={studentId} schoolId={effectiveSchoolId || undefined} />
       </div>
 
       <Modal

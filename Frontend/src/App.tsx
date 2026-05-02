@@ -39,6 +39,7 @@ import CompleteGuardianRegistration from "@/Section/Guardian/complete-registrati
 import CompleteAdminRegistration from "@/Section/SystemAdmin/complete-registration";
 import TermsPage from "@/components/TermsPage";
 import { Role } from "./enum";
+import { canAccess, type TabKey } from "@/lib/roleAccess";
 
 // System Admin Components
 import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
@@ -52,17 +53,22 @@ import SchoolsList from "./Section/SystemAdmin/schools/index";
 
 const systemAdminRoles = [Role.SystemAdmin];
 
-// Reusable ProtectedRoute component
-const ProtectedRoute = ({ children, requiredRoles }: { children: React.ReactNode, requiredRoles?: string[] }) => {
+// Reusable ProtectedRoute component. Prefer `requiredTab` (sources the spec
+// matrix in lib/roleAccess.ts, including Teacher type='Lead' vs not), and
+// fall back to `requiredRoles` for routes where role-string matching is enough.
+const ProtectedRoute = ({ children, requiredRoles, requiredTab }: { children: React.ReactNode, requiredRoles?: string[], requiredTab?: TabKey }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
   if (!user) {
     return <Navigate to="/signin" replace />;
   }
+  if (requiredTab && !canAccess(user, requiredTab)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
   if (requiredRoles && !requiredRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -106,29 +112,29 @@ export default function App() {
           <Route path="/verify" element={<OtpVerificationPage />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
 
-          {/* Authenticated Routes */}
-          <Route path="/analytics" element={<ProtectedRoute requiredRoles={[Role.SystemAdmin, Role.Admin, Role.SchoolAdmin, Role.Teacher]}><Analytics /></ProtectedRoute>} />
-          <Route path="/addteacher" element={<ProtectedRoute><AddTeacher /></ProtectedRoute>} />
-          <Route path="/addstudent" element={<ProtectedRoute><AddStudent /></ProtectedRoute>} />
-          <Route path="/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
-          <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute><ViewStudents /></ProtectedRoute>} />
-          <Route path="/teachers/students" element={<ProtectedRoute><ViewTeacherStudents /></ProtectedRoute>} />
-          <Route path="/createform" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
-          <Route path="/editform/:id" element={<ProtectedRoute><EditForm /></ProtectedRoute>} />
-          <Route path="/schoolAdmin/submitform/:id" element={<ProtectedRoute><FormPageAdmin /></ProtectedRoute>} />
+          {/* Authenticated Routes — gated by spec Access Matrix (lib/roleAccess.ts) */}
+          <Route path="/analytics" element={<ProtectedRoute requiredTab="analytics"><Analytics /></ProtectedRoute>} />
+          <Route path="/addteacher" element={<ProtectedRoute requiredTab="teachers"><AddTeacher /></ProtectedRoute>} />
+          <Route path="/addstudent" element={<ProtectedRoute requiredTab="students"><AddStudent /></ProtectedRoute>} />
+          <Route path="/print-report" element={<ProtectedRoute requiredTab="printReport"><Finalize /></ProtectedRoute>} />
+          <Route path="/teachers" element={<ProtectedRoute requiredTab="teachers"><Teachers /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute requiredTab="students"><ViewStudents /></ProtectedRoute>} />
+          <Route path="/teachers/students" element={<ProtectedRoute requiredTab="students"><ViewTeacherStudents /></ProtectedRoute>} />
+          <Route path="/createform" element={<ProtectedRoute requiredTab="forms"><FormBuilder /></ProtectedRoute>} />
+          <Route path="/editform/:id" element={<ProtectedRoute requiredTab="forms"><EditForm /></ProtectedRoute>} />
+          <Route path="/schoolAdmin/submitform/:id" element={<ProtectedRoute requiredTab="forms"><FormPageAdmin /></ProtectedRoute>} />
 
-          <Route path="/viewforms" element={<ProtectedRoute><ViewForms /></ProtectedRoute>} />
-          <Route path="/teachers/createform" element={<ProtectedRoute><FormBuilderTeacher /></ProtectedRoute>} />
-          <Route path="/teachers/editform/:id" element={<ProtectedRoute><EditFormTeacher /></ProtectedRoute>} />
-          <Route path="/teachers/viewforms" element={<ProtectedRoute><ViewFormsTeacher /></ProtectedRoute>} />
-          <Route path="/teachers/managepoints" element={<ProtectedRoute><ViewTeacherForms /></ProtectedRoute>} />
-          <Route path="/teachers/addstudent" element={<ProtectedRoute><AddStudentTeacher /></ProtectedRoute>} />
-          <Route path="/teachers/submitform/:id" element={<ProtectedRoute><FormPage /></ProtectedRoute>} />
-          <Route path="/teachers/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
-          <Route path="/teachers/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-          <Route path="/teachers/print-report" element={<ProtectedRoute><Finalize /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute><ViewPointHistory /></ProtectedRoute>} />
+          <Route path="/viewforms" element={<ProtectedRoute requiredTab="forms"><ViewForms /></ProtectedRoute>} />
+          <Route path="/teachers/createform" element={<ProtectedRoute requiredTab="forms"><FormBuilderTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/editform/:id" element={<ProtectedRoute requiredTab="forms"><EditFormTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/viewforms" element={<ProtectedRoute requiredTab="forms"><ViewFormsTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/managepoints" element={<ProtectedRoute requiredTab="forms"><ViewTeacherForms /></ProtectedRoute>} />
+          <Route path="/teachers/addstudent" element={<ProtectedRoute requiredTab="students"><AddStudentTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/submitform/:id" element={<ProtectedRoute requiredTab="forms"><FormPage /></ProtectedRoute>} />
+          <Route path="/teachers/history" element={<ProtectedRoute requiredTab="pointHistory"><ViewPointHistory /></ProtectedRoute>} />
+          <Route path="/teachers/analytics" element={<ProtectedRoute requiredTab="analytics"><Analytics /></ProtectedRoute>} />
+          <Route path="/teachers/print-report" element={<ProtectedRoute requiredTab="printReport"><Finalize /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute requiredTab="pointHistory"><ViewPointHistory /></ProtectedRoute>} />
 
           {/* Dashboards */}
           <Route path="/home" element={
@@ -140,14 +146,14 @@ export default function App() {
           <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
-          <Route path="/school/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
-          <Route path="/teachers/points-history" element={<ProtectedRoute><DetailedHistory /></ProtectedRoute>} />
+          <Route path="/school/points-history" element={<ProtectedRoute requiredTab="pointHistory"><DetailedHistory /></ProtectedRoute>} />
+          <Route path="/teachers/points-history" element={<ProtectedRoute requiredTab="pointHistory"><DetailedHistory /></ProtectedRoute>} />
 
           <Route path="/verifyemail" element={<VerifyEmail />} />
-          <Route path="/setup" element={<ProtectedRoute><SetupPage /></ProtectedRoute>} />
-          <Route path="/setup-teachers" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
-          <Route path="/setup-students" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
-          <Route path="/teachers/students-setup" element={<ProtectedRoute><SetupStudents /></ProtectedRoute>} />
+          <Route path="/setup" element={<ProtectedRoute requiredTab="setup"><SetupPage /></ProtectedRoute>} />
+          <Route path="/setup-teachers" element={<ProtectedRoute requiredTab="setup"><Setup /></ProtectedRoute>} />
+          <Route path="/setup-students" element={<ProtectedRoute requiredTab="setup"><SetupStudents /></ProtectedRoute>} />
+          <Route path="/teachers/students-setup" element={<ProtectedRoute requiredTab="setup"><SetupStudents /></ProtectedRoute>} />
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
           <Route path="/guardian/complete-registration" element={<CompleteGuardianRegistration />} />
           <Route path="/admin/complete-registration" element={<CompleteAdminRegistration />} />

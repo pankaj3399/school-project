@@ -91,6 +91,7 @@ export default function SystemAdminDashboard() {
     const [stateAnalytics, setStateAnalytics] = useState<StateAnalyticsRow[]>([]);
     const [districtAnalytics, setDistrictAnalytics] = useState<DistrictAnalyticsRow[]>([]);
     const [districtError, setDistrictError] = useState<string | null>(null);
+    const [stateError, setStateError] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartDataRow[]>([]);
     const [schoolStats, setSchoolStats] = useState<SchoolStatRow[]>([]);
 
@@ -124,9 +125,25 @@ export default function SystemAdminDashboard() {
                         setError("Failed to load dashboard metrics");
                     }
                     if (Array.isArray(geo.stateAnalytics)) {
-                        setStateAnalytics(geo.stateAnalytics);
+                        const cleaned: StateAnalyticsRow[] = (geo.stateAnalytics as unknown[])
+                            .filter((row): row is Record<string, unknown> =>
+                                row != null && typeof row === 'object' && typeof (row as { state?: unknown }).state === 'string' && !!(row as { state: string }).state)
+                            .map((row) => ({
+                                state: String(row.state),
+                                districtCount: Number(row.districtCount) || 0,
+                                activeDistrictCount: Number(row.activeDistrictCount) || 0,
+                                schoolCount: Number(row.schoolCount) || 0,
+                                teacherCount: Number(row.teacherCount) || 0,
+                                studentCount: Number(row.studentCount) || 0,
+                            }));
+                        setStateAnalytics(cleaned);
+                        setStateError(null);
+                    } else if (geo.error) {
+                        setStateAnalytics([]);
+                        setStateError(typeof geo.error === 'string' ? geo.error : 'Could not load state analytics');
                     } else {
                         setStateAnalytics([]);
+                        setStateError('Could not load state analytics');
                     }
                     if (Array.isArray(distComp.districtStats)) {
                         setDistrictAnalytics(distComp.districtStats);
@@ -487,6 +504,35 @@ export default function SystemAdminDashboard() {
                                             <td className="py-3 px-4 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalTeachers || 0).toLocaleString()}</td>
                                             <td className="py-3 px-4 text-right text-gray-900">{error || !stats ? '—' : Number(stats.totalStudents || 0).toLocaleString()}</td>
                                         </tr>
+
+                                        {/* By State */}
+                                        {stateError ? (
+                                            <tr className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{stateError}</td>
+                                            </tr>
+                                        ) : stateAnalytics.length === 0 ? (
+                                            <tr className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                </th>
+                                                <td colSpan={5} className="py-3 px-4 text-center text-gray-400">No state data yet.</td>
+                                            </tr>
+                                        ) : stateAnalytics.map((s) => (
+                                            <tr key={s.state} className="border-b border-gray-200">
+                                                <th scope="row" className="py-3 px-4 text-left font-normal">
+                                                    <div className="font-semibold text-gray-900">By State</div>
+                                                    <div className="text-xs text-gray-600">{s.state || 'Unknown'}</div>
+                                                </th>
+                                                <td className="py-3 px-4 text-right text-gray-400">—</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.districtCount || 0).toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.schoolCount || 0).toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.teacherCount || 0).toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-gray-900">{Number(s.studentCount || 0).toLocaleString()}</td>
+                                            </tr>
+                                        ))}
 
                                         {/* By District */}
                                         {error ? (

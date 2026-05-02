@@ -1,40 +1,40 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, X, MenuIcon, ClipboardIcon, Users, School, Target, Paperclip, SettingsIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { getCurrentUser } from '@/api';
 import { useAuth } from '@/authContext';
+import { canAccess, type TabKey } from '@/lib/roleAccess';
+
+const allTeacherItems: { href: string; label: string; icon: any; tab: TabKey }[] = [
+  { href: '/teachers/analytics', label: 'Analytics', icon: School, tab: 'analytics' },
+  { href: '/teachers/students', label: 'Student Roster', icon: Users, tab: 'students' },
+  { href: '/teachers/viewforms', label: 'Forms', icon: ClipboardIcon, tab: 'forms' },
+  { href: '/teachers/managepoints', label: 'Forms', icon: ClipboardIcon, tab: 'forms' },
+  { href: '/teachers/history', label: 'Point History', icon: Target, tab: 'pointHistory' },
+  { href: '/teachers/print-report', label: 'Print Report', icon: Paperclip, tab: 'printReport' },
+  { href: '/teachers/students-setup', label: 'Setup', icon: SettingsIcon, tab: 'setup' },
+];
 
 export function TeacherSideNav() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const[toogle,Settoogle] = useState(false);
-  const [navItems, setNavItems] = useState<any[]>([
-    { href: '/teachers/managepoints', label: 'Forms', icon: ClipboardIcon }
-  ])
+  const [toogle, Settoogle] = useState(false);
 
-  useEffect(() => {
-    // Fetch teacher details
-    const fetchTeacher = async () => {
-      const response = await getCurrentUser();
-      
-      if(response.user.type == "Lead"){
-        setNavItems([
-          { href: '/teachers/analytics', label: 'Analytics', icon: School },
-          { href: '/teachers/viewforms', label: 'Forms', icon: ClipboardIcon },
-          { href: '/teachers/students', label: 'Student Roster', icon: Users },
-          { href: '/teachers/history', label: 'Point History', icon: Target },
-          { href: '/teachers/print-report', label: 'Print Report', icon: Paperclip },
-          { href: '/teachers/students-setup', label: 'Setup', icon: SettingsIcon }
-        ])
-      }
-    };
-    fetchTeacher();
-  }, []);
+  // Lead teachers get the full Forms (manage + view), regular Team Members
+  // only get the manage-points page. Filter the duplicate Forms entry first,
+  // then run the matrix filter so unauthorized tabs are dropped.
+  const isLead = user?.type === 'Lead';
+  const navItems = allTeacherItems
+    .filter((item) => {
+      if (item.href === '/teachers/managepoints') return !isLead;
+      if (item.href === '/teachers/viewforms') return isLead;
+      return true;
+    })
+    .filter((item) => canAccess(user, item.tab));
 
-  const toogleX = () =>{
+  const toogleX = () => {
     Settoogle(!toogle);
-  }
+  };
 
   const handleLogout = () => {
     logout();
@@ -48,7 +48,7 @@ export function TeacherSideNav() {
         !toogle ? <Button variant={"ghost"} onClick={()=> toogleX()}><MenuIcon /></Button>:<Button variant={"ghost"} onClick={()=> toogleX()}><X /></Button>
       }
     </div>
-    
+
     {
       toogle && <nav className={`w-64 bg-[#654f6f] text-black shadow-lg  ${!toogle ? "max-md:hidden":""}`}>
       <div className="p-4">

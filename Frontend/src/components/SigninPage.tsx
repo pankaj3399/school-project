@@ -174,7 +174,7 @@ export default function LoginForm() {
           description: "Redirecting to your dashboard...",
           variant: "default",
         });
-        navigateBasedOnRole(loginContext.role);
+        navigateBasedOnRole(res.role || loginContext.role, loginContext.role);
       }
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message ||
@@ -191,15 +191,23 @@ export default function LoginForm() {
     }
   };
 
-  const navigateBasedOnRole = (role: string) => {
-    if (role === "Admin") {
+  const navigateBasedOnRole = (serverRole: string, formRole: string) => {
+    // Per the spec Access Matrix, Analytics is Administrator-only — so
+    // System Manager (Admin) lands on Teachers list, not Analytics. Server
+    // collapses Lead/Special teachers into a single "Teacher" role, so we
+    // use the form selection to pick the right teacher landing.
+    if (serverRole === "SystemAdmin") {
       navigate("/system-admin");
-    } else if (role === "SchoolAdmin") {
-      navigate("/analytics");
-    } else if (role === "SpecialTeacher") {
+    } else if (serverRole === "Admin" || serverRole === "SchoolAdmin") {
+      navigate("/teacher");
+    } else if (serverRole === "Teacher") {
+      if (formRole === "SpecialTeacher") {
+        navigate("/teachers/managepoints");
+      } else {
+        navigate("/teachers/viewforms");
+      }
+    } else {
       navigate("/teachers/managepoints");
-    } else if (role === "Teacher") {
-      navigate("/teachers/viewforms");
     }
   };
 
