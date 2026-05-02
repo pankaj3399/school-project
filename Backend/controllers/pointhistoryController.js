@@ -768,7 +768,7 @@ export const getWeekPointsHistoryByStudent = async (req, res) => {
         return res.status(403).json({
           message: "Access denied: You don't have permission to view this student's data",
           requestedStudent: studentId,
-          accessibleStudents: teacherData.studentIds.map(id => id.toString())
+          accessibleStudentCount: teacherData.studentIds.length
         });
       }
     }
@@ -1055,7 +1055,7 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
         return res.status(403).json({
           message: "Access denied: You don't have permission to view this student's data",
           requestedStudent: studentId,
-          accessibleStudents: teacherData.studentIds.map(id => id.toString())
+          accessibleStudentCount: teacherData.studentIds.length
         });
       }
     }
@@ -1255,7 +1255,8 @@ export const getHistoricalPointsDataByStudentId = async (req, res) => {
     console.error("=== ERROR in getHistoricalPointsDataByStudentId ===");
     console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
-    res.status(500).json({ message: error.message });
+    const status = error.status || error.statusCode || 500;
+    res.status(status).json({ message: error.message });
   }
 };
 

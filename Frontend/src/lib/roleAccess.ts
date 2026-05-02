@@ -69,6 +69,7 @@ export function rolesForTab(tab: TabKey): string[] {
     else if (t === 'SystemManager') {
       out.add(Role.Admin);
       out.add(Role.SchoolAdmin);
+      out.add(Role.DistrictAdmin);
     } else if (t === 'LeadTeacher' || t === 'TeamMember') {
       // We can't gate Lead vs non-Lead at the route level (no `type` in
       // ProtectedRoute), so any Teacher passes the route check. The side-nav

@@ -495,14 +495,7 @@ export default function SystemAdminDashboard() {
                                         </tr>
 
                                         {/* By State */}
-                                        {error ? (
-                                            <tr className="border-b border-gray-200">
-                                                <th scope="row" className="py-3 px-4 text-left font-normal">
-                                                    <div className="font-semibold text-gray-900">By State</div>
-                                                </th>
-                                                <td colSpan={5} className="py-3 px-4 text-center text-amber-700">{error}</td>
-                                            </tr>
-                                        ) : stateError ? (
+                                        {stateError ? (
                                             <tr className="border-b border-gray-200">
                                                 <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By State</div>
@@ -516,8 +509,8 @@ export default function SystemAdminDashboard() {
                                                 </th>
                                                 <td colSpan={5} className="py-3 px-4 text-center text-gray-400">No state data yet.</td>
                                             </tr>
-                                        ) : stateAnalytics.map((s, idx) => (
-                                            <tr key={`${s.state ?? 'Unknown'}-${idx}`} className="border-b border-gray-200">
+                                        ) : stateAnalytics.map((s) => (
+                                            <tr key={s.state} className="border-b border-gray-200">
                                                 <th scope="row" className="py-3 px-4 text-left font-normal">
                                                     <div className="font-semibold text-gray-900">By State</div>
                                                     <div className="text-xs text-gray-600">{s.state || 'Unknown'}</div>
