@@ -282,12 +282,14 @@ export default function ViewDistrict() {
                         <Globe className="h-4 w-4 mr-2" />
                         Website
                     </Button>
-                                <Button
-                                    className="bg-[#00a58c] hover:bg-[#008f7a]"
-                                    onClick={() => setSearchParams({ tab: 'admins' })}
-                                >
-                                    Manage Admins
-                                </Button>
+                                {activeTab !== 'admins' && (
+                                    <Button
+                                        className="bg-[#00a58c] hover:bg-[#008f7a]"
+                                        onClick={() => setSearchParams({ tab: 'admins' })}
+                                    >
+                                        Manage Admins
+                                    </Button>
+                                )}
                 </div>
             </div>
 

@@ -20,16 +20,16 @@ export default function VerifyEmail() {
   });
 
   useEffect(() => {
-    // Get data from URL parameters
-    const otp = searchParams.get("otp");
+    // Guardian-verifying-student links use `token=`; everyone else `otp=`.
+    const code = searchParams.get("otp") ?? searchParams.get("token");
     const role = searchParams.get("role");
     const email = searchParams.get("email");
     const isStudent = searchParams.get("isStudent");
     const toVerify = searchParams.get("toVerify");
 
-    if (otp && role && email) {
+    if (code && role && email) {
       setVerificationData({
-        emailVerificationCode: otp,
+        emailVerificationCode: code,
         role,
         email,
         isStudent: isStudent === "true",

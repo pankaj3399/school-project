@@ -303,11 +303,11 @@ export default function LoginForm() {
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Admin">Administrator</SelectItem>
-                    <SelectItem value="SchoolAdmin">System Manager</SelectItem>
-                    <SelectItem value="Teacher">Leader/Lead Teacher</SelectItem>
+                    <SelectItem value="Admin">Super Admin</SelectItem>
+                    <SelectItem value="SchoolAdmin">School Tech</SelectItem>
+                    <SelectItem value="Teacher">AN Teacher (Lead Teacher)</SelectItem>
                     <SelectItem value="SpecialTeacher">
-                      Team member/Teacher
+                      Team Member / Teacher
                     </SelectItem>
                   </SelectContent>
                 </Select>

@@ -20,53 +20,63 @@ const generateToken = (id, role, districtId = null) => {
   return jwt.sign({ id, role, districtId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// Updated authController.js
+// Strict role-aware user lookup. The selected role from the login dropdown
+// must match the user's stored role+type — otherwise a SchoolAdmin could log
+// in as "Administrator" and a Lead Teacher could log in as "Team Member".
+// UI dropdown values map to backend roles as follows:
+//   "Admin"          -> Super Admin       (Role.SystemAdmin only)
+//   "SchoolAdmin"    -> School Tech       (Role.SchoolAdmin / Admin / DistrictAdmin)
+//   "Teacher"        -> Lead / AN Teacher (Role.Teacher, type='Lead')
+//   "SpecialTeacher" -> Team Member       (Role.Teacher, type!='Lead')
+const findUserByRoleSelection = async (email, roleSelection) => {
+  const normalizedEmail = (email || "").toLowerCase().trim();
+  if (!normalizedEmail) return null;
+
+  switch (roleSelection) {
+    case "Admin": {
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.SystemAdmin });
+      return u ? { user: u, userRole: Role.SystemAdmin } : null;
+    }
+    case "SchoolAdmin": {
+      const u = await Admin.findOne({
+        email: normalizedEmail,
+        role: { $in: [Role.SchoolAdmin, Role.Admin, Role.DistrictAdmin] }
+      });
+      return u ? { user: u, userRole: u.role } : null;
+    }
+    case "Teacher": {
+      const u = await Teacher.findOne({ email: normalizedEmail, type: "Lead" });
+      return u ? { user: u, userRole: Role.Teacher } : null;
+    }
+    case "SpecialTeacher": {
+      const u = await Teacher.findOne({ email: normalizedEmail, type: { $ne: "Lead" } });
+      return u ? { user: u, userRole: Role.Teacher } : null;
+    }
+    case Role.Student: {
+      const u = await Student.findOne({ email: normalizedEmail });
+      return u ? { user: u, userRole: Role.Student } : null;
+    }
+    default:
+      return null;
+  }
+};
+
+const ROLE_MISMATCH_MESSAGE = "Invalid credentials or wrong role for this account.";
 
 export const requestLoginOtp = async (req, res) => {
   try {
-    const { email, role, password } = req.body; // Now requires password for validation
-    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-    let user;
-    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
-    
-    if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email: email.toLowerCase() });
-      if (user && user.role === Role.SystemAdmin) {
-        userRole = Role.SystemAdmin;
-      } else {
-        return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
-      }
-    } else {
-      switch (userRole) {
-        case Role.Teacher: {
-          user = await Teacher.findOne({ email });
-          break;
-        }
-        case Role.Student: {
-          user = await Student.findOne({ email });
-          break;
-        }
-        default: {
-          user = await Admin.findOne({ email });
-          break;
-        }
-      }
-    }
+    const { email, role, password } = req.body;
 
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const result = await findUserByRoleSelection(email, role);
+    if (!result) {
+      return res.status(401).json({ message: ROLE_MISMATCH_MESSAGE });
     }
+    const { user, userRole } = result;
 
     if (
-      (user.type === "Special" && role !== "SpecialTeacher") ||
-      (user.type === "Lead" && role !== "Teacher")
+      (userRole === Role.Admin || userRole === Role.SchoolAdmin || userRole === Role.DistrictAdmin) &&
+      !user.approved
     ) {
-      return res.status(404).json({ message: "User Not Found" });
-    }
-
-    console.log(user)
-    if (role === Role.Admin && !user.approved) {
       return res.status(401).json({ message: "User not approved" });
     }
 
@@ -81,14 +91,11 @@ export const requestLoginOtp = async (req, res) => {
     }
 
     console.log("Attempting password comparison for user:", user.email);
-    // Validate password before sending OTP
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("invalid")
-      return res.status(401).json({ message: "Invalid Credentials" });
+      return res.status(401).json({ message: ROLE_MISMATCH_MESSAGE });
     }
 
-    // Credentials are valid, now send OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const newOtp = new Otp({ userId: user._id, otp });
     await newOtp.save();
@@ -151,54 +158,21 @@ export const requestLoginOtp = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password, role, otp } = req.body;
-  let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
 
   try {
-    let user;
-    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
-    
-    if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email });
-      if (user && user.role === Role.SystemAdmin) {
-        userRole = Role.SystemAdmin;
-      } else {
-        return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
-      }
-    } else {
-      switch (userRole) {
-        case Role.Teacher: {
-          user = await Teacher.findOne({ email });
-          break;
-        }
-        case Role.Student: {
-          user = await Student.findOne({ email });
-          break;
-        }
-        default: {
-          user = await Admin.findOne({ email });
-          break;
-        }
-      }
+    const result = await findUserByRoleSelection(email, role);
+    if (!result) {
+      return res.status(401).json({ message: ROLE_MISMATCH_MESSAGE });
     }
+    const { user, userRole } = result;
 
-
-    if (!user) {
-      return res.status(404).json({ message: "User Not found" });
-    }
-
-    // Enforce correct role/type mapping for teachers
     if (
-      (user.type === "Teacher" && role !== "SpecialTeacher") ||
-      (user.type === "Lead" && role !== "Teacher")
+      (userRole === Role.Admin || userRole === Role.SchoolAdmin || userRole === Role.DistrictAdmin) &&
+      !user.approved
     ) {
-      return res.status(404).json({ message: "User Not Found" });
-    }
-
-    if (role === Role.Admin && !user.approved) {
       return res.status(401).json({ message: "User not approved" });
     }
 
-    // Check if user has a password before attempting bcrypt comparison
     if (!user.password) {
       return res.status(401).json({
         message: "Account setup incomplete. Please check your email for a registration link or contact your administrator for a new invitation.",
@@ -209,7 +183,7 @@ export const login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid Credentials" });
+      return res.status(401).json({ message: ROLE_MISMATCH_MESSAGE });
     }
 
     // If no OTP provided, request OTP (this maintains backward compatibility)
@@ -297,36 +271,12 @@ export const login = async (req, res) => {
 export const verifyLoginOtp = async (req, res) => {
   try {
     const { otp, email, role } = req.body;
-    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-    let user;
-    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
-    
-    if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email });
-      if (user && user.role === Role.SystemAdmin) {
-        userRole = Role.SystemAdmin;
-      } else {
-        return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
-      }
-    } else {
-      switch (userRole) {
-        case Role.Teacher: {
-          user = await Teacher.findOne({ email });
-          break;
-        }
-        case Role.Student: {
-          user = await Student.findOne({ email });
-          break;
-        }
-        default: {
-          user = await Admin.findOne({ email });
-          break;
-        }
-      }
+
+    const result = await findUserByRoleSelection(email, role);
+    if (!result) {
+      return res.status(401).json({ message: ROLE_MISMATCH_MESSAGE });
     }
-
-
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const { user, userRole } = result;
 
     // Find the OTP associated with the user
     const storedOtp = await Otp.findOne({ otp, userId: user._id });
