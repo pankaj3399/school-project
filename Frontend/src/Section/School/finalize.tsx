@@ -176,7 +176,7 @@ const Finalize = () => {
     setProgress(0)
     setGeneratedPDFs([])
     setShowModal(false)
-    setAlsoSendToAnTeacher(false)
+    setAlsoSendToSupport(false)
 
     let successCount = 0;
     const failures: string[] = [];
