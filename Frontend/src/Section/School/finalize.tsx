@@ -147,10 +147,12 @@ const Finalize = () => {
   }
 
   const generateAllReports = async () => {
-    if (!anTeacherEmail) {
+    const trimmedEmail = anTeacherEmail?.trim() ?? "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
       toast({
-        title: "AN teacher not found",
-        description: "This school has no AN Teacher on file. Cannot email reports.",
+        title: "AN teacher email invalid",
+        description: "This school has no valid AN Teacher email on file. Cannot email reports.",
         variant: "destructive",
       });
       setShowModal(false);
@@ -168,7 +170,7 @@ const Finalize = () => {
       recipients.push({ email, required });
     };
     // Primary recipient: the school's AN Teacher (Leader/Lead Teacher).
-    addRecipient(anTeacherEmail, true);
+    addRecipient(trimmedEmail, true);
     // Optional secondary: support inbox — only when the user opted in.
     if (alsoSendToSupport) addRecipient(SUPPORT_REPORT_EMAIL, false);
 
