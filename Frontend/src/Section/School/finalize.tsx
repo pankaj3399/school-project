@@ -73,7 +73,7 @@ const Finalize = () => {
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
   const [anTeacherEmail, setAnTeacherEmail] = useState<string>("")
-  const [alsoSendToAnTeacher, setAlsoSendToAnTeacher] = useState(false)
+  const [alsoSendToSupport, setAlsoSendToSupport] = useState(false)
   const { selectedSchoolId } = useSchool()
   const { user: authUser } = useAuth()
   const authSchoolId =
@@ -108,7 +108,7 @@ const Finalize = () => {
 
   const buildReportFormData = async (student: any, barChart: HTMLElement) => {
     const teacher = Array.isArray(student.teacher) && student.teacher.length > 0 ? student.teacher[0] : null;
-    const src = await htmlToImage.toJpeg(barChart, { quality: 0.8 })
+    const src = await htmlToImage.toJpeg(barChart, { quality: 0.8, backgroundColor: '#ffffff' })
     const formdata = new FormData();
     const imageBlob = await (await fetch(src)).blob();
     formdata.append('file', imageBlob, 'chart.png');
@@ -147,13 +147,16 @@ const Finalize = () => {
   }
 
   const generateAllReports = async () => {
-    const includeAnTeacher = alsoSendToAnTeacher && !!anTeacherEmail;
-    if (alsoSendToAnTeacher && !anTeacherEmail) {
+    const trimmedEmail = anTeacherEmail?.trim() ?? "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
       toast({
-        title: "AN teacher not found",
-        description: "This school has no AN Teacher on file. Reports will be sent to support only.",
-        variant: "destructive"
-      })
+        title: "AN teacher email invalid",
+        description: "This school has no valid AN Teacher email on file. Cannot email reports.",
+        variant: "destructive",
+      });
+      setShowModal(false);
+      return;
     }
 
     // Dedupe by normalized email so we never send the same address twice when
@@ -166,14 +169,16 @@ const Finalize = () => {
       seen.add(key);
       recipients.push({ email, required });
     };
-    addRecipient(SUPPORT_REPORT_EMAIL, true);
-    if (includeAnTeacher) addRecipient(anTeacherEmail, false);
+    // Primary recipient: the school's AN Teacher (Leader/Lead Teacher).
+    addRecipient(trimmedEmail, true);
+    // Optional secondary: support inbox — only when the user opted in.
+    if (alsoSendToSupport) addRecipient(SUPPORT_REPORT_EMAIL, false);
 
     setIsGenerating(true)
     setProgress(0)
     setGeneratedPDFs([])
     setShowModal(false)
-    setAlsoSendToAnTeacher(false)
+    setAlsoSendToSupport(false)
 
     let successCount = 0;
     const failures: string[] = [];
@@ -287,7 +292,7 @@ const Finalize = () => {
       
       <div className="grid grid-cols-4 gap-4 w-full">
         <div className="col-span-4">
-          <p>*Note: After you click on the button EMAIL REPORTS, each student's report is emailed to {SUPPORT_REPORT_EMAIL}. You can optionally also send a copy to the AN Teacher of this school. Please allow a few moments so we can build the reports.</p>
+          <p>*Note: After you click on the button EMAIL REPORTS, each student's report is emailed to the AN Teacher of this school ({anTeacherEmail || "no AN Teacher on file"}). You can optionally also send a copy to {SUPPORT_REPORT_EMAIL}. Please allow a few moments so we can build the reports.</p>
         </div>
 
         
@@ -331,21 +336,21 @@ const Finalize = () => {
         isOpen={showModal}
         onClose={() => {
           setShowModal(false)
-          setAlsoSendToAnTeacher(false)
+          setAlsoSendToSupport(false)
         }}
         onConfirm={() => generateAllReports()}
         title="Email Reports"
-        description={`You are about to email ${selectedStudentsData.length} report${selectedStudentsData.length === 1 ? '' : 's'} to ${SUPPORT_REPORT_EMAIL}. Are you sure you want to proceed?`}
-        callToAction='Confirm'
-        confirmDisabled={isGenerating}
-        checkboxLabel={
+        description={
           anTeacherEmail
-            ? `Also send the report to the AN teacher (${anTeacherEmail})?`
-            : 'Also send the report to the AN teacher of this school? (No AN Teacher on file)'
+            ? `You are about to email ${selectedStudentsData.length} report${selectedStudentsData.length === 1 ? '' : 's'} to the AN Teacher of this school (${anTeacherEmail}). Are you sure you want to proceed?`
+            : `This school has no AN Teacher on file. Reports cannot be emailed until an AN Teacher is assigned.`
         }
-        checkboxChecked={alsoSendToAnTeacher}
-        onCheckboxChange={setAlsoSendToAnTeacher}
-        checkboxDisabled={isGenerating || !anTeacherEmail}
+        callToAction='Confirm'
+        confirmDisabled={isGenerating || !anTeacherEmail}
+        checkboxLabel={`Also send a copy to support (${SUPPORT_REPORT_EMAIL})?`}
+        checkboxChecked={alsoSendToSupport}
+        onCheckboxChange={setAlsoSendToSupport}
+        checkboxDisabled={isGenerating}
       />
 
       <LoadingModal isOpen={isGenerating} progress={progress} />

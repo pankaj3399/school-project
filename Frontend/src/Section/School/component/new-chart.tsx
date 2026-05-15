@@ -176,7 +176,7 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
         ))}
       </div>
 
-      <div id="graph" data-student-id={studentId || ''} data-render-token={renderToken} className="w-full h-[450px] ">
+      <div id="graph" data-student-id={studentId || ''} data-render-token={renderToken} className="w-full h-[450px] bg-white">
         <ResponsiveContainer width="100%" height="100%"   >
           <ComposedChart
             data={chartData}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Loading from "../Loading";
-import { getCurrrentSchool, getReportDataStudentCombined } from "@/api";
+import { getCurrrentSchool, getReportDataStudentCombined, getTeachers } from "@/api";
 import PasswordConfirmationModal from "./PasswordConfirmationModal";
 import { useSchool } from "@/context/SchoolContext";
 import { useAuth } from "@/authContext";
@@ -80,6 +80,20 @@ const SetupPage = () => {
       if (report?.error || !report?.gradeData) {
         throw new Error(report?.error || "Unable to load snapshot data.");
       }
+
+      // Fetch the full teacher roster so the EMAIL column is populated for
+      // every teacher, including ones whose grade list didn't surface them
+      // through getReportDataStudentCombined.
+      const teachersResp = await getTeachers(resolvedSchoolId);
+      const allTeachers: any[] = Array.isArray(teachersResp?.teachers)
+        ? teachersResp.teachers
+        : Array.isArray(teachersResp)
+          ? teachersResp
+          : [];
+      const teacherEmailById = new Map<string, string>();
+      allTeachers.forEach((t: any) => {
+        if (t?._id != null && t?.email) teacherEmailById.set(String(t._id), t.email);
+      });
 
       const studentRows: any[] = [];
       const historyRows: any[] = [];
@@ -168,12 +182,29 @@ const SetupPage = () => {
         });
       });
 
+      // Include every teacher from the full roster, even those who never
+      // submitted (otherwise the Teachers sheet silently drops them).
+      allTeachers.forEach((t: any) => {
+        if (t?._id == null) return;
+        const id = String(t._id);
+        if (!teacherInfo.has(id)) {
+          const grades = new Set<string>();
+          if (t.grade) grades.add(t.grade);
+          teacherInfo.set(id, {
+            name: t.name || "",
+            subject: t.subject || "",
+            grades,
+            email: t.email || "",
+          });
+        }
+      });
+
       const teacherRows = Array.from(teacherInfo.entries())
         .map(([id, t]) => ({
           NAME: t.name,
           SUBJECT: t.subject,
           GRADE: Array.from(t.grades).sort().join(", "),
-          EMAIL: t.email,
+          EMAIL: t.email || teacherEmailById.get(id) || "",
           "AWARDED TOKEN": awardedByTeacher.get(id) || 0,
         }))
         .sort((a, b) => a.NAME.localeCompare(b.NAME));

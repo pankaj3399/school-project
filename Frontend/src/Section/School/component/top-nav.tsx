@@ -29,10 +29,11 @@ export function TopNav() {
   const getUserLabel = () => {
     if (!user) return "";
     switch (user.role) {
-      case Role.SystemAdmin: return "System Admin";
+      case Role.SystemAdmin: return "Super Admin";
       case Role.Admin: return "District Manager";
-      case Role.SchoolAdmin: return "School Admin";
-      case Role.Teacher: return "Teacher";
+      case Role.SchoolAdmin: return "School Tech";
+      case Role.DistrictAdmin: return "District Admin";
+      case Role.Teacher: return user.type === "Lead" ? "AN Teacher" : "Team Member";
       case Role.Student: return "Student";
       default: return user.role;
     }

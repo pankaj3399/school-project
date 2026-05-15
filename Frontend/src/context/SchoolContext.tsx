@@ -167,6 +167,21 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       };
       fetchSchools();
+    } else if (user.role === Role.SchoolAdmin || user.role === Role.DistrictAdmin) {
+      // School Tech / District Admin are tied to a specific school — auto-select
+      // it from the auth context so pages like Setup don't show "please select a
+      // school" when they have no picker available.
+      const u = user as { schoolId?: string | { _id?: string } };
+      const ownSchoolId =
+        typeof u.schoolId === 'string'
+          ? u.schoolId
+          : (u.schoolId && typeof u.schoolId === 'object' ? u.schoolId._id ?? null : null);
+      if (ownSchoolId) {
+        setSelectedSchoolId(ownSchoolId);
+      } else {
+        setSelectedSchoolId(null);
+      }
+      setSchools([]);
     } else {
       setSelectedSchoolId(null);
       setSchools([]);
