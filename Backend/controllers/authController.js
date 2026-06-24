@@ -8,7 +8,7 @@ import { sendEmail } from "../services/mail.js";
 import Otp from "../models/Otp.js";
 import { getVerificationEmailTemplate } from "../utils/emailTemplates.js";
 import { emailGenerator } from "../utils/emailHelper.js";
-import { sendOnboardingEmail } from "../services/verificationMail.js";
+import { sendOnboardingEmail, sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import SupportRequest from "../models/SupportRequest.js";
 import { sendSupportEmail } from "../services/supportRequestEmail.js";
 import School from "../models/School.js";
@@ -513,6 +513,39 @@ export const sendVerifyEmail = async (req, res) => {
       });
     }
 
+    // New teachers must finish /teacher/complete-registration — not /verifyemail.
+    if (userRole === Role.Teacher && !user.password && user.registrationToken) {
+      if (
+        !user.registrationTokenExpires ||
+        user.registrationTokenExpires < new Date()
+      ) {
+        user.registrationToken =
+          Math.random().toString(36).substr(2) + Date.now().toString(36);
+        user.registrationTokenExpires = new Date(
+          Date.now() + 48 * 60 * 60 * 1000
+        );
+        await user.save();
+      }
+
+      const school = await School.findById(user.schoolId);
+      const frontendBase =
+        process.env.FRONTEND_URL ||
+        (typeof url === "string" ? url.replace(/\/verifyemail\/?$/, "") : "");
+
+      await sendTeacherRegistrationMail({
+        email: user.email,
+        url: `${frontendBase}/teacher/complete-registration`,
+        registrationToken: user.registrationToken,
+        schoolId: user.schoolId,
+        schoolLogo: school?.logo,
+      });
+
+      return res.status(200).json({
+        message:
+          "Registration invite resent successfully. The teacher should use the Complete Registration link in the email.",
+      });
+    }
+
     if (userRole === Role.Student) {
       if (isStudent && user.isStudentEmailVerified) {
         return res.status(200).json({
@@ -629,10 +662,9 @@ export const completeVerification = async (req, res) => {
         }
 
         if (user) {
-          // Check for expiry (if applicable)
           if (user.registrationTokenExpires && user.registrationTokenExpires < new Date()) {
-            return res.status(400).json({ 
-              message: "Registration link has expired. Please contact the school to resend the invitation." 
+            return res.status(400).json({
+              message: "Registration link has expired. Please contact the school to resend the invitation."
             });
           }
           if (user.isEmailVerified && user.password) {
@@ -642,7 +674,26 @@ export const completeVerification = async (req, res) => {
             });
           }
 
-          // Update registration data if provided
+          const isPendingRegistration = user.registrationToken && !user.password;
+          const isOtpOnlyRequest = emailVerificationCode && !password && !termsAccepted;
+
+          // /verifyemail cannot finish setup for teachers who still need registration.
+          if (isPendingRegistration && isOtpOnlyRequest) {
+            return res.status(400).json({
+              message:
+                "Please use the Complete Registration link in your invitation email to set up your account.",
+            });
+          }
+
+          // Simple email re-verification for teachers who already have a password.
+          if (emailVerificationCode && user.password && !password && !termsAccepted) {
+            user.isEmailVerified = true;
+            user.emailVerificationCode = null;
+            await user.save();
+            break;
+          }
+
+          // Full registration via token (legacy path on this endpoint).
           if (name) user.name = name;
           if (subject) user.subject = subject;
           if (password) {
@@ -650,7 +701,6 @@ export const completeVerification = async (req, res) => {
             user.password = await bcrypt.hash(password, salt);
           }
 
-          // Handle Terms of Use - REQUIRED
           if (!termsAccepted) {
             return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
           }
@@ -659,7 +709,7 @@ export const completeVerification = async (req, res) => {
           const currentTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
 
           if (termsVersion && termsVersion !== currentTermsVersion) {
-            return res.status(400).json({ 
+            return res.status(400).json({
               message: "The Terms of Use have been updated. Please refresh the page to review and accept the latest version.",
               error: "version_mismatch"
             });
@@ -671,11 +721,13 @@ export const completeVerification = async (req, res) => {
           user.termsAcceptedVersion = currentTermsVersion;
 
           user.isEmailVerified = true;
-          user.emailVerificationCode = null; // Clear the code
-          user.registrationToken = null; // Clear the token
+          user.emailVerificationCode = null;
+          user.registrationToken = null;
           await user.save();
         }
-        sendOnboardingEmail(user);
+        if (user?.password) {
+          sendOnboardingEmail(user);
+        }
         break;
       }
       case Role.Student: {

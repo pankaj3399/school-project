@@ -46,7 +46,10 @@ export default function VerifyEmail() {
       if (response.error) {
         toast({
           title: "Verification Failed",
-          description: "Please try again",
+          description:
+            typeof response.error === "string"
+              ? response.error
+              : "Please try again",
           variant: "destructive",
         });
       } else if (response.success) {

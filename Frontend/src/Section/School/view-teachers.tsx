@@ -188,15 +188,27 @@ export default function ViewTeachers() {
         userId: teacherId,
       });
 
+      if (data.error) {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const needsRegistration =
+        editingTeacher && !editingTeacher.isEmailVerified && !editingTeacher.password;
+
       toast({
-        title: "Verification Email Status",
-        description: data.data.message,
+        title: needsRegistration ? "Registration Invite Sent" : "Verification Email Sent",
+        description: data.data?.message || "Email sent successfully.",
       });
     } catch (error) {
       console.error("Verification error:", error);
       toast({
         title: "Error",
-        description: "Failed to send verification email",
+        description: "Failed to send email",
         variant: "destructive",
       });
     } finally {
@@ -325,10 +337,19 @@ export default function ViewTeachers() {
                   }
                   className="whitespace-nowrap"
                 >
-                  {sendingVerification ? "Sending..." : "Verify Email"}
+                  {sendingVerification
+                    ? "Sending..."
+                    : !editingTeacher.isEmailVerified && !editingTeacher.password
+                      ? "Resend Registration Invite"
+                      : "Verify Email"}
                 </Button>
               </div>
-              {!editingTeacher.isEmailVerified && (
+              {!editingTeacher.isEmailVerified && !editingTeacher.password && (
+                <p className="text-sm text-amber-600 mt-1">
+                  Registration not completed — resend the registration invite below
+                </p>
+              )}
+              {!editingTeacher.isEmailVerified && editingTeacher.password && (
                 <p className="text-sm text-amber-600 mt-1">
                   Email not verified
                 </p>
