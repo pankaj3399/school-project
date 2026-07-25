@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get('/', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin), getAllSchools);
 router.get('/students',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getStudents);
-router.get('/teachers',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),getTeachers);
+router.get('/teachers',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getTeachers);
 router.get('/school',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin),getCurrentSchool);
 router.put('/updateSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),upload.single('logo'),updateSchool);
 router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin),deleteSchool);

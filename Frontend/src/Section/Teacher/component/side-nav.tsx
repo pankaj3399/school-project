@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, X, MenuIcon, ClipboardIcon, Users, School, Target, Paperclip, SettingsIcon } from 'lucide-react';
+import { LogOut, X, MenuIcon, ClipboardIcon, Users, BookOpen, School, Target, Paperclip, SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/authContext';
@@ -7,7 +7,8 @@ import { canAccess, type TabKey } from '@/lib/roleAccess';
 
 const allTeacherItems: { href: string; label: string; icon: any; tab: TabKey }[] = [
   { href: '/teachers/analytics', label: 'Analytics', icon: School, tab: 'analytics' },
-  { href: '/teachers/students', label: 'Student Roster', icon: Users, tab: 'students' },
+  { href: '/teachers/roster', label: 'Teachers', icon: Users, tab: 'teachers' },
+  { href: '/teachers/students', label: 'Student Roster', icon: BookOpen, tab: 'students' },
   { href: '/teachers/viewforms', label: 'Forms', icon: ClipboardIcon, tab: 'forms' },
   { href: '/teachers/managepoints', label: 'Forms', icon: ClipboardIcon, tab: 'forms' },
   { href: '/teachers/history', label: 'Point History', icon: Target, tab: 'pointHistory' },

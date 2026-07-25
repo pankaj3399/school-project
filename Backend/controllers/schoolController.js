@@ -111,6 +111,10 @@ export const getTeachers = async (req, res) => {
             if (!teacher) {
                 return res.status(404).json({ error: "Teacher record not found" });
             }
+            // Access matrix: only Lead / AN Teachers may view the Teachers roster
+            if (teacher.type !== 'Lead') {
+                return res.status(403).json({ message: "Only Lead Teachers can access the Teachers roster" });
+            }
             schoolId = teacher.schoolId;
         } else if (req.user.role === Role.SchoolAdmin) {
             const schoolAdmin = await Admin.findById(req.user.id); // Changed to Admin.findById

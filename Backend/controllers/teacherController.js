@@ -38,6 +38,15 @@ export const addTeacher = async (req, res) => {
       if (!schoolId) {
         return res.status(400).json({ message: "School ID is required for System Administrators" });
       }
+    } else if (req.user.role === Role.Teacher) {
+      const leadTeacher = await Teacher.findById(req.user.id).select("schoolId type");
+      if (!leadTeacher || leadTeacher.type !== 'Lead') {
+        return res.status(403).json({ message: "Only Lead Teachers can invite teachers" });
+      }
+      if (!leadTeacher.schoolId) {
+        return res.status(403).json({ message: "Teacher not associated with a school" });
+      }
+      schoolId = leadTeacher.schoolId;
     } else {
       const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
       if (!schoolAdmin || !schoolAdmin.schoolId) {
@@ -144,6 +153,16 @@ export const updateTeacher = async (req, res) => {
           return res.status(403).json({ message: "You do not have permission to update this teacher" });
         }
         break;
+      case Role.Teacher: {
+        const leadTeacher = await Teacher.findById(req.user.id).select("schoolId type");
+        if (!leadTeacher || leadTeacher.type !== 'Lead') {
+          return res.status(403).json({ message: "Only Lead Teachers can update teachers" });
+        }
+        if (!leadTeacher.schoolId || !teacherToUpdate.schoolId || leadTeacher.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
+          return res.status(403).json({ message: "You do not have permission to update this teacher" });
+        }
+        break;
+      }
       case Role.SystemAdmin:
       case Role.Admin:
         // Elevated roles can update teachers in any school
@@ -196,6 +215,14 @@ export const deleteTeacher = async (req, res) => {
     if (req.user.role === Role.SchoolAdmin) {
       const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
       if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToDelete.schoolId || schoolAdmin.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
+        return res.status(403).json({ message: "You do not have permission to delete this teacher" });
+      }
+    } else if (req.user.role === Role.Teacher) {
+      const leadTeacher = await Teacher.findById(req.user.id).select("schoolId type");
+      if (!leadTeacher || leadTeacher.type !== 'Lead') {
+        return res.status(403).json({ message: "Only Lead Teachers can delete teachers" });
+      }
+      if (!leadTeacher.schoolId || !teacherToDelete.schoolId || leadTeacher.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
         return res.status(403).json({ message: "You do not have permission to delete this teacher" });
       }
     }

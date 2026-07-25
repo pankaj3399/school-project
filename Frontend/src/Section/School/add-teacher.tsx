@@ -97,7 +97,8 @@ export default function AddTeacher() {
             description: "Teacher added but registration email failed to send.",
           });
         }
-        navigate("/teacher");
+        const rosterPath = authUser?.role === Role.Teacher ? "/teachers/roster" : "/teacher";
+        navigate(rosterPath);
       } else {
         const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || "Failed to add teacher. Please try again.");
         toast({

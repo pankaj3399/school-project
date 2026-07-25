@@ -18,8 +18,10 @@ import Loading from "../Loading";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Modal from "./Modal";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
+import { useAuth } from "@/authContext";
+import { Role } from "@/enum";
 import {
   Select,
   SelectContent,
@@ -39,6 +41,11 @@ import { GRADE_OPTIONS } from "@/lib/types";
 
 export default function ViewTeachers() {
   const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isTeacherSpace = location.pathname.startsWith("/teachers") || user?.role === Role.Teacher;
+  const addTeacherPath = isTeacherSpace ? "/teachers/addteacher" : "/addteacher";
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
@@ -121,8 +128,6 @@ export default function ViewTeachers() {
       fetchRequestRef.current += 1;
     };
   }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection]);
-
-  const navigate = useNavigate();
 
   const handleDelete = async (id: string) => {
     try {
@@ -262,7 +267,7 @@ export default function ViewTeachers() {
           </Button>
           <Button
             className="bg-[#00a58c] hover:bg-[#00a58c]"
-            onClick={() => navigate("/addteacher")}
+            onClick={() => navigate(addTeacherPath)}
           >
             Add Teachers
           </Button>

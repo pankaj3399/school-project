@@ -119,6 +119,8 @@ export default function App() {
           <Route path="/print-report" element={<ProtectedRoute requiredTab="printReport"><Finalize /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute requiredTab="teachers"><Teachers /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute requiredTab="students"><ViewStudents /></ProtectedRoute>} />
+          <Route path="/teachers/roster" element={<ProtectedRoute requiredTab="teachers"><ViewTeachers /></ProtectedRoute>} />
+          <Route path="/teachers/addteacher" element={<ProtectedRoute requiredTab="teachers"><AddTeacher /></ProtectedRoute>} />
           <Route path="/teachers/students" element={<ProtectedRoute requiredTab="students"><ViewTeacherStudents /></ProtectedRoute>} />
           <Route path="/createform" element={<ProtectedRoute requiredTab="forms"><FormBuilder /></ProtectedRoute>} />
           <Route path="/editform/:id" element={<ProtectedRoute requiredTab="forms"><EditForm /></ProtectedRoute>} />
@@ -143,7 +145,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
-          <Route path="/teacher" element={<ProtectedRoute><ViewTeachers /></ProtectedRoute>} />
+          <Route path="/teacher" element={<ProtectedRoute requiredTab="teachers"><ViewTeachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
           <Route path="/school/points-history" element={<ProtectedRoute requiredTab="pointHistory"><DetailedHistory /></ProtectedRoute>} />
