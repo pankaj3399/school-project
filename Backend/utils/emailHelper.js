@@ -19,10 +19,19 @@ export const emailGenerator = async (
 ) => {
   let subject = '', body = '', attachment, attachmentName;
   const emailPromises = [];
+  const skipped = [];
 
   if (!student && !teacher && !schoolAdmin) {
-    return { subject, body, attachment, attachmentName };
+    return { total: 0, successful: 0, failed: 0, errors: [], skipped: ["No recipients available"] };
   }
+
+  // Recipient intent comes from the Form document in the DB (not the client).
+  const effectiveFlags = {
+    studentEmail: !!form.studentEmail,
+    teacherEmail: !!form.teacherEmail,
+    schoolAdminEmail: !!form.schoolAdminEmail,
+    parentEmail: !!form.parentEmail,
+  };
 
   // Get school timezone for consistent date formatting
   const schoolTimezone = school.timeZone || "UTC+0";
@@ -577,72 +586,75 @@ export const emailGenerator = async (
     }
   }
 
-  // Send email to teacher for all point-related form types (AwardPoints, AwardPointsIEP, DeductPoints, PointWithdraw)
-  // Teacher will receive email if:
-  // 1. Form has teacherEmail enabled OR it's a DeductPoints/PointWithdraw form (always notify)
-  // 2. Teacher has opted in to receive emails (recieveMails = true) OR is an Admin
-  // 3. Teacher's email is verified OR is an Admin
+  // Teacher email: respect form/override flags; Deduct/Withdraw always notify when possible
   const isTeacherAdmin = teacher?.role === Role.SchoolAdmin || teacher?.role === Role.Admin;
   const canSendToTeacher = isTeacherAdmin || (teacher?.recieveMails && teacher?.isEmailVerified);
+  const wantTeacherEmail =
+    effectiveFlags.teacherEmail ||
+    form.formType == FormType.DeductPoints ||
+    form.formType == FormType.PointWithdraw;
 
-
-
-
-  if (
-    (form.teacherEmail ||
-      form.formType == FormType.DeductPoints ||
-      form.formType == FormType.PointWithdraw ||
-      form.formType == FormType.AwardPoints ||
-      form.formType == FormType.AwardPointsIEP) &&
-    canSendToTeacher
-  ) {
-    queueEmail(teacher.email);
+  if (wantTeacherEmail) {
+    if (!teacher?.email) {
+      skipped.push("Teacher has no email on file");
+    } else if (!canSendToTeacher) {
+      skipped.push("Teacher email opted out or unverified");
+    } else {
+      queueEmail(teacher.email);
+    }
   }
 
-  const parentEmailRequired = form.parentEmail;
+  const parentEmailRequired = effectiveFlags.parentEmail;
   const parentEmailsVerified = (student.parentEmail && student.isParentOneEmailVerified) ||
                                (student.standard && student.isParentTwoEmailVerified);
   const shouldFallbackToStudent = parentEmailRequired && !parentEmailsVerified;
 
+  const wantStudentEmail =
+    effectiveFlags.studentEmail ||
+    form.formType == FormType.DeductPoints ||
+    form.formType == FormType.PointWithdraw ||
+    form.formType == FormType.Feedback ||
+    shouldFallbackToStudent;
 
-
-  if (
-    (form.studentEmail ||
-      form.formType == FormType.DeductPoints ||
-      form.formType == FormType.PointWithdraw ||
-      form.formType == FormType.Feedback ||
-      shouldFallbackToStudent) &&
-    student?.isStudentEmailVerified
-  ) {
-    queueEmail(student.email);
+  if (wantStudentEmail) {
+    if (!student?.email) {
+      skipped.push("Student has no email on file");
+    } else if (!student?.isStudentEmailVerified) {
+      skipped.push("Student email is unverified");
+    } else {
+      queueEmail(student.email);
+    }
   }
 
-
-
-  if (form.schoolAdminEmail && schoolAdmin?.email) {
-    queueEmail(schoolAdmin.email);
+  if (effectiveFlags.schoolAdminEmail) {
+    if (!schoolAdmin?.email) {
+      skipped.push("School admin has no email on file");
+    } else {
+      queueEmail(schoolAdmin.email);
+    }
   }
 
-
-
-  if (
-    form.parentEmail &&
-    student.parentEmail &&
-    student.sendNotifications &&
-    student.isParentOneEmailVerified
-  ) {
-    queueEmail(student.parentEmail);
-  }
-
-
-
-  if (
-    form.parentEmail &&
-    student.standard &&
-    student.sendNotifications &&
-    student.isParentTwoEmailVerified
-  ) {
-    queueEmail(student.standard);
+  if (effectiveFlags.parentEmail) {
+    let parentQueued = false;
+    if (
+      student.parentEmail &&
+      student.sendNotifications &&
+      student.isParentOneEmailVerified
+    ) {
+      queueEmail(student.parentEmail);
+      parentQueued = true;
+    }
+    if (
+      student.standard &&
+      student.sendNotifications &&
+      student.isParentTwoEmailVerified
+    ) {
+      queueEmail(student.standard);
+      parentQueued = true;
+    }
+    if (!parentQueued) {
+      skipped.push("Parent email unverified or notifications disabled");
+    }
   }
 
   const leadTeachers = Array.isArray(leadTeacher) ? leadTeacher : [leadTeacher];
@@ -650,20 +662,19 @@ export const emailGenerator = async (
     .filter((lt) => lt?.email)
     .forEach((lt) => queueEmail(lt.email));
 
-
   const results = await Promise.allSettled(emailPromises);
-  
+
   const summary = {
     total: results.length,
     successful: 0,
     failed: 0,
-    errors: []
+    errors: [],
+    skipped,
   };
 
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       summary.successful++;
-
     } else {
       summary.failed++;
       console.error(`[EMAIL GENERATOR] Email ${index + 1}/${results.length} failed:`, result.reason);
@@ -673,7 +684,6 @@ export const emailGenerator = async (
       });
     }
   });
-
 
   return summary;
 };

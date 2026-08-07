@@ -135,16 +135,25 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       const response = await promote(capturedSchoolId);
       if (isStale(capturedSchoolId)) return;
       if (response.error) {
-        toast({ title: "Promotion Failed", description: response.error, variant: "destructive" });
+        toast({ title: "Promotion Failed", description: String(response.error), variant: "destructive" });
       } else {
         const promotedCount = (response as any).promotedCount || (response as any).count || 0;
         setPromotionResult({ count: promotedCount });
         setActiveStep('finalize');
-        toast({ title: "Promotion Successful", description: "Students advanced to the next grade." });
+        toast({
+          title: "Promotion Successful",
+          description: promotedCount > 0
+            ? `${promotedCount} students advanced to the next grade.`
+            : "No eligible numeric grades were found to promote. Non-numeric grades (for example center labels) must be updated manually.",
+        });
       }
     } catch (error) {
       if (isStale(capturedSchoolId)) return;
-      toast({ title: "Error", description: "Promotion operation failed.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Promotion operation failed.",
+        variant: "destructive",
+      });
     } finally {
       if (!isStale(capturedSchoolId)) setIsProcessing(false);
     }
@@ -166,7 +175,9 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
           </div>
           <div>
             <CardTitle className="text-2xl font-bold text-neutral-900">Academic Lifecycle Manager</CardTitle>
-            <CardDescription className="text-neutral-600 text-sm font-medium">Phased annual maintenance and grade transition</CardDescription>
+            <CardDescription className="text-neutral-600 text-sm font-medium">
+              Year-end steps for Aug 1–Jul 31: Backup → optional Points Reset → Promote → Finish
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -208,9 +219,9 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                 <Download className="w-10 h-10" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 1: Data Preservation</h3>
+                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 1: Backup</h3>
                 <p className="text-neutral-500 leading-relaxed">
-                  Export a full-year snapshot (students, teachers, and points history) and your waiting list before starting the rollover.
+                  Export a full-year snapshot (students, teachers, and points history) and your waiting list before starting the rollover. Point History is all-time until you optionally reset points in the next step.
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3 pt-4">
@@ -258,9 +269,9 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                 <Eraser className="w-10 h-10" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 2: Point & History Reset</h3>
+                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 2: Optional Points Reset</h3>
                 <p className="text-neutral-500 leading-relaxed">
-                  Start the new year with a clean slate. This will reset all student point balances to zero and <span className="font-bold text-red-500">permanently delete</span> the previous year's history.
+                  Start the new year with a clean slate. This will reset all student point balances to zero and <span className="font-bold text-red-500">permanently delete</span> the previous year's history. You can skip this step if you want to keep history.
                 </p>
               </div>
 
@@ -293,9 +304,9 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                 <Rocket className="w-10 h-10" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 3: Seasonal Promotion</h3>
+                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Step 3: Promote Grades</h3>
                 <p className="text-neutral-500 leading-relaxed text-sm">
-                  Advance your roster to the next academic year. Select your preferred strategy for student and teacher records.
+                  Advance numeric grades (1–11 → next grade; 12 → Graduate). Non-numeric grades are left unchanged and must be adjusted manually.
                 </p>
               </div>
 
@@ -348,7 +359,7 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black text-neutral-900 tracking-tight">Transition Success</h3>
                   <p className="text-neutral-500 font-medium max-w-sm mx-auto">
-                    The annual lifecycle transition has been successfully applied to your school ecosystem.
+                    Students advanced where eligible. Adjust retained or failed students manually. Analytics tracks the new year from Aug 1.
                   </p>
                 </div>
                 

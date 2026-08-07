@@ -449,12 +449,13 @@ export const submitFormTeacher = async (req, res) => {
       });
     }
 
+    let emailNotification = { total: 0, successful: 0, failed: 0, skipped: [], errors: [] };
     if (school && teacher && submittedForStudent) {
       const leadTeacher = await Teacher.find({
         grade: submittedForStudent.grade,
         schoolId: teacher.schoolId,
       })
-      await emailGenerator(form, {
+      emailNotification = await emailGenerator(form, {
         points: totalPoints,
         submission: formSubmission,
         teacher: teacher,
@@ -462,14 +463,15 @@ export const submitFormTeacher = async (req, res) => {
         schoolAdmin: schoolAdmin,
         school: school,
         submittedAt: submittedAt,
-        leadTeacher: leadTeacher[0] ?? null
-      })
+        leadTeacher: leadTeacher[0] ?? null,
+      }) || emailNotification;
     }
 
 
     return res.status(200).json({
       message: "Form Submitted Successfully",
       formSubmission: formSubmission,
+      emailNotification,
     });
   } catch (error) {
     return res
@@ -480,7 +482,12 @@ export const submitFormTeacher = async (req, res) => {
 
 export const submitFormAdmin = async (req, res) => {
   const formId = req.params.formId;
-  const { submittedFor, answers, submittedAt, schoolId: bodySchoolId } = req.body;
+  const {
+    submittedFor,
+    answers,
+    submittedAt,
+    schoolId: bodySchoolId,
+  } = req.body;
   const { schoolId: querySchoolId } = req.query;
   
   try {
@@ -604,12 +611,13 @@ export const submitFormAdmin = async (req, res) => {
       });
     }
 
+    let emailNotification = { total: 0, successful: 0, failed: 0, skipped: [], errors: [] };
     if (school && submittedForStudent) {
       const leadTeacher = await Teacher.find({
         grade: submittedForStudent.grade,
         schoolId: schoolId,
       })
-      await emailGenerator(form, {
+      emailNotification = await emailGenerator(form, {
         points: totalPoints,
         submission: formSubmission,
         teacher: schoolAdmin,
@@ -617,14 +625,15 @@ export const submitFormAdmin = async (req, res) => {
         submittedAt: submittedAt,
         schoolAdmin: schoolAdmin,
         school: school,
-        leadTeacher: leadTeacher[0] ?? null
-      })
+        leadTeacher: leadTeacher[0] ?? null,
+      }) || emailNotification;
     }
 
 
     return res.status(200).json({
       message: "Form Submitted Successfully",
       formSubmission: formSubmission,
+      emailNotification,
     });
   } catch (error) {
     return res

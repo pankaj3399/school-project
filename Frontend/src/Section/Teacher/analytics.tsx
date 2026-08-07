@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import EducationYearChart from "../School/component/new-chart";
 import StudentRanks from "../School/component/StudentRanks";
 import TeacherRanks from "../School/component/TeacherRanks";
+import { AcademicYearBanner } from "@/components/AcademicYearBanner";
 
 const StatCard = ({
     title,
@@ -152,6 +153,8 @@ const Analytics = () => {
                     Performance overview across tokens, feedback, oopsies, and withdrawals.
                 </p>
             </div>
+
+            <AcademicYearBanner variant="analytics" />
 
             {requiresSchoolSelection && (
                 <div className="p-8 text-center text-neutral-500 bg-white rounded-2xl border-2 border-gray-300">

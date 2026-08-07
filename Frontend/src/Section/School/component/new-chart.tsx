@@ -177,6 +177,14 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
       </div>
 
       <div id="graph" data-student-id={studentId || ''} data-render-token={renderToken} className="w-full h-[450px] bg-white">
+        {chartData.length > 0 && chartData.every((d: any) => !(d.tokens || d.oopsies || d.withdrawals)) ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-6 gap-2">
+            <p className="text-neutral-600 font-medium">No activity in this period yet.</p>
+            <p className="text-sm text-neutral-400 max-w-md">
+              The academic year chart starts August 1. Earlier entries still appear in Point History.
+            </p>
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height="100%"   >
           <ComposedChart
             data={chartData}
@@ -245,6 +253,7 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
             />
           </ComposedChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

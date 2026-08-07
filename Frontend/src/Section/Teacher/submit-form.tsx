@@ -6,6 +6,7 @@ import { getFormById, submitFormTeacher } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { useAuth } from '@/authContext'
 import { timezoneManager } from '@/lib/luxon'
+import { formatEmailNotificationToast } from '@/lib/academicYear'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +51,17 @@ export default function FormPage( ) {
     setIsSubmitting(true)
     const token = localStorage.getItem('token')
     
-    if(token){
+    if(!token){
+      toast({
+        title: 'Error submitting form',
+        description: 'Please login to submit form',
+        variant: 'destructive',
+      })
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
       // Convert the submission date to UTC for database storage
       let convertedSubmittedAt = submittedAt;
       if(!isManuallySet && user?.schoolId?.timeZone){
@@ -61,49 +72,38 @@ export default function FormPage( ) {
       const response = await submitFormTeacher(answers, submittedFor, isSendEmail, params?.id || "", token, convertedSubmittedAt)
       if(!response.error){
         toast({ 
-          title: 'Form submitted successfully',
-          description: 'Form submitted successfully',
+          title: 'Points saved',
+          description: formatEmailNotificationToast(response.emailNotification),
         })
         setIsSubmitting(false)
         navigate(-1)
-        return // Exit early on success
-      }else{
-        // Extract error message from the error object
-        const errorMessage = response.error?.response?.data?.message || 
-                            response.error?.message || 
-                            'An error occurred while submitting the form';
- 
-        // Check if it's an email verification error
-        if (errorMessage.toLowerCase().includes('unverified') || 
-            errorMessage.toLowerCase().includes('email must be verified') ||
-            errorMessage.toLowerCase().includes('cannot perform operations')) {
-          setEmailVerificationError('Sorry, the student\'s email is not verified. Please make sure the email is verified and try to use the form again.')
-          setShowEmailVerificationDialog(true)
-          setIsSubmitting(false)
-          return // Exit early - don't navigate, keep form open
-        } else {
-          // Show other errors as toast notifications
-          toast({
-            title: 'Error submitting form',
-            description: errorMessage,
-            variant: 'destructive',
-          })
-        }
+        return
       }
-    } else {
+
+      const errorMessage = response.error?.response?.data?.message || 
+                          response.error?.message || 
+                          'An error occurred while submitting the form';
+
+      if (errorMessage.toLowerCase().includes('unverified') || 
+          errorMessage.toLowerCase().includes('email must be verified') ||
+          errorMessage.toLowerCase().includes('cannot perform operations')) {
+        setEmailVerificationError('Sorry, the student\'s email is not verified. Please make sure the email is verified and try to use the form again.')
+        setShowEmailVerificationDialog(true)
+      } else {
+        toast({
+          title: 'Error submitting form',
+          description: errorMessage,
+          variant: 'destructive',
+        })
+      }
+      setIsSubmitting(false)
+    } catch (err: any) {
       toast({
         title: 'Error submitting form',
-        description: 'Please login to submit form',
+        description: err?.message || 'An error occurred while submitting the form',
+        variant: 'destructive',
       })
-    }
-    
-    // Only reach here for non-email-verification errors
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsSubmitting(false)
-    if(user?.type == "Lead"){
-      navigate('/teachers/viewforms')
-    }else{
-      navigate('/teachers/managepoints')
+      setIsSubmitting(false)
     }
   }
 

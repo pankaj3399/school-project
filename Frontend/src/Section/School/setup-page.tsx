@@ -11,6 +11,8 @@ import { DangerZone } from "./components/setup/DangerZone";
 import { Sparkles, School } from "lucide-react";
 import { GRADE_OPTIONS, FormType } from "@/lib/types";
 import * as XLSX from "xlsx";
+import { AcademicYearBanner } from "@/components/AcademicYearBanner";
+import { getAcademicYearLabel } from "@/lib/academicYear";
 
 const SetupPage = () => {
   const [loading, setLoading] = useState(true);
@@ -266,7 +268,11 @@ const SetupPage = () => {
       toast({ title: "Export Complete", description: "Your waitlist has been downloaded as an XLSX file." });
       return true;
     } catch (error) {
-      toast({ title: "Export Failed", description: "Could not retrieve waitlist data.", variant: "destructive" });
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Could not retrieve waitlist data.",
+        variant: "destructive",
+      });
       return false;
     } finally {
       if (url) window.URL.revokeObjectURL(url);
@@ -288,7 +294,9 @@ const SetupPage = () => {
             <h1 className="text-5xl font-black text-neutral-900 tracking-tight leading-tight">
               {school?.name || "Lifecycle Management"}
             </h1>
-            <p className="text-neutral-600 font-medium text-xl leading-relaxed max-w-xl">Perform year-end maintenance, promote students, and handle roster rollovers.</p>
+            <p className="text-neutral-600 font-medium text-xl leading-relaxed max-w-xl">
+              Academic year {getAcademicYearLabel()} (Aug 1–Jul 31). Back up data, optionally reset points, and promote grades.
+            </p>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -298,6 +306,9 @@ const SetupPage = () => {
       </div>
 
       <div className="container mx-auto px-8 max-w-5xl">
+        <div className="mb-8">
+          <AcademicYearBanner variant="setup" />
+        </div>
         {!school && isAdmin ? (
           <div className="py-20 flex flex-col items-center justify-center max-w-2xl mx-auto text-center space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="w-24 h-24 bg-teal-50 rounded-[2.5rem] flex items-center justify-center border-2 border-teal-100/50 shadow-2xl shadow-teal-100/20 rotate-3">

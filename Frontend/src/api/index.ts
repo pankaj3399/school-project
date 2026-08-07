@@ -384,7 +384,7 @@ export const getFormById = async (id: string, token: string) => {
 export const submitFormTeacher = async (
   data: AnswerType,
   submittedFor: string,
-  isSendEmail: {
+  _isSendEmail: {
     studentEmail: boolean;
     teacherEmail: boolean;
     schoolAdminEmail: boolean;
@@ -408,7 +408,6 @@ export const submitFormTeacher = async (
         answers,
         submittedFor,
         submittedAt,
-        ...isSendEmail,
       },
       {
         headers: {
@@ -433,7 +432,7 @@ export const submitFormTeacher = async (
 export const submitFormAdmin = async (
   data: AnswerType,
   submittedFor: string,
-  isSendEmail: {
+  _isSendEmail: {
     studentEmail: boolean;
     teacherEmail: boolean;
     schoolAdminEmail: boolean;
@@ -456,7 +455,6 @@ export const submitFormAdmin = async (
       {
         answers,
         submittedFor,
-        ...isSendEmail,
         submittedAt,
       },
       {
@@ -824,7 +822,7 @@ export const getAnalyticsData = async (data: { period: string; studentId?: strin
 export const promote = async (schoolId?: string) => {
   try {
     const token = getToken();
-    await axios.put(
+    const response = await axios.put(
       `${API_URL}/school/promote${schoolId ? `?schoolId=${schoolId}` : ''}`,
       {},
       {
@@ -834,7 +832,7 @@ export const promote = async (schoolId?: string) => {
         },
       },
     );
-    return { success: true };
+    return { success: true, ...response.data };
   } catch (error: any) {
     return { error: error?.response?.data?.message || error?.message || "Operation failed" };
   }

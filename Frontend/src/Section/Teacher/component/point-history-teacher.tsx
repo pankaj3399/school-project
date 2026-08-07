@@ -129,7 +129,10 @@ export default function ViewPointHistoryTeacher() {
     console.log("=== FILTERING POINT HISTORY ===");
     console.log("Selected student name:", studentName);
     console.log("Total point history:", pointHistory.length);
-    const filtered = pointHistory.filter(point => point.submittedForName === studentName);
+    // No student selected → show full list; selected → filter to that student
+    const filtered = studentName
+      ? pointHistory.filter(point => point.submittedForName === studentName)
+      : pointHistory;
     console.log("Filtered point history:", filtered.length);
     console.log("Filtered data:", filtered);
     setShowPointHistory(filtered);

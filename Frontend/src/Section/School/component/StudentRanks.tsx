@@ -119,6 +119,12 @@ const StudentRanks = ({ studentId, schoolId, period = "1W" }: { studentId: strin
                         </div>
                     </CardHeader>
                     <CardContent className="pt-6">
+                        {students.length === 0 ? (
+                            <div className="h-[300px] flex flex-col items-center justify-center text-center px-4 gap-1">
+                                <p className="text-sm font-medium text-neutral-600">No activity in this period yet.</p>
+                                <p className="text-xs text-neutral-400">Point History still shows earlier entries.</p>
+                            </div>
+                        ) : (
                         <div className="h-[300px] w-full overflow-y-auto">
                             <ResponsiveContainer width="100%" height={Math.max(300, students.length * 28)}>
                                 <BarChart
@@ -150,6 +156,7 @@ const StudentRanks = ({ studentId, schoolId, period = "1W" }: { studentId: strin
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
