@@ -14,8 +14,8 @@ export function AcademicYearBanner({ variant = "analytics" }: AcademicYearBanner
       <p className="font-semibold">Academic year is Aug 1–Jul 31. You are in {yearLabel}.</p>
       <p className="mt-1 text-blue-800/80">
         {variant === "setup"
-          ? "Point History keeps all-time rows until an optional points reset. Use the wizard below to back up, optionally reset points, and promote grades."
-          : "Charts for the current year can look empty early after August 1. Earlier activity is still in Point History. Use Setup → Academic Lifecycle Manager for year-end backup, optional reset, and promote."}
+          ? "Download an Excel backup, then use Year-End Student Wipe to delete student, parent, and points data. Teachers and school settings stay."
+          : "Charts for the current year can look empty early after August 1. Earlier activity is still in Point History. Use Setup → Year-End Student Wipe after the report window."}
       </p>
     </div>
   );

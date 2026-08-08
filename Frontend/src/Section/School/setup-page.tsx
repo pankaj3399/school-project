@@ -8,6 +8,7 @@ import { useAuth } from "@/authContext";
 import { Role } from "@/enum";
 import { LifecycleManager } from "./components/setup/LifecycleManager";
 import { DangerZone } from "./components/setup/DangerZone";
+import { YearEndWipe } from "./components/setup/YearEndWipe";
 import { Sparkles, School } from "lucide-react";
 import { GRADE_OPTIONS, FormType } from "@/lib/types";
 import * as XLSX from "xlsx";
@@ -295,7 +296,7 @@ const SetupPage = () => {
               {school?.name || "Lifecycle Management"}
             </h1>
             <p className="text-neutral-600 font-medium text-xl leading-relaxed max-w-xl">
-              Academic year {getAcademicYearLabel()} (Aug 1–Jul 31). Back up data, optionally reset points, and promote grades.
+              Academic year {getAcademicYearLabel()} (Aug 1–Jul 31). Download an Excel backup, then wipe student and parent data for a fresh year.
             </p>
           </div>
           
@@ -329,6 +330,17 @@ const SetupPage = () => {
                 {/* Primary Activity: Lifecycle Wizard */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 px-2">
+                    <div className="h-6 w-1 bg-teal-500 rounded-full" />
+                    <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Year-End Student Wipe</h2>
+                  </div>
+                  <YearEndWipe
+                    schoolId={selectedSchoolId || school?._id || ""}
+                    onDownloadSnapshot={handleDownloadSnapshot}
+                  />
+                </div>
+
+                <div className="space-y-6 opacity-80">
+                  <div className="flex items-center gap-3 px-2">
                     <div className="h-6 w-1 bg-blue-500 rounded-full" />
                     <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Annual Transition Wizard</h2>
                   </div>
@@ -336,6 +348,7 @@ const SetupPage = () => {
                     schoolId={selectedSchoolId || school?._id || ""}
                     onDownloadWaitlist={handleDownloadWaitlist}
                     onDownloadSnapshot={handleDownloadSnapshot}
+                    disabled
                   />
                 </div>
 
@@ -344,12 +357,12 @@ const SetupPage = () => {
                   <div className="space-y-1.5 px-2">
                     <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Advanced Maintenance</h2>
                     <p className="text-sm text-neutral-500 font-medium leading-relaxed max-w-2xl">
-                      Use these utilities for manual roster clearing and irreversible administrative resets. Ensure you have a backup before proceeding.
+                      Older reset tools are temporarily disabled. Use Year-End Student Wipe above.
                     </p>
                   </div>
                   
                   <div className="grid grid-cols-1 gap-6">
-                    <DangerZone onResetRoster={handleOpenResetModal} />
+                    <DangerZone onResetRoster={handleOpenResetModal} disabled />
                   </div>
                 </div>
 

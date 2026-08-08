@@ -958,6 +958,25 @@ export const resetStudentRoster = async (schoolId?: string) => {
   }
 };
 
+export const yearEndStudentWipe = async (schoolId?: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.put(
+      `${API_URL}/schoolAdmin/yearEndStudentWipe${schoolId ? `?schoolId=${schoolId}` : ''}`,
+      {},
+      {
+        headers: {
+          token,
+          schoolId,
+        },
+      },
+    );
+    return { success: true, ...response.data };
+  } catch (error: any) {
+    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+  }
+};
+
 export const resetPoints = async (schoolId?: string) => {
   try {
     const token = getToken();

@@ -11,6 +11,7 @@ interface LifecycleManagerProps {
   schoolId: string;
   onDownloadWaitlist: () => Promise<boolean>;
   onDownloadSnapshot: () => Promise<boolean>;
+  disabled?: boolean;
 }
 
 type Step = 'export' | 'reset-points' | 'promote' | 'finalize';
@@ -18,7 +19,8 @@ type Step = 'export' | 'reset-points' | 'promote' | 'finalize';
 export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
   schoolId,
   onDownloadWaitlist,
-  onDownloadSnapshot
+  onDownloadSnapshot,
+  disabled = false,
 }) => {
   const [activeStep, setActiveStep] = useState<Step>('export');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -176,13 +178,15 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
           <div>
             <CardTitle className="text-2xl font-bold text-neutral-900">Academic Lifecycle Manager</CardTitle>
             <CardDescription className="text-neutral-600 text-sm font-medium">
-              Year-end steps for Aug 1–Jul 31: Backup → optional Points Reset → Promote → Finish
+              {disabled
+                ? "Temporarily disabled. Use Year-End Student Wipe above."
+                : "Year-end steps for Aug 1–Jul 31: Backup → optional Points Reset → Promote → Finish"}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="p-8">
+      <CardContent className={`p-8 ${disabled ? "pointer-events-none opacity-50" : ""}`}>
         <div className="flex items-center justify-between mb-12 relative px-4">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-neutral-100 -translate-y-1/2 z-0" />
           {steps.map((step, idx) => {

@@ -4,9 +4,10 @@ import { Trash2, AlertTriangle, ShieldAlert, Lock } from "lucide-react";
 
 interface DangerZoneProps {
   onResetRoster: () => void;
+  disabled?: boolean;
 }
 
-export function DangerZone({ onResetRoster }: DangerZoneProps) {
+export function DangerZone({ onResetRoster, disabled = false }: DangerZoneProps) {
   return (
     <Card className="border-none shadow-2xl bg-white/40 backdrop-blur-md rounded-3xl overflow-hidden ring-1 ring-red-200">
       <CardHeader className="bg-red-50/50 border-b border-red-100 p-8">
@@ -16,7 +17,9 @@ export function DangerZone({ onResetRoster }: DangerZoneProps) {
           </div>
           <div>
             <CardTitle className="text-xl font-black text-red-900 uppercase tracking-tight">System Danger Zone</CardTitle>
-            <CardDescription className="text-red-700/70 font-medium">Critical school-wide resets and data removal</CardDescription>
+            <CardDescription className="text-red-700/70 font-medium">
+              {disabled ? "Temporarily disabled. Use Year-End Student Wipe instead." : "Critical school-wide resets and data removal"}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -38,7 +41,9 @@ export function DangerZone({ onResetRoster }: DangerZoneProps) {
           
           <Button 
             onClick={onResetRoster}
-            className="w-full md:w-auto h-14 px-8 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs gap-3 shadow-lg shadow-red-600/20 active:scale-[0.98] transition-all"
+            disabled={disabled}
+            title={disabled ? "Temporarily disabled. Use Year-End Student Wipe instead." : undefined}
+            className="w-full md:w-auto h-14 px-8 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs gap-3 shadow-lg shadow-red-600/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
             <Lock className="w-4 h-4" />
             Reset Students

@@ -17,6 +17,11 @@ import Otp from "../models/Otp.js";
 import { sendEmail } from "../services/mail.js";
 import ParentVerification from "../models/ParentVerification.js";
 import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
+import Feedback from "../models/Feedback.js";
+import Form from "../models/Form.js";
+import FormSubmissions from "../models/FormSubmissions.js";
+import PendingTokens from "../models/PendingTokens.js";
+import { TermsAcceptance } from "../models/TermsOfUse.js";
 
 const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
@@ -799,6 +804,116 @@ export const resetStudentRoster = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Server Error", error: error.message });
+  }
+};
+
+const assertSchoolWipeAccess = async (req, schoolId) => {
+  if (req.user.role === Role.Admin || req.user.role === Role.SchoolAdmin) {
+    const admin = await Admin.findById(req.user.id);
+    if (admin && admin.role !== Role.SystemAdmin) {
+      if (req.user.role === Role.SchoolAdmin && admin.schoolId?.toString() !== schoolId?.toString()) {
+        const error = new Error("Access denied. You can only wipe student data for your assigned school.");
+        error.status = 403;
+        throw error;
+      }
+      if (req.user.role === Role.Admin && admin.districtId) {
+        const school = await School.findById(schoolId);
+        if (!school || school.districtId.toString() !== admin.districtId.toString()) {
+          const error = new Error("Access denied. School is outside your district.");
+          error.status = 403;
+          throw error;
+        }
+      }
+    }
+  }
+};
+
+export const yearEndStudentWipe = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const schoolId = await getSchoolIdFromUser(req);
+    if (schoolId == null || schoolId === "") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        message: "Cannot run year-end wipe: valid school context required.",
+      });
+    }
+
+    await assertSchoolWipeAccess(req, schoolId);
+
+    const schoolObjectId = mongoose.Types.ObjectId.isValid(schoolId)
+      ? new mongoose.Types.ObjectId(schoolId)
+      : schoolId;
+
+    const students = await Student.find({ schoolId: schoolObjectId }).select("_id").session(session).lean();
+    const studentIds = students.map((s) => s._id);
+    const forms = await Form.find({ schoolId: schoolObjectId }).select("_id").session(session).lean();
+    const formIds = forms.map((f) => f._id);
+
+    const points = await PointsHistory.deleteMany({ schoolId: schoolObjectId }).session(session);
+    const feedbacks = await Feedback.deleteMany({ schoolId: schoolObjectId }).session(session);
+    const pendingTokens = studentIds.length
+      ? await PendingTokens.deleteMany({ studentId: { $in: studentIds } }).session(session)
+      : { deletedCount: 0 };
+    const submissions = formIds.length
+      ? await FormSubmissions.deleteMany({ formId: { $in: formIds } }).session(session)
+      : { deletedCount: 0 };
+    const parentVerifications = await ParentVerification.deleteMany({ schoolId: schoolObjectId }).session(session);
+
+    const guardianUsers = await Admin.find({
+      schoolId: schoolObjectId,
+      role: Role.Guardian,
+    }).select("_id").session(session).lean();
+    const guardianIds = guardianUsers.map((u) => u._id);
+    const termsUserIds = [...studentIds, ...guardianIds];
+    const termsAcceptances = termsUserIds.length
+      ? await TermsAcceptance.deleteMany({
+          $or: [
+            { schoolId: schoolObjectId, userType: { $in: ["Student", "Guardian"] } },
+            { userId: { $in: termsUserIds }, userType: { $in: ["Student", "Guardian"] } },
+          ],
+        }).session(session)
+      : { deletedCount: 0 };
+    const guardians = guardianIds.length
+      ? await Admin.deleteMany({ _id: { $in: guardianIds }, role: Role.Guardian }).session(session)
+      : { deletedCount: 0 };
+    const studentDocs = await Student.deleteMany({ schoolId: schoolObjectId }).session(session);
+
+    await School.updateOne(
+      { _id: schoolObjectId },
+      { $set: { students: [] } }
+    ).session(session);
+    await Form.updateMany(
+      { schoolId: schoolObjectId },
+      { $set: { preSelectedStudents: [] } }
+    ).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: "Year-end student data wipe completed. Teachers and school settings were kept.",
+      deleted: {
+        students: studentDocs.deletedCount || 0,
+        pointHistories: points.deletedCount || 0,
+        feedbacks: feedbacks.deletedCount || 0,
+        formSubmissions: submissions.deletedCount || 0,
+        pendingTokens: pendingTokens.deletedCount || 0,
+        parentVerifications: parentVerifications.deletedCount || 0,
+        guardianAccounts: guardians.deletedCount || 0,
+        termsAcceptances: termsAcceptances.deletedCount || 0,
+      },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(error.status || 500).json({
+      message: error.message || "Server Error",
+      error: error.message,
+    });
   }
 };
 
