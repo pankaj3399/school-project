@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { GRADE_OPTIONS } from "@/lib/types"
+import { isApiError } from "@/lib/errors"
 
 const STUDENT_GRADES = GRADE_OPTIONS
 
@@ -199,6 +200,15 @@ export default function ViewStudents() {
         userId: studentId,
         isStudent
       });
+
+      if (isApiError(data)) {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Verification Email Status",

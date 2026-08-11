@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { promote, resetPoints, verifyCurrentUserPassword } from "@/api";
 import { cn } from "@/lib/utils";
 import { PasswordConfirmModal } from "@/Section/SystemAdmin/schools/PasswordConfirmModal";
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 
 interface LifecycleManagerProps {
   schoolId: string;
@@ -66,13 +66,13 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
     try {
       const verify = await verifyCurrentUserPassword(password);
       if (isStale(capturedSchoolId)) return;
-      if (verify?.error) {
+      if (isApiError(verify)) {
         throw new Error(getErrorMessage(verify, "Password verification failed. Please try again."));
       }
 
       const response = await resetPoints(capturedSchoolId);
       if (isStale(capturedSchoolId)) return;
-      if (response.error) {
+      if (isApiError(response)) {
         const message = getErrorMessage(response, "Reset failed");
         toast({ title: "Reset Failed", description: message, variant: "destructive" });
         throw new Error(message);

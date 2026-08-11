@@ -133,6 +133,16 @@ function isGenericTransportMessage(message: string): boolean {
   );
 }
 
+/** Type guard for API helper results that return `{ error: string }` on failure. */
+export function isApiError(result: unknown): result is { error: string } {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "error" in result &&
+    (result as { error: unknown }).error != null
+  );
+}
+
 /** Convenience for API catch blocks: always returns `{ error: string }`. */
 export function toApiError(
   error: unknown,

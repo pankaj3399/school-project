@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {  useSearchParams } from "react-router-dom";
 import Header from "./Header";
 import { useToast } from "@/hooks/use-toast";
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 import { sendConfirmation } from "@/api"; // You'll need to add this API function
 
 export default function VerifyEmail() {
@@ -44,13 +44,13 @@ export default function VerifyEmail() {
     try {
       const response = await sendConfirmation(verificationData);
 
-      if (response.error) {
+      if (isApiError(response)) {
         toast({
           title: "Verification Failed",
           description: getErrorMessage(response, "Please try again"),
           variant: "destructive",
         });
-      } else if (response.success) {
+      } else {
         toast({
           title: "Email Verified Successfully",
           description: "You can now close this window",

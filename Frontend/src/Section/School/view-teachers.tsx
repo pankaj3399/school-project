@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { GRADE_OPTIONS } from "@/lib/types";
+import { isApiError } from "@/lib/errors";
 
 export default function ViewTeachers() {
   const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
@@ -193,7 +194,7 @@ export default function ViewTeachers() {
         userId: teacherId,
       });
 
-      if (data.error) {
+      if (isApiError(data)) {
         toast({
           title: "Error",
           description: data.error,

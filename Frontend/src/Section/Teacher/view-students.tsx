@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Modal from "@/Section/School/Modal"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
+import { isApiError } from "@/lib/errors"
 
 export default function ViewTeacherStudents() {
   const [students, setStudents] = useState<any[]>([])
@@ -122,6 +123,15 @@ export default function ViewTeacherStudents() {
         userId: studentId,
         isStudent
       });
+
+      if (isApiError(data)) {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
       
       toast({
         title: "Verification Email Status",

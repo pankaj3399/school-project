@@ -71,7 +71,7 @@ export default function AddStudentTeacher() {
         email : email,
         parentEmail : parentEmail,
         sendNotifications : sendNotifications,
-        grade:formData.grade        
+        grade: String(formData.grade ?? ""),
       }
 
 

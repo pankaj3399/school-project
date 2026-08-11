@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { verifyCurrentUserPassword, resetStudentRoster } from "@/api";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 
 interface PasswordConfirmationModalProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, 
       // First verify the password
       const verifyResponse = await verifyCurrentUserPassword(password);
       
-      if (verifyResponse.error) {
+      if (isApiError(verifyResponse)) {
         const message = getErrorMessage(verifyResponse, "Invalid password. Please try again.");
         setError(message);
         toast({
@@ -48,7 +48,7 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, 
       // If password is verified, proceed with resetting student data
       const resetResponse = await resetStudentRoster(schoolId);
       
-      if (resetResponse.error) {
+      if (isApiError(resetResponse)) {
         const message = getErrorMessage(resetResponse, "Failed to reset student data. Please try again.");
         setError(message);
         toast({

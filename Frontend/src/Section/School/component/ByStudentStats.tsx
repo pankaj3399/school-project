@@ -63,7 +63,7 @@ const ByStudentStats = () => {
             </Select>
         </div>
         {studentId && (
-            <BarChartCard title={`Points Received by ${studentName}`} data={pointReceivedPerMonth} color='#4CAF50' />
+            <BarChartCard label={`Points Received by ${studentName}`} data={pointReceivedPerMonth} />
         )}
     </div>
   )

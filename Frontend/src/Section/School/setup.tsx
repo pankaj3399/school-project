@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
-import { getErrorMessage } from "@/lib/errors";
+import { getErrorMessage, isApiError } from "@/lib/errors";
 
 interface TeacherData {
   // firstName: string;
@@ -199,7 +199,7 @@ export default function Setup() {
         teachers: formattedTeachers,
         ...(isMultiSchoolUser && selectedSchoolId ? { schoolId: selectedSchoolId } : {}),
       });
-      if (response.error || !response.success) {
+      if (isApiError(response)) {
         throw new Error(getErrorMessage(response, "Failed to submit teacher roster"));
       }
 

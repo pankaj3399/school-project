@@ -13,6 +13,7 @@ import * as XLSX from 'xlsx';
 import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { studentRoster } from "@/api";
+import { isApiError } from "@/lib/errors";
 
 interface StudentData {
   firstName: string;
@@ -201,7 +202,7 @@ export default function SetupStudents() {
       }));
 
       const response = await studentRoster({ students: formattedStudents });
-      if (!response.success) throw new Error('Failed to submit roster');
+      if (isApiError(response)) throw new Error('Failed to submit roster');
 
       toast({
         title: "Success",
