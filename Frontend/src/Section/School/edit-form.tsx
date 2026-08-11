@@ -12,10 +12,12 @@ import { Label } from '@/components/ui/label'
 import { Switch } from "@/components/ui/switch"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { X } from 'lucide-react'
+import { useSchoolSelectionGuard } from '@/hooks/useSchoolSelectionGuard'
 
 export default function EditForm() {
   const params = useParams();
   const navigate = useNavigate()
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
   const [form, setForm] = useState<any | null>(null)
   const [formName, setFormName] = useState('')
   const [formType, setFormType] = useState<FormType>(FormType.AwardPoints)
@@ -98,15 +100,28 @@ export default function EditForm() {
 
   useEffect(() => {
     getForm(params?.id || "")
-    // Fetch students for IEP pre-selection
+  }, [])
+
+  // Fetch students for IEP pre-selection — scoped to the selected school
+  useEffect(() => {
     const fetchStudents = async () => {
+      if (requiresSchoolSelection) {
+        setStudents([])
+        setFilteredStudents([])
+        return
+      }
+
       const token = localStorage.getItem('token')
-      const resStudents = await getStudents(token ?? "")
-      setStudents(resStudents.students)
-      setFilteredStudents(resStudents.students)
+      const effectiveSchoolId = isMultiSchoolUser
+        ? (selectedSchoolId || undefined)
+        : undefined
+      const resStudents = await getStudents(token ?? "", effectiveSchoolId)
+      const schoolStudents = resStudents.students || []
+      setStudents(schoolStudents)
+      setFilteredStudents(schoolStudents)
     }
     fetchStudents()
-  }, [])
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection])
 
   useEffect(() => {
     if (!form) return
@@ -127,6 +142,14 @@ export default function EditForm() {
   }, [form])
 
   const grades = GRADE_OPTIONS
+
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to edit a form.
+      </div>
+    )
+  }
 
   if (!form) {
     return <div>Loading...</div>

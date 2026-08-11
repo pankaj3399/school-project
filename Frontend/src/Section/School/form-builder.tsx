@@ -12,9 +12,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { X } from 'lucide-react'
+import { useSchoolSelectionGuard } from '@/hooks/useSchoolSelectionGuard'
 
 
 export default function FormBuilder() {
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
   const [formName, setFormName] = useState('')
   const [formType, setFormType] = useState<FormType>(FormType.AwardPoints)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -39,16 +41,28 @@ export default function FormBuilder() {
     setSelectedStudents([])
   }
 
-  // Fetch students for IEP pre-selection
+  // Fetch students for IEP pre-selection — scoped to the selected school
   useEffect(() => {
     const fetchStudents = async () => {
+      if (requiresSchoolSelection) {
+        setStudents([])
+        setFilteredStudents([])
+        setSelectedStudents([])
+        return
+      }
+
       const token = localStorage.getItem('token')
-      const resStudents = await getStudents(token ?? "")
-      setStudents(resStudents.students)
-      setFilteredStudents(resStudents.students)
+      const effectiveSchoolId = isMultiSchoolUser
+        ? (selectedSchoolId || undefined)
+        : undefined
+      const resStudents = await getStudents(token ?? "", effectiveSchoolId)
+      const schoolStudents = resStudents.students || []
+      setStudents(schoolStudents)
+      setFilteredStudents(schoolStudents)
+      setSelectedStudents([])
     }
     fetchStudents()
-  }, [])
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection])
 
   useEffect(() => {
     switch (formType) {
@@ -182,6 +196,13 @@ export default function FormBuilder() {
 
   const grades = GRADE_OPTIONS
 
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to create a form.
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl p-4 space-y-6 bg-white rounded-lg shadow-md mx-auto mt-12">

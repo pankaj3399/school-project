@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard"
 
 const periods = [
     {label: '1W', value: '1 WEEK'},
@@ -81,6 +82,7 @@ const getFormMetadata = (formType: string | null) => {
 
 const DetailedHistory = () => {
     const [searchParams] = useSearchParams();
+    const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
     const [period, setPeriod] = useState<string>('1W');
     const [data, setData] = useState<any[]>([]);
     const [historyData, setHistoryData] = useState<any[]>([]);
@@ -92,16 +94,27 @@ const DetailedHistory = () => {
     const [studentName, setStudentName] = useState<string>("");
     const [loading, setLoading] = useState(false);
 
-    // Fetch students on component mount
+    // Fetch students on component mount — scoped to the selected school
     useEffect(() => {
         const fetchStudents = async () => {
             try {
+                if (requiresSchoolSelection) {
+                    setStudents([]);
+                    setFilteredStudents([]);
+                    setStudentId("");
+                    setStudentName("");
+                    return;
+                }
                 const token = localStorage.getItem('token');
                 if (!token) return;
-                
-                const resTeacher = await getStudents(token);
-                setStudents(resTeacher.students || []);
-                setFilteredStudents(resTeacher.students || []);
+
+                const effectiveSchoolId = isMultiSchoolUser
+                    ? (selectedSchoolId || undefined)
+                    : undefined;
+                const resTeacher = await getStudents(token, effectiveSchoolId);
+                const schoolStudents = resTeacher.students || [];
+                setStudents(schoolStudents);
+                setFilteredStudents(schoolStudents);
             } catch (error) {
                 console.error('Error fetching students:', error);
                 setStudents([]);
@@ -109,7 +122,7 @@ const DetailedHistory = () => {
             }
         };
         fetchStudents();
-    }, []);
+    }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection]);
 
     // Set metadata based on form type
     useEffect(() => {

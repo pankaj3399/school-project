@@ -68,10 +68,14 @@ export const getAllSchools = async (req, res) => {
           }
         }
       } else if (req.user.role === Role.SystemAdmin) {
-        console.log("System admin - all students (optionally filtered by schoolId query)");
+        console.log("System admin - students filtered by schoolId");
         const { schoolId } = req.query;
-        const filter = schoolId ? { schoolId } : {};
-        students = await Student.find(filter);
+        if (!schoolId) {
+          return res.status(400).json({
+            message: "schoolId is required. Select a school to view its students.",
+          });
+        }
+        students = await Student.find({ schoolId });
       } else if (req.user.role === Role.Admin) {
         console.log("Admin - district scoped students");
         const adminUser = await Admin.findById(req.user.id);
@@ -81,17 +85,15 @@ export const getAllSchools = async (req, res) => {
         }
 
         const { schoolId } = req.query;
-        if (schoolId) {
-          // Verify school belongs to admin's district
-          const school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId });
-          if (!school) return res.status(403).json({ message: "Access denied to school outside your district." });
-          students = await Student.find({ schoolId });
-        } else {
-          // Find all schools in admin's district
-          const schools = await School.find({ districtId: adminUser.districtId });
-          const schoolIds = schools.map(s => s._id);
-          students = await Student.find({ schoolId: { $in: schoolIds } });
+        if (!schoolId) {
+          return res.status(400).json({
+            message: "schoolId is required. Select a school to view its students.",
+          });
         }
+        // Verify school belongs to admin's district
+        const school = await School.findOne({ _id: schoolId, districtId: adminUser.districtId });
+        if (!school) return res.status(403).json({ message: "Access denied to school outside your district." });
+        students = await Student.find({ schoolId });
       }
       console.log("Students found:", students.length);
       return res.status(200).json({ students });

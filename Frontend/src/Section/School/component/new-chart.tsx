@@ -1,5 +1,6 @@
 import { getHistoryOfYear, getHistoryOfYearByStudent } from '@/api';
 import { FormType } from '@/lib/types';
+import { formatAcademicMonthLabel, getAcademicYearLabel } from '@/lib/academicYear';
 import { useEffect, useState } from 'react';
 import {
   ComposedChart,
@@ -171,7 +172,7 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
             onClick={() => setSelectedMonth(month)}
             className={`m-1 px-3 py-1 text-sm rounded ${selectedMonth === month ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
           >
-            {month}
+            {formatAcademicMonthLabel(month)}
           </button>
         ))}
       </div>
@@ -199,8 +200,19 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey={selectedMonth ? "day" : "month"}
-              label={{ value: selectedMonth ? `${selectedMonth}` : `${new Date().getFullYear()}`, position: 'insideBottom', offset: -5, fontSize: 22, dy: 12 }}
-              tick={{ fontSize: 18 }}
+              tickFormatter={(value) =>
+                selectedMonth ? String(value) : formatAcademicMonthLabel(String(value))
+              }
+              label={{
+                value: selectedMonth
+                  ? formatAcademicMonthLabel(selectedMonth)
+                  : getAcademicYearLabel(),
+                position: 'insideBottom',
+                offset: -5,
+                fontSize: 22,
+                dy: 12
+              }}
+              tick={{ fontSize: 14 }}
             />
             <YAxis tick={{ fontSize: 16 }} />
             <Tooltip />

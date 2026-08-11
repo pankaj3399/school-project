@@ -10,6 +10,7 @@ import {
     Tooltip,
     Legend,
 } from "chart.js";
+import { formatMonthYearLabel } from "@/lib/academicYear";
 
 // Register Chart.js components
 ChartJS.register(BarElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
@@ -20,11 +21,9 @@ interface BarChartCardProps {
 }
 
 const BarChartCard: React.FC<BarChartCardProps> = ({ data, label }) => {
+    const year = new Date().getFullYear();
     const chartData = {
-        labels: [
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ],
+        labels: Array.from({ length: 12 }, (_, i) => formatMonthYearLabel(i + 1, year)),
         datasets: [
             {
                 label: label,

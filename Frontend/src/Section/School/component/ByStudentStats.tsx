@@ -3,8 +3,10 @@ import { getPointsReceivedPerMonth, getStudents } from '@/api'
 import { useEffect, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import BarChartCard from './bar-chart'
+import { useSchoolSelectionGuard } from '@/hooks/useSchoolSelectionGuard'
 
 const ByStudentStats = () => {
+    const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
     const [pointReceivedPerMonth, setpointReceivedPerMonth] = useState<number[]>([])
     const [students, setStudents] = useState<any[]>([])
     const [studentId, setStudentId] = useState<string>("")
@@ -12,12 +14,21 @@ const ByStudentStats = () => {
 
     useEffect(()=>{
         const fetchData = async () => {
+            if (requiresSchoolSelection) {
+                setStudents([])
+                setStudentId("")
+                setStudentName("")
+                return
+            }
             const token = localStorage.getItem('token')
-            const resTeacher = await getStudents(token ?? "")
-            setStudents(resTeacher.students)
+            const effectiveSchoolId = isMultiSchoolUser
+                ? (selectedSchoolId || undefined)
+                : undefined
+            const resTeacher = await getStudents(token ?? "", effectiveSchoolId)
+            setStudents(resTeacher.students || [])
         }
         fetchData()
-    },[])
+    },[selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection])
 
     useEffect(()=>{
       const fetchData = async () => {
@@ -50,8 +61,10 @@ const ByStudentStats = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        <BarChartCard label={`Total Points Received (${studentName})`} data={pointReceivedPerMonth} />
+        </div>
+        {studentId && (
+            <BarChartCard title={`Points Received by ${studentName}`} data={pointReceivedPerMonth} color='#4CAF50' />
+        )}
     </div>
   )
 }

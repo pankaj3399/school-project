@@ -28,7 +28,7 @@ export const CANADA_PROVINCES = [
     { name: "Yukon", abbreviation: "YT" }
 ] as const;
 
-export const COUNTRIES = ["USA", "Canada", "Other"] as const;
+export const COUNTRIES = ["USA", "Canada", "Outside the USA"] as const;
 
 export type USState = typeof US_STATES[number];
 export type USStateName = USState['name'];

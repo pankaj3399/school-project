@@ -22,6 +22,7 @@ import {
 import { getSystemDashboardStats, getStateAnalytics, getDistrictAnalytics } from '@/api';
 import { useAuth } from '@/authContext';
 import { getAuthToken } from '@/lib/auth';
+import { formatMonthYearLabel } from '@/lib/academicYear';
 
 type StateAnalyticsRow = {
     state: string;
@@ -222,7 +223,7 @@ export default function SystemAdminDashboard() {
             return academicOrder.indexOf(a.month) - academicOrder.indexOf(b.month);
         }).map(item => ({
             ...item,
-            monthName: selectedYear === 'All Year' ? `${monthNames[item.month - 1]} ${getAcademicYear(item)}` : monthNames[item.month - 1],
+            monthName: formatMonthYearLabel(item.month, item.year),
             academicYear: getAcademicYear(item)
         }));
     }, [chartData, selectedYear, selectedMonth]);

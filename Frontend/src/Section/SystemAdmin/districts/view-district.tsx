@@ -73,7 +73,9 @@ export default function ViewDistrict() {
                             city: response.district.city || '',
                             zipCode: response.district.zipCode || '',
                             state: response.district.state || '',
-                            country: response.district.country || 'USA',
+                            country: response.district.country === 'Other'
+                                ? 'Outside the USA'
+                                : (response.district.country || 'USA'),
                             subscriptionStatus: response.district.subscriptionStatus
                         });
                         setLogoPreview(response.district.logo || null);

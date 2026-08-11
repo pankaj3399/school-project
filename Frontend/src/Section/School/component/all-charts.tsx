@@ -12,9 +12,11 @@ import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getStudents } from "@/api";
 import StudenRanks from "./StudentRanks";
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
 
 
 const AllCharts = () => {
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
   const [studentName, setStudentName] = useState<string>("");
   const [studentId, setStudentId] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
@@ -23,13 +25,24 @@ const AllCharts = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
+      if (requiresSchoolSelection) {
+        setStudents([]);
+        setfilteredStudents([]);
+        setStudentId("");
+        setStudentName("");
+        return;
+      }
       const token = localStorage.getItem("token");
-      const resTeacher = await getStudents(token ?? "");
-      setStudents(resTeacher.students);
-      setfilteredStudents(resTeacher.students);
+      const effectiveSchoolId = isMultiSchoolUser
+        ? (selectedSchoolId || undefined)
+        : undefined;
+      const resTeacher = await getStudents(token ?? "", effectiveSchoolId);
+      const schoolStudents = resTeacher.students || [];
+      setStudents(schoolStudents);
+      setfilteredStudents(schoolStudents);
     };
     fetchStudents();
-  }, []);
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection]);
 
 
   return (
