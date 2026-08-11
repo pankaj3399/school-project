@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/errors"
 //f
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -51,9 +52,7 @@ const [grade, setGrade] = useState<string>("K")
       )
           if(response.error){
       // Extract error message from the error object
-      const errorMessage = response.error?.response?.data?.message || 
-                          response.error?.message || 
-                          'An error occurred while editing the form';
+      const errorMessage = getErrorMessage(response, 'An error occurred while editing the form');
       toast({
         title: 'Error',
         description: errorMessage,

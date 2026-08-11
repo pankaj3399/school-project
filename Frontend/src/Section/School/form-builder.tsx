@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/errors"
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -147,6 +148,15 @@ export default function FormBuilder() {
       return;
     }
 
+    if (isMultiSchoolUser && !selectedSchoolId) {
+      toast({
+        title: 'Error',
+        description: 'Select a school before creating a form',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     const response = await createForm(
       {
         formName,
@@ -155,15 +165,13 @@ export default function FormBuilder() {
         isSpecial,
         grade: isSpecial ? null : grade,
         ...(formType === FormType.AwardPointsIEP && { preSelectedStudents: selectedStudents }),
+        ...(isMultiSchoolUser && selectedSchoolId ? { schoolId: selectedSchoolId } : {}),
         ...isSendEmail
       },
       localStorage.getItem('token')!
     )
     if (response.error) {
-      // Extract error message from the error object
-      const errorMessage = response.error?.response?.data?.message ||
-        response.error?.message ||
-        'An error occurred while creating the form';
+      const errorMessage = getErrorMessage(response, 'An error occurred while creating the form');
       toast({
         title: 'Error',
         description: errorMessage,

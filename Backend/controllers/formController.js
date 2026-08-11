@@ -182,26 +182,61 @@ export const createForm = async (req, res) => {
     parentEmail = false,
     isSpecial,
     grade,
-    preSelectedStudents = []
+    preSelectedStudents = [],
+    schoolId: bodySchoolId
   } = req.body;
   const id = req.user.id;
-  let school;
+  const requestedSchoolId = bodySchoolId || req.query.schoolId || req.get("schoolId");
 
   try {
-    if (req.user.role == Role.Teacher) {
-      const user = await Teacher.findById(id)
+    let school;
+
+    if (req.user.role === Role.Teacher) {
+      const user = await Teacher.findById(id);
       if (!user) {
         return res.status(404).json({ message: "Teacher not found" });
       }
-      school = await School.findById(user.schoolId)
+      school = await School.findById(user.schoolId);
       if (!school) {
         return res.status(404).json({ message: "School not found for teacher" });
       }
-    } else {
-      school = await School.findOne({ createdBy: id });
+    } else if (req.user.role === Role.SchoolAdmin) {
+      const admin = await Admin.findById(id);
+      if (!admin) {
+        return res.status(404).json({ message: "School admin not found" });
+      }
+      if (admin.schoolId) {
+        school = await School.findById(admin.schoolId);
+      } else {
+        // Legacy fallback for older accounts that created the school themselves
+        school = await School.findOne({ createdBy: id });
+      }
       if (!school) {
         return res.status(404).json({ message: "School not found for admin" });
       }
+    } else if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+      if (!requestedSchoolId) {
+        return res.status(400).json({
+          message: "schoolId is required. Select a school before creating a form.",
+        });
+      }
+
+      school = await School.findById(requestedSchoolId);
+      if (!school) {
+        return res.status(404).json({ message: "School not found" });
+      }
+
+      if (req.user.role === Role.Admin) {
+        const admin = await Admin.findById(id);
+        if (!admin || !admin.districtId) {
+          return res.status(403).json({ message: "Admin is not assigned to a district." });
+        }
+        if (school.districtId?.toString() !== admin.districtId.toString()) {
+          return res.status(403).json({ message: "Access denied to school outside your district." });
+        }
+      }
+    } else {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
     const form = await Form.create({

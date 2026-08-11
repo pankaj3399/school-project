@@ -9,6 +9,7 @@ import Header from "./Header";
 import { useToast } from "@/hooks/use-toast";
 import { useOtpContext } from "./OtpContextProvider";
 import { sendOtp } from "@/api";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function ForgotPassword() {
     const {updateEmail, updateRole, updateOtpId} = useOtpContext()
@@ -65,8 +66,8 @@ export default function ForgotPassword() {
       }
       if (res.error) {
         toast({
-          title: res.error.message,
-          description: res.error?.response?.data?.message || "Please Try Again!!",
+          title: "Error",
+          description: getErrorMessage(res, "Please try again."),
           variant: "destructive",
         });
         
@@ -82,7 +83,7 @@ export default function ForgotPassword() {
       console.error("OTP error:", err);
       toast({
         title: "Unexpected Error",
-        description: "An error occurred. Please try again.",
+        description: getErrorMessage(err, "An error occurred. Please try again."),
         variant: "destructive",
       });
     } finally {

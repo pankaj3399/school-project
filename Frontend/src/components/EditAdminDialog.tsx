@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateAdmin } from '@/api';
+import { getErrorMessage } from "@/lib/errors"
 import {
   Select,
   SelectContent,
@@ -63,7 +64,7 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
       });
 
       if (response.error) {
-        throw new Error(typeof response.error === 'string' ? response.error : response.error.message);
+        throw new Error(getErrorMessage(response));
       }
       
       toast({
@@ -75,7 +76,7 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to update administrator.",
+        description: getErrorMessage(error, "Failed to update administrator."),
         variant: "destructive",
       });
     } finally {

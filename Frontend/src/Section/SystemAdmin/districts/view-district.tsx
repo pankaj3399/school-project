@@ -24,6 +24,7 @@ import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
+import { getErrorMessage } from "@/lib/errors"
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -80,7 +81,7 @@ export default function ViewDistrict() {
                         });
                         setLogoPreview(response.district.logo || null);
                     } else if (response.error) {
-                        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to load district data.");
+                        const errorMsg = getErrorMessage(response, "Failed to load district data.");
                         toast({
                             title: "Error",
                             description: errorMsg,
@@ -139,7 +140,7 @@ export default function ViewDistrict() {
                     description: response.message || "District settings updated successfully.",
                 });
             } else {
-                const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || "Update failed");
+                const errorMsg = getErrorMessage(response, "Update failed");
                 throw new Error(errorMsg);
             }
         } catch (error: any) {
@@ -168,7 +169,7 @@ export default function ViewDistrict() {
             const token = localStorage.getItem('token') || '';
             const response = await deleteSchool(schoolId, token);
             if (response.error) {
-                const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to delete school");
+                const errorMsg = getErrorMessage(response, "Failed to delete school");
                 toast({
                     title: "Error",
                     description: errorMsg,
@@ -221,7 +222,7 @@ export default function ViewDistrict() {
         } catch (error: any) {
             toast({
                 title: "Error",
-                description: error.message || "An error occurred while resending the invitation.",
+                description: getErrorMessage(error, "An error occurred while resending the invitation."),
                 variant: "destructive"
             });
         } finally {

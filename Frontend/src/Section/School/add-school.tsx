@@ -14,6 +14,7 @@ import AllCharts from "./component/all-charts";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { TIMEZONE_OPTIONS } from "@/lib/luxon";
 import { validateSchoolLocation } from "@/lib/schoolLocationValidator";
+import { getErrorMessage } from "@/lib/errors"
 
 const STATE_OPTIONS = [
   'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC',
@@ -229,7 +230,7 @@ export default function SchoolPage() {
         setIsEditing(false);
         navigate("/analytics");
       } else {
-        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to process the request. Please try again.");
+        const errorMsg = getErrorMessage(response, "Failed to process the request. Please try again.");
         toast({
           title: "Error",
           description: errorMsg,

@@ -12,6 +12,7 @@ import { GRADE_OPTIONS } from "@/lib/types";
 import { useSchool } from "@/context/SchoolContext";
 import { useAuth } from "@/authContext";
 import { Role } from "@/enum";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function AddTeacher() {
   const [formData, setFormData] = useState({
@@ -100,7 +101,7 @@ export default function AddTeacher() {
         const rosterPath = authUser?.role === Role.Teacher ? "/teachers/roster" : "/teacher";
         navigate(rosterPath);
       } else {
-        const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || "Failed to add teacher. Please try again.");
+        const errorMsg = getErrorMessage(response, "Failed to add teacher. Please try again.");
         toast({
           title: "Error",
           description: errorMsg,

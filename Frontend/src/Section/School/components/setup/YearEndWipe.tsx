@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Eraser, FileSpreadsheet } from "lucide-rea
 import { useToast } from "@/hooks/use-toast";
 import { verifyCurrentUserPassword, yearEndStudentWipe } from "@/api";
 import { PasswordConfirmModal } from "@/Section/SystemAdmin/schools/PasswordConfirmModal";
+import { getErrorMessage } from "@/lib/errors"
 
 interface YearEndWipeProps {
   schoolId: string;
@@ -77,17 +78,13 @@ export const YearEndWipe: React.FC<YearEndWipeProps> = ({
       const verify = await verifyCurrentUserPassword(password);
       if (isStale(capturedSchoolId)) return;
       if (verify?.error) {
-        const message =
-          typeof verify.error === "string"
-            ? verify.error
-            : (verify.error as any)?.message || "Password verification failed. Please try again.";
-        throw new Error(message);
+        throw new Error(getErrorMessage(verify, "Password verification failed. Please try again."));
       }
 
       const response = await yearEndStudentWipe(capturedSchoolId);
       if (isStale(capturedSchoolId)) return;
       if (response.error) {
-        throw new Error(String(response.error));
+        throw new Error(getErrorMessage(response, "Year-end wipe failed"));
       }
 
       const deleted = (response as any).deleted || {};

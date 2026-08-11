@@ -12,6 +12,7 @@ import { CheckCircle2, ChevronRight, FileText } from "lucide-react";
 import { PasswordField } from "@/components/PasswordField";
 import { validatePassword } from "@/lib/password";
 import TermsPage from "@/components/TermsPage";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function CompleteGuardianRegistration() {
   const [searchParams] = useSearchParams();
@@ -122,9 +123,7 @@ export default function CompleteGuardianRegistration() {
 
       if (result.error) {
         const errorMessage =
-          typeof result.error === "string"
-            ? result.error
-            : result.error?.message || result.message || "Registration failed.";
+          getErrorMessage(result, "Registration failed.");
         toast({
           title: "Registration Failed",
           description: errorMessage,

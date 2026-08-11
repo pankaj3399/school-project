@@ -23,6 +23,7 @@ import { getSystemDashboardStats, getStateAnalytics, getDistrictAnalytics } from
 import { useAuth } from '@/authContext';
 import { getAuthToken } from '@/lib/auth';
 import { formatMonthYearLabel } from '@/lib/academicYear';
+import { getErrorMessage } from '@/lib/errors';
 
 type StateAnalyticsRow = {
     state: string;
@@ -141,7 +142,7 @@ export default function SystemAdminDashboard() {
                         setStateError(null);
                     } else if (geo.error) {
                         setStateAnalytics([]);
-                        setStateError(typeof geo.error === 'string' ? geo.error : 'Could not load state analytics');
+                        setStateError(getErrorMessage(geo, 'Could not load state analytics'));
                     } else {
                         setStateAnalytics([]);
                         setStateError('Could not load state analytics');
@@ -151,7 +152,7 @@ export default function SystemAdminDashboard() {
                         setDistrictError(null);
                     } else if (distComp.error) {
                         setDistrictAnalytics([]);
-                        setDistrictError(typeof distComp.error === 'string' ? distComp.error : 'Could not load district analytics');
+                        setDistrictError(getErrorMessage(distComp, 'Could not load district analytics'));
                     } else {
                         setDistrictAnalytics([]);
                         setDistrictError('Could not load district analytics');

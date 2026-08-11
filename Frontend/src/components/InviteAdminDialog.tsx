@@ -22,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { inviteAdmin } from '@/api';
 import { Role, type RoleType } from '@/enum';
+import { getErrorMessage } from "@/lib/errors"
 
 interface InviteAdminDialogProps {
   districtId: string | undefined;
@@ -80,7 +81,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
       });
 
       if (response.error) {
-        const errorMsg = typeof response.error === 'string' ? response.error : (response.error.message || "Failed to send invitation.");
+        const errorMsg = getErrorMessage(response, "Failed to send invitation.");
         throw new Error(errorMsg);
       }
       
@@ -99,7 +100,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "An error occurred while sending the invitation.",
+        description: getErrorMessage(error, "An error occurred while sending the invitation."),
         variant: "destructive",
       });
     } finally {

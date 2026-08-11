@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/errors"
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -124,9 +125,7 @@ export default function FormBuilderTeacher() {
     )
     if (response.error) {
       // Extract error message from the error object
-      const errorMessage = response.error?.response?.data?.message ||
-        response.error?.message ||
-        'An error occurred while creating the form';
+      const errorMessage = getErrorMessage(response, 'An error occurred while creating the form');
       toast({
         title: 'Error',
         description: errorMessage,

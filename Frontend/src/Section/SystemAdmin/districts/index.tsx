@@ -37,6 +37,7 @@ import { useAuth } from '@/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
 import Modal from '@/Section/School/Modal';
+import { getErrorMessage } from "@/lib/errors"
 
 interface District {
     _id: string;
@@ -73,10 +74,10 @@ export default function DistrictsList() {
             if (data.error) {
                 toast({
                     title: "Error",
-                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to fetch districts"),
+                    description: getErrorMessage(data, "Failed to fetch districts"),
                     variant: "destructive"
                 });
-                setError(typeof data.error === 'string' ? data.error : (data.error.message || "Failed to fetch districts"));
+                setError(getErrorMessage(data, "Failed to fetch districts"));
             } else {
                 setDistricts(data.districts || []);
             }
@@ -111,7 +112,7 @@ export default function DistrictsList() {
             if (data.error) {
                 toast({
                     title: "Error",
-                    description: typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete district"),
+                    description: getErrorMessage(data, "Failed to delete district"),
                     variant: "destructive"
                 });
             } else {

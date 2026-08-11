@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/authContext"; // Import useAuth hook
 import { changePassword } from '@/api';
+import { getErrorMessage } from "@/lib/errors";
 
 const FirstLogin = () => {
   const { user } = useAuth(); // Get user data from auth hook
@@ -92,7 +93,7 @@ const FirstLogin = () => {
       if(response.error) {
         toast({
           title: "Error",
-          description: `${response.error.message ?? "Something went wrong"}`,
+          description: getErrorMessage(response, "Something went wrong"),
           variant: "destructive",
         });
         return;

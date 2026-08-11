@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { promote, resetPoints, verifyCurrentUserPassword } from "@/api";
 import { cn } from "@/lib/utils";
 import { PasswordConfirmModal } from "@/Section/SystemAdmin/schools/PasswordConfirmModal";
+import { getErrorMessage } from "@/lib/errors"
 
 interface LifecycleManagerProps {
   schoolId: string;
@@ -66,20 +67,15 @@ export const LifecycleManager: React.FC<LifecycleManagerProps> = ({
       const verify = await verifyCurrentUserPassword(password);
       if (isStale(capturedSchoolId)) return;
       if (verify?.error) {
-        if (verify.error instanceof Error) {
-          throw verify.error;
-        }
-        const message = typeof verify.error === 'string'
-          ? verify.error
-          : (verify.error as any)?.message || "Password verification failed. Please try again.";
-        throw new Error(message);
+        throw new Error(getErrorMessage(verify, "Password verification failed. Please try again."));
       }
 
       const response = await resetPoints(capturedSchoolId);
       if (isStale(capturedSchoolId)) return;
       if (response.error) {
-        toast({ title: "Reset Failed", description: response.error, variant: "destructive" });
-        throw new Error(response.error);
+        const message = getErrorMessage(response, "Reset failed");
+        toast({ title: "Reset Failed", description: message, variant: "destructive" });
+        throw new Error(message);
       }
       toast({ title: "Points Cleared", description: "All student points and history have been reset." });
       setShowResetPasswordModal(false);

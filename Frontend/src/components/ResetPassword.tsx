@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { resetPassword } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { useOtpContext } from './OtpContextProvider'
+import { getErrorMessage } from '@/lib/errors'
 
 
 
@@ -65,8 +66,8 @@ export  const ResetPassword = ()=> {
         })
         if (res.error) {
           toast({
-            title: "Error in reseting",
-            description: "Something went wrong!",
+            title: "Error in resetting",
+            description: getErrorMessage(res, "Something went wrong!"),
             variant: "destructive"
           })
         } else {
@@ -76,7 +77,7 @@ export  const ResetPassword = ()=> {
         console.error("Reset error:", error)
         toast({
           title: "Reset failed",
-          description: "Something went wrong. Please try again.",
+          description: getErrorMessage(error, "Something went wrong. Please try again."),
           variant: "destructive"
         })
       } finally {

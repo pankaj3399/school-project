@@ -12,6 +12,7 @@ import Loading from "../Loading";
 import TermsPage from "@/components/TermsPage";
 import { PasswordField } from "@/components/PasswordField";
 import { validatePassword } from "@/lib/password";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
@@ -131,7 +132,7 @@ export default function CompleteAdminRegistration() {
         });
         navigate("/signin");
       } else {
-        const errorMsg = typeof data.error === 'string' ? data.error : (data.error?.message || data.message || "Registration failed.");
+        const errorMsg = getErrorMessage(data, "Registration failed.");
         toast({
           title: "Registration Failed",
           description: errorMsg,

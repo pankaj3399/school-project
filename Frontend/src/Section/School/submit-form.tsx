@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/errors"
 import { useState } from 'react'
 import { FormSubmission } from '@/Section/Teacher/component/form-submit'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -80,9 +81,7 @@ export default function FormPageAdmin( ) {
         return
       }
 
-      const errorMessage = response.error?.response?.data?.message || 
-                          response.error?.message || 
-                          'An error occurred while submitting the form';
+      const errorMessage = getErrorMessage(response, 'An error occurred while submitting the form');
 
       if (errorMessage.toLowerCase().includes('unverified') || 
           errorMessage.toLowerCase().includes('email must be verified') ||
@@ -100,7 +99,7 @@ export default function FormPageAdmin( ) {
     } catch (err: any) {
       toast({
         title: 'Error submitting form',
-        description: err?.message || 'An error occurred while submitting the form',
+        description: getErrorMessage(err, 'An error occurred while submitting the form'),
         variant: 'destructive',
       })
       setIsSubmitting(false)

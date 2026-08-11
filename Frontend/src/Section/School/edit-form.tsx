@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/errors"
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, FormType, GRADE_OPTIONS, Question } from '@/lib/types'
@@ -58,9 +59,7 @@ export default function EditForm() {
     )
     if (response.error) {
       // Extract error message from the error object
-      const errorMessage = response.error?.response?.data?.message ||
-        response.error?.message ||
-        'An error occurred while editing the form';
+      const errorMessage = getErrorMessage(response, 'An error occurred while editing the form');
       toast({
         title: 'Error',
         description: errorMessage,

@@ -7,6 +7,7 @@ import Header from "./Header";
 import { useToast } from "@/hooks/use-toast";
 import { verifyOtp } from "@/api";
 import { useOtpContext } from "./OtpContextProvider";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function OtpVerificationPage() {
     const {role, email, updateOtpId} = useOtpContext()
@@ -55,8 +56,8 @@ export default function OtpVerificationPage() {
       });
       if (res.error) {
         toast({
-          title: res.error.message,
-          description: res.error?.response?.data?.message || "Please Try Again!!",
+          title: "Error",
+          description: getErrorMessage(res, "Please try again."),
           variant: "destructive",
         });
         
@@ -74,7 +75,7 @@ export default function OtpVerificationPage() {
       console.error("OTP error:", err);
       toast({
         title: "Unexpected Error",
-        description: "An error occurred. Please try again.",
+        description: getErrorMessage(err, "An error occurred. Please try again."),
         variant: "destructive",
       });
     } finally {

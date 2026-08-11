@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { verifyCurrentUserPassword, resetStudentRoster } from "@/api";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { getErrorMessage } from "@/lib/errors"
 
 interface PasswordConfirmationModalProps {
   isOpen: boolean;
@@ -34,10 +35,11 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, 
       const verifyResponse = await verifyCurrentUserPassword(password);
       
       if (verifyResponse.error) {
-        setError("Invalid password. Please try again.");
+        const message = getErrorMessage(verifyResponse, "Invalid password. Please try again.");
+        setError(message);
         toast({
           title: "Error",
-          description: "Invalid password. Please try again.",
+          description: message,
           variant: "destructive",
         });
         return;
@@ -47,9 +49,11 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, 
       const resetResponse = await resetStudentRoster(schoolId);
       
       if (resetResponse.error) {
+        const message = getErrorMessage(resetResponse, "Failed to reset student data. Please try again.");
+        setError(message);
         toast({
           title: "Error",
-          description: "Failed to reset student data. Please try again.",
+          description: message,
           variant: "destructive",
         });
         return;
@@ -63,10 +67,11 @@ export default function PasswordConfirmationModal({ isOpen, onClose, onSuccess, 
       onSuccess();
       onClose();
     } catch (error) {
-      setError("An error occurred. Please try again.");
+      const message = getErrorMessage(error, "An error occurred. Please try again.");
+      setError(message);
       toast({
         title: "Error",
-        description: "An error occurred. Please try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {

@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/errors"
 import React, { useEffect, useState, useRef, useCallback, ReactNode } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { getCurrrentSchool, getStats, getDistricts, updateSchool } from '@/api'
@@ -155,7 +156,7 @@ const ViewSchool = () => {
 
             const response = await updateSchool(id!, data, token)
             
-            if (response.error) throw new Error(typeof response.error === 'string' ? response.error : response.error.message)
+            if (response.error) throw new Error(getErrorMessage(response))
             
             toast({
                 title: "Success",
@@ -215,7 +216,7 @@ const ViewSchool = () => {
         } catch (error: any) {
             toast({
                 title: "Error",
-                description: error.message || "An error occurred while resending the invitation.",
+                description: getErrorMessage(error, "An error occurred while resending the invitation."),
                 variant: "destructive"
             });
         } finally {

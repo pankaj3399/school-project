@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
 import { PasswordConfirmModal } from './PasswordConfirmModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getErrorMessage } from "@/lib/errors"
 
 interface SchoolData {
     _id: string;
@@ -122,7 +123,7 @@ export default function SchoolsList() {
             
             const data = await deleteSchool(id, token, password);
             if (data.error) {
-                const message = typeof data.error === 'string' ? data.error : (data.error.message || "Failed to delete school");
+                const message = getErrorMessage(data, "Failed to delete school");
                 toast({
                     title: "Error",
                     description: message,

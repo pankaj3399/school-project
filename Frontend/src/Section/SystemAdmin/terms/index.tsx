@@ -14,6 +14,7 @@ import {
 import { getCurrentTerms, updateTerms } from '@/api';
 import { useAuth } from '@/authContext';
 import { getAuthToken } from '@/lib/auth';
+import { getErrorMessage } from "@/lib/errors"
 
 interface TermsData {
     title: string;
@@ -75,7 +76,7 @@ export default function TermsManagement() {
             if (!response.error) {
                 setMessage({ type: 'success', text: 'Terms updated successfully' });
             } else {
-                const errorMsg = response.error?.response?.data?.message || response.error?.message || 'Failed to update terms';
+                const errorMsg = getErrorMessage(response, 'Failed to update terms');
                 throw new Error(errorMsg);
             }
         } catch (error: any) {

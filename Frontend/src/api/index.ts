@@ -1,5 +1,6 @@
 import axios from "axios";
 import { AnswerType, AnswerTypeArray } from "@/lib/types";
+import { toApiError } from "@/lib/errors";
 
 export const API_URL = import.meta.env.VITE_VERCEL
   ? import.meta.env.VITE_API_URL
@@ -25,7 +26,7 @@ export const signUp = async (data: {
     const response = await axios.post(`${API_URL}/auth/signup`, data);
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -36,15 +37,7 @@ export const signIn = async (data: { email: string; password: string; role: stri
     const response = await axios.post(`${API_URL}/auth/login`, data);
     return response.data;
   } catch (error: any) {
-    // Pass through the specific error message from the backend
-    return {
-      error: {
-        message: error?.response?.data?.message || error?.message || "Login failed",
-        response: {
-          data: error?.response?.data
-        }
-      }
-    };
+    return toApiError(error, "Login failed");
   }
 };
 
@@ -53,15 +46,7 @@ export const requestLoginOtp = async ({ email, role, password }: { email: string
     const response = await axios.post(`${API_URL}/auth/request-login-otp`, { email, role, password });
     return response.data;
   } catch (error: any) {
-    // Pass through the specific error message from the backend
-    return {
-      error: {
-        message: error?.response?.data?.message || error?.message || "OTP request failed",
-        response: {
-          data: error?.response?.data
-        }
-      }
-    };
+    return toApiError(error, "OTP request failed");
   }
 };
 
@@ -70,7 +55,7 @@ export const verifyLoginOtp = async ({ otp, email, role }: { otp: string; email:
     const response = await axios.post(`${API_URL}/auth/verify-login-otp`, { otp, email, role });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -93,7 +78,7 @@ export const addStudent = async (
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -120,7 +105,7 @@ export const updateStudent = async (
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -136,7 +121,7 @@ export const deleteStudent = async (id: string, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -153,7 +138,7 @@ export const addSchool = async (data: FormData, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -175,7 +160,7 @@ export const addTeacher = async (
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const updateTeacher = async (
@@ -201,7 +186,7 @@ export const updateTeacher = async (
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const deleteTeacher = async (id: string, token: string) => {
@@ -216,7 +201,7 @@ export const deleteTeacher = async (id: string, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -229,7 +214,7 @@ export const getAllSchools = async (token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const getStudents = async (token: string, schoolId?: string) => {
@@ -242,7 +227,7 @@ export const getStudents = async (token: string, schoolId?: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -270,7 +255,7 @@ export const getCurrentUser = async (token?: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -291,7 +276,7 @@ export const updateSchool = async (
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -308,7 +293,7 @@ export const deleteSchool = async (id: string, token: string, password?: string)
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -322,7 +307,7 @@ export const getForms = async (token: string, schoolId?: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -337,7 +322,7 @@ export const createForm = async (data: any, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const editForm = async (id: string, data: any, token: string) => {
@@ -351,7 +336,7 @@ export const editForm = async (id: string, data: any, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -365,7 +350,7 @@ export const deleteForm = async (id: string, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -378,7 +363,7 @@ export const getFormById = async (id: string, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const submitFormTeacher = async (
@@ -418,14 +403,7 @@ export const submitFormTeacher = async (
     return response.data;
   } catch (error: any) {
     // Extract the actual error message from axios response
-    return {
-      error: {
-        message: error?.response?.data?.message || error?.message || "Form submission failed",
-        response: {
-          data: error?.response?.data
-        }
-      }
-    };
+    return toApiError(error, "Form submission failed");
   }
 };
 
@@ -466,14 +444,7 @@ export const submitFormAdmin = async (
     return response.data;
   } catch (error: any) {
     // Extract the actual error message from axios response
-    return {
-      error: {
-        message: error?.response?.data?.message || error?.message || "Form submission failed",
-        response: {
-          data: error?.response?.data
-        }
-      }
-    };
+    return toApiError(error, "Form submission failed");
   }
 };
 
@@ -485,7 +456,7 @@ export const getPointHistory = async (token: string, page: number, limit: number
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -497,7 +468,7 @@ export const getFilteredPointHistory = async (token: string, studentId: string, 
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -515,7 +486,7 @@ export const getStats = async (schoolId?: string, opts?: { studentId?: string; p
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const getMonthlyStats = async (schoolId?: string) => {
@@ -527,7 +498,7 @@ export const getMonthlyStats = async (schoolId?: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const getPointsGivenPerMonth = async () => {
@@ -539,7 +510,7 @@ export const getPointsGivenPerMonth = async () => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const getPointsGivenPerMonthPerTeacher = async (id: string) => {
@@ -551,7 +522,7 @@ export const getPointsGivenPerMonthPerTeacher = async (id: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -564,7 +535,7 @@ export const getPointsReceivedPerMonth = async (id: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const getFormsSubmittedPerMonth = async () => {
@@ -576,7 +547,7 @@ export const getFormsSubmittedPerMonth = async () => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -589,7 +560,7 @@ export const getFormsSubmittedPerMonthPerTeacher = async (id: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -604,7 +575,7 @@ export const getTeachers = async (schoolId?: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -622,7 +593,7 @@ export const sendOtp = async ({
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -643,7 +614,7 @@ export const verifyOtp = async ({
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -654,7 +625,7 @@ export const resetPassword = async (data: any) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -672,7 +643,7 @@ export const getHistoryOfYear = async (schoolId?: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -690,7 +661,7 @@ export const getHistoryOfYearByStudent = async (id: string, schoolId?: string) =
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -711,7 +682,7 @@ export const getReportDataStudentCombined = async (grades: string[], schoolId?: 
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -731,7 +702,7 @@ export const getReportDataStudent = async (id: string, grade: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -749,7 +720,7 @@ export const getHistoryOfCurrentWeek = async (data: any) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -770,7 +741,7 @@ export const getHistoryOfCurrentWeekByStudent = async (
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const getHistoryByTime = async (data: any) => {
@@ -796,7 +767,7 @@ export const getHistoryByTime = async (data: any) => {
     }
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -834,7 +805,7 @@ export const promote = async (schoolId?: string) => {
     );
     return { success: true, ...response.data };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -853,7 +824,7 @@ export const sendReport = async (data: FormData, email: string) => {
     );
     return { success: true, data: response.data };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const sendReportImage = async (data: FormData, email: string) => {
@@ -871,7 +842,7 @@ export const sendReportImage = async (data: FormData, email: string) => {
     );
     return { success: true, data: response.data };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -885,7 +856,7 @@ export const sendVerificationMail = async (data: any) => {
     });
     return { success: true, data: response.data };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -899,7 +870,7 @@ export const sendConfirmation = async (data: any) => {
     });
     return { success: true };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -917,7 +888,7 @@ export const sendResetOtp = async () => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -935,7 +906,7 @@ export const verifyResetOtp = async (otp: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -954,7 +925,7 @@ export const resetStudentRoster = async (schoolId?: string) => {
     );
     return { success: true };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -973,7 +944,7 @@ export const yearEndStudentWipe = async (schoolId?: string) => {
     );
     return { success: true, ...response.data };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -992,7 +963,7 @@ export const resetPoints = async (schoolId?: string) => {
     );
     return { success: true };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1015,7 +986,7 @@ export const teacherRoster = async (data: any) => {
     );
     return { success: true };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1039,7 +1010,7 @@ export const studentRoster = async (data: any) => {
     );
     return { success: true };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1053,7 +1024,7 @@ export const sendSupportEmail = async (data: any) => {
     });
     return { success: true };
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1088,8 +1059,7 @@ export async function completeTeacherRegistration({ token, name, password, subje
     });
     return response.data;
   } catch (error: any) {
-    const message = error?.response?.data?.message || error?.message || "Failed to complete registration";
-    return { error: message };
+    return toApiError(error, "Failed to complete registration");
   }
 }
 
@@ -1105,8 +1075,7 @@ export async function completeGuardianRegistration({ token, name, password, emai
     });
     return response.data;
   } catch (error: any) {
-    const message = error?.response?.data?.message || error?.message || "Failed to complete registration";
-    return { error: message };
+    return toApiError(error, "Failed to complete registration");
   }
 }
 
@@ -1115,7 +1084,7 @@ export const getCurrentTerms = async () => {
     const response = await axios.get(`${API_URL}/auth/get-terms`);
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 }
 
@@ -1133,7 +1102,7 @@ export const verifyCurrentUserPassword = async (password: string) => {
     );
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1145,8 +1114,7 @@ export const subscribeToWaitlist = async (email: string, confirmEmail: string) =
     });
     return response.data;
   } catch (error: any) {
-    const message = error?.response?.data?.message || "Something went wrong";
-    return { error: message };
+    return toApiError(error, "Something went wrong");
   }
 };
 
@@ -1158,7 +1126,7 @@ export const getSystemDashboardStats = async (token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1174,7 +1142,7 @@ export const getDistricts = async (token: string, params?: any) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1185,7 +1153,7 @@ export const createDistrict = async (data: any, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1196,7 +1164,7 @@ export const getDistrictById = async (id: string, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1207,7 +1175,7 @@ export const updateDistrict = async (id: string, data: any, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1218,7 +1186,7 @@ export const deleteDistrict = async (id: string, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1229,7 +1197,7 @@ export const assignDistrictAdmin = async (id: string, data: any, token: string) 
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1245,7 +1213,7 @@ export const bulkImportSchools = async (file: File, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1256,7 +1224,7 @@ export const getStateAnalytics = async (token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1267,7 +1235,7 @@ export const getDistrictAnalytics = async (token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1278,7 +1246,7 @@ export const cloneFromTemplate = async (data: { templateDistrictId: string; newD
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1289,7 +1257,7 @@ export const updateTerms = async (data: any, token: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const inviteAdmin = async (data: {
@@ -1311,7 +1279,7 @@ export const inviteAdmin = async (data: {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 export const completeAdminRegistration = async (data: { token: string; email: string; password: string; name?: string; termsAccepted?: boolean; termsVersion?: string }) => {
@@ -1319,7 +1287,7 @@ export const completeAdminRegistration = async (data: { token: string; email: st
     const response = await axios.post(`${API_URL}/system-admin/complete-registration`, data);
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1331,7 +1299,7 @@ export const updateAdmin = async (id: string, data: any) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };
 
@@ -1343,6 +1311,6 @@ export const reInviteAdmin = async (id: string) => {
     });
     return response.data;
   } catch (error: any) {
-    return { error: error?.response?.data?.message || error?.message || "Operation failed" };
+    return toApiError(error);
   }
 };

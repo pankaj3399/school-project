@@ -12,6 +12,7 @@ import { validatePassword } from "@/lib/password";
 import { completeTeacherRegistration, getCurrentTerms } from "@/api";
 import Loading from "../Loading";
 import TermsPage from "@/components/TermsPage";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function CompleteTeacherRegistration() {
   const [searchParams] = useSearchParams();
@@ -115,9 +116,7 @@ export default function CompleteTeacherRegistration() {
         navigate("/signin");
       } else {
         const errorMessage =
-          typeof data.error === "string"
-            ? data.error
-            : data.error?.message || data.message || "Registration failed.";
+          getErrorMessage(data, "Registration failed.");
         toast({
           title: "Error",
           description: errorMessage,

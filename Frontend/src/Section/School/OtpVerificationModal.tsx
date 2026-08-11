@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { sendResetOtp, verifyResetOtp } from "@/api";
 import { Loader2 } from "lucide-react";
+import { getErrorMessage } from "@/lib/errors"
 
 interface OtpVerificationModalProps {
   isOpen: boolean;
@@ -62,10 +63,10 @@ export default function OtpVerificationModal({ isOpen, onClose, onSuccess }: Otp
     try {
       const response = await verifyResetOtp(otp);
       if (response.error) {
-        setError(response.error?.response?.data?.message || "Invalid OTP");
+        setError(getErrorMessage(response, "Invalid OTP"));
         toast({
           title: "Error",
-          description: response.error?.response?.data?.message || "Invalid OTP",
+          description: getErrorMessage(response, "Invalid OTP"),
           variant: "destructive",
         });
         return;
@@ -78,10 +79,11 @@ export default function OtpVerificationModal({ isOpen, onClose, onSuccess }: Otp
       onSuccess();
       onClose();
     } catch (error) {
-      setError("An error occurred. Please try again.");
+      const message = getErrorMessage(error, "An error occurred. Please try again.");
+      setError(message);
       toast({
         title: "Error",
-        description: "An error occurred. Please try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {

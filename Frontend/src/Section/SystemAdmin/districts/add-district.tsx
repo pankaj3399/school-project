@@ -11,6 +11,7 @@ import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react
 import { getAuthToken } from '@/lib/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
+import { getErrorMessage } from "@/lib/errors"
 
 export default function AddDistrict() {
     const navigate = useNavigate();
@@ -123,7 +124,7 @@ export default function AddDistrict() {
                 navigate('/system-admin/districts');
             } else {
                 // Robust error message extraction
-                const errorMsg = typeof response.error === 'string' ? response.error : (response.error?.message || response.message || "Failed to create district");
+                const errorMsg = getErrorMessage(response, "Failed to create district");
                 toast({
                     title: "Registration Failed",
                     description: errorMsg,
@@ -133,7 +134,7 @@ export default function AddDistrict() {
         } catch (error: any) {
             toast({
                 title: "Error",
-                description: "A network error occurred. Please try again.",
+                description: getErrorMessage(error, "A network error occurred. Please try again."),
                 variant: "destructive"
             });
         } finally {

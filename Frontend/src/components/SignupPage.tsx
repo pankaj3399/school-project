@@ -10,6 +10,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/authContext'
+import { getErrorMessage } from '@/lib/errors'
 
 
 
@@ -73,8 +74,8 @@ export  const SignupForm = ()=> {
         const res = await signUp(formData)
         if (res.error) {
           toast({
-            title: "User not approved",
-            description: "Wait until you are approved!",
+            title: "Signup failed",
+            description: getErrorMessage(res, "Wait until you are approved!"),
             variant: "destructive"
           })
         } else {
@@ -87,7 +88,7 @@ export  const SignupForm = ()=> {
         console.error("Signup error:", error)
         toast({
           title: "Signup failed",
-          description: "Something went wrong. Please try again.",
+          description: getErrorMessage(error, "Something went wrong. Please try again."),
           variant: "destructive"
         })
       } finally {

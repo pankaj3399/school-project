@@ -22,6 +22,7 @@ import Header from "./Header";
 import { useAuth } from "@/authContext";
 import { signIn, requestLoginOtp } from "@/api";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errors"
 
 export default function LoginForm() {
   const { toast } = useToast();
@@ -102,9 +103,7 @@ export default function LoginForm() {
       });
 
       if (otpRes.error) {
-        const errorMessage = otpRes.error?.response?.data?.message ||
-          otpRes.error?.message ||
-          "Invalid credentials. Please try again.";
+        const errorMessage = getErrorMessage(otpRes, "Invalid credentials. Please try again.");
         toast({
           title: "Login Error",
           description: errorMessage,
@@ -129,9 +128,7 @@ export default function LoginForm() {
       });
     } catch (err: any) {
       console.error("Login error:", err);
-      const errorMessage = err?.response?.data?.message ||
-        err?.message ||
-        "An unexpected error occurred. Please try again.";
+      const errorMessage = getErrorMessage(err, "An unexpected error occurred. Please try again.");
       toast({
         title: "Login Error",
         description: errorMessage,
@@ -158,9 +155,7 @@ export default function LoginForm() {
       });
 
       if (res.error) {
-        const errorMessage = res.error?.response?.data?.message ||
-          res.error?.message ||
-          "Invalid or expired OTP";
+        const errorMessage = getErrorMessage(res, "Invalid or expired OTP");
         setOtpError(errorMessage);
         toast({
           title: "OTP Error",
@@ -177,9 +172,7 @@ export default function LoginForm() {
         navigateBasedOnRole(res.role || loginContext.role, loginContext.role);
       }
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message ||
-        err?.message ||
-        "An error occurred. Please try again.";
+      const errorMessage = getErrorMessage(err, "An error occurred. Please try again.");
       setOtpError(errorMessage);
       toast({
         title: "OTP Error",
