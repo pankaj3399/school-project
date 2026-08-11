@@ -10,7 +10,7 @@ import { addTeacher } from "../controllers/teacherController.js";
 const router = express.Router();
 
 router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), (req, res) => {
-    const roleLabel = req.user.role === Role.SystemAdmin ? "System Admin" : req.user.role === Role.Admin ? "Admin" : "School Admin";
+    const roleLabel = req.user.role === Role.SystemAdmin ? "Super Admin" : req.user.role === Role.Admin ? "District Manager" : "School Tech";
     res.json({ message:` Welcome ${roleLabel}: ${req.user.id} `});
 });
 
@@ -42,7 +42,7 @@ router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), sen
 router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), verifyResetOtp);
 router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), sendReport);
 router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), genreport);
-router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin), teacherRoster);
+router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), teacherRoster);
 router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin), studentRoster);
 
 export default router;

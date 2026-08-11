@@ -7,6 +7,59 @@ import Teacher from "../models/Teacher.js";
 import ParentVerification from "../models/ParentVerification.js";
 import PointsHistory from "../models/PointsHistory.js";
 
+const resolveSchoolIdForStudentCreate = async (req) => {
+    const requestedSchoolId = req.body?.schoolId || req.query?.schoolId || req.get?.("schoolId");
+
+    if (req.user.role === Role.Teacher) {
+        const teacher = await Teacher.findById(req.user.id);
+        if (!teacher?.schoolId) {
+            const error = new Error("Teacher is not assigned to a school.");
+            error.status = 403;
+            throw error;
+        }
+        return teacher.schoolId;
+    }
+
+    if (req.user.role === Role.SchoolAdmin) {
+        const admin = await Admin.findById(req.user.id);
+        if (!admin?.schoolId) {
+            const error = new Error("School Tech is not assigned to a school.");
+            error.status = 403;
+            throw error;
+        }
+        return admin.schoolId;
+    }
+
+    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+        if (!requestedSchoolId) {
+            const error = new Error("schoolId is required. Select a school before adding a student.");
+            error.status = 400;
+            throw error;
+        }
+
+        if (req.user.role === Role.Admin) {
+            const admin = await Admin.findById(req.user.id);
+            if (!admin?.districtId) {
+                const error = new Error("Admin is not assigned to a district.");
+                error.status = 403;
+                throw error;
+            }
+            const school = await School.findOne({ _id: requestedSchoolId, districtId: admin.districtId });
+            if (!school) {
+                const error = new Error("Access denied to school outside your district.");
+                error.status = 403;
+                throw error;
+            }
+        }
+
+        return requestedSchoolId;
+    }
+
+    const error = new Error("Forbidden");
+    error.status = 403;
+    throw error;
+};
+
 export const addStudent = async (req, res) => {
     const {
         name,
@@ -18,22 +71,18 @@ export const addStudent = async (req, res) => {
         grade
     } = req.body
 
-    let user;
-
-    if(req.user.role == Role.Teacher){
-        user = await Teacher.findById(req.user.id);
-    }else{
-        user = await Admin.findById(req.user.id)
-    }
-
-
     try{
+        const schoolId = await resolveSchoolIdForStudentCreate(req);
+        if (!schoolId) {
+            return res.status(400).json({ message: "schoolId is required. Select a school before adding a student." });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 12)
 
         // Check if there's existing parent verification for this student email
         const existingVerification = await ParentVerification.findOne({
             studentEmail: email,
-            schoolId: user.schoolId
+            schoolId: schoolId
         });
 
         // Set verification status based on existing record
@@ -58,13 +107,13 @@ export const addStudent = async (req, res) => {
             role: Role.Student,
             parentEmail,
             sendNotifications,
-            schoolId: user.schoolId,
+            schoolId,
             grade,
             isParentOneEmailVerified,
             isParentTwoEmailVerified
         })
         await School.findOneAndUpdate({
-            _id: user.schoolId
+            _id: schoolId
         }, {
             $push:{
                 students:student._id
@@ -75,7 +124,8 @@ export const addStudent = async (req, res) => {
             student
         })
     }catch(error){
-        return res.status(500).json({ message: 'Server Error', error: error.message });
+        const status = error.status || 500;
+        return res.status(status).json({ message: error.message || 'Server Error', error: error.message });
     }
 }
 

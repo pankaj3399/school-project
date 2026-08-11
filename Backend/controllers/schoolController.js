@@ -373,7 +373,7 @@ export const deleteSchool = async (req, res) => {
         const adminCount = await Admin.countDocuments({ schoolId, role: Role.SchoolAdmin });
         if (adminCount > 0) {
             return res.status(400).json({ 
-                message: `Cannot delete school with ${adminCount} associated school administrators. Please remove all school admins first.` 
+                message: `Cannot delete school with ${adminCount} associated School Techs. Please remove all School Techs first.` 
             });
         }
 
@@ -449,7 +449,7 @@ export const promote = async (req, res) => {
               if (adminUser && adminUser.schoolId) {
                  school = await School.findById(adminUser.schoolId).session(session);
               } else {
-                 const error = new Error("Unauthorized. School Administrator is not explicitly assigned to a school.");
+                 const error = new Error("Unauthorized. School Tech is not explicitly assigned to a school.");
                  error.status = 403;
                  throw error;
               }

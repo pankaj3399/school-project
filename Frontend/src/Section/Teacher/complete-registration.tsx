@@ -188,7 +188,7 @@ export default function CompleteTeacherRegistration() {
                   </Label>
                   {" "}
                   <a
-                    href="/terms"
+                    href="https://docs.google.com/document/d/18JxkAmny_gUyI-cm4dv4yHVtEz6wwR6ZnfIeRKLwEa4/edit?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"
@@ -197,7 +197,7 @@ export default function CompleteTeacherRegistration() {
                   </a>
                   {" "}and{" "}
                   <a
-                    href="/privacy"
+                    href="https://docs.google.com/document/d/17U6LuQHQeNkHzj_-nXlmSAlPnWM0bdtRhfy9WQs8sG4/edit?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"

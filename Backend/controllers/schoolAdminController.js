@@ -69,7 +69,7 @@ const getSchoolIdFromUser = async (req) => {
     if (admin && admin.schoolId) {
       return admin.schoolId.toString();
     }
-    const error = new Error("Unauthorized. School Administrator is not explicitly assigned to a school.");
+    const error = new Error("Unauthorized. School Tech is not explicitly assigned to a school.");
     error.status = 403;
     throw error;
   }

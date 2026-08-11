@@ -9,16 +9,26 @@ import { Role } from "@/enum";
 import { LifecycleManager } from "./components/setup/LifecycleManager";
 import { DangerZone } from "./components/setup/DangerZone";
 import { YearEndWipe } from "./components/setup/YearEndWipe";
-import { Sparkles, School } from "lucide-react";
+import { Sparkles, School, Users, GraduationCap } from "lucide-react";
 import { GRADE_OPTIONS, FormType } from "@/lib/types";
 import * as XLSX from "xlsx";
 import { AcademicYearBanner } from "@/components/AcademicYearBanner";
 import { getAcademicYearLabel } from "@/lib/academicYear";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const SetupPage = () => {
   const [loading, setLoading] = useState(true);
   const [school, setSchool] = useState<any>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -327,6 +337,61 @@ const SetupPage = () => {
             {/* Maintenance Section Gating */}
             {(selectedSchoolId || school?._id) && !loading ? (
               <>
+                {/* Bulk roster import — scoped to the selected school */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 px-2">
+                    <div className="h-6 w-1 bg-[#00a58c] rounded-full" />
+                    <div>
+                      <h2 className="text-xl font-bold text-neutral-800 tracking-tight">Bulk Roster Upload</h2>
+                      <p className="text-sm text-neutral-500 font-medium">
+                        Excel import for this school only
+                        {(school?.name || selectedSchoolId) ? ` — ${school?.name || "selected school"}` : ""}.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="flex flex-col h-full border-neutral-200 shadow-sm">
+                      <CardHeader>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-5 w-5 text-[#00a58c]" />
+                          <CardTitle>Setup Teachers</CardTitle>
+                        </div>
+                        <CardDescription>
+                          Download the Excel template and bulk-import teachers for this school.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardFooter className="mt-auto">
+                        <Button
+                          className="w-full bg-[#00a58c] hover:bg-[#00a58c]/90"
+                          onClick={() => navigate("/setup-teachers")}
+                        >
+                          Setup Teachers
+                        </Button>
+                      </CardFooter>
+                    </Card>
+
+                    <Card className="flex flex-col h-full border-neutral-200 shadow-sm">
+                      <CardHeader>
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="h-5 w-5 text-[#00a58c]" />
+                          <CardTitle>Setup Students</CardTitle>
+                        </div>
+                        <CardDescription>
+                          Download the Excel template and bulk-import students for this school.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardFooter className="mt-auto">
+                        <Button
+                          className="w-full bg-[#00a58c] hover:bg-[#00a58c]/90"
+                          onClick={() => navigate("/setup-students")}
+                        >
+                          Setup Students
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                </div>
+
                 {/* Primary Activity: Lifecycle Wizard */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 px-2">

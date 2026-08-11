@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import Loading from "../Loading"
 import { GRADE_OPTIONS } from "@/lib/types"
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard"
+import { getErrorMessage } from "@/lib/errors"
 
 const STUDENT_GRADES = GRADE_OPTIONS;
 
@@ -24,6 +26,7 @@ export default function AddStudent() {
     grade: "K"  // Changed initial value to "K"
   })
   const [loading, setLoading] = useState(false)
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
 
 
   const { toast } = useToast()
@@ -43,6 +46,15 @@ export default function AddStudent() {
     e.preventDefault()
 
     const { name, password, className, email, parentEmail, sendNotifications, grade } = formData
+
+    if (requiresSchoolSelection) {
+      toast({
+        title: "Error",
+        description: "Please select a school from the header before adding a student.",
+        variant: "destructive",
+      })
+      return
+    }
 
     if (!name || !password  || !parentEmail) {
       toast({
@@ -75,11 +87,22 @@ export default function AddStudent() {
         email : email,
         parentEmail : parentEmail,
         sendNotifications : sendNotifications,
-        grade: grade        
+        grade: grade,
+        ...(isMultiSchoolUser && selectedSchoolId ? { schoolId: selectedSchoolId } : {}),
       }
 
 
       const response = await addStudent(studentData,token)
+
+      if (response.error) {
+        toast({
+          title: "Error",
+          description: getErrorMessage(response, "Failed to add student."),
+          variant: "destructive",
+        })
+        setLoading(false)
+        return
+      }
 
       if (!response.error) {
         // Send verification emails to both parent emails if provided
@@ -124,12 +147,6 @@ export default function AddStudent() {
         }
 
         navigate("/students");
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to add student. Please try again.",
-          variant: "destructive",
-        })
       }
 
       setLoading(false)

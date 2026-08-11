@@ -67,6 +67,8 @@ export const addStudent = async (
     name: string;
     sendNotifications: boolean;
     parentEmail: string;
+    grade?: string;
+    schoolId?: string;
   },
   token: string,
 ) => {

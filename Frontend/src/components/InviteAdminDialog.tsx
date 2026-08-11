@@ -57,7 +57,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
     e.preventDefault();
     if (effectiveRole === Role.SchoolAdmin) {
       if (!schoolId) {
-        toast({ title: "Error", description: "School ID is required for School Admin invitation.", variant: "destructive" });
+        toast({ title: "Error", description: "School ID is required for School Tech invitation.", variant: "destructive" });
         return;
       }
     } else if (!districtId) {
@@ -119,9 +119,13 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleInvite}>
           <DialogHeader>
-            <DialogTitle>Invite {effectiveRole === Role.SchoolAdmin ? 'School' : 'District'} Administrator</DialogTitle>
+            <DialogTitle>
+              Invite {effectiveRole === Role.SchoolAdmin ? 'School Tech' : 'District Administrator'}
+            </DialogTitle>
             <DialogDescription>
-              Send an invitation to a new {effectiveRole === Role.SchoolAdmin ? 'school' : 'district'} administrator. They will receive an email to set up their account.
+              {effectiveRole === Role.SchoolAdmin
+                ? 'Send an invitation to a new School Tech. They will receive an email to set up their account.'
+                : 'Send an invitation to a new district administrator. They will receive an email to set up their account.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

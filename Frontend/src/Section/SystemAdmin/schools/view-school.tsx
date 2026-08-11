@@ -352,12 +352,12 @@ const ViewSchool = () => {
                 <TabsContent value="admins" className="outline-none">
                     <Card className="border-neutral-200 shadow-sm rounded-2xl overflow-hidden">
                         <CardHeader className="bg-neutral-50/50 border-b p-6 flex flex-row items-center justify-between">
-                            <CardTitle className="text-xl font-bold text-neutral-900">School Administrators</CardTitle>
+                            <CardTitle className="text-xl font-bold text-neutral-900">School Techs</CardTitle>
                             <InviteAdminDialog
                                 districtId={school.districtId?._id || school.districtId}
                                 schoolId={id}
                                 role={Role.SchoolAdmin}
-                                label="Invite School Admin"
+                                label="Invite School Tech"
                             />
                         </CardHeader>
                         <CardContent className="p-0">

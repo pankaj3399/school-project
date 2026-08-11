@@ -30,7 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Role } from "@/enum";
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
+import { getErrorMessage } from "@/lib/errors";
 
 interface TeacherData {
   // firstName: string;
@@ -52,6 +53,7 @@ export default function Setup() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedSchoolId, selectedSchool } = useSchool();
+  const { isMultiSchoolUser, requiresSchoolSelection } = useSchoolSelectionGuard();
 
   const downloadTemplate = () => {
     // Create a link element to download the existing template file
@@ -170,8 +172,7 @@ export default function Setup() {
   };
 
   const handleSubmitRoster = async () => {
-    const isAdmin = user?.role === Role.Admin || user?.role === Role.SystemAdmin;
-    if (isAdmin && !selectedSchoolId) {
+    if (requiresSchoolSelection) {
       toast({
         title: "No School Selected",
         description: "Please select a school from the header to proceed.",
@@ -193,17 +194,14 @@ export default function Setup() {
     try {
       let formattedTeachers = teachers.map((teacher) => ({
         ...teacher,
-        // dateOfBirth: new Date(teacher.dateOfBirth).toISOString(),
-        // name: `${teacher.firstName} ${teacher.lastName}`,
-        // firstName: undefined,
-        // lastName: undefined,
       }));
-      console.log(formattedTeachers);
       const response = await teacherRoster({ 
         teachers: formattedTeachers,
-        schoolId: selectedSchoolId,
+        ...(isMultiSchoolUser && selectedSchoolId ? { schoolId: selectedSchoolId } : {}),
       });
-      if (!response.success) throw new Error("Failed to submit roster");
+      if (response.error || !response.success) {
+        throw new Error(getErrorMessage(response, "Failed to submit teacher roster"));
+      }
 
       toast({
         title: "Success",
@@ -212,10 +210,9 @@ export default function Setup() {
       setTeachers([]);
       setValidationErrors([]);
     } catch (error) {
-      console.log(error);
       toast({
         title: "Error",
-        description: "Failed to submit teacher roster",
+        description: getErrorMessage(error, "Failed to submit teacher roster"),
         variant: "destructive",
       });
     } finally {
@@ -250,11 +247,22 @@ export default function Setup() {
 
   if (loading) return <Loading />;
 
+  if (requiresSchoolSelection) {
+    return (
+      <div className="p-8 text-center text-neutral-500">
+        Please select a district and school from the top-right picker to bulk-upload teachers for that school.
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">
         Teacher Roster Setup {selectedSchool?.name ? `for ${selectedSchool.name}` : user?.schoolId?.name ? `for ${user.schoolId.name}` : ""}
       </h1>
+      <p className="text-neutral-500 mb-6">
+        Teachers imported here are added only to the selected school.
+      </p>
 
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
