@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { US_STATES, CANADA_PROVINCES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations';
 import { getErrorMessage } from "@/lib/errors"
+import { formatContactRole } from '@/lib/roleLabels';
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -486,7 +487,7 @@ export default function ViewDistrict() {
                                                 </TableCell>
                                                 <TableCell className="text-gray-600">
                                                     <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider">
-                                                        {admin.contactRole || 'Leadership'}
+                                                        {formatContactRole(admin.contactRole)}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>

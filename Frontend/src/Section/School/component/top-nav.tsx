@@ -14,6 +14,7 @@ import { useState } from "react"
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SchoolSelector } from "@/components/SchoolSelector";
 import { Role } from "@/enum";
+import { formatRoleName } from "@/lib/roleLabels";
 
 export function TopNav() {
   const { user, logout } = useAuth();
@@ -28,15 +29,10 @@ export function TopNav() {
 
   const getUserLabel = () => {
     if (!user) return "";
-    switch (user.role) {
-      case Role.SystemAdmin: return "Super Admin";
-      case Role.Admin: return "District Manager";
-      case Role.SchoolAdmin: return "School Tech";
-      case Role.DistrictAdmin: return "District Admin";
-      case Role.Teacher: return user.type === "Lead" ? "AN Teacher" : "Team Member";
-      case Role.Student: return "Student";
-      default: return user.role;
+    if (user.role === Role.Teacher) {
+      return user.type === "Lead" ? "AN Teacher" : "Team Member";
     }
+    return formatRoleName(user.role) || user.role;
   };
 
   // Only show school selector for System Admin on specific reporting/roster pages

@@ -13,6 +13,7 @@ import TermsPage from "@/components/TermsPage";
 import { PasswordField } from "@/components/PasswordField";
 import { validatePassword } from "@/lib/password";
 import { getErrorMessage } from "@/lib/errors"
+import { formatRoleName } from "@/lib/roleLabels"
 
 export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
@@ -249,7 +250,7 @@ export default function CompleteAdminRegistration() {
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
             Complete Registration
           </CardTitle>
-          <p className="text-gray-500 mt-2">Set up your {role || "Administrator"} account</p>
+          <p className="text-gray-500 mt-2">Set up your {formatRoleName(role) || "administrator"} account</p>
         </CardHeader>
         <CardContent className="p-8 pt-4">
           <form onSubmit={handleSubmit} className="space-y-6">

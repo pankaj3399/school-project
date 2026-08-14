@@ -15,6 +15,7 @@ import { Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateAdmin } from '@/api';
 import { getErrorMessage } from "@/lib/errors"
+import { CONTACT_ROLE_LEADERSHIP, CONTACT_ROLE_SCHOOL_TECH, formatContactRole } from "@/lib/roleLabels"
 import {
   Select,
   SelectContent,
@@ -36,7 +37,7 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
   const [address, setAddress] = useState(admin.address || '');
   const [phone, setPhone] = useState(admin.phone || '');
   const [position, setPosition] = useState(admin.position || 'Other');
-  const [contactRole, setContactRole] = useState(admin.contactRole || 'Leadership');
+  const [contactRole, setContactRole] = useState(formatContactRole(admin.contactRole));
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
       setAddress(admin.address || '');
       setPhone(admin.phone || '');
       setPosition(admin.position || 'Other');
-      setContactRole(admin.contactRole || 'Leadership');
+      setContactRole(formatContactRole(admin.contactRole));
     }
   }, [open, admin]);
 
@@ -147,8 +148,8 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Leadership">Leadership</SelectItem>
-                    <SelectItem value="Tech partner">Tech Partner</SelectItem>
+                    <SelectItem value={CONTACT_ROLE_LEADERSHIP}>Leadership</SelectItem>
+                    <SelectItem value={CONTACT_ROLE_SCHOOL_TECH}>School Tech</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

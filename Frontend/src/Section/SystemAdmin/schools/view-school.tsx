@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { reInviteAdmin } from '@/api'
 import { cn } from "@/lib/utils"
 import { US_STATES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations'
+import { formatContactRole } from '@/lib/roleLabels'
 
 interface StatCardProps {
     title: string;
@@ -391,7 +392,7 @@ const ViewSchool = () => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                                                            {admin.contactRole || "Leadership"}
+                                                            {formatContactRole(admin.contactRole)}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell>

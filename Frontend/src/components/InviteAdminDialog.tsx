@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { inviteAdmin } from '@/api';
 import { Role, type RoleType } from '@/enum';
 import { getErrorMessage } from "@/lib/errors"
+import { CONTACT_ROLE_LEADERSHIP, CONTACT_ROLE_SCHOOL_TECH } from "@/lib/roleLabels"
 
 interface InviteAdminDialogProps {
   districtId: string | undefined;
@@ -37,6 +38,12 @@ interface InviteAdminDialogProps {
 }
 
 export function InviteAdminDialog({ districtId, schoolId, role, label, schools }: InviteAdminDialogProps) {
+  const { toast } = useToast();
+  const effectiveRole: RoleType = role ?? Role.Admin;
+  const isDistrictLevelInvite = effectiveRole === Role.DistrictAdmin || effectiveRole === Role.Admin;
+  const showLogoSchoolPicker = isDistrictLevelInvite && Array.isArray(schools) && schools.length > 0;
+  const defaultContactRole = effectiveRole === Role.SchoolAdmin ? CONTACT_ROLE_SCHOOL_TECH : CONTACT_ROLE_LEADERSHIP;
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -44,14 +51,8 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState('Other');
-  const [contactRole, setContactRole] = useState('Leadership');
+  const [contactRole, setContactRole] = useState(defaultContactRole);
   const [logoSchoolId, setLogoSchoolId] = useState<string>('');
-  const { toast } = useToast();
-  // Mirror the same default the payload uses so picker visibility and the
-  // submitted role can never disagree.
-  const effectiveRole: RoleType = role ?? Role.Admin;
-  const isDistrictLevelInvite = effectiveRole === Role.DistrictAdmin || effectiveRole === Role.Admin;
-  const showLogoSchoolPicker = isDistrictLevelInvite && Array.isArray(schools) && schools.length > 0;
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +96,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
       setAddress('');
       setPhone('');
       setPosition('Other');
-      setContactRole('Leadership');
+      setContactRole(defaultContactRole);
       setLogoSchoolId('');
     } catch (error: any) {
       toast({
@@ -176,8 +177,8 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Leadership">Leadership</SelectItem>
-                    <SelectItem value="Tech partner">Tech Partner</SelectItem>
+                    <SelectItem value={CONTACT_ROLE_LEADERSHIP}>Leadership</SelectItem>
+                    <SelectItem value={CONTACT_ROLE_SCHOOL_TECH}>School Tech</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

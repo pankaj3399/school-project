@@ -76,7 +76,7 @@ const userSchema = new mongoose.Schema({
   },
   contactRole: {
     type: String,
-    enum: ['Leadership', 'Tech partner'],
+    enum: ['Leadership', 'Tech partner', 'School Tech'],
     default: 'Leadership',
   },
   createdAt: {
