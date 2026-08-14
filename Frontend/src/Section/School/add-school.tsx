@@ -15,6 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { TIMEZONE_OPTIONS } from "@/lib/luxon";
 import { validateSchoolLocation } from "@/lib/schoolLocationValidator";
 import { getErrorMessage } from "@/lib/errors"
+import { OUTSIDE_USA } from "@/lib/locations";
 
 const STATE_OPTIONS = [
   'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC',
@@ -22,7 +23,8 @@ const STATE_OPTIONS = [
   'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE',
   'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK',
   'OR', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT',
-  'VA', 'VI', 'WA', 'WV', 'WI', 'WY'
+  'VA', 'VI', 'WA', 'WV', 'WI', 'WY',
+  OUTSIDE_USA,
 ];
 
 

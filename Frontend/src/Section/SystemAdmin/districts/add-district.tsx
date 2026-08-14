@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
+import { US_STATES, CANADA_PROVINCES, COUNTRIES, OUTSIDE_USA } from '@/lib/locations';
 import { getErrorMessage } from "@/lib/errors"
 
 export default function AddDistrict() {
@@ -61,7 +61,6 @@ export default function AddDistrict() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const isUsCountry = formData.country === 'USA';
     const isCanada = formData.country === 'Canada';
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -72,9 +71,7 @@ export default function AddDistrict() {
                 title: "State Required",
                 description: isCanada
                     ? "Please select a province."
-                    : isUsCountry
-                        ? "Please select a state."
-                        : "Please enter a state, province, or region.",
+                    : "Please select a state.",
                 variant: "destructive"
             });
             return;
@@ -231,23 +228,9 @@ export default function AddDistrict() {
 
                             <div className="space-y-2">
                                 <Label htmlFor="state" className="text-sm font-bold text-gray-700">
-                                    {isCanada ? 'Province' : 'State / Region'}
+                                    {isCanada ? 'Province' : 'State'}
                                 </Label>
-                                {isUsCountry ? (
-                                    <Select
-                                        value={formData.state}
-                                        onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
-                                    >
-                                        <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
-                                            <SelectValue placeholder="Select state" />
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-72">
-                                            {US_STATES.map(s => (
-                                                <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                ) : isCanada ? (
+                                {isCanada ? (
                                     <Select
                                         value={formData.state}
                                         onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
@@ -262,15 +245,20 @@ export default function AddDistrict() {
                                         </SelectContent>
                                     </Select>
                                 ) : (
-                                    <Input
-                                        id="state"
-                                        name="state"
-                                        placeholder="State / Province / Region"
+                                    <Select
                                         value={formData.state}
-                                        onChange={handleChange}
-                                        required
-                                        className="border-gray-200 focus:ring-[#00a58c] h-11"
-                                    />
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                                    >
+                                        <SelectTrigger id="state" className="border-gray-200 focus:ring-[#00a58c] h-11">
+                                            <SelectValue placeholder="Select state" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-72">
+                                            {US_STATES.map(s => (
+                                                <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
+                                            ))}
+                                            <SelectItem value={OUTSIDE_USA}>{OUTSIDE_USA}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 )}
                             </div>
 

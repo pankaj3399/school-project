@@ -23,7 +23,7 @@ import { EditAdminDialog } from '@/components/EditAdminDialog';
 import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { US_STATES, CANADA_PROVINCES, COUNTRIES } from '@/lib/locations';
+import { US_STATES, CANADA_PROVINCES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations';
 import { getErrorMessage } from "@/lib/errors"
 
 export default function ViewDistrict() {
@@ -62,6 +62,10 @@ export default function ViewDistrict() {
                 try {
                     const response = await getDistrictById(id, token);
                     if (response.district) {
+                        const loc = normalizeLocation({
+                            country: response.district.country,
+                            state: response.district.state,
+                        });
                         setData(response);
                         setEditData({
                             name: response.district.name,
@@ -73,10 +77,8 @@ export default function ViewDistrict() {
                             address: response.district.address || '',
                             city: response.district.city || '',
                             zipCode: response.district.zipCode || '',
-                            state: response.district.state || '',
-                            country: response.district.country === 'Other'
-                                ? 'Outside the USA'
-                                : (response.district.country || 'USA'),
+                            state: loc.state,
+                            country: loc.country,
                             subscriptionStatus: response.district.subscriptionStatus
                         });
                         setLogoPreview(response.district.logo || null);
@@ -704,29 +706,18 @@ export default function ViewDistrict() {
                                                 {COUNTRIES.map(c => (
                                                     <SelectItem key={c} value={c}>{c}</SelectItem>
                                                 ))}
+                                                {editData?.country && !(COUNTRIES as readonly string[]).includes(editData.country) && editData.country !== OUTSIDE_USA && (
+                                                    <SelectItem value={editData.country}>{editData.country}</SelectItem>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>
 
                                     <div className="space-y-2">
                                         <Label className="text-sm font-bold text-gray-700">
-                                            {editData?.country === 'Canada' ? 'Province' : 'State / Region'}
+                                            {editData?.country === 'Canada' ? 'Province' : 'State'}
                                         </Label>
-                                        {editData?.country === 'USA' ? (
-                                            <Select
-                                                value={editData?.state || ''}
-                                                onValueChange={(v) => setEditData({...editData, state: v})}
-                                            >
-                                                <SelectTrigger className="h-11 bg-white border-gray-200">
-                                                    <SelectValue placeholder="Select state" />
-                                                </SelectTrigger>
-                                                <SelectContent className="max-h-72">
-                                                    {US_STATES.map(s => (
-                                                        <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        ) : editData?.country === 'Canada' ? (
+                                        {editData?.country === 'Canada' ? (
                                             <Select
                                                 value={editData?.state || ''}
                                                 onValueChange={(v) => setEditData({...editData, state: v})}
@@ -741,12 +732,23 @@ export default function ViewDistrict() {
                                                 </SelectContent>
                                             </Select>
                                         ) : (
-                                            <Input
+                                            <Select
                                                 value={editData?.state || ''}
-                                                onChange={(e) => setEditData({...editData, state: e.target.value})}
-                                                placeholder="State / Province / Region"
-                                                className="h-11 bg-white border-gray-200"
-                                            />
+                                                onValueChange={(v) => setEditData({...editData, state: v})}
+                                            >
+                                                <SelectTrigger className="h-11 bg-white border-gray-200">
+                                                    <SelectValue placeholder="Select state" />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-72">
+                                                    {US_STATES.map(s => (
+                                                        <SelectItem key={s.abbreviation} value={s.name}>{s.name}</SelectItem>
+                                                    ))}
+                                                    <SelectItem value={OUTSIDE_USA}>{OUTSIDE_USA}</SelectItem>
+                                                    {editData?.state && !isListedUsaStateOption(editData.state, "name") && (
+                                                        <SelectItem value={editData.state}>{editData.state}</SelectItem>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
                                         )}
                                     </div>
 

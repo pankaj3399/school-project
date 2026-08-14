@@ -19,14 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { reInviteAdmin } from '@/api'
 import { cn } from "@/lib/utils"
-import { US_STATES, COUNTRIES } from '@/lib/locations'
-
-const normalizeCountry = (country?: string) => {
-    if (!country) return 'USA'
-    if (country === 'United States') return 'USA'
-    if (country === 'Other') return 'Outside the USA'
-    return country
-}
+import { US_STATES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations'
 
 interface StatCardProps {
     title: string;
@@ -103,6 +96,10 @@ const ViewSchool = () => {
             if (requestId !== requestRef.current) return
 
             if (schoolRes.school) {
+                const loc = normalizeLocation({
+                    country: schoolRes.school.country,
+                    state: schoolRes.school.state,
+                })
                 setSchool(schoolRes.school)
                 setAdmins(schoolRes.admins || [])
                 setLogoPreview(schoolRes.school.logo || null)
@@ -111,9 +108,9 @@ const ViewSchool = () => {
                     address: schoolRes.school.address || '',
                     city: schoolRes.school.city || '',
                     districtId: schoolRes.school.districtId?._id || schoolRes.school.districtId || '',
-                    state: schoolRes.school.state || 'CO',
+                    state: loc.state || 'CO',
                     zipCode: schoolRes.school.zipCode || '',
-                    country: normalizeCountry(schoolRes.school.country),
+                    country: loc.country,
                     domain: schoolRes.school.domain || '',
                     logo: schoolRes.school.logo || ''
                 })
@@ -620,7 +617,8 @@ const ViewSchool = () => {
                                                             {s.name} ({s.abbreviation})
                                                         </SelectItem>
                                                     ))}
-                                                    {formData.state && !US_STATES.some(s => s.abbreviation === formData.state) && (
+                                                    <SelectItem value={OUTSIDE_USA}>{OUTSIDE_USA}</SelectItem>
+                                                    {formData.state && !isListedUsaStateOption(formData.state, "abbreviation") && (
                                                         <SelectItem key={formData.state} value={formData.state}>{formData.state}</SelectItem>
                                                     )}
                                                 </SelectContent>
@@ -639,7 +637,7 @@ const ViewSchool = () => {
                                                     {COUNTRIES.map(c => (
                                                         <SelectItem key={c} value={c}>{c}</SelectItem>
                                                     ))}
-                                                    {formData.country && !(COUNTRIES as readonly string[]).includes(formData.country) && (
+                                                    {formData.country && !(COUNTRIES as readonly string[]).includes(formData.country) && formData.country !== OUTSIDE_USA && (
                                                         <SelectItem key={formData.country} value={formData.country}>{formData.country}</SelectItem>
                                                     )}
                                                 </SelectContent>

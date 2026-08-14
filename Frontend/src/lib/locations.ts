@@ -28,7 +28,12 @@ export const CANADA_PROVINCES = [
     { name: "Yukon", abbreviation: "YT" }
 ] as const;
 
-export const COUNTRIES = ["USA", "Canada", "Outside the USA"] as const;
+export const COUNTRIES = ["USA", "Canada"] as const;
+
+/** State-dropdown option for locations that are not a US state or Canadian province. */
+export const OUTSIDE_USA = "Outside the USA";
+
+const LEGACY_OUTSIDE_COUNTRY = new Set(["Outside the USA", "Other"]);
 
 export type USState = typeof US_STATES[number];
 export type USStateName = USState['name'];
@@ -39,3 +44,27 @@ export type CanadaProvinceName = CanadaProvince['name'];
 export type CanadaProvinceAbbreviation = CanadaProvince['abbreviation'];
 
 export type Country = typeof COUNTRIES[number];
+
+export function normalizeCountry(country?: string): string {
+    if (!country) return "USA";
+    if (country === "United States") return "USA";
+    if (LEGACY_OUTSIDE_COUNTRY.has(country)) return "USA";
+    return country;
+}
+
+/** Move a legacy Country value of “Outside the USA” onto State when loading saved records. */
+export function normalizeLocation(input: { country?: string; state?: string }): { country: string; state: string } {
+    const rawCountry = input.country ?? "";
+    const country = normalizeCountry(rawCountry);
+    let state = (input.state ?? "").trim();
+    if (LEGACY_OUTSIDE_COUNTRY.has(rawCountry) && !state) {
+        state = OUTSIDE_USA;
+    }
+    return { country, state };
+}
+
+export function isListedUsaStateOption(value: string, mode: "name" | "abbreviation" = "name"): boolean {
+    if (!value) return false;
+    if (value === OUTSIDE_USA) return true;
+    return US_STATES.some((s) => (mode === "abbreviation" ? s.abbreviation === value : s.name === value));
+}
