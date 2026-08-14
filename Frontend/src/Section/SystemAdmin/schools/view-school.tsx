@@ -355,7 +355,7 @@ const ViewSchool = () => {
                                 districtId={school.districtId?._id || school.districtId}
                                 schoolId={id}
                                 role={Role.SchoolAdmin}
-                                label="Invite School Tech"
+                                label="Invite"
                             />
                         </CardHeader>
                         <CardContent className="p-0">
