@@ -15,6 +15,7 @@ import { getCurrentTerms, updateTerms } from '@/api';
 import { useAuth } from '@/authContext';
 import { getAuthToken } from '@/lib/auth';
 import { getErrorMessage } from "@/lib/errors"
+import { LEGAL_ROUTES } from "@/lib/legal"
 
 interface TermsData {
     title: string;
@@ -175,11 +176,11 @@ export default function TermsManagement() {
                             <CheckCircle2 className="h-5 w-5" />
                             Live Preview
                         </h4>
-                        <p className="text-sm text-blue-700 mb-4">You can see how this will look to users by visiting the public terms page.</p>
+                        <p className="text-sm text-blue-700 mb-4">Open the public Terms of Service PDF that users see.</p>
                         <Button 
                             variant="outline" 
                             className="w-full bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
-                            onClick={() => window.open('/terms', '_blank')}
+                            onClick={() => window.open(LEGAL_ROUTES.terms, '_blank')}
                         >
                             Open Preview
                         </Button>

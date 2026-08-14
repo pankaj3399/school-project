@@ -13,6 +13,7 @@ import { completeTeacherRegistration, getCurrentTerms } from "@/api";
 import Loading from "../Loading";
 import TermsPage from "@/components/TermsPage";
 import { getErrorMessage } from "@/lib/errors"
+import { LEGAL_ROUTES } from "@/lib/legal"
 
 export default function CompleteTeacherRegistration() {
   const [searchParams] = useSearchParams();
@@ -188,7 +189,7 @@ export default function CompleteTeacherRegistration() {
                   </Label>
                   {" "}
                   <a
-                    href="https://docs.google.com/document/d/18JxkAmny_gUyI-cm4dv4yHVtEz6wwR6ZnfIeRKLwEa4/edit?usp=sharing"
+                    href={LEGAL_ROUTES.terms}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"
@@ -197,7 +198,7 @@ export default function CompleteTeacherRegistration() {
                   </a>
                   {" "}and{" "}
                   <a
-                    href="https://docs.google.com/document/d/17U6LuQHQeNkHzj_-nXlmSAlPnWM0bdtRhfy9WQs8sG4/edit?usp=sharing"
+                    href={LEGAL_ROUTES.privacy}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"

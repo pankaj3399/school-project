@@ -14,6 +14,7 @@ import { PasswordField } from "@/components/PasswordField";
 import { validatePassword } from "@/lib/password";
 import { getErrorMessage } from "@/lib/errors"
 import { formatRoleName } from "@/lib/roleLabels"
+import { LEGAL_ROUTES } from "@/lib/legal"
 
 export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
@@ -204,7 +205,7 @@ export default function CompleteAdminRegistration() {
                   </Label>
                   {" "}
                   <a
-                    href="/terms"
+                    href={LEGAL_ROUTES.terms}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"
@@ -213,7 +214,7 @@ export default function CompleteAdminRegistration() {
                   </a>
                   {" "}and{" "}
                   <a
-                    href="/privacy"
+                    href={LEGAL_ROUTES.privacy}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00a58c] font-bold hover:underline"

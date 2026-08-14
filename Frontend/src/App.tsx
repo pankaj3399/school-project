@@ -37,7 +37,7 @@ import SetupStudents from "./Section/School/setup-students";
 import CompleteTeacherRegistration from "@/Section/Teacher/complete-registration";
 import CompleteGuardianRegistration from "@/Section/Guardian/complete-registration";
 import CompleteAdminRegistration from "@/Section/SystemAdmin/complete-registration";
-import TermsPage from "@/components/TermsPage";
+import LegalPdfPage from "@/components/LegalPdfPage";
 import { Role } from "./enum";
 import { canAccess, type TabKey } from "@/lib/roleAccess";
 
@@ -159,7 +159,8 @@ export default function App() {
           <Route path="/teacher/complete-registration" element={<CompleteTeacherRegistration />} />
           <Route path="/guardian/complete-registration" element={<CompleteGuardianRegistration />} />
           <Route path="/admin/complete-registration" element={<CompleteAdminRegistration />} />
-          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/terms" element={<LegalPdfPage doc="terms" />} />
+          <Route path="/privacy" element={<LegalPdfPage doc="privacy" />} />
 
           {/* System Admin Routes */}
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />

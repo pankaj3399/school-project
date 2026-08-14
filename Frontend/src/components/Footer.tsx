@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { LEGAL_ROUTES } from "@/lib/legal";
 
 export default function Footer() {
   return (
@@ -56,7 +57,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/privacy"
+                  to={LEGAL_ROUTES.privacy}
                   className="text-sm hover:text-blue-400 transition-colors"
                 >
                   Privacy Policy
@@ -64,7 +65,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/terms"
+                  to={LEGAL_ROUTES.terms}
                   className="text-sm hover:text-blue-400 transition-colors"
                 >
                   Terms of Service
