@@ -31,6 +31,8 @@ export type Form = {
     parentEmail: boolean,
     teacherEmail: boolean,
     schoolAdminEmail: boolean,
+    isSpecial?: boolean,
+    grade?: string,
     preSelectedStudents?: string[]
   }
 

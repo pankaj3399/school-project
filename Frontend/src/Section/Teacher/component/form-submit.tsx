@@ -25,6 +25,20 @@ import { timezoneManager } from "@/lib/luxon";
 import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
 import { isApiError } from "@/lib/errors";
 
+function resolveSchoolId(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null && "_id" in value) {
+    const id = (value as { _id: unknown })._id;
+    return id ? String(id) : undefined;
+  }
+  return String(value);
+}
+
+function sameGrade(a: unknown, b: unknown): boolean {
+  return String(a ?? "") === String(b ?? "");
+}
+
 type FormSubmissionProps = {
   form: any;
   isSubmitting: boolean;
@@ -111,17 +125,19 @@ export function FormSubmission({
   useEffect(() => {
     const getStudent = async () => {
       const token = localStorage.getItem("token") || "";
-      if (requiresSchoolSelection) {
+      const formSchoolId = resolveSchoolId(form?.schoolId);
+      const schoolIdForFetch = formSchoolId || (isMultiSchoolUser ? selectedSchoolId || undefined : undefined);
+
+      // Superuser / district users can still submit if the form itself has a school,
+      // even when the header picker is hidden on the submit page.
+      if (!schoolIdForFetch && requiresSchoolSelection) {
         setStudentLoadError("Select a school before submitting this form.");
         setStudent([]);
         setfilteredStudent([]);
         return;
       }
 
-      const response = await getStudents(
-        token,
-        isMultiSchoolUser ? selectedSchoolId || undefined : undefined,
-      );
+      const response = await getStudents(token, schoolIdForFetch);
 
       if (isApiError(response) || !Array.isArray(response.students)) {
         setStudentLoadError(
@@ -136,64 +152,31 @@ export function FormSubmission({
 
       setStudentLoadError(null);
 
-      // Filter students for any form with pre-selection
-      if (
-        form &&
-        form.preSelectedStudents &&
-        form.preSelectedStudents.length > 0
-      ) {
-        const preSelectedStudents = response.students.filter((s: any) =>
-          form.preSelectedStudents.includes(s._id),
-        );
+      const withGradeLabel = (list: any[]) =>
+        list.map((s: any) => ({
+          ...s,
+          name: s.name + " - Grade " + s.grade,
+        }));
 
-        setStudent(
-          preSelectedStudents.map((s: any) => ({
-            ...s,
-            name: s.name + " - Grade " + s.grade,
-          })),
+      let eligible = response.students;
+
+      if (form?.preSelectedStudents?.length > 0) {
+        const selectedIds = new Set(
+          form.preSelectedStudents.map((id: unknown) => String(id)),
         );
-        setfilteredStudent(
-          preSelectedStudents.map((s: any) => ({
-            ...s,
-            name: s.name + " - Grade " + s.grade,
-          })),
-        );
-      } else if (form) {
-        if (form.isSpecial || user?.type == "Special") {
-          setStudent(
-            response.students.map((s: any) => ({
-              ...s,
-              name: s.name + " - Grade " + s.grade,
-            })),
-          );
-          setfilteredStudent(
-            response.students.map((s: any) => ({
-              ...s,
-              name: s.name + " - Grade " + s.grade,
-            })),
-          );
-        } else {
-          setStudent(
-            response.students.map((s: any) => ({
-              ...s,
-              name: s.name + " - Grade " + s.grade,
-            })),
-          );
-          setfilteredStudent(
-            response.students.map((s: any) => ({
-              ...s,
-              name: s.name + " - Grade " + s.grade,
-            })),
-          );
-        }
-      } else {
-        setStudent(
-          response.students.filter((s: any) => s.grade === form.grade),
-        );
-        setfilteredStudent(
-          response.students.filter((s: any) => s.grade === form.grade),
-        );
+        eligible = eligible.filter((s: any) => selectedIds.has(String(s._id)));
+      } else if (
+        form &&
+        !form.isSpecial &&
+        user?.type !== "Special" &&
+        form.formType !== FormType.AwardPointsIEP
+      ) {
+        eligible = eligible.filter((s: any) => sameGrade(s.grade, form.grade));
       }
+
+      const named = withGradeLabel(eligible);
+      setStudent(named);
+      setfilteredStudent(named);
     };
     getStudent();
   }, [form, selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection, user?.type]);
@@ -206,12 +189,13 @@ export function FormSubmission({
   }, [filteredStudent, submittedFor]);
 
   useEffect(() => {
+    if (!(form?.isSpecial || user?.type == "Special")) return;
     if (grade == "All") {
-      setfilteredStudent(student.filter((s: any) => s));
+      setfilteredStudent(student);
     } else {
-      setfilteredStudent(student.filter((s: any) => s.grade == grade));
+      setfilteredStudent(student.filter((s: any) => sameGrade(s.grade, grade)));
     }
-  }, [grade]);
+  }, [grade, student, form?.isSpecial, user?.type]);
 
   useEffect(() => {
     switch (form.formType) {
@@ -487,13 +471,13 @@ export function FormSubmission({
   useEffect(() => {
     if (
       !form?.isSpecial &&
+      user?.type !== "Special" &&
       form.formType !== FormType.AwardPointsIEP &&
       student.length > 0
     ) {
-      const filtered = student.filter((s: any) => s.grade === form.grade);
-      setfilteredStudent(filtered);
+      setfilteredStudent(student.filter((s: any) => sameGrade(s.grade, form.grade)));
     }
-  }, [student, form]);
+  }, [student, form, user?.type]);
 
   console.log(student, submittedFor);
 
@@ -628,22 +612,20 @@ export function FormSubmission({
                         <Input
                           onChange={(e) => {
                             const value = e.target.value;
+                            const matchesGrade = (s: any) =>
+                              form?.isSpecial || user?.type == "Special"
+                                ? grade === "All" || sameGrade(s.grade, grade)
+                                : sameGrade(s.grade, form.grade);
                             if (value == "") {
-                              // Reset to show students based on selected grade
-                              setfilteredStudent(
-                                student.filter(
-                                  (s: any) => s.grade == form.grade,
-                                ),
-                              );
+                              setfilteredStudent(student.filter(matchesGrade));
                             } else {
-                              // Filter from the base student list based on grade first, then search
                               setfilteredStudent(
                                 student.filter(
                                   (s: any) =>
                                     s.name
                                       .toLowerCase()
                                       .includes(value.toLowerCase()) &&
-                                    s.grade === form.grade,
+                                    matchesGrade(s),
                                 ),
                               );
                             }

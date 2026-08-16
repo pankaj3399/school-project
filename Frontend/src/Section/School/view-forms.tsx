@@ -86,10 +86,11 @@ export default function ViewForms() {
       if (form.isSpecial) {
         acc.special.push(form)
       } else {
-        if (!acc.byGrade[form.grade]) {
-          acc.byGrade[form.grade] = []
+        const gradeKey = form.grade == null || form.grade === "" ? "Ungraded" : String(form.grade)
+        if (!acc.byGrade[gradeKey]) {
+          acc.byGrade[gradeKey] = []
         }
-        acc.byGrade[form.grade].push(form)
+        acc.byGrade[gradeKey].push(form)
       }
       return acc
     }, { special: [] as Form[], byGrade: {} as { [key: string]: Form[] } })
