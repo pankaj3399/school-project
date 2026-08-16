@@ -1,5 +1,5 @@
 import { addStudent,updateStudent,deleteStudent } from "../controllers/studentController.js";
-import { authenticateToken as authenticate, authorizeRoles } from "../middlewares/authMiddleware.js";
+import { authenticateToken as authenticate, authorizeRoles, requireLeadIfTeacher } from "../middlewares/authMiddleware.js";
 import express from 'express';
 import {Role} from '../enum.js';
 
@@ -9,9 +9,9 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.Student), async (req,
     res.json({ message: `Welcome School Student: ${req.user.id}` });
 });
 
-router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),addStudent)
-router.put("/updateStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), updateStudent)
-router.delete("/deleteStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), deleteStudent)
+router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,addStudent)
+router.put("/updateStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher, updateStudent)
+router.delete("/deleteStudent/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher, deleteStudent)
 
 
 

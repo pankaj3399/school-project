@@ -58,7 +58,7 @@ const systemAdminRoles = [Role.SystemAdmin];
 // Reusable ProtectedRoute component. Prefer `requiredTab` (sources the spec
 // matrix in lib/roleAccess.ts, including Teacher type='Lead' vs not), and
 // fall back to `requiredRoles` for routes where role-string matching is enough.
-const ProtectedRoute = ({ children, requiredRoles, requiredTab }: { children: React.ReactNode, requiredRoles?: string[], requiredTab?: TabKey }) => {
+const ProtectedRoute = ({ children, requiredRoles, requiredTab, requireLeadIfTeacher }: { children: React.ReactNode, requiredRoles?: string[], requiredTab?: TabKey, requireLeadIfTeacher?: boolean }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <div>Loading...</div>;
@@ -80,6 +80,15 @@ const ProtectedRoute = ({ children, requiredRoles, requiredTab }: { children: Re
         to="/unauthorized"
         replace
         state={{ from: location.pathname, reason: "This page is not available for your role." }}
+      />
+    );
+  }
+  if (requireLeadIfTeacher && user.role === Role.Teacher && user.type !== "Lead") {
+    return (
+      <Navigate
+        to="/unauthorized"
+        replace
+        state={{ from: location.pathname, reason: "This page is not available for Team Members." }}
       />
     );
   }
@@ -128,14 +137,14 @@ export default function App() {
           <Route path="/teachers/roster" element={<ProtectedRoute requiredTab="teachers"><ViewTeachers /></ProtectedRoute>} />
           <Route path="/teachers/addteacher" element={<ProtectedRoute requiredTab="teachers"><AddTeacher /></ProtectedRoute>} />
           <Route path="/teachers/students" element={<ProtectedRoute requiredTab="students"><ViewTeacherStudents /></ProtectedRoute>} />
-          <Route path="/createform" element={<ProtectedRoute requiredTab="forms"><FormBuilder /></ProtectedRoute>} />
-          <Route path="/editform/:id" element={<ProtectedRoute requiredTab="forms"><EditForm /></ProtectedRoute>} />
-          <Route path="/schoolAdmin/submitform/:id" element={<ProtectedRoute requiredTab="forms"><FormPageAdmin /></ProtectedRoute>} />
+          <Route path="/createform" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><FormBuilder /></ProtectedRoute>} />
+          <Route path="/editform/:id" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><EditForm /></ProtectedRoute>} />
+          <Route path="/schoolAdmin/submitform/:id" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><FormPageAdmin /></ProtectedRoute>} />
 
-          <Route path="/viewforms" element={<ProtectedRoute requiredTab="forms"><ViewForms /></ProtectedRoute>} />
-          <Route path="/teachers/createform" element={<ProtectedRoute requiredTab="forms"><FormBuilderTeacher /></ProtectedRoute>} />
-          <Route path="/teachers/editform/:id" element={<ProtectedRoute requiredTab="forms"><EditFormTeacher /></ProtectedRoute>} />
-          <Route path="/teachers/viewforms" element={<ProtectedRoute requiredTab="forms"><ViewFormsTeacher /></ProtectedRoute>} />
+          <Route path="/viewforms" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><ViewForms /></ProtectedRoute>} />
+          <Route path="/teachers/createform" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><FormBuilderTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/editform/:id" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><EditFormTeacher /></ProtectedRoute>} />
+          <Route path="/teachers/viewforms" element={<ProtectedRoute requiredTab="forms" requireLeadIfTeacher><ViewFormsTeacher /></ProtectedRoute>} />
           <Route path="/teachers/managepoints" element={<ProtectedRoute requiredTab="forms"><ViewTeacherForms /></ProtectedRoute>} />
           <Route path="/teachers/addstudent" element={<ProtectedRoute requiredTab="students"><AddStudentTeacher /></ProtectedRoute>} />
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute requiredTab="forms"><FormPage /></ProtectedRoute>} />
