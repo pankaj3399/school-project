@@ -11,7 +11,7 @@ router.get('/students',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teache
 router.get('/teachers',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),getTeachers);
 router.get('/school',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),getCurrentSchool);
 router.put('/updateSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),upload.single('logo'),updateSchool);
-router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),deleteSchool);
+router.delete('/deleteSchool/:id',authenticate,authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),deleteSchool);
 router.post('/getYearPointsHistory',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),getYearPointsHistory);
 router.post('/getYearPointsHistory/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),getYearPointsHistoryByStudent);
 router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),getWeekPointsHistory);

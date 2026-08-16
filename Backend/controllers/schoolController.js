@@ -332,16 +332,7 @@ export const deleteSchool = async (req, res) => {
                     return res.status(403).json({ message: "Access denied. School is outside your district." });
                 }
             }
-        } else if (req.user.role === Role.SchoolAdmin) {
-            const school = await School.findById(schoolId);
-            const isCreator = school && school.createdBy && school.createdBy.toString() === req.user.id;
-            const isAssigned = adminUser.schoolId && adminUser.schoolId.toString() === schoolId;
-            
-            if (!isCreator && !isAssigned) {
-                return res.status(403).json({ message: "Access denied. You can only delete schools you created or are assigned to." });
-            }
         } else if (req.user.role !== Role.SystemAdmin) {
-            // Explicitly reject unsupported roles if they reached this point
             return res.status(403).json({ message: "Access denied. Unauthorized role for this action." });
         }
 

@@ -64,9 +64,9 @@ router.post('/import/schools', authorizeRoles(Role.SystemAdmin), (req, res, next
 }, bulkImportSchools);
 router.post('/clone-district', authorizeRoles(Role.SystemAdmin), cloneFromTemplate);
 router.get('/admins', authorizeRoles(Role.SystemAdmin), getAllAdmins);
-router.post('/invite', authorizeRoles(Role.SystemAdmin, Role.Admin), inviteAdmin);
-router.put('/admins/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), updateAdmin);
-router.post('/admins/:id/reinvite', authorizeRoles(Role.SystemAdmin, Role.Admin), reInviteAdmin);
+router.post('/invite', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), inviteAdmin);
+router.put('/admins/:id', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), updateAdmin);
+router.post('/admins/:id/reinvite', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), reInviteAdmin);
 
 // Terms management routes (authenticated)
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin), getAllTermsVersions);
