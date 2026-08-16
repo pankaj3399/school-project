@@ -38,6 +38,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAuthToken } from '@/lib/auth';
 import Modal from '@/Section/School/Modal';
 import { getErrorMessage } from "@/lib/errors"
+import { Role } from '@/enum';
 
 interface District {
     _id: string;
