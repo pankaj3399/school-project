@@ -23,6 +23,7 @@ import { useAuth } from "@/authContext";
 import { signIn, requestLoginOtp } from "@/api";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors"
+import { homePathFor } from "@/lib/roleAccess"
 
 export default function LoginForm() {
   const { toast } = useToast();
@@ -163,13 +164,14 @@ export default function LoginForm() {
           variant: "destructive",
         });
       } else {
-        await login(res.token);
+        const loggedIn = await login(res.token);
         toast({
           title: "Login Successful",
           description: "Redirecting to your dashboard...",
           variant: "default",
         });
-        navigateBasedOnRole(res.role || loginContext.role, loginContext.role);
+        const formType = loginContext.role === "SpecialTeacher" ? "Special" : loginContext.role === "Teacher" ? "Lead" : undefined;
+        navigate(homePathFor(loggedIn ?? { role: res.role || loginContext.role, type: formType }));
       }
     } catch (err: any) {
       const errorMessage = getErrorMessage(err, "An error occurred. Please try again.");
@@ -181,26 +183,6 @@ export default function LoginForm() {
       });
     } finally {
       setOtpLoading(false);
-    }
-  };
-
-  const navigateBasedOnRole = (serverRole: string, formRole: string) => {
-    // Per the spec Access Matrix, Analytics is Administrator-only — so
-    // System Manager (Admin) lands on Teachers list, not Analytics. Server
-    // collapses Lead/Special teachers into a single "Teacher" role, so we
-    // use the form selection to pick the right teacher landing.
-    if (serverRole === "SystemAdmin") {
-      navigate("/system-admin");
-    } else if (serverRole === "Admin" || serverRole === "SchoolAdmin") {
-      navigate("/teacher");
-    } else if (serverRole === "Teacher") {
-      if (formRole === "SpecialTeacher") {
-        navigate("/teachers/managepoints");
-      } else {
-        navigate("/teachers/viewforms");
-      }
-    } else {
-      navigate("/teachers/managepoints");
     }
   };
 

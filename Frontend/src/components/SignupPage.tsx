@@ -11,6 +11,7 @@ import { signUp } from '@/api'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/authContext'
 import { getErrorMessage } from '@/lib/errors'
+import { homePathFor } from '@/lib/roleAccess'
 
 
 
@@ -79,10 +80,8 @@ export  const SignupForm = ()=> {
             variant: "destructive"
           })
         } else {
-          login(res.token)
-          if (formData.role === 'SchoolAdmin') {
-            navigate('/analytics')
-          }
+          const loggedIn = await login(res.token)
+          navigate(homePathFor(loggedIn ?? { role: formData.role }))
         }
       } catch (error) {
         console.error("Signup error:", error)

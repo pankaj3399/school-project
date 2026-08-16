@@ -6,7 +6,7 @@ interface User { _id: string, email: string, role: string, name: string, grade?:
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (token: string) => Promise<User | null>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   // Fetch user from API
-  const fetchUser = async (token: string) => {
+  const fetchUser = async (token: string): Promise<User | null> => {
     try {
       const response = await getCurrentUser(token);
       if (response.error) {
@@ -26,16 +26,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.removeItem("token");
         }
         setUser(null);
-        return;
+        return null;
       }
       const sanitizedUser = response.user ?? null;
       if (sanitizedUser && !sanitizedUser.token) {
         sanitizedUser.token = token;
       }
       setUser(sanitizedUser);
+      return sanitizedUser;
     } catch (error) {
       console.error("Error fetching user:", error);
-      setUser(null); // Clear user on error
+      setUser(null);
+      return null;
     }
   };
 
@@ -54,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (token: string) => {
     localStorage.setItem("token", token);
-    await refreshUser();
+    return fetchUser(token);
   };
 
   // Logout function

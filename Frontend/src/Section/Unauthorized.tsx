@@ -1,9 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/authContext";
+import { homePathFor } from "@/lib/roleAccess";
 
 export default function UnauthorizedPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const homePath = homePathFor(user);
   const reason =
     (location.state as { reason?: string } | null)?.reason ||
     "This page is not available for your role.";
@@ -18,7 +22,7 @@ export default function UnauthorizedPage() {
       <div className="mt-6 flex gap-3">
         <Button onClick={() => navigate(-1)}>Go back</Button>
         <Button variant="outline" asChild>
-          <Link to="/viewforms">Go to Forms</Link>
+          <Link to={homePath}>Go to home</Link>
         </Button>
       </div>
     </div>

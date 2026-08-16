@@ -230,7 +230,7 @@ export default function SchoolPage() {
         setLoading(false);
         setSchool(response.school || response.data?.school);
         setIsEditing(false);
-        navigate("/analytics");
+        navigate("/system-admin/schools");
       } else {
         const errorMsg = getErrorMessage(response, "Failed to process the request. Please try again.");
         toast({

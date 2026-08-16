@@ -39,7 +39,7 @@ import CompleteGuardianRegistration from "@/Section/Guardian/complete-registrati
 import CompleteAdminRegistration from "@/Section/SystemAdmin/complete-registration";
 import LegalPdfPage from "@/components/LegalPdfPage";
 import { Role } from "./enum";
-import { canAccess, type TabKey } from "@/lib/roleAccess";
+import { canAccess, homePathFor, type TabKey } from "@/lib/roleAccess";
 
 // System Admin Components
 import SystemAdminDashboard from "@/Section/SystemAdmin/dashboard";
@@ -91,23 +91,14 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) {
-    if (user.role === Role.Student) {
-      return <Navigate to="/student" replace />;
-    }
-    return <Navigate to="/analytics" replace />;
+    return <Navigate to={homePathFor(user)} replace />;
   }
   return <>{children}</>;
 };
 
 const HomeRedirect = () => {
   const { user } = useAuth();
-  if (user?.role === Role.Student) {
-    return <Navigate to="/student" replace />;
-  }
-  if (user?.role === Role.Teacher) {
-    return <Navigate to="/analytics" replace />;
-  }
-  return <Navigate to="/analytics" replace />;
+  return <Navigate to={homePathFor(user)} replace />;
 };
 
 export default function App() {

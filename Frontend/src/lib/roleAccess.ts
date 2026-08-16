@@ -61,6 +61,48 @@ export function canAccess(user: ClassifiableUser, tab: TabKey): boolean {
   return accessMatrix[tab].includes(cls);
 }
 
+// First page each role is allowed to open — matches side-nav order.
+const homeTabOrder: ReadonlyArray<TabKey> = [
+  'overview',
+  'analytics',
+  'districts',
+  'schools',
+  'teachers',
+  'students',
+  'forms',
+  'pointHistory',
+  'printReport',
+  'setup',
+];
+
+const homePathByTab: Record<TabKey, { default: string; teacher: string }> = {
+  overview:     { default: '/system-admin', teacher: '/system-admin' },
+  analytics:    { default: '/analytics', teacher: '/teachers/analytics' },
+  districts:    { default: '/system-admin/districts', teacher: '/system-admin/districts' },
+  schools:      { default: '/system-admin/schools', teacher: '/system-admin/schools' },
+  teachers:     { default: '/teacher', teacher: '/teachers/roster' },
+  students:     { default: '/students', teacher: '/teachers/students' },
+  forms:        { default: '/viewforms', teacher: '/teachers/viewforms' },
+  pointHistory: { default: '/history', teacher: '/teachers/history' },
+  printReport:  { default: '/print-report', teacher: '/teachers/print-report' },
+  setup:        { default: '/setup', teacher: '/teachers/students-setup' },
+};
+
+export function homePathFor(user: ClassifiableUser): string {
+  if (!user?.role) return '/signin';
+  if (user.role === Role.Student) return '/student';
+
+  const isTeacher = user.role === Role.Teacher;
+  for (const tab of homeTabOrder) {
+    if (!canAccess(user, tab)) continue;
+    if (tab === 'forms' && isTeacher && user.type !== 'Lead') {
+      return '/teachers/managepoints';
+    }
+    return isTeacher ? homePathByTab[tab].teacher : homePathByTab[tab].default;
+  }
+  return isTeacher ? '/teachers/managepoints' : '/viewforms';
+}
+
 // Map AccessRole tiers back to backend Role strings — used by App.tsx
 // ProtectedRoute requiredRoles to enforce URL-level access.
 export function rolesForTab(tab: TabKey): string[] {
