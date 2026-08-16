@@ -420,6 +420,7 @@ export const submitFormAdmin = async (
   },
   formId: string,
   submittedAt: Date,
+  schoolId?: string,
 ) => {
   try {
     const token = getToken();
@@ -436,6 +437,7 @@ export const submitFormAdmin = async (
         answers,
         submittedFor,
         submittedAt,
+        ...(schoolId ? { schoolId } : {}),
       },
       {
         headers: {

@@ -8,10 +8,11 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import Admin from "../models/Admin.js";
 import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
+import { isDistrictScopedRole } from "../utils/schoolAccess.js";
 export const getAllSchools = async (req, res) => {
     try {
       let filter = {};
-      if (req.user.role === Role.Admin) {
+      if (isDistrictScopedRole(req.user.role)) {
         const adminUser = await Admin.findById(req.user.id);
         if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
           return res.status(403).json({ message: "Access denied. You are not assigned to a district." });
@@ -76,7 +77,7 @@ export const getAllSchools = async (req, res) => {
           });
         }
         students = await Student.find({ schoolId });
-      } else if (req.user.role === Role.Admin) {
+      } else if (isDistrictScopedRole(req.user.role)) {
         console.log("Admin - district scoped students");
         const adminUser = await Admin.findById(req.user.id);
         
@@ -128,7 +129,7 @@ export const getTeachers = async (req, res) => {
             const { schoolId: querySchoolId } = req.query;
             const filter = querySchoolId ? { schoolId: querySchoolId } : {};
             teachers = await Teacher.find(filter);
-        } else if (req.user.role === Role.Admin) {
+        } else if (isDistrictScopedRole(req.user.role)) {
             const adminUser = await Admin.findById(req.user.id);
             if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
                 return res.status(403).json({ message: "Admin is not assigned to a district." });
@@ -182,6 +183,7 @@ export const getCurrentSchool = async (req, res) => {
                 }
                 sch = await School.findById(querySchoolId).populate('districtId').populate('createdBy');
                 break;
+            case Role.DistrictAdmin:
             case Role.Admin:
                 const adminUser = await Admin.findById(req.user.id);
                 if (!adminUser) return res.status(403).json({ message: "Admin user not found." });
@@ -207,7 +209,7 @@ export const getCurrentSchool = async (req, res) => {
         
         // Fetch administrators associated with this school
         // Conditionally include PII (address/phone) only for privileged roles
-        const isPrivileged = req.user.role === Role.Admin || req.user.role === Role.SystemAdmin;
+        const isPrivileged = isDistrictScopedRole(req.user.role) || req.user.role === Role.SystemAdmin;
         const projection = `_id name email role createdAt ${isPrivileged ? 'address phone ' : ''}position contactRole password`;
         
         const adminsRaw = await Admin.find({ schoolId: sch._id })
@@ -239,7 +241,7 @@ export const updateSchool = async (req, res) => {
 
     try {
       // Role-based access control
-      if (req.user.role === Role.Admin) {
+      if (isDistrictScopedRole(req.user.role)) {
         const adminUser = await Admin.findById(req.user.id);
         const school = await School.findById(req.params.id);
         if (!adminUser || !school) {
@@ -320,7 +322,7 @@ export const deleteSchool = async (req, res) => {
         }
 
         // 1. Authorization check by role/scope FIRST
-        if (req.user.role === Role.Admin) {
+        if (isDistrictScopedRole(req.user.role)) {
             if (adminUser.role !== Role.SystemAdmin) {
                 if (!adminUser.districtId) {
                     return res.status(403).json({ message: "Admin is not assigned to a district." });
@@ -416,7 +418,7 @@ export const promote = async (req, res) => {
                   throw error;
               }
               school = await School.findById(schoolId).session(session);
-          } else if (req.user.role === Role.Admin) {
+          } else if (isDistrictScopedRole(req.user.role)) {
               const adminUser = await Admin.findById(id).session(session);
               const isSystemAdminEquivalent = adminUser && adminUser.role === Role.SystemAdmin;
               

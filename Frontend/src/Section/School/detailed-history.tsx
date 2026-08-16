@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard"
+import { isApiError, getErrorMessage } from "@/lib/errors"
+import { useToast } from "@/hooks/use-toast"
 
 const periods = [
     {label: '1W', value: '1 WEEK'},
@@ -93,6 +95,7 @@ const DetailedHistory = () => {
     const [studentId, setStudentId] = useState<string>("");
     const [studentName, setStudentName] = useState<string>("");
     const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
 
     // Fetch students on component mount — scoped to the selected school
     useEffect(() => {
@@ -112,6 +115,16 @@ const DetailedHistory = () => {
                     ? (selectedSchoolId || undefined)
                     : undefined;
                 const resTeacher = await getStudents(token, effectiveSchoolId);
+                if (isApiError(resTeacher)) {
+                    toast({
+                        title: "Error",
+                        description: resTeacher.error,
+                        variant: "destructive",
+                    });
+                    setStudents([]);
+                    setFilteredStudents([]);
+                    return;
+                }
                 const schoolStudents = resTeacher.students || [];
                 setStudents(schoolStudents);
                 setFilteredStudents(schoolStudents);
@@ -148,7 +161,14 @@ const DetailedHistory = () => {
 
             res = await getHistoryByTime(requestData);
 
-            if (!res) {
+            if (!res || isApiError(res)) {
+                if (isApiError(res)) {
+                    toast({
+                        title: "Error",
+                        description: res.error,
+                        variant: "destructive",
+                    });
+                }
                 setData([]);
                 setHistoryData([]);
                 return;
@@ -183,12 +203,13 @@ const DetailedHistory = () => {
             };
             console.error('Request that failed:', requestDataForLog);
 
-            if (error.response?.status === 403) {
-                console.error('Access denied error details:', error.response.data);
-            }
-
             setData([]);
             setHistoryData([]);
+            toast({
+                title: "Error",
+                description: getErrorMessage(error, "Could not load point history."),
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }

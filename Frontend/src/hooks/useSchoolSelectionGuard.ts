@@ -5,7 +5,7 @@ import { Role } from "@/enum";
 export function useSchoolSelectionGuard() {
   const { user } = useAuth();
   const { selectedSchoolId } = useSchool();
-  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin;
   const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
   return { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId };
 }

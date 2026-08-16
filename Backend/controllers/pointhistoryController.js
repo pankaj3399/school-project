@@ -85,7 +85,7 @@ const getSchoolIdFromUser = async (req) => {
   }
 
   // Admin (District/School) still requires schoolId or has it assigned
-  if (userRole === Role.Admin) {
+  if (userRole === Role.Admin || userRole === Role.DistrictAdmin) {
     const adminUser = await Admin.findById(userId);
     if (!adminUser || !adminUser.districtId) {
       const error = new Error("Administrator is not assigned to a district.");

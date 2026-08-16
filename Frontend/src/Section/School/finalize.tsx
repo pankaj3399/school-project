@@ -235,7 +235,7 @@ const Finalize = () => {
       try {
         const token = localStorage.getItem("token")
         
-        const isAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
+        const isAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin || authUser?.role === Role.DistrictAdmin;
         if (isAdmin && !effectiveSchoolId) {
           setStudents([])
           setSchoolData({})

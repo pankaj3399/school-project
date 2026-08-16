@@ -22,6 +22,8 @@ import { ChevronsUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/authContext";
 import { timezoneManager } from "@/lib/luxon";
+import { useSchoolSelectionGuard } from "@/hooks/useSchoolSelectionGuard";
+import { isApiError } from "@/lib/errors";
 
 type FormSubmissionProps = {
   form: any;
@@ -46,6 +48,7 @@ export function FormSubmission({
   isSubmitting,
 }: FormSubmissionProps) {
   const { user } = useAuth();
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
   const [submittedFor, setSubmittedFor] = useState("");
   const [answers, setAnswers] = useState<AnswerType>({});
   const [isFormValid, setIsFormValid] = useState(false);
@@ -54,6 +57,7 @@ export function FormSubmission({
   const [isPopOverOpen, setIsPopOverOpen] = useState(false);
   const [grade, setGrade] = useState("All");
   const [student, setStudent] = useState<any[]>([]);
+  const [studentLoadError, setStudentLoadError] = useState<string | null>(null);
   const [isSendEmail, setIsSendEmail] = useState({
     studentEmail: false,
     teacherEmail: false,
@@ -107,7 +111,30 @@ export function FormSubmission({
   useEffect(() => {
     const getStudent = async () => {
       const token = localStorage.getItem("token") || "";
-      const response = await getStudents(token);
+      if (requiresSchoolSelection) {
+        setStudentLoadError("Select a school before submitting this form.");
+        setStudent([]);
+        setfilteredStudent([]);
+        return;
+      }
+
+      const response = await getStudents(
+        token,
+        isMultiSchoolUser ? selectedSchoolId || undefined : undefined,
+      );
+
+      if (isApiError(response) || !Array.isArray(response.students)) {
+        setStudentLoadError(
+          isApiError(response)
+            ? response.error
+            : "Could not load students for this school.",
+        );
+        setStudent([]);
+        setfilteredStudent([]);
+        return;
+      }
+
+      setStudentLoadError(null);
 
       // Filter students for any form with pre-selection
       if (
@@ -169,7 +196,7 @@ export function FormSubmission({
       }
     };
     getStudent();
-  }, [form]);
+  }, [form, selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection, user?.type]);
 
   // Auto-select if only one student is available in the filtered list
   useEffect(() => {
@@ -652,6 +679,10 @@ export function FormSubmission({
                         className="h-4 w-4 shrink-0 opacity-50 cursor-pointer hover:opacity-100"
                       />
                     )}
+                  </div>
+                ) : studentLoadError ? (
+                  <div className="font-bold text-red-700">
+                    {studentLoadError}
                   </div>
                 ) : (
                   <div className="font-bold">

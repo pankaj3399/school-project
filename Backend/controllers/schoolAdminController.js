@@ -22,6 +22,7 @@ import Form from "../models/Form.js";
 import FormSubmissions from "../models/FormSubmissions.js";
 import PendingTokens from "../models/PendingTokens.js";
 import { TermsAcceptance } from "../models/TermsOfUse.js";
+import { assertSchoolAccess, assertStudentAccess } from "../utils/schoolAccess.js";
 
 const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
@@ -35,7 +36,7 @@ const getSchoolIdFromUser = async (req) => {
     return resolvedSchoolId || undefined;
   }
 
-  if (userRole === Role.Admin) {
+  if (userRole === Role.Admin || userRole === Role.DistrictAdmin) {
     const admin = await Admin.findById(userId);
     const isTopLevelSystemAdmin = admin && admin.role === Role.SystemAdmin;
     
@@ -250,7 +251,7 @@ export const getStats = async (req, res) => {
     const id = req.user.id;
 
     const adminUser = await Admin.findById(id);
-    if (!adminUser && req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin) {
+    if (!adminUser && req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin && req.user.role !== Role.DistrictAdmin) {
       return res.status(404).json({ message: "Admin user not found" });
     }
 
@@ -258,7 +259,7 @@ export const getStats = async (req, res) => {
 
     if (schoolId == null) {
       // If still no schoolId and not a system admin, return zeros
-      if (req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin) {
+      if (req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin && req.user.role !== Role.DistrictAdmin) {
           return res.status(200).json({
             totalTeachers: 0,
             totalStudents: 0,
@@ -362,9 +363,10 @@ export const getStats = async (req, res) => {
       totalFeedbackCount: stats.feedbackCount,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -372,11 +374,11 @@ export const getPointsReceivedPerMonth = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    // Validate student existence
     const student = await Student.findById(studentId);
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
+    await assertStudentAccess(req, student);
 
     // Aggregate points received by the student per month
     const pointsData = await PointsHistory.aggregate([
@@ -397,30 +399,23 @@ export const getPointsReceivedPerMonth = async (req, res) => {
 
     return res.status(200).json({ monthlyPoints });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
 export const getPointsGivenPerMonth = async (req, res) => {
   try {
-    const id = req.user.id; // Get the authenticated user's ID
-
-    // Find the school admin by ID to extract the schoolId
-    const adminUser = await Admin.findById(id);
-    if (!adminUser) {
-      return res.status(404).json({ message: "Admin user not found" });
-    }
-
-    let schoolId = adminUser.schoolId;
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
-        schoolId = req.query.schoolId;
-    }
+    const schoolId = await getSchoolIdFromUser(req);
 
     let match = {};
     if (schoolId) {
+        await assertSchoolAccess(req, schoolId);
         match.schoolId = new mongoose.Types.ObjectId(schoolId);
+    } else if (req.user.role !== Role.SystemAdmin) {
+        return res.status(400).json({ message: "schoolId is required. Select a school." });
     }
 
     // Aggregate points given by the teacher per month
@@ -445,9 +440,10 @@ export const getPointsGivenPerMonth = async (req, res) => {
 
     return res.status(200).json({ monthlyPoints });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -460,6 +456,7 @@ export const getPointsGivenPerMonthPerTeacher = async (req, res) => {
     if (!teacher) {
       return res.status(404).json({ message: "Teacher not found" });
     }
+    await assertSchoolAccess(req, teacher.schoolId);
 
     // Aggregate points given by the teacher per month
     const pointsData = await PointsHistory.aggregate([
@@ -480,30 +477,23 @@ export const getPointsGivenPerMonthPerTeacher = async (req, res) => {
 
     return res.status(200).json({ monthlyPoints });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
 export const getFormsSubmittedPerMonth = async (req, res) => {
   try {
-    const id = req.user.id; // Get the authenticated user's ID
-
-    // Find the school admin by ID to extract the schoolId
-    const adminUser = await Admin.findById(id);
-    if (!adminUser) {
-      return res.status(404).json({ message: "Admin user not found" });
-    }
-
-    let schoolId = adminUser.schoolId;
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
-        schoolId = req.query.schoolId;
-    }
+    const schoolId = await getSchoolIdFromUser(req);
 
     let match = {};
     if (schoolId) {
+        await assertSchoolAccess(req, schoolId);
         match.schoolId = new mongoose.Types.ObjectId(schoolId);
+    } else if (req.user.role !== Role.SystemAdmin) {
+        return res.status(400).json({ message: "schoolId is required. Select a school." });
     }
 
     // Aggregate form submissions by the teacher per month
@@ -528,9 +518,10 @@ export const getFormsSubmittedPerMonth = async (req, res) => {
 
     return res.status(200).json({ monthlyForms });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -543,6 +534,7 @@ export const getFormsSubmittedPerMonthPerTeacher = async (req, res) => {
     if (!teacher) {
       return res.status(404).json({ message: "Teacher not found" });
     }
+    await assertSchoolAccess(req, teacher.schoolId);
 
     // Aggregate form submissions by the teacher per month
     const formsData = await PointsHistory.aggregate([
@@ -563,27 +555,20 @@ export const getFormsSubmittedPerMonthPerTeacher = async (req, res) => {
 
     return res.status(200).json({ monthlyForms });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
 export const getMonthlyStats = async (req, res) => {
   try {
-    const id = req.user.id; // Get the authenticated user's ID
-
-    // Find the school admin by ID to extract the schoolId
-    const adminUser = await Admin.findById(id);
-    if (!adminUser) {
-      return res.status(404).json({ message: "Admin user not found" });
-    }
-
-    let schoolId;
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
-      schoolId = req.query.schoolId;
-    } else {
-      schoolId = adminUser.schoolId;
+    const schoolId = await getSchoolIdFromUser(req);
+    if (schoolId) {
+      await assertSchoolAccess(req, schoolId);
+    } else if (req.user.role !== Role.SystemAdmin) {
+      return res.status(400).json({ message: "schoolId is required. Select a school." });
     }
     const monthlyStats = await PointsHistory.aggregate([
       {
@@ -622,9 +607,10 @@ export const getMonthlyStats = async (req, res) => {
       monthlyStats: formattedMonthlyStats,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 

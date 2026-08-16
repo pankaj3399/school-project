@@ -1,6 +1,6 @@
 import Student from "../models/Student.js";
 
-export const checkStudentFormEligibility = async (studentId, form) => {
+export const checkStudentFormEligibility = async (studentId, form, options = {}) => {
   try {
     const student = await Student.findById(studentId);
     
@@ -8,6 +8,20 @@ export const checkStudentFormEligibility = async (studentId, form) => {
       return {
         eligible: false,
         error: "Student not found"
+      };
+    }
+
+    if (form?.schoolId && student.schoolId?.toString() !== form.schoolId.toString()) {
+      return {
+        eligible: false,
+        error: "Access denied. Student does not belong to this form's school."
+      };
+    }
+
+    if (options.schoolId && student.schoolId?.toString() !== options.schoolId.toString()) {
+      return {
+        eligible: false,
+        error: "Access denied. Student is not in your school."
       };
     }
 

@@ -8,6 +8,7 @@ import Admin from "../models/Admin.js";
 import { sendTeacherRegistrationMail } from "../services/verificationMail.js";
 import { sendOnboardingEmail } from "../services/verificationMail.js";
 import mongoose from "mongoose";
+import { assertSchoolAccess, isDistrictScopedRole } from "../utils/schoolAccess.js";
 
 export const awardPoints = async (req, res) => {
   const { studentId, points } = req.body;
@@ -33,11 +34,12 @@ export const addTeacher = async (req, res) => {
 
   try {
     let schoolId;
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+    if (req.user.role === Role.SystemAdmin || isDistrictScopedRole(req.user.role)) {
       schoolId = querySchoolId || bodySchoolId;
       if (!schoolId) {
         return res.status(400).json({ message: "School ID is required for System Administrators" });
       }
+      await assertSchoolAccess(req, schoolId);
     } else if (req.user.role === Role.Teacher) {
       const leadTeacher = await Teacher.findById(req.user.id).select("schoolId type");
       if (!leadTeacher || leadTeacher.type !== 'Lead') {
@@ -119,9 +121,10 @@ export const addTeacher = async (req, res) => {
       registrationToken,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error in teacherController.js", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error in teacherController.js", error: error.message });
   }
 };
 
@@ -148,27 +151,20 @@ export const updateTeacher = async (req, res) => {
     // Role handling and ownership check
     switch (req.user.role) {
       case Role.SchoolAdmin:
-        const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
-        if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToUpdate.schoolId || schoolAdmin.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
-          return res.status(403).json({ message: "You do not have permission to update this teacher" });
-        }
+      case Role.SystemAdmin:
+      case Role.Admin:
+      case Role.DistrictAdmin:
+        await assertSchoolAccess(req, teacherToUpdate.schoolId);
         break;
       case Role.Teacher: {
         const leadTeacher = await Teacher.findById(req.user.id).select("schoolId type");
         if (!leadTeacher || leadTeacher.type !== 'Lead') {
           return res.status(403).json({ message: "Only Lead Teachers can update teachers" });
         }
-        if (!leadTeacher.schoolId || !teacherToUpdate.schoolId || leadTeacher.schoolId.toString() !== teacherToUpdate.schoolId.toString()) {
-          return res.status(403).json({ message: "You do not have permission to update this teacher" });
-        }
+        await assertSchoolAccess(req, teacherToUpdate.schoolId);
         break;
       }
-      case Role.SystemAdmin:
-      case Role.Admin:
-        // Elevated roles can update teachers in any school
-        break;
       default:
-        // Basic users or unrecognized roles
         return res.status(403).json({ message: "Access denied: Unauthorized role" });
     }
 
@@ -196,9 +192,10 @@ export const updateTeacher = async (req, res) => {
       teacher: updatedTeacher,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -212,20 +209,20 @@ export const deleteTeacher = async (req, res) => {
     }
 
     // Ownership check
-    if (req.user.role === Role.SchoolAdmin) {
-      const schoolAdmin = await Admin.findById(req.user.id).select("schoolId");
-      if (!schoolAdmin || !schoolAdmin.schoolId || !teacherToDelete.schoolId || schoolAdmin.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
-        return res.status(403).json({ message: "You do not have permission to delete this teacher" });
-      }
-    } else if (req.user.role === Role.Teacher) {
-      const leadTeacher = await Teacher.findById(req.user.id).select("schoolId type");
+    if (req.user.role === Role.Teacher) {
+      const leadTeacher = await Teacher.findById(req.user.id).select("type");
       if (!leadTeacher || leadTeacher.type !== 'Lead') {
         return res.status(403).json({ message: "Only Lead Teachers can delete teachers" });
       }
-      if (!leadTeacher.schoolId || !teacherToDelete.schoolId || leadTeacher.schoolId.toString() !== teacherToDelete.schoolId.toString()) {
-        return res.status(403).json({ message: "You do not have permission to delete this teacher" });
-      }
+    } else if (
+      req.user.role !== Role.SchoolAdmin &&
+      req.user.role !== Role.SystemAdmin &&
+      req.user.role !== Role.Admin &&
+      req.user.role !== Role.DistrictAdmin
+    ) {
+      return res.status(403).json({ message: "Access denied: Unauthorized role" });
     }
+    await assertSchoolAccess(req, teacherToDelete.schoolId);
 
     const deletedTeacher = await Teacher.findByIdAndDelete(teacherId);
 
@@ -242,9 +239,10 @@ export const deleteTeacher = async (req, res) => {
       message: "Teacher deleted successfully",
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 

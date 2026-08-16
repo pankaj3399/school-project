@@ -11,7 +11,7 @@ import Students from "./Section/Students/Students";
 import Teachers from "./Section/Teacher/Teacher";
 import FormBuilder from "./Section/School/form-builder";
 import ViewTeacherStudents from "./Section/Teacher/view-students";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./authContext";
 import ViewForms from "./Section/School/view-forms";
 import ViewTeacherForms from "./Section/Teacher/view-teacher-forms";
@@ -50,6 +50,7 @@ import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
 import ViewSchool from "@/Section/SystemAdmin/schools/view-school";
 import TermsManagement from "./Section/SystemAdmin/terms";
 import SchoolsList from "./Section/SystemAdmin/schools/index";
+import UnauthorizedPage from "./Section/Unauthorized";
 
 const systemAdminRoles = [Role.SystemAdmin];
 
@@ -58,15 +59,28 @@ const systemAdminRoles = [Role.SystemAdmin];
 // fall back to `requiredRoles` for routes where role-string matching is enough.
 const ProtectedRoute = ({ children, requiredRoles, requiredTab }: { children: React.ReactNode, requiredRoles?: string[], requiredTab?: TabKey }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <div>Loading...</div>;
   if (!user) {
     return <Navigate to="/signin" replace />;
   }
   if (requiredTab && !canAccess(user, requiredTab)) {
-    return <Navigate to="/unauthorized" replace />;
+    return (
+      <Navigate
+        to="/unauthorized"
+        replace
+        state={{ from: location.pathname, reason: "This page is not available for your role." }}
+      />
+    );
   }
   if (requiredRoles && !requiredRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+    return (
+      <Navigate
+        to="/unauthorized"
+        replace
+        state={{ from: location.pathname, reason: "This page is not available for your role." }}
+      />
+    );
   }
 
   return <>{children}</>;
@@ -169,12 +183,12 @@ export default function App() {
           <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/schools" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SchoolsList /></ProtectedRoute>} />
-          <Route path="/system-admin/schools/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddSchool /></ProtectedRoute>} />
-          <Route path="/system-admin/schools/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewSchool /></ProtectedRoute>} />
+          <Route path="/system-admin/schools" element={<ProtectedRoute requiredTab="schools"><SchoolsList /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/new" element={<ProtectedRoute requiredTab="schools"><AddSchool /></ProtectedRoute>} />
+          <Route path="/system-admin/schools/:id" element={<ProtectedRoute requiredTab="schools"><ViewSchool /></ProtectedRoute>} />
           <Route path="/system-admin/terms" element={<ProtectedRoute requiredRoles={systemAdminRoles}><TermsManagement /></ProtectedRoute>} />
 
-          <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
+          <Route path="/unauthorized" element={<ProtectedRoute><UnauthorizedPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </RootLayout>

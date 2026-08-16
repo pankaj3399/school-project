@@ -98,7 +98,7 @@ export default function SchoolPage() {
           return;
         }
 
-        const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+        const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin;
         if (isCreateMode || (isAdmin && !selectedSchoolId)) {
           setSchool(null);
           setSchoolName("");

@@ -62,7 +62,7 @@ const Analytics = () => {
     const { user } = useAuth();
     const { selectedSchoolId, setSelectedSchoolId, schools } = useSchool();
 
-    const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+    const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin;
     const effectiveSchoolId = isMultiSchoolUser ? selectedSchoolId || undefined : undefined;
 
     const [studentName, setStudentName] = useState<string>("");

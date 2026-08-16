@@ -8,13 +8,11 @@ import { toast } from '@/hooks/use-toast'
 import { Form, Question, FormType } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
-import { useSchool } from '@/context/SchoolContext'
-import { useAuth } from '@/authContext'
-import { Role } from '@/enum'
+import { useSchoolSelectionGuard } from '@/hooks/useSchoolSelectionGuard'
+import { isApiError } from '@/lib/errors'
 
 export default function ViewForms() {
-  const { user } = useAuth()
-  const { selectedSchoolId } = useSchool()
+  const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard()
   const [forms, setForms] = useState<any[]>([])
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
   const [groupedForms, setGroupedForms] = useState<{
@@ -32,9 +30,6 @@ export default function ViewForms() {
   const closeDeleteModal = () => {
     setDeleteModal({ form: null, open: false })
   }
-
-  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin
-  const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,7 +52,7 @@ export default function ViewForms() {
           getStudents(token, effectiveSchoolId)
         ])
 
-        if (formsData.error) {
+        if (isApiError(formsData)) {
           toast({
             title: 'Error',
             description: formsData.error,
@@ -68,7 +63,14 @@ export default function ViewForms() {
           groupForms(formsData.forms)
         }
 
-        if (studentsData?.students) {
+        if (isApiError(studentsData)) {
+          toast({
+            title: 'Error',
+            description: studentsData.error,
+            variant: 'destructive'
+          })
+          setStudents([])
+        } else if (studentsData?.students) {
           setStudents(studentsData.students)
         }
       } catch (error) {
@@ -77,7 +79,7 @@ export default function ViewForms() {
     }
 
     fetchData()
-  }, [selectedSchoolId, user])
+  }, [selectedSchoolId, isMultiSchoolUser, requiresSchoolSelection])
 
   const groupForms = (forms: any[]) => {
     const grouped = forms.reduce((acc, form) => {

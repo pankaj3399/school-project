@@ -102,7 +102,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) {
       setSelectedSchoolId(null);
       setSchools([]);
-    } else if (user.role === Role.SystemAdmin || user.role === Role.Admin) {
+    } else if (user.role === Role.SystemAdmin || user.role === Role.Admin || user.role === Role.DistrictAdmin) {
       const fetchSchools = async () => {
         setLoading(true);
         try {
@@ -167,8 +167,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       };
       fetchSchools();
-    } else if (user.role === Role.SchoolAdmin || user.role === Role.DistrictAdmin) {
-      // School Tech / District Admin are tied to a specific school — auto-select
+    } else if (user.role === Role.SchoolAdmin) {
+      // School Tech is tied to a specific school — auto-select
       // it from the auth context so pages like Setup don't show "please select a
       // school" when they have no picker available.
       const u = user as { schoolId?: string | { _id?: string } };

@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, FormType, GRADE_OPTIONS, Question } from '@/lib/types'
@@ -91,6 +91,15 @@ export default function EditForm() {
     const token = localStorage.getItem('token')
     if (token) {
       const form = await getFormById(id, token)
+      if (isApiError(form) || !form.form) {
+        toast({
+          title: 'Error',
+          description: isApiError(form) ? form.error : 'You do not have access to this form.',
+          variant: 'destructive',
+        })
+        navigate('/viewforms')
+        return null
+      }
       setForm(form.form as Form)
       return form.form as Form
     }

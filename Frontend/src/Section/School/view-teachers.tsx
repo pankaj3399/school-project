@@ -89,6 +89,16 @@ export default function ViewTeachers() {
       const data = await getTeachers(effectiveSchoolId);
       if (requestId !== fetchRequestRef.current) return;
 
+      if (isApiError(data)) {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+        setTeachers([]);
+        return;
+      }
+
       let teachersArray = [];
       if (Array.isArray(data)) {
         teachersArray = data;
@@ -136,7 +146,15 @@ export default function ViewTeachers() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found.");
 
-      await deleteTeacher(id, token);
+      const result = await deleteTeacher(id, token);
+      if (isApiError(result)) {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
       setTeachers((prev) => prev.filter((teacher) => teacher._id !== id));
       setShowModal(false);
       setTeacherToDelete(null);
@@ -163,6 +181,14 @@ export default function ViewTeachers() {
       if (!token) throw new Error("No token found.");
 
       const updatedData = await updateTeacher(updatedTeacher, id, token);
+      if (isApiError(updatedData)) {
+        toast({
+          title: "Error",
+          description: updatedData.error,
+          variant: "destructive",
+        });
+        return;
+      }
       setTeachers((prev) =>
         prev.map((teacher) =>
           teacher._id === updatedData._id ? updatedData : teacher

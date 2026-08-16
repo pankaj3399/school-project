@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 import { useState } from 'react'
 import { FormSubmission } from '@/Section/Teacher/component/form-submit'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -33,6 +33,15 @@ export default function FormPage( ) {
     const token = localStorage.getItem('token')
     if(token){
       const form = await getFormById(id, token)
+      if (isApiError(form) || !form.form) {
+        toast({
+          title: 'Error',
+          description: isApiError(form) ? form.error : 'You do not have access to this form.',
+          variant: 'destructive',
+        })
+        navigate(-1)
+        return null
+      }
       setForm(form.form as Form)
       return form.form as Form
     }

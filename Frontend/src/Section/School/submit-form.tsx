@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 import { useState } from 'react'
 import { FormSubmission } from '@/Section/Teacher/component/form-submit'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -6,6 +6,7 @@ import { AnswerType, Form } from '@/lib/types'
 import { getFormById, submitFormAdmin } from '@/api'
 import { toast } from '@/hooks/use-toast'
 import { useAuth } from '@/authContext'
+import { useSchoolSelectionGuard } from '@/hooks/useSchoolSelectionGuard'
 import { timezoneManager } from '@/lib/luxon'
 import { formatEmailNotificationToast } from '@/lib/academicYear'
 import {
@@ -26,6 +27,7 @@ export default function FormPageAdmin( ) {
   const navigate = useNavigate()
   const [form, setForm] = useState<Form | null>(null)
   const {user} = useAuth();
+  const { isMultiSchoolUser, selectedSchoolId } = useSchoolSelectionGuard();
   const [showEmailVerificationDialog, setShowEmailVerificationDialog] = useState(false)
   const [emailVerificationError, setEmailVerificationError] = useState('')
 
@@ -33,6 +35,15 @@ export default function FormPageAdmin( ) {
     const token = localStorage.getItem('token')
     if(token){
       const form = await getFormById(id, token)
+      if (isApiError(form) || !form.form) {
+        toast({
+          title: 'Error',
+          description: isApiError(form) ? form.error : 'You do not have access to this form.',
+          variant: 'destructive',
+        })
+        navigate('/viewforms')
+        return null
+      }
       setForm(form.form as Form)
       return form.form as Form
     }
@@ -70,7 +81,14 @@ export default function FormPageAdmin( ) {
         convertedSubmittedAt = utcDateTime.toJSDate();
       }
       
-      const response = await submitFormAdmin(answers, submittedFor, isSendEmail, params?.id || "", convertedSubmittedAt)
+      const response = await submitFormAdmin(
+        answers,
+        submittedFor,
+        isSendEmail,
+        params?.id || "",
+        convertedSubmittedAt,
+        isMultiSchoolUser ? selectedSchoolId || undefined : undefined,
+      )
       if(!response.error){
         toast({ 
           title: 'Points saved',

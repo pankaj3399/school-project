@@ -73,7 +73,7 @@ export default function ViewReport({
   const [reportError, setReportError] = useState<string | null>(null);
   const { selectedSchoolId } = useSchool();
   const { user } = useAuth();
-  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin;
 
   const handleSelectStudent = (studentId: string, studentData: any, gradeInfo:any) => {
     setSelectedStudents(prev => {

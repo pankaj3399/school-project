@@ -54,7 +54,7 @@ export function TopNav() {
   ];
   
   const isSystemAdminOverview = location.pathname === '/system-admin';
-  const showSchoolSelector = (user?.role === Role.SystemAdmin || user?.role === Role.Admin) && 
+  const showSchoolSelector = (user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin) && 
     !isSystemAdminOverview &&
     allowedPaths.some(path => location.pathname.startsWith(path));
 

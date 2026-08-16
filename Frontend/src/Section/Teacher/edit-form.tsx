@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, isApiError } from "@/lib/errors"
 //f
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -84,6 +84,15 @@ const [grade, setGrade] = useState<string>("K")
     const token = localStorage.getItem('token')
     if(token){
       const form = await getFormById(id, token)
+      if (isApiError(form) || !form.form) {
+        toast({
+          title: 'Error',
+          description: isApiError(form) ? form.error : 'You do not have access to this form.',
+          variant: 'destructive',
+        })
+        navigate('/teachers/viewforms')
+        return null
+      }
       setForm(form.form as Form)
       return form.form as Form
     }

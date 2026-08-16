@@ -139,8 +139,13 @@ export default function ViewStudents() {
 
       const result = await deleteStudent(id, token)
 
-      if (result.error) {
-        throw new Error(result.error.message || "Failed to delete student")
+      if (isApiError(result)) {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        })
+        return
       }
 
       setStudents((prev) => prev.filter((student) => student._id !== id))
@@ -170,9 +175,18 @@ export default function ViewStudents() {
       if (!token) throw new Error("No token found.")
 
       const updatedData = await updateStudent(updatedStudent, id, token)
+      if (isApiError(updatedData)) {
+        toast({
+          title: "Error",
+          description: updatedData.error,
+          variant: "destructive",
+        })
+        return
+      }
+      const studentRecord = updatedData.student || updatedData
       setStudents((prev) =>
         prev.map((student) =>
-          student._id === updatedData._id ? updatedData : student
+          student._id === studentRecord._id ? studentRecord : student
         )
       )
       setEditingStudent(null)

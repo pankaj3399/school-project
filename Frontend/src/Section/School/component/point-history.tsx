@@ -14,6 +14,7 @@ import { Role } from "@/enum"
 import { timezoneManager } from "@/lib/luxon"
 import { useSearchParams } from "react-router-dom"
 import { aggregateHistoryData } from '@/lib/pointHistoryUtils'
+import { isApiError } from "@/lib/errors"
 
 // Define pagination interface
 interface PaginationData {
@@ -37,7 +38,7 @@ export default function ViewPointHistoryTeacher() {
   const { selectedSchoolId } = useSchool();
   const [searchParams] = useSearchParams();
   const formTypeFromUrl = searchParams.get('formType') || '';
-  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const isMultiSchoolUser = user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin;
   const requiresSchoolSelection = isMultiSchoolUser && !selectedSchoolId;
   const effectiveSchoolId = isMultiSchoolUser ? (selectedSchoolId || undefined) : undefined;
 
@@ -53,6 +54,16 @@ export default function ViewPointHistoryTeacher() {
     const fetchData = async () => {
       const token = localStorage.getItem('token')
       const resTeacher = await getStudents(token ?? "", effectiveSchoolId)
+      if (isApiError(resTeacher)) {
+        toast({
+          title: "Error",
+          description: resTeacher.error,
+          variant: "destructive",
+        })
+        setStudents([])
+        setfilteredStudents([])
+        return
+      }
       const list = Array.isArray(resTeacher?.students) ? resTeacher.students : []
       setStudents(list)
       setfilteredStudents(list)

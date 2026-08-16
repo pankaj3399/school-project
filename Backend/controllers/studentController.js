@@ -6,6 +6,7 @@ import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
 import ParentVerification from "../models/ParentVerification.js";
 import PointsHistory from "../models/PointsHistory.js";
+import { assertStudentAccess, isDistrictScopedRole } from "../utils/schoolAccess.js";
 
 const resolveSchoolIdForStudentCreate = async (req) => {
     const requestedSchoolId = req.body?.schoolId || req.query?.schoolId || req.get?.("schoolId");
@@ -30,14 +31,14 @@ const resolveSchoolIdForStudentCreate = async (req) => {
         return admin.schoolId;
     }
 
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+    if (req.user.role === Role.SystemAdmin || isDistrictScopedRole(req.user.role)) {
         if (!requestedSchoolId) {
             const error = new Error("schoolId is required. Select a school before adding a student.");
             error.status = 400;
             throw error;
         }
 
-        if (req.user.role === Role.Admin) {
+        if (isDistrictScopedRole(req.user.role)) {
             const admin = await Admin.findById(req.user.id);
             if (!admin?.districtId) {
                 const error = new Error("Admin is not assigned to a district.");
@@ -134,13 +135,20 @@ export const updateStudent = async (req, res) => {
     const { name, email, standard, parentEmail, sendNotifications, grade } = req.body;
 
     try{
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+        await assertStudentAccess(req, student);
+
         const updatedStudent = await Student.findByIdAndUpdate(studentId, {
             $set: { name, email, standard, parentEmail, sendNotifications, grade }
         }, { new: true });
 
         return res.status(200).json({ message: 'Student updated successfully', student: updatedStudent });
     }catch(error){
-        return res.status(500).json({ message: 'Server Error', error: error.message });
+        const status = error.status || 500;
+        return res.status(status).json({ message: error.message || 'Server Error', error: error.message });
     }
 }
 
@@ -153,6 +161,8 @@ export const deleteStudent = async (req, res) => {
         if (!studentToDelete) {
             return res.status(404).json({ message: 'Student not found' });
         }
+
+        await assertStudentAccess(req, studentToDelete);
 
         // Save parent verification status before deletion
         if (studentToDelete.parentEmail || studentToDelete.standard) {
@@ -185,6 +195,7 @@ export const deleteStudent = async (req, res) => {
 
         return res.status(200).json({ message: 'Student deleted successfully' });
     }catch(error){
-        return res.status(500).json({ message: 'Server Error', error: error.message });
+        const status = error.status || 500;
+        return res.status(status).json({ message: error.message || 'Server Error', error: error.message });
     }
 }

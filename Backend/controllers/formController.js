@@ -13,6 +13,12 @@ import { sendEmail } from "../services/mail.js";
 import { checkStudentFormEligibility } from "../utils/studentVerification.js";
 import { emailGenerator } from "../utils/emailHelper.js";
 import mongoose from "mongoose";
+import {
+  assertSchoolAccess,
+  assertStudentAccess,
+  isDistrictScopedRole,
+  resolveSchoolListFilter,
+} from "../utils/schoolAccess.js";
 
 const getGradeFromUser = async (userId) => {
   // Try finding user as admin first
@@ -214,7 +220,7 @@ export const createForm = async (req, res) => {
       if (!school) {
         return res.status(404).json({ message: "School not found for admin" });
       }
-    } else if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+    } else if (req.user.role === Role.SystemAdmin || isDistrictScopedRole(req.user.role)) {
       if (!requestedSchoolId) {
         return res.status(400).json({
           message: "schoolId is required. Select a school before creating a form.",
@@ -226,7 +232,7 @@ export const createForm = async (req, res) => {
         return res.status(404).json({ message: "School not found" });
       }
 
-      if (req.user.role === Role.Admin) {
+      if (isDistrictScopedRole(req.user.role)) {
         const admin = await Admin.findById(id);
         if (!admin || !admin.districtId) {
           return res.status(403).json({ message: "Admin is not assigned to a district." });
@@ -278,6 +284,12 @@ export const editForm = async (req, res) => {
     preSelectedStudents = []
   } = req.body;
   try {
+    const existing = await Form.findById(formId);
+    if (!existing) {
+      return res.status(404).json({ message: "Form doesn't exist" });
+    }
+    await assertSchoolAccess(req, existing.schoolId);
+
     const form = await Form.findByIdAndUpdate(formId, {
       formName,
       formType,
@@ -295,9 +307,10 @@ export const editForm = async (req, res) => {
       form: form,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -315,14 +328,14 @@ export const getForms = async (req, res) => {
         break;
       case Role.SystemAdmin:
       case Role.Admin:
-        // SystemAdmin/Admin can see all forms or forms for a specific school
-        const { schoolId: querySchoolId } = req.query;
-        const filter = querySchoolId ? { schoolId: querySchoolId } : {};
+      case Role.DistrictAdmin: {
+        const filter = await resolveSchoolListFilter(req);
         const allForms = await Form.find(filter);
         return res.status(200).json({
           message: "Forms Fetched Successfully",
           forms: allForms,
         });
+      }
       default:
         return res.status(403).json({ message: "Forbidden" });
     }
@@ -353,9 +366,10 @@ export const getForms = async (req, res) => {
       forms: forms,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -363,24 +377,32 @@ export const getFormById = async (req, res) => {
   const id = req.params.id;
   try {
     const form = await Form.findById(id);
+    if (!form) {
+      return res.status(404).json({ message: "Form doesn't exist" });
+    }
+    await assertSchoolAccess(req, form.schoolId);
     return res.status(200).json({ form });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
 export const deleteForm = async (req, res) => {
   const id = req.params.id;
   try {
-    const form = await Form.findByIdAndDelete(id);
+    const form = await Form.findById(id);
     if (!form) return res.status(404).json({ message: "Form doesn't exist" });
+    await assertSchoolAccess(req, form.schoolId);
+    await Form.findByIdAndDelete(id);
     return res.status(200).json({ formName: form.formName });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -388,15 +410,28 @@ export const submitFormTeacher = async (req, res) => {
   const formId = req.params.formId;
   const { submittedFor, answers, submittedAt } = req.body;
   const teacherId = req.user.id;
-  const teacher = await Teacher.findById(teacherId);
-  const form = await Form.findById(formId);
-  const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
-  const school = await School.findById(teacher.schoolId);
-  const schoolAdmin = await Admin.findById(school.createdBy);
 
   try {
-    // Check if student is eligible for form submission
-    const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher?.schoolId) {
+      return res.status(403).json({ message: "Teacher is not assigned to a school." });
+    }
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: "Form doesn't exist" });
+    }
+    await assertSchoolAccess(req, form.schoolId);
+    if (form.schoolId.toString() !== teacher.schoolId.toString()) {
+      return res.status(403).json({ message: "Access denied. This form does not belong to your school." });
+    }
+
+    const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
+    const school = await School.findById(teacher.schoolId);
+    const schoolAdmin = school ? await Admin.findById(school.createdBy) : null;
+
+    const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form, {
+      schoolId: teacher.schoolId,
+    });
     if (!eligibilityCheck.eligible) {
       return res.status(403).json({
         message: eligibilityCheck.error
@@ -404,6 +439,7 @@ export const submitFormTeacher = async (req, res) => {
     }
 
     const submittedForStudent = eligibilityCheck.student;
+    await assertStudentAccess(req, submittedForStudent);
 
     const formSubmission = await FormSubmissions.create({
       formId,
@@ -509,9 +545,10 @@ export const submitFormTeacher = async (req, res) => {
       emailNotification,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -528,7 +565,7 @@ export const submitFormAdmin = async (req, res) => {
   try {
     let schoolId, schoolAdmin, school;
 
-    if (req.user.role === Role.SystemAdmin || req.user.role === Role.Admin) {
+    if (req.user.role === Role.SystemAdmin || isDistrictScopedRole(req.user.role)) {
       schoolId = querySchoolId || bodySchoolId;
       if (!schoolId) {
         return res.status(400).json({ message: "School ID is required for System Administrators" });
@@ -536,6 +573,7 @@ export const submitFormAdmin = async (req, res) => {
       if (!mongoose.Types.ObjectId.isValid(schoolId)) {
         return res.status(400).json({ message: "Invalid School ID format" });
       }
+      await assertSchoolAccess(req, schoolId);
       schoolAdmin = await Admin.findById(req.user.id) || { _id: req.user.id, name: "System Admin" };
       school = await School.findById(schoolId);
     } else {
@@ -558,7 +596,9 @@ export const submitFormAdmin = async (req, res) => {
     const totalPoints = answers.reduce((acc, curr) => acc + curr.points, 0);
 
     // Check if student is eligible for form submission
-    const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form);
+    const eligibilityCheck = await checkStudentFormEligibility(submittedFor, form, {
+      schoolId,
+    });
     if (!eligibilityCheck.eligible) {
       return res.status(403).json({
         message: eligibilityCheck.error
@@ -566,6 +606,7 @@ export const submitFormAdmin = async (req, res) => {
     }
 
     const submittedForStudent = eligibilityCheck.student;
+    await assertStudentAccess(req, submittedForStudent);
 
     const formSubmission = await FormSubmissions.create({
       formId,
@@ -671,9 +712,10 @@ export const submitFormAdmin = async (req, res) => {
       emailNotification,
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -772,14 +814,19 @@ export const getPointHistory = async (req, res) => {
         });
 
       case Role.Admin:
-      case Role.SystemAdmin:
-        // SystemAdmin/Admin see everything or filtered by schoolId
-        const { schoolId } = req.query;
-        if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+      case Role.DistrictAdmin:
+      case Role.SystemAdmin: {
+        const filter = await resolveSchoolListFilter(req);
+        if (filter.schoolId && !filter.schoolId.$in && !mongoose.Types.ObjectId.isValid(filter.schoolId)) {
           return res.status(400).json({ message: "Invalid schoolId format" });
         }
-        query = schoolId ? { schoolId: new mongoose.Types.ObjectId(schoolId) } : {};
-        
+        query = {};
+        if (filter.schoolId?.$in) {
+          query.schoolId = { $in: filter.schoolId.$in };
+        } else if (filter.schoolId) {
+          query.schoolId = new mongoose.Types.ObjectId(filter.schoolId);
+        }
+
         const systemAggregationResult = await PointsHistory.aggregate(
           buildPointHistoryPipeline(query, { skip, limit, includeAddFields: true })
         );
@@ -799,14 +846,16 @@ export const getPointHistory = async (req, res) => {
             itemsPerPage: limit
           }
         });
+      }
 
       default:
         return res.status(403).json({ message: "Forbidden" });
     }
   } catch (error) {
     console.error("Error getting point history:", error);
-    return res.status(500).json({
-      message: "Server Error",
+    const status = error.status || 500;
+    return res.status(status).json({
+      message: error.message || "Server Error",
       error: error.message
     });
   }
@@ -828,24 +877,15 @@ export const getFilteredPointHistory = async (req, res) => {
 
     switch (req.user.role) {
       case Role.Admin:
+      case Role.DistrictAdmin:
       case Role.SystemAdmin:
-      case Role.SchoolAdmin:
-        let schoolId;
-        if (req.user.role === Role.SchoolAdmin) {
-          user = await Admin.findById(id);
-          if (!user) return res.status(404).json({ message: "Admin user not found" });
-          if (!user.schoolId) {
-            return res.status(403).json({ message: "Forbidden: Admin not associated with a school" });
-          }
-          schoolId = user.schoolId;
-        } else {
-          schoolId = req.query.schoolId;
+      case Role.SchoolAdmin: {
+        if (!studentId) {
+          return res.status(400).json({ message: "studentId is required" });
         }
-
-        query = { submittedForId: studentId };
-        if (schoolId) {
-          query.schoolId = schoolId;
-        }
+        const student = await Student.findById(studentId);
+        await assertStudentAccess(req, student);
+        query = { submittedForId: studentId, schoolId: student.schoolId };
 
         const adminPointHistoryRaw = await PointsHistory.find(query)
           .populate("submittedForId")
@@ -860,6 +900,7 @@ export const getFilteredPointHistory = async (req, res) => {
         return res.status(200).json({
           pointHistory: adminPointHistory,
         });
+      }
 
       case Role.Teacher:
         console.log("Processing Teacher role...");
@@ -909,8 +950,9 @@ export const getFilteredPointHistory = async (req, res) => {
     }
   } catch (error) {
     console.error("Error getting point history:", error);
-    return res.status(500).json({
-      message: "Server Error",
+    const status = error.status || 500;
+    return res.status(status).json({
+      message: error.message || "Server Error",
       error: error.message,
     });
   }

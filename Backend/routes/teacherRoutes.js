@@ -9,9 +9,9 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.Teacher), async (req,
     res.json({ message:` Welcome Teacher: ${req.user.id}` });
 });
 
-router.post("/addTeacher",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), addTeacher)
-router.put("/updateTeacher/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), updateTeacher)
-router.delete("/deleteTeacher/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin), deleteTeacher)
+router.post("/addTeacher",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), addTeacher)
+router.put("/updateTeacher/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), updateTeacher)
+router.delete("/deleteTeacher/:id",authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), deleteTeacher)
 router.post("/complete-registration", completeTeacherRegistration);
 
 export default router;

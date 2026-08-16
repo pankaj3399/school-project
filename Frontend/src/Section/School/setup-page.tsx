@@ -34,7 +34,7 @@ const SetupPage = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [modalSchoolId, setModalSchoolId] = useState<string | null>(null);
 
-  const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin;
+  const isAdmin = user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin;
 
   useEffect(() => {
     let isCancelled = false;

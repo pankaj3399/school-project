@@ -74,10 +74,10 @@ export default function SchoolsList() {
             if (data.error) {
                 toast({
                     title: "Error",
-                    description: "Failed to fetch schools",
+                    description: getErrorMessage(data, "Failed to fetch schools"),
                     variant: "destructive"
                 });
-                setError("Failed to fetch schools");
+                setError(getErrorMessage(data, "Failed to fetch schools"));
             } else {
                 setSchools(data.schools || []);
             }
@@ -172,7 +172,7 @@ export default function SchoolsList() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Schools</h1>
-                    <p className="text-gray-500 mt-2">Manage all registered schools across all districts.</p>
+                    <p className="text-gray-500 mt-2">Manage registered schools you have access to.</p>
                 </div>
                 <Button
                     onClick={() => navigate('/system-admin/schools/new')}

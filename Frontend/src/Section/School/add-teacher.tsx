@@ -60,7 +60,7 @@ export default function AddTeacher() {
         return;
       }
 
-      const isElevatedAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin;
+      const isElevatedAdmin = authUser?.role === Role.SystemAdmin || authUser?.role === Role.Admin || authUser?.role === Role.DistrictAdmin;
       if (isElevatedAdmin && !selectedSchoolId) {
         toast({
           title: "Error",
