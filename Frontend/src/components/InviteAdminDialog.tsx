@@ -23,10 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 import { inviteAdmin } from '@/api';
 import { Role, type RoleType } from '@/enum';
 import { getErrorMessage } from "@/lib/errors"
-import { CONTACT_ROLE_LEADERSHIP, CONTACT_ROLE_SCHOOL_TECH } from "@/lib/roleLabels"
+import { CONTACT_ROLE_LEADERSHIP, CONTACT_ROLE_SCHOOL_TECH, formatRoleName } from "@/lib/roleLabels"
 
 interface InviteAdminDialogProps {
-  districtId: string | undefined;
+  districtId?: string;
   schoolId?: string;
   role?: RoleType;
   label?: string;
@@ -35,12 +35,15 @@ interface InviteAdminDialogProps {
   // email's branding header. Useful when a District Admin should be branded
   // with a specific school's logo even though they aren't assigned to one.
   schools?: Array<{ _id: string; name: string }>;
+  districts?: Array<{ _id: string; name: string; code?: string }>;
+  onSuccess?: () => void;
 }
 
-export function InviteAdminDialog({ districtId, schoolId, role, label, schools }: InviteAdminDialogProps) {
+export function InviteAdminDialog({ districtId, schoolId, role, label, schools, districts, onSuccess }: InviteAdminDialogProps) {
   const { toast } = useToast();
   const effectiveRole: RoleType = role ?? Role.Admin;
   const isDistrictLevelInvite = effectiveRole === Role.DistrictAdmin || effectiveRole === Role.Admin;
+  const showDistrictPicker = isDistrictLevelInvite && !districtId && Array.isArray(districts);
   const showLogoSchoolPicker = isDistrictLevelInvite && Array.isArray(schools) && schools.length > 0;
   const defaultContactRole = effectiveRole === Role.SchoolAdmin ? CONTACT_ROLE_SCHOOL_TECH : CONTACT_ROLE_LEADERSHIP;
 
@@ -53,15 +56,28 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
   const [position, setPosition] = useState('Other');
   const [contactRole, setContactRole] = useState(defaultContactRole);
   const [logoSchoolId, setLogoSchoolId] = useState<string>('');
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+
+  const resetForm = () => {
+    setEmail('');
+    setName('');
+    setAddress('');
+    setPhone('');
+    setPosition('Other');
+    setContactRole(defaultContactRole);
+    setLogoSchoolId('');
+    setSelectedDistrictId('');
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    const resolvedDistrictId = districtId || selectedDistrictId;
     if (effectiveRole === Role.SchoolAdmin) {
       if (!schoolId) {
         toast({ title: "Error", description: "School ID is required for School Tech invitation.", variant: "destructive" });
         return;
       }
-    } else if (!districtId) {
+    } else if (!resolvedDistrictId) {
       toast({ title: "Error", description: "A district must be selected to send this invitation.", variant: "destructive" });
       return;
     }
@@ -77,7 +93,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
         contactRole,
         role: effectiveRole,
         ...(schoolId ? { schoolId } : {}),
-        ...(districtId ? { districtId } : {}),
+        ...(resolvedDistrictId ? { districtId: resolvedDistrictId } : {}),
         ...(showLogoSchoolPicker && logoSchoolId ? { logoSchoolId } : {}),
       });
 
@@ -91,13 +107,8 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
         description: response.message || `An invitation has been sent to ${email}.`,
       });
       setOpen(false);
-      setEmail('');
-      setName('');
-      setAddress('');
-      setPhone('');
-      setPosition('Other');
-      setContactRole(defaultContactRole);
-      setLogoSchoolId('');
+      resetForm();
+      onSuccess?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -121,12 +132,10 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
         <form onSubmit={handleInvite}>
           <DialogHeader>
             <DialogTitle>
-              Invite {effectiveRole === Role.SchoolAdmin ? 'School Tech' : 'District Administrator'}
+              Invite {formatRoleName(effectiveRole) || 'administrator'}
             </DialogTitle>
             <DialogDescription>
-              {effectiveRole === Role.SchoolAdmin
-                ? 'Send an invitation to a new School Tech. They will receive an email to set up their account.'
-                : 'Send an invitation to a new district administrator. They will receive an email to set up their account.'}
+              Send an invitation to a new {formatRoleName(effectiveRole) || 'administrator'}. They will receive an email to set up their account.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -153,6 +162,27 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools }
                 />
               </div>
             </div>
+
+            {showDistrictPicker && (
+              <div className="grid gap-2">
+                <Label htmlFor="district">District</Label>
+                <Select value={selectedDistrictId} onValueChange={setSelectedDistrictId}>
+                  <SelectTrigger id="district">
+                    <SelectValue placeholder="Select a district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(districts ?? []).map((d) => (
+                      <SelectItem key={d._id} value={d._id}>
+                        {d.name}{d.code ? ` (${d.code})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(districts ?? []).length === 0 && (
+                  <p className="text-xs text-amber-600">Create a district first, then invite a District Manager to it.</p>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

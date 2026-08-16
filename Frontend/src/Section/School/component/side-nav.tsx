@@ -1,15 +1,25 @@
 //school/component
 import { Link, useNavigate } from 'react-router-dom';
-import { School, Building2, Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, History, Paperclip, SettingsIcon, LayoutDashboard} from 'lucide-react';
+import { School, Building2, Users, BookOpen, LogOut, X, MenuIcon ,ClipboardIcon, History, Paperclip, SettingsIcon, LayoutDashboard, UserCog} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/authContext';
 import { canAccess, type TabKey } from '@/lib/roleAccess';
+import { Role } from '@/enum';
 
-const navItems: { href: string; label: string; icon: any; tab: TabKey }[] = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: any;
+  tab?: TabKey;
+  systemAdminOnly?: boolean;
+};
+
+const navItems: NavItem[] = [
   { href: '/system-admin', label: 'Overview', icon: LayoutDashboard, tab: 'overview' },
   { href: '/analytics', label: 'Analytics', icon: School, tab: 'analytics' },
   { href: '/system-admin/districts', label: 'Districts', icon: Building2, tab: 'districts' },
+  { href: '/system-admin/district-managers', label: 'District Managers', icon: UserCog, systemAdminOnly: true },
   { href: '/system-admin/schools', label: 'Schools', icon: School, tab: 'schools' },
   { href: '/teacher', label: 'Teachers', icon: Users, tab: 'teachers' },
   { href: '/students', label: 'Students', icon: BookOpen, tab: 'students' },
@@ -24,7 +34,10 @@ export function SideNav() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const filteredItems = navItems.filter((item) => canAccess(user, item.tab));
+  const filteredItems = navItems.filter((item) => {
+    if (item.systemAdminOnly) return user?.role === Role.SystemAdmin;
+    return item.tab ? canAccess(user, item.tab) : false;
+  });
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);

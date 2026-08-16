@@ -2,7 +2,7 @@ import { Role } from '@/enum';
 
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
   [Role.SchoolAdmin]: 'School Tech',
-  [Role.SystemAdmin]: 'Super Admin',
+  [Role.SystemAdmin]: 'Admin',
   [Role.DistrictAdmin]: 'District Admin',
   [Role.Admin]: 'District Manager',
   [Role.Teacher]: 'Team Member',

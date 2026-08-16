@@ -23,26 +23,34 @@ const generateToken = (id, role, districtId = null) => {
 // Strict role-aware user lookup. The selected role from the login dropdown
 // must match the user's stored role+type — otherwise a SchoolAdmin could log
 // in as "Administrator" and a Lead Teacher could log in as "Team Member".
-// UI dropdown values map to backend roles as follows:
-//   "Admin"          -> Super Admin       (Role.SystemAdmin only)
-//   "SchoolAdmin"    -> School Tech       (Role.SchoolAdmin / Admin / DistrictAdmin)
-//   "Teacher"        -> Lead / AN Teacher (Role.Teacher, type='Lead')
-//   "SpecialTeacher" -> Team Member       (Role.Teacher, type!='Lead')
+// UI dropdown values map to stored DB roles as follows:
+//   "Admin" / "SystemAdmin" -> Admin              (Role.SystemAdmin)
+//   "DistrictManager"       -> District Manager   (Role.Admin)
+//   "DistrictAdmin"         -> District Admin     (Role.DistrictAdmin)
+//   "SchoolAdmin"           -> School Tech        (Role.SchoolAdmin)
+//   "Teacher"               -> Lead / AN Teacher  (Role.Teacher, type='Lead')
+//   "SpecialTeacher"        -> Team Member        (Role.Teacher, type!='Lead')
 const findUserByRoleSelection = async (email, roleSelection) => {
   const normalizedEmail = (email || "").toLowerCase().trim();
   if (!normalizedEmail) return null;
 
   switch (roleSelection) {
-    case "Admin": {
+    case "Admin":
+    case Role.SystemAdmin: {
       const u = await Admin.findOne({ email: normalizedEmail, role: Role.SystemAdmin });
       return u ? { user: u, userRole: Role.SystemAdmin } : null;
     }
+    case "DistrictManager": {
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.Admin });
+      return u ? { user: u, userRole: Role.Admin } : null;
+    }
+    case Role.DistrictAdmin: {
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.DistrictAdmin });
+      return u ? { user: u, userRole: Role.DistrictAdmin } : null;
+    }
     case "SchoolAdmin": {
-      const u = await Admin.findOne({
-        email: normalizedEmail,
-        role: { $in: [Role.SchoolAdmin, Role.Admin, Role.DistrictAdmin] }
-      });
-      return u ? { user: u, userRole: u.role } : null;
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.SchoolAdmin });
+      return u ? { user: u, userRole: Role.SchoolAdmin } : null;
     }
     case "Teacher": {
       const u = await Teacher.findOne({ email: normalizedEmail, type: "Lead" });

@@ -441,7 +441,10 @@ export default function ViewDistrict() {
                     <Card className="border-0 shadow-sm ring-1 ring-gray-100">
                         <CardHeader className="border-b bg-gray-50/30 flex flex-row items-center justify-between">
                             <CardTitle className="text-lg">District Administrators</CardTitle>
-                            <InviteAdminDialog districtId={id} role={Role.DistrictAdmin} label="Invite District Admin" schools={schools} />
+                            <div className="flex gap-2">
+                                <InviteAdminDialog districtId={id} role={Role.Admin} label="Invite District Manager" schools={schools} />
+                                <InviteAdminDialog districtId={id} role={Role.DistrictAdmin} label="Invite District Admin" schools={schools} />
+                            </div>
                         </CardHeader>
                         <CardContent className="p-6">
                             <Table>

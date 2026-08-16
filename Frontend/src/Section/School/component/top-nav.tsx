@@ -99,7 +99,7 @@ export function TopNav() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/system-admin')} className="cursor-pointer font-medium">
-                    System Admin Dashboard
+                    Admin Dashboard
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="font-normal">

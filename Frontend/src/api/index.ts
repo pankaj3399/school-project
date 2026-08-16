@@ -1264,6 +1264,23 @@ export const updateTerms = async (data: any, token: string) => {
     return toApiError(error);
   }
 };
+export const getAdmins = async (token: string, params?: { role?: string; page?: number; limit?: number }) => {
+  try {
+    const filteredParams = params ? Object.fromEntries(
+      Object.entries(params)
+        .filter(([_, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => [k, String(v)])
+    ) : {};
+    const query = new URLSearchParams(filteredParams as Record<string, string>).toString();
+    const response = await axios.get(`${API_URL}/system-admin/admins${query ? `?${query}` : ''}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return toApiError(error);
+  }
+};
+
 export const inviteAdmin = async (data: {
   email: string;
   name: string;
