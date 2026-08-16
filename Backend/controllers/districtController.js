@@ -138,14 +138,14 @@ export const getDistricts = async (req, res) => {
     const { state, status, search, page = 1, limit = 20 } = req.query;
     
     const query = {};
-    
-    if (req.user.role === Role.Admin) {
+
+    if (req.user.role === Role.Admin || req.user.role === Role.DistrictAdmin) {
       const adminUser = await ensureAdminDistrictScope(req.user.id);
       if (!adminUser) {
         console.warn(`Admin ${req.user.id} has no districtId assigned or does not exist.`);
         return res.status(200).json({ districts: [], pagination: { total: 0, page: 1, limit: limit, pages: 0 } });
       }
-      
+
       if (adminUser.role !== Role.SystemAdmin) {
         query._id = adminUser.districtId;
       }

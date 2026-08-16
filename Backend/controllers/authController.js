@@ -15,6 +15,7 @@ import School from "../models/School.js";
 import PendingTokens from "../models/PendingTokens.js";
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 import { TermsOfUse } from "../models/TermsOfUse.js";
+import { assertSchoolAccess } from "../utils/schoolAccess.js";
 
 const generateToken = (id, role, districtId = null) => {
   return jwt.sign({ id, role, districtId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -492,6 +493,17 @@ export const sendVerifyEmail = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User Not Found" });
+    }
+
+    if (!user.schoolId) {
+      return res.status(403).json({ message: "User is not assigned to a school." });
+    }
+    try {
+      await assertSchoolAccess(req, user.schoolId);
+    } catch (accessError) {
+      return res.status(accessError.status || 403).json({
+        message: accessError.message || "Access denied.",
+      });
     }
 
     if (userRole === Role.Teacher && user.isEmailVerified) {

@@ -23,13 +23,13 @@ router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Tea
 router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,editForm)
 router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,deleteForm)
 
-router.get('/stats', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getStats);
-router.get('/stats/monthly', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getMonthlyStats);
-router.get('/stats/pointsgiven', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getPointsGivenPerMonth);
-router.get('/stats/pointsgiven/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), requireLeadIfTeacher, getPointsGivenPerMonthPerTeacher);
-router.get('/stats/pointsreceived/:studentId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Student, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), requireLeadIfTeacher, getPointsReceivedPerMonth);
-router.get('/stats/formsubmitted', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), requireLeadIfTeacher, getFormsSubmittedPerMonth);
-router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), requireLeadIfTeacher, getFormsSubmittedPerMonthPerTeacher);
+router.get('/stats', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getStats);
+router.get('/stats/monthly', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getMonthlyStats);
+router.get('/stats/pointsgiven', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getPointsGivenPerMonth);
+router.get('/stats/pointsgiven/:teacherId', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getPointsGivenPerMonthPerTeacher);
+router.get('/stats/pointsreceived/:studentId', authenticate, authorizeRoles(Role.Student, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getPointsReceivedPerMonth);
+router.get('/stats/formsubmitted', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getFormsSubmittedPerMonth);
+router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getFormsSubmittedPerMonthPerTeacher);
 
 router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), requireLeadIfTeacher, getCombinedStudentPointsHistory);
 router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), requireLeadIfTeacher, getStudentPointsHistory);
@@ -40,8 +40,8 @@ router.put('/yearEndStudentWipe', authenticate, authorizeRoles(Role.SchoolAdmin,
 // OTP routes for reset confirmation
 router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), sendResetOtp);
 router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), verifyResetOtp);
-router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.DistrictAdmin, Role.SystemAdmin), upload.single('file'), sendReport);
-router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.DistrictAdmin, Role.SystemAdmin), upload.single('file'), genreport);
+router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Admin, Role.DistrictAdmin, Role.SystemAdmin), requireLeadIfTeacher, upload.single('file'), sendReport);
+router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.Admin, Role.DistrictAdmin, Role.SystemAdmin), requireLeadIfTeacher, upload.single('file'), genreport);
 router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), teacherRoster);
 router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), studentRoster);
 

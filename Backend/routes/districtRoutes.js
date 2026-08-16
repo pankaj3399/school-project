@@ -21,12 +21,12 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // District Registration & Management (System Admin / Admin)
-router.get('/', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistricts);
+router.get('/', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getDistricts);
 router.post('/', authorizeRoles(Role.SystemAdmin), createDistrict);
 router.get('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), ensureDistrictOwnership, getDistrictById);
-router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), upload.single('logo'), ensureDistrictOwnership, updateDistrict);
+router.put('/:id', authorizeRoles(Role.SystemAdmin), upload.single('logo'), ensureDistrictOwnership, updateDistrict);
 router.delete('/:id', authorizeRoles(Role.SystemAdmin), ensureDistrictOwnership, deleteDistrict);
-router.post('/:id/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), ensureDistrictOwnership, assignDistrictAdmin);
+router.post('/:id/admins', authorizeRoles(Role.SystemAdmin), ensureDistrictOwnership, assignDistrictAdmin);
 
 // School Operations within Districts (Admin/DistrictAdmin)
 

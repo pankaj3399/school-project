@@ -161,7 +161,7 @@ export default function App() {
           } />
           <Route path="/super-admin" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute requiredTab="teachers"><ViewTeachers /></ProtectedRoute>} />
-          <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+          <Route path="/student" element={<ProtectedRoute requiredRoles={[Role.Student]}><Students /></ProtectedRoute>} />
 
           <Route path="/school/points-history" element={<ProtectedRoute requiredTab="pointHistory"><DetailedHistory /></ProtectedRoute>} />
           <Route path="/teachers/points-history" element={<ProtectedRoute requiredTab="pointHistory"><DetailedHistory /></ProtectedRoute>} />

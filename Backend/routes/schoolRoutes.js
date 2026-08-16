@@ -18,7 +18,7 @@ router.post('/getCurrentWeekPoints',authenticate,authorizeRoles(Role.SchoolAdmin
 router.post('/getCurrentWeekPoints/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,getWeekPointsHistoryByStudent);
 router.post('/getHistoryByTime',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,getHistoricalPointsData);
 router.post('/getHistoryByTimeById',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,getHistoricalPointsDataByStudentId);
-router.post('/analytics',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,getAnalyticsData);
+router.post('/analytics',authenticate,authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),getAnalyticsData);
 router.put('/promote',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),promote);
 
 
