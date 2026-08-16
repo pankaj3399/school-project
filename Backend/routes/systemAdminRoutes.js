@@ -43,13 +43,13 @@ router.post('/complete-registration', completeAdminRegistration);
 // All routes below this point require authentication
 router.use(authenticateToken);
 
-// SystemAdmin and Admin routes
-router.get('/dashboard', authorizeRoles(Role.SystemAdmin, Role.Admin), getDashboardStats);
-router.get('/analytics/states', authorizeRoles(Role.SystemAdmin, Role.Admin), getStateLevelStats);
-router.get('/analytics/districts', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistrictComparison);
+// Platform-admin-only analytics and district cloning
+router.get('/dashboard', authorizeRoles(Role.SystemAdmin), getDashboardStats);
+router.get('/analytics/states', authorizeRoles(Role.SystemAdmin), getStateLevelStats);
+router.get('/analytics/districts', authorizeRoles(Role.SystemAdmin), getDistrictComparison);
 
 // Bulk import with customized error handling for Multer
-router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), (req, res, next) => {
+router.post('/import/schools', authorizeRoles(Role.SystemAdmin), (req, res, next) => {
   upload.single('file')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading (e.g. file too large)
@@ -62,15 +62,15 @@ router.post('/import/schools', authorizeRoles(Role.SystemAdmin, Role.Admin), (re
     next();
   });
 }, bulkImportSchools);
-router.post('/clone-district', authorizeRoles(Role.SystemAdmin, Role.Admin), cloneFromTemplate);
+router.post('/clone-district', authorizeRoles(Role.SystemAdmin), cloneFromTemplate);
 router.get('/admins', authorizeRoles(Role.SystemAdmin), getAllAdmins);
 router.post('/invite', authorizeRoles(Role.SystemAdmin, Role.Admin), inviteAdmin);
 router.put('/admins/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), updateAdmin);
 router.post('/admins/:id/reinvite', authorizeRoles(Role.SystemAdmin, Role.Admin), reInviteAdmin);
 
 // Terms management routes (authenticated)
-router.get('/terms/all', authorizeRoles(Role.SystemAdmin, Role.Admin), getAllTermsVersions);
-router.post('/terms', authorizeRoles(Role.SystemAdmin, Role.Admin), createTermsVersion);
+router.get('/terms/all', authorizeRoles(Role.SystemAdmin), getAllTermsVersions);
+router.post('/terms', authorizeRoles(Role.SystemAdmin), createTermsVersion);
 router.post('/terms/accept', authenticateToken, recordTermsAcceptance); // Used during registration
 
 export default router;

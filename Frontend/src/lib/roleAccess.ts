@@ -15,25 +15,28 @@ export type TabKey =
 
 // Spec's role tiers, in plain English.
 export type AccessRole =
-  | 'TeamMember'      // Team Member / Teacher  (Role.Teacher, type !== 'Lead')
-  | 'LeadTeacher'     // Leader / Lead Teacher  (Role.Teacher, type === 'Lead')
-  | 'SchoolTech'      // Role.SchoolAdmin
-  | 'SystemManager'   // Role.Admin / Role.DistrictAdmin
-  | 'Administrator';  // Role.SystemAdmin
+  | 'TeamMember'       // Team Member / Teacher  (Role.Teacher, type !== 'Lead')
+  | 'LeadTeacher'      // Leader / Lead Teacher  (Role.Teacher, type === 'Lead')
+  | 'SchoolTech'       // Role.SchoolAdmin
+  | 'DistrictAdmin'    // Role.DistrictAdmin
+  | 'DistrictManager'  // Role.Admin
+  | 'Administrator';   // Role.SystemAdmin
 
 // Source of truth — Access Matrix from `System Overview-NOTES 4_29_2026.pdf`,
 // with Schools hidden from School Tech per `System Overview-NOTES 8_12_2026.pdf`.
+// District Manager is a distinct tier: they see their district (to invite
+// District Admins) plus school operations. District Admin does not.
 export const accessMatrix: Readonly<Record<TabKey, ReadonlyArray<AccessRole>>> = {
   overview:     ['Administrator'],
   analytics:    ['Administrator'],
-  districts:    ['Administrator'],
-  schools:      ['SystemManager', 'Administrator'],
-  teachers:     ['LeadTeacher', 'SchoolTech', 'SystemManager', 'Administrator'],
-  students:     ['LeadTeacher', 'SchoolTech', 'SystemManager', 'Administrator'],
-  forms:        ['TeamMember', 'LeadTeacher', 'SchoolTech', 'SystemManager', 'Administrator'],
-  pointHistory: ['LeadTeacher', 'SchoolTech', 'SystemManager', 'Administrator'],
-  printReport:  ['LeadTeacher', 'SchoolTech', 'SystemManager', 'Administrator'],
-  setup:        ['SchoolTech', 'SystemManager', 'Administrator'],
+  districts:    ['DistrictManager', 'Administrator'],
+  schools:      ['DistrictAdmin', 'DistrictManager', 'Administrator'],
+  teachers:     ['LeadTeacher', 'SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
+  students:     ['LeadTeacher', 'SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
+  forms:        ['TeamMember', 'LeadTeacher', 'SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
+  pointHistory: ['LeadTeacher', 'SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
+  printReport:  ['LeadTeacher', 'SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
+  setup:        ['SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
 };
 
 type ClassifiableUser = { role?: string; type?: string } | null | undefined;
@@ -46,8 +49,9 @@ export function classifyRole(user: ClassifiableUser): AccessRole | null {
     case Role.SchoolAdmin:
       return 'SchoolTech';
     case Role.Admin:
+      return 'DistrictManager';
     case Role.DistrictAdmin:
-      return 'SystemManager';
+      return 'DistrictAdmin';
     case Role.Teacher:
       return user.type === 'Lead' ? 'LeadTeacher' : 'TeamMember';
     default:
@@ -110,12 +114,10 @@ export function rolesForTab(tab: TabKey): string[] {
   const out = new Set<string>();
   for (const t of tiers) {
     if (t === 'Administrator') out.add(Role.SystemAdmin);
-    else if (t === 'SystemManager') {
-      out.add(Role.Admin);
-      out.add(Role.DistrictAdmin);
-    } else if (t === 'SchoolTech') {
-      out.add(Role.SchoolAdmin);
-    } else if (t === 'LeadTeacher' || t === 'TeamMember') {
+    else if (t === 'DistrictManager') out.add(Role.Admin);
+    else if (t === 'DistrictAdmin') out.add(Role.DistrictAdmin);
+    else if (t === 'SchoolTech') out.add(Role.SchoolAdmin);
+    else if (t === 'LeadTeacher' || t === 'TeamMember') {
       // We can't gate Lead vs non-Lead at the route level (no `type` in
       // ProtectedRoute), so any Teacher passes the route check. The side-nav
       // and page-level guards still hide TeamMember-forbidden tabs by

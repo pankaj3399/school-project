@@ -10,6 +10,6 @@ const router = express.Router();
 router.post('/', subscribeToWaitlist);
 
 // Admin route - download waitlist csv
-router.get('/export', authenticate, authorizeRoles(Role.Admin), exportWaitlistData);
+router.get('/export', authenticate, authorizeRoles(Role.SystemAdmin), exportWaitlistData);
 
 export default router;

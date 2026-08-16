@@ -22,11 +22,11 @@ router.use(authenticateToken);
 
 // District Registration & Management (System Admin / Admin)
 router.get('/', authorizeRoles(Role.SystemAdmin, Role.Admin), getDistricts);
-router.post('/', authorizeRoles(Role.SystemAdmin, Role.Admin), createDistrict);
+router.post('/', authorizeRoles(Role.SystemAdmin), createDistrict);
 router.get('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), ensureDistrictOwnership, getDistrictById);
-router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), upload.single('logo'), updateDistrict);
-router.delete('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), deleteDistrict);
-router.post('/:id/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), assignDistrictAdmin);
+router.put('/:id', authorizeRoles(Role.SystemAdmin, Role.Admin), upload.single('logo'), ensureDistrictOwnership, updateDistrict);
+router.delete('/:id', authorizeRoles(Role.SystemAdmin), ensureDistrictOwnership, deleteDistrict);
+router.post('/:id/admins', authorizeRoles(Role.SystemAdmin, Role.Admin), ensureDistrictOwnership, assignDistrictAdmin);
 
 // School Operations within Districts (Admin/DistrictAdmin)
 

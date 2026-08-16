@@ -18,6 +18,11 @@ const resolveSchoolIdForStudentCreate = async (req) => {
             error.status = 403;
             throw error;
         }
+        if (teacher.type !== "Lead") {
+            const error = new Error("Only Lead Teachers can add students.");
+            error.status = 403;
+            throw error;
+        }
         return teacher.schoolId;
     }
 

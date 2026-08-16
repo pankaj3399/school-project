@@ -721,7 +721,7 @@ export const resetPoints = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
     // Explicit authorization check: for non-system admins, verify the schoolId matches their assigned scope
-    if (req.user.role === Role.Admin || req.user.role === Role.SchoolAdmin) {
+    if (req.user.role === Role.Admin || req.user.role === Role.DistrictAdmin || req.user.role === Role.SchoolAdmin) {
       const admin = await Admin.findById(req.user.id);
       if (admin && admin.role !== Role.SystemAdmin) {
         if (req.user.role === Role.SchoolAdmin && admin.schoolId?.toString() !== schoolId?.toString()) {
@@ -729,7 +729,7 @@ export const resetPoints = async (req, res) => {
            session.endSession();
            return res.status(403).json({ message: "Access denied. You can only reset points for your assigned school." });
         }
-        if (req.user.role === Role.Admin && admin.districtId) {
+        if ((req.user.role === Role.Admin || req.user.role === Role.DistrictAdmin) && admin.districtId) {
            const school = await School.findById(schoolId);
            if (!school || school.districtId.toString() !== admin.districtId.toString()) {
               await session.abortTransaction();
@@ -794,7 +794,7 @@ export const resetStudentRoster = async (req, res) => {
 };
 
 const assertSchoolWipeAccess = async (req, schoolId) => {
-  if (req.user.role === Role.Admin || req.user.role === Role.SchoolAdmin) {
+  if (req.user.role === Role.Admin || req.user.role === Role.DistrictAdmin || req.user.role === Role.SchoolAdmin) {
     const admin = await Admin.findById(req.user.id);
     if (admin && admin.role !== Role.SystemAdmin) {
       if (req.user.role === Role.SchoolAdmin && admin.schoolId?.toString() !== schoolId?.toString()) {
@@ -802,7 +802,7 @@ const assertSchoolWipeAccess = async (req, schoolId) => {
         error.status = 403;
         throw error;
       }
-      if (req.user.role === Role.Admin && admin.districtId) {
+      if ((req.user.role === Role.Admin || req.user.role === Role.DistrictAdmin) && admin.districtId) {
         const school = await School.findById(schoolId);
         if (!school || school.districtId.toString() !== admin.districtId.toString()) {
           const error = new Error("Access denied. School is outside your district.");

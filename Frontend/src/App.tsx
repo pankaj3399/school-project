@@ -150,7 +150,7 @@ export default function App() {
               <HomeRedirect />
             </ProtectedRoute>
           } />
-          <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+          <Route path="/super-admin" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/teacher" element={<ProtectedRoute requiredTab="teachers"><ViewTeachers /></ProtectedRoute>} />
           <Route path="/student" element={<ProtectedRoute><Students /></ProtectedRoute>} />
 
@@ -172,9 +172,9 @@ export default function App() {
           <Route path="/admin" element={<Navigate to="/system-admin" replace />} />
           <Route path="/system-admin" element={<ProtectedRoute requiredRoles={systemAdminRoles}><SystemAdminDashboard /></ProtectedRoute>} />
           <Route path="/system-admin/schools/import" element={<ProtectedRoute requiredRoles={systemAdminRoles}><BulkImportSchools /></ProtectedRoute>} />
-          <Route path="/system-admin/districts" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictsList /></ProtectedRoute>} />
+          <Route path="/system-admin/districts" element={<ProtectedRoute requiredTab="districts"><DistrictsList /></ProtectedRoute>} />
           <Route path="/system-admin/districts/new" element={<ProtectedRoute requiredRoles={systemAdminRoles}><AddDistrict /></ProtectedRoute>} />
-          <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredRoles={systemAdminRoles}><ViewDistrict /></ProtectedRoute>} />
+          <Route path="/system-admin/districts/:id" element={<ProtectedRoute requiredTab="districts"><ViewDistrict /></ProtectedRoute>} />
           <Route path="/system-admin/district-managers" element={<ProtectedRoute requiredRoles={systemAdminRoles}><DistrictManagersList /></ProtectedRoute>} />
           <Route path="/system-admin/schools" element={<ProtectedRoute requiredTab="schools"><SchoolsList /></ProtectedRoute>} />
           <Route path="/system-admin/schools/new" element={<ProtectedRoute requiredTab="schools"><AddSchool /></ProtectedRoute>} />

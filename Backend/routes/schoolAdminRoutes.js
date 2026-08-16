@@ -14,7 +14,7 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Sys
     res.json({ message:` Welcome ${roleLabel}: ${req.user.id} `});
 });
 
-router.post('/addSchool',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),upload.single('logo'),addSchool)
+router.post('/addSchool',authenticate,authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),upload.single('logo'),addSchool)
 
 router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),addTeacher)
 router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
@@ -34,14 +34,14 @@ router.get('/stats/formsubmitted/:teacherId', authenticate, authorizeRoles(Role.
 router.post('/stats/reportdata', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getCombinedStudentPointsHistory);
 router.post('/stats/reportdata/:id', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getStudentPointsHistory);
 router.put('/resetPoints', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), resetPoints);
-router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin), resetStudentRoster);
+router.put('/resetStudentRoster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), resetStudentRoster);
 router.put('/yearEndStudentWipe', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), yearEndStudentWipe);
 
 // OTP routes for reset confirmation
-router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), sendResetOtp);
-router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin), verifyResetOtp);
-router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), sendReport);
-router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.SystemAdmin), upload.single('file'), genreport);
+router.post('/sendResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), sendResetOtp);
+router.post('/verifyResetOtp', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), verifyResetOtp);
+router.post('/sendreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.DistrictAdmin, Role.SystemAdmin), upload.single('file'), sendReport);
+router.post('/genreport/:email', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Admin, Role.DistrictAdmin, Role.SystemAdmin), upload.single('file'), genreport);
 router.post('/teacher-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), teacherRoster);
 router.post('/student-roster', authenticate, authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), studentRoster);
 

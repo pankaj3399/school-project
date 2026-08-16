@@ -71,6 +71,13 @@ const findUserByRoleSelection = async (email, roleSelection) => {
 
 const ROLE_MISMATCH_MESSAGE = "Invalid credentials or wrong role for this account.";
 
+const rejectIfUnapproved = (user) => {
+  if (user && user.approved === false) {
+    return { message: "User not approved" };
+  }
+  return null;
+};
+
 export const requestLoginOtp = async (req, res) => {
   try {
     const { email, role, password } = req.body;
@@ -81,11 +88,9 @@ export const requestLoginOtp = async (req, res) => {
     }
     const { user, userRole } = result;
 
-    if (
-      (userRole === Role.Admin || userRole === Role.SchoolAdmin || userRole === Role.DistrictAdmin) &&
-      !user.approved
-    ) {
-      return res.status(401).json({ message: "User not approved" });
+    const unapproved = rejectIfUnapproved(user);
+    if (unapproved) {
+      return res.status(401).json(unapproved);
     }
 
     // Check if user has a password before attempting bcrypt comparison
@@ -174,11 +179,9 @@ export const login = async (req, res) => {
     }
     const { user, userRole } = result;
 
-    if (
-      (userRole === Role.Admin || userRole === Role.SchoolAdmin || userRole === Role.DistrictAdmin) &&
-      !user.approved
-    ) {
-      return res.status(401).json({ message: "User not approved" });
+    const unapproved = rejectIfUnapproved(user);
+    if (unapproved) {
+      return res.status(401).json(unapproved);
     }
 
     if (!user.password) {
@@ -357,34 +360,10 @@ export const verifyLoginOtp = async (req, res) => {
   }
 };
 
-export const signup = async (req, res) => {
-  const { name, email, password, role } = req.body;
-
-  try {
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = await Admin.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-    });
-    const savedUser = await newUser.save();
-    const token = generateToken(savedUser._id, role, savedUser.districtId);
-    if (!newUser.approved)
-      return res.status(401).json({ message: "User not approved" });
-    res.status(201).json({
-      message: "User registered successfully",
-      token,
-      user: {
-        id: savedUser._id,
-        name: savedUser.name,
-        email: savedUser.email,
-        role,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
+export const signup = async (_req, res) => {
+  return res.status(403).json({
+    message: "Registration is by invitation only. Use the invite link from your administrator, or sign in if you already have an account.",
+  });
 };
 
 export const sendOtp = async (req, res) => {

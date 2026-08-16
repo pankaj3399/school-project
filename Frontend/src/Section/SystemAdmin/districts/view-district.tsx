@@ -32,6 +32,7 @@ export default function ViewDistrict() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { toast } = useToast();
+    const isPlatformAdmin = user?.role === Role.SystemAdmin;
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'schools';
     const [data, setData] = useState<any>(null);
@@ -355,7 +356,9 @@ export default function ViewDistrict() {
                             <CardTitle className="text-lg">District Schools</CardTitle>
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={() => navigate(`/system-admin/schools/new?districtId=${id}`)}>Add School</Button>
+                                {isPlatformAdmin && (
                                 <Button variant="outline" size="sm" className="bg-white" onClick={() => navigate('/system-admin/schools/import')}>Bulk Import</Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -442,7 +445,9 @@ export default function ViewDistrict() {
                         <CardHeader className="border-b bg-gray-50/30 flex flex-row items-center justify-between">
                             <CardTitle className="text-lg">District Administrators</CardTitle>
                             <div className="flex gap-2">
+                                {isPlatformAdmin && (
                                 <InviteAdminDialog districtId={id} role={Role.Admin} label="Invite District Manager" schools={schools} />
+                                )}
                                 <InviteAdminDialog districtId={id} role={Role.DistrictAdmin} label="Invite District Admin" schools={schools} />
                             </div>
                         </CardHeader>

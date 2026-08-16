@@ -61,6 +61,7 @@ export default function DistrictsList() {
     const [districtToDelete, setDistrictToDelete] = useState<{ id: string; name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
+    const isPlatformAdmin = user?.role === Role.SystemAdmin;
 
 
     const fetchDistricts = useCallback(async (search = '') => {
@@ -157,8 +158,13 @@ export default function DistrictsList() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Districts</h1>
-                    <p className="text-gray-500 mt-2">Manage all registered school districts and their settings.</p>
+                    <p className="text-gray-500 mt-2">
+                        {isPlatformAdmin
+                            ? "Manage all registered school districts and their settings."
+                            : "View and manage your assigned district."}
+                    </p>
                 </div>
+                {isPlatformAdmin && (
                 <Button 
                     onClick={() => navigate('/system-admin/districts/new')}
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
@@ -166,6 +172,7 @@ export default function DistrictsList() {
                     <Plus className="mr-2 h-4 w-4" />
                     Add District
                 </Button>
+                )}
             </div>
 
             <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-100">
@@ -265,6 +272,8 @@ export default function DistrictsList() {
                                                     <DropdownMenuItem onClick={() => navigate(`/system-admin/districts/${district._id}?tab=schools`)}>
                                                         <School className="mr-2 h-4 w-4" /> Manage Schools
                                                     </DropdownMenuItem>
+                                                    {isPlatformAdmin && (
+                                                    <>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem 
                                                         className="text-amber-600"
@@ -279,13 +288,13 @@ export default function DistrictsList() {
                                                         onSelect={(e) => {
                                                             e.preventDefault();
                                                             setDistrictToDelete({ id: district._id, name: district.name });
-                                                            // Small timeout to allow the dropdown to close before the modal opens
-                                                            // This avoids Radix UI issues with pointer-events: none on body
                                                             setTimeout(() => setShowDeleteModal(true), 100);
                                                         }}
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete District
                                                     </DropdownMenuItem>
+                                                    </>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
