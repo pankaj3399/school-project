@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
+import { hidePassword } from './passwordPrivacy.js';
 
 const GaurdianSchema = new mongoose.Schema({
   name:{
@@ -26,6 +27,7 @@ const studentSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    select: false,
   },
   role: {
     type: String,
@@ -116,5 +118,7 @@ studentSchema.pre('save', function (next) {
 
 studentSchema.index({ guardianRegistrationToken: 1 });
 studentSchema.index({ schoolId: 1, grade: 1 });
+
+hidePassword(studentSchema);
 
 export default mongoose.model('Student', studentSchema);

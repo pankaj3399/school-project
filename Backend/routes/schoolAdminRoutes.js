@@ -1,4 +1,4 @@
-import { addSchool, addStudent,  getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetPoints, resetStudentRoster, yearEndStudentWipe, sendReport, genreport, teacherRoster, studentRoster, sendResetOtp, verifyResetOtp } from "../controllers/schoolAdminController.js";
+import { addSchool, getFormsSubmittedPerMonth, getFormsSubmittedPerMonthPerTeacher, getMonthlyStats, getPointsGivenPerMonth, getPointsGivenPerMonthPerTeacher, getPointsReceivedPerMonth, getStats, resetPoints, resetStudentRoster, yearEndStudentWipe, sendReport, genreport, teacherRoster, studentRoster, sendResetOtp, verifyResetOtp } from "../controllers/schoolAdminController.js";
 import { authenticateToken as authenticate, authorizeRoles, requireLeadIfTeacher } from "../middlewares/authMiddleware.js";
 import express from 'express';
 import {Role} from '../enum.js';
@@ -17,7 +17,6 @@ router.get('/dashboard', authenticate, authorizeRoles(Role.SchoolAdmin, Role.Sys
 router.post('/addSchool',authenticate,authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),upload.single('logo'),addSchool)
 
 router.post('/addTeacher',authenticate,authorizeRoles(Role.SchoolAdmin, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),addTeacher)
-router.post('/addStudent',authenticate,authorizeRoles(Role.SchoolAdmin),addStudent)
 
 router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,createForm)
 router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,editForm)

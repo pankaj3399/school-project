@@ -40,6 +40,9 @@ import {
 import { GRADE_OPTIONS } from "@/lib/types";
 import { isApiError } from "@/lib/errors";
 
+const teacherHasPassword = (teacher: { hasCompletedRegistration?: boolean; password?: unknown } | null) =>
+  Boolean(teacher?.hasCompletedRegistration ?? teacher?.password);
+
 export default function ViewTeachers() {
   const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();
   const { user } = useAuth();
@@ -230,7 +233,7 @@ export default function ViewTeachers() {
       }
 
       const needsRegistration =
-        editingTeacher && !editingTeacher.isEmailVerified && !editingTeacher.password;
+        editingTeacher && !editingTeacher.isEmailVerified && !teacherHasPassword(editingTeacher);
 
       toast({
         title: needsRegistration ? "Registration Invite Sent" : "Verification Email Sent",
@@ -371,17 +374,17 @@ export default function ViewTeachers() {
                 >
                   {sendingVerification
                     ? "Sending..."
-                    : !editingTeacher.isEmailVerified && !editingTeacher.password
+                    : !editingTeacher.isEmailVerified && !teacherHasPassword(editingTeacher)
                       ? "Resend Registration Invite"
                       : "Verify Email"}
                 </Button>
               </div>
-              {!editingTeacher.isEmailVerified && !editingTeacher.password && (
+              {!editingTeacher.isEmailVerified && !teacherHasPassword(editingTeacher) && (
                 <p className="text-sm text-amber-600 mt-1">
                   Registration not completed — resend the registration invite below
                 </p>
               )}
-              {!editingTeacher.isEmailVerified && editingTeacher.password && (
+              {!editingTeacher.isEmailVerified && teacherHasPassword(editingTeacher) && (
                 <p className="text-sm text-amber-600 mt-1">
                   Email not verified
                 </p>

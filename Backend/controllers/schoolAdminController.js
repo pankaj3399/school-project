@@ -22,7 +22,8 @@ import Form from "../models/Form.js";
 import FormSubmissions from "../models/FormSubmissions.js";
 import PendingTokens from "../models/PendingTokens.js";
 import { TermsAcceptance } from "../models/TermsOfUse.js";
-import { assertSchoolAccess, assertStudentAccess } from "../utils/schoolAccess.js";
+import { escapeRegExp } from "../utils/stringUtils.js";
+import { assertSchoolAccess, assertStudentAccess, httpError, isDistrictScopedRole } from "../utils/schoolAccess.js";
 
 const getSchoolIdFromUser = async (req) => {
   const userId = req.user.id;
@@ -81,7 +82,7 @@ const getSchoolIdFromUser = async (req) => {
     return teacher.schoolId;
   }
 
-  throw new Error("User not authorized");
+  throw httpError("Access denied. You do not have the required permissions.");
 };
 
 export const addSchool = async (req, res) => {
@@ -93,48 +94,71 @@ export const addSchool = async (req, res) => {
     return res.status(locationError.status).json({ message: locationError.message });
   }
 
-  // Resolve & authorize districtId before create.
-  let resolvedDistrictId;
-  if (req.body.districtId) {
-    if (!mongoose.Types.ObjectId.isValid(req.body.districtId)) {
-      return res.status(400).json({ message: "Invalid districtId." });
-    }
-    try {
-      const districtDoc = await District.findById(req.body.districtId).select('_id').lean();
-      if (!districtDoc) {
-        return res.status(404).json({ message: "District not found." });
-      }
-      if (req.user.role !== Role.SystemAdmin) {
-        const requester = await Admin.findById(req.user.id).select('districtId role').lean();
-        const isGlobalAdmin = requester?.role === Role.SystemAdmin;
-        if (!isGlobalAdmin) {
-          const requesterDistrictId = requester?.districtId?.toString() || '';
-          if (requesterDistrictId !== districtDoc._id.toString()) {
-            return res.status(403).json({ message: "You can only create schools inside your own district." });
-          }
-        }
-      }
-      resolvedDistrictId = districtDoc._id;
-    } catch (err) {
-      console.error('Error resolving district for addSchool:', err);
-      return res.status(500).json({ message: "Error resolving district.", error: err.message });
-    }
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return res.status(400).json({ message: "School name is required and must be a non-empty string" });
   }
 
   try {
-    const existingSchool = await School.findOne({ createdBy: req.user.id });
-    if (existingSchool) {
-      return res
-        .status(403)
-        .json({ message: "School already exists for this admin." });
+    const requester = await Admin.findById(req.user.id).select("districtId role").lean();
+    const isGlobalAdmin =
+      req.user.role === Role.SystemAdmin || requester?.role === Role.SystemAdmin;
+
+    let requestedDistrictId = req.body.districtId || null;
+    if (!requestedDistrictId && !isGlobalAdmin && isDistrictScopedRole(req.user.role)) {
+      requestedDistrictId = requester?.districtId?.toString() || null;
     }
+
+    if (!requestedDistrictId) {
+      if (isGlobalAdmin) {
+        return res.status(400).json({
+          message: "districtId is required. Select a district before creating a school.",
+        });
+      }
+      return res.status(403).json({
+        message: "Administrator is not assigned to a district.",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(requestedDistrictId)) {
+      return res.status(400).json({ message: "Invalid districtId." });
+    }
+
+    const districtDoc = await District.findById(requestedDistrictId).select("_id name").lean();
+    if (!districtDoc) {
+      return res.status(404).json({ message: "District not found." });
+    }
+
+    if (!isGlobalAdmin) {
+      if (!requester?.districtId) {
+        return res.status(403).json({
+          message: "Administrator is not assigned to a district.",
+        });
+      }
+      if (requester.districtId.toString() !== districtDoc._id.toString()) {
+        return res.status(403).json({
+          message: "You can only create schools inside your own district.",
+        });
+      }
+    }
+
+    const escapedName = escapeRegExp(name.trim());
+    const duplicate = await School.findOne({
+      name: { $regex: new RegExp(`^${escapedName}$`, "i") },
+      districtId: districtDoc._id,
+    });
+    if (duplicate) {
+      return res.status(400).json({
+        message: `School with name "${name.trim()}" already exists in this district.`,
+      });
+    }
+
     const logoUrl = await uploadImageFromDataURI(logo);
     const newSchool = await School.create({
-      name,
+      name: name.trim(),
       address,
       city,
-      district,
-      districtId: resolvedDistrictId,
+      district: district || districtDoc.name,
+      districtId: districtDoc._id,
       logo: logoUrl,
       timeZone,
       createdBy: req.user.id,
@@ -144,11 +168,14 @@ export const addSchool = async (req, res) => {
       domain,
     });
 
-    res
+    return res
       .status(201)
       .json({ message: "School created successfully", school: newSchool });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    return res.status(error.status || 500).json({
+      message: error.message || "Server error",
+      error: error.message,
+    });
   }
 };
 export const addTeacher = async (req, res) => {
@@ -182,67 +209,10 @@ export const addTeacher = async (req, res) => {
       message: "Teacher Added successfully",
     });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
-  }
-};
-
-export const addStudent = async (req, res) => {
-  const { name, password, email, standard, grade, subject } = req.body;
-
-  try {
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Get the school ID
-    const schoolId = await getSchoolIdFromUser(req);
-
-    // Check if there's existing parent verification for this student email
-    const existingVerification = await ParentVerification.findOne({
-      studentEmail: email,
-      schoolId: schoolId
-    });
-
-    // Set verification status based on existing record
-    let isParentOneEmailVerified = false;
-    let isParentTwoEmailVerified = false;
-
-    if (existingVerification) {
-      // For school admin controller, we don't have parentEmail in req.body,
-      // so we check against standard field for parent emails
-      if (standard && standard === existingVerification.parentTwoEmail) {
-        isParentTwoEmailVerified = existingVerification.isParentTwoEmailVerified;
-      }
-    }
-
-    const student = await Student.create({
-      name,
-      password: hashedPassword,
-      standard,
-      email,
-      role: Role.Student,
-      grade,
-      isParentOneEmailVerified,
-      isParentTwoEmailVerified,
-      schoolId: schoolId
-    });
-    await School.findOneAndUpdate(
-      {
-        _id: schoolId,
-      },
-      {
-        $push: {
-          students: student._id,
-        },
-      }
-    );
-    return res.status(200).json({
-      message: "Student Added successfully",
-    });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -709,9 +679,10 @@ export const verifyResetOtp = async (req, res) => {
       .status(200)
       .json({ message: "Student roster reset successfully" });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -764,7 +735,8 @@ export const resetPoints = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    return res.status(500).json({ message: "Server Error", error: error.message });
+    const status = error.status || 500;
+    return res.status(status).json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -787,9 +759,10 @@ export const resetStudentRoster = async (req, res) => {
       .status(200)
       .json({ message: "Student roster reset successfully" });
   } catch (error) {
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -1036,9 +1009,10 @@ export const teacherRoster = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    const status = error.status || 500;
     return res
-      .status(500)
-      .json({ message: "Server Error", error: error.message });
+      .status(status)
+      .json({ message: error.message || "Server Error", error: error.message });
   }
 };
 
@@ -1171,9 +1145,10 @@ export const studentRoster = async (req, res) => {
     });
   } catch (error) {
     console.error("Student Roster Error:", error);
-    return res.status(500).json({
+    const status = error.status || 500;
+    return res.status(status).json({
       success: false,
-      message: "Server Error",
+      message: error.message || "Server Error",
       error: error.message,
     });
   }

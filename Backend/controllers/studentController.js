@@ -6,7 +6,7 @@ import Admin from "../models/Admin.js";
 import Teacher from "../models/Teacher.js";
 import ParentVerification from "../models/ParentVerification.js";
 import PointsHistory from "../models/PointsHistory.js";
-import { assertStudentAccess, isDistrictScopedRole } from "../utils/schoolAccess.js";
+import { assertStudentAccess, httpError, isDistrictScopedRole } from "../utils/schoolAccess.js";
 
 const resolveSchoolIdForStudentCreate = async (req) => {
     const requestedSchoolId = req.body?.schoolId || req.query?.schoolId || req.get?.("schoolId");
@@ -61,9 +61,7 @@ const resolveSchoolIdForStudentCreate = async (req) => {
         return requestedSchoolId;
     }
 
-    const error = new Error("Forbidden");
-    error.status = 403;
-    throw error;
+    throw httpError("Access denied. You do not have the required permissions.");
 };
 
 export const addStudent = async (req, res) => {

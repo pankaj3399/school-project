@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import {Role} from '../enum.js';
 import net from 'net';
+import { hidePassword } from './passwordPrivacy.js';
 
 const teacherSchema = new mongoose.Schema({
   name: {
@@ -24,6 +25,7 @@ const teacherSchema = new mongoose.Schema({
   password: {
     type: String,
     required: false,
+    select: false,
   },
   role: {
     type: String,
@@ -92,8 +94,9 @@ const teacherSchema = new mongoose.Schema({
 teacherSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
 
-  // Validate that teachers have either a password or a registration token
-  if (!this.password && !this.registrationToken) {
+  // password is select:false; skip this check on updates where it was not loaded
+  const passwordSelected = this.isNew || this.isSelected('password');
+  if (passwordSelected && !this.password && !this.registrationToken) {
     return next(new Error('Teacher must have either a password or a registration token'));
   }
 
@@ -120,5 +123,7 @@ teacherSchema.pre('save', function (next) {
 
 teacherSchema.index({ registrationToken: 1 });
 teacherSchema.index({ schoolId: 1, grade: 1, type: 1 });
+
+hidePassword(teacherSchema, { includeRegistrationFlag: true });
 
 export default mongoose.model('Teacher', teacherSchema);

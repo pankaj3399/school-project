@@ -8,6 +8,7 @@ import FormSubmissions from "../models/FormSubmissions.js";
 import Feedback from "../models/Feedback.js";
 import { LuxonTimezoneManager } from "../utils/luxon.js";
 import { FormType, Role } from "../enum.js";
+import { httpError } from "../utils/schoolAccess.js";
 
 // Create timezone manager instance
 const timezoneManager = new LuxonTimezoneManager();
@@ -128,7 +129,7 @@ const getSchoolIdFromUser = async (req) => {
     return teacher.schoolId;
   }
 
-  throw new Error("User not authorized");
+  throw httpError("Access denied. You do not have the required permissions.");
 };
 
 const getGradeFromUser = async (userId) => {
@@ -159,7 +160,7 @@ const getGradeFromUser = async (userId) => {
       isSpecialTeacher: teacher.type === 'Special'
     };
   }
-  throw new Error("User not authorized");
+  throw httpError("Access denied. You do not have the required permissions.");
 };
 
 // 1. Whole Year Points History Controller

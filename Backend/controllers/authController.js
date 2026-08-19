@@ -38,31 +38,31 @@ const findUserByRoleSelection = async (email, roleSelection) => {
   switch (roleSelection) {
     case "Admin":
     case Role.SystemAdmin: {
-      const u = await Admin.findOne({ email: normalizedEmail, role: Role.SystemAdmin });
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.SystemAdmin }).select('+password');
       return u ? { user: u, userRole: Role.SystemAdmin } : null;
     }
     case "DistrictManager": {
-      const u = await Admin.findOne({ email: normalizedEmail, role: Role.Admin });
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.Admin }).select('+password');
       return u ? { user: u, userRole: Role.Admin } : null;
     }
     case Role.DistrictAdmin: {
-      const u = await Admin.findOne({ email: normalizedEmail, role: Role.DistrictAdmin });
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.DistrictAdmin }).select('+password');
       return u ? { user: u, userRole: Role.DistrictAdmin } : null;
     }
     case "SchoolAdmin": {
-      const u = await Admin.findOne({ email: normalizedEmail, role: Role.SchoolAdmin });
+      const u = await Admin.findOne({ email: normalizedEmail, role: Role.SchoolAdmin }).select('+password');
       return u ? { user: u, userRole: Role.SchoolAdmin } : null;
     }
     case "Teacher": {
-      const u = await Teacher.findOne({ email: normalizedEmail, type: "Lead" });
+      const u = await Teacher.findOne({ email: normalizedEmail, type: "Lead" }).select('+password');
       return u ? { user: u, userRole: Role.Teacher } : null;
     }
     case "SpecialTeacher": {
-      const u = await Teacher.findOne({ email: normalizedEmail, type: { $ne: "Lead" } });
+      const u = await Teacher.findOne({ email: normalizedEmail, type: { $ne: "Lead" } }).select('+password');
       return u ? { user: u, userRole: Role.Teacher } : null;
     }
     case Role.Student: {
-      const u = await Student.findOne({ email: normalizedEmail });
+      const u = await Student.findOne({ email: normalizedEmail }).select('+password');
       return u ? { user: u, userRole: Role.Student } : null;
     }
     default:
@@ -478,7 +478,7 @@ export const sendVerifyEmail = async (req, res) => {
     let user = null;
     switch (userRole) {
       case Role.Teacher: {
-        user = await Teacher.findById(userId);
+        user = await Teacher.findById(userId).select('+password');
         break;
       }
       case Role.Student: {
@@ -650,10 +650,10 @@ export const completeVerification = async (req, res) => {
       case Role.Teacher: {
         if (token) {
           // High-entropy registration token lookup
-          user = await Teacher.findOne({ registrationToken: token });
+          user = await Teacher.findOne({ registrationToken: token }).select('+password');
         } else if (email && emailVerificationCode) {
           // 6-digit OTP scoped by email
-          user = await Teacher.findOne({ email, emailVerificationCode });
+          user = await Teacher.findOne({ email, emailVerificationCode }).select('+password');
         } else {
           return res.status(400).json({ 
             message: "A valid registration token or email with verification code is required." 
@@ -1074,7 +1074,7 @@ export const changePassword = async (req, res) => {
   const userId = req.user.id; // Assuming you have the user ID from the auth middleware
 
   try {
-    const user = await Teacher.findById(userId); // Change this to the appropriate model (Admin, Teacher, Student)
+    const user = await Teacher.findById(userId).select('+password'); // Change this to the appropriate model (Admin, Teacher, Student)
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -1114,15 +1114,15 @@ export const verifyPassword = async (req, res) => {
     // Find user based on role from token
     switch (req.user.role) {
       case Role.Teacher: {
-        user = await Teacher.findById(userId);
+        user = await Teacher.findById(userId).select('+password');
         break;
       }
       case Role.Student: {
-        user = await Student.findById(userId);
+        user = await Student.findById(userId).select('+password');
         break;
       }
       default: {
-        user = await Admin.findById(userId);
+        user = await Admin.findById(userId).select('+password');
         break;
       }
     }

@@ -16,6 +16,7 @@ import mongoose from "mongoose";
 import {
   assertSchoolAccess,
   assertStudentAccess,
+  httpError,
   isDistrictScopedRole,
   resolveSchoolListFilter,
 } from "../utils/schoolAccess.js";
@@ -35,7 +36,7 @@ const getGradeFromUser = async (userId) => {
       studentIds: studentIds.map(student => student._id)
     };
   }
-  throw new Error('User not authorized');
+  throw httpError("Access denied. You do not have the required permissions.");
 }
 
 /**
@@ -242,7 +243,7 @@ export const createForm = async (req, res) => {
         }
       }
     } else {
-      return res.status(403).json({ message: "Forbidden" });
+      return res.status(403).json({ message: "Access denied. You do not have the required permissions." });
     }
 
     const form = await Form.create({
@@ -337,7 +338,7 @@ export const getForms = async (req, res) => {
         });
       }
       default:
-        return res.status(403).json({ message: "Forbidden" });
+        return res.status(403).json({ message: "Access denied. You do not have the required permissions." });
     }
 
     const schoolId = user.schoolId;
@@ -849,7 +850,7 @@ export const getPointHistory = async (req, res) => {
       }
 
       default:
-        return res.status(403).json({ message: "Forbidden" });
+        return res.status(403).json({ message: "Access denied. You do not have the required permissions." });
     }
   } catch (error) {
     console.error("Error getting point history:", error);
@@ -946,7 +947,7 @@ export const getFilteredPointHistory = async (req, res) => {
         });
 
       default:
-        return res.status(403).json({ message: "Forbidden" });
+        return res.status(403).json({ message: "Access denied. You do not have the required permissions." });
     }
   } catch (error) {
     console.error("Error getting point history:", error);

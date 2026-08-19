@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Role } from '../enum.js';
 import crypto from 'crypto';
+import { hidePassword } from './passwordPrivacy.js';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -18,6 +19,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: false,
+    select: false,
   },
   approved: {
     type: Boolean,
@@ -137,5 +139,7 @@ userSchema.methods.compareRegistrationToken = function (rawToken) {
 };
 
 userSchema.index({ schoolId: 1 });
+
+hidePassword(userSchema);
 
 export default mongoose.model('User', userSchema);

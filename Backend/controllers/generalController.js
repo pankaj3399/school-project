@@ -7,11 +7,11 @@ export const getCurrentUser  = async (req, res) =>{
     try{
         let user; 
         switch(req.user.role){
-            case Role.Student: user = await Student.findById(req.user.id).populate('schoolId')
+            case Role.Student: user = await Student.findById(req.user.id).select('-password').populate('schoolId')
                             break;
-            case Role.Teacher: user = await Teacher.findById(req.user.id).populate('schoolId')
+            case Role.Teacher: user = await Teacher.findById(req.user.id).select('-password').populate('schoolId')
                             break;
-            default: user = await User.findById(req.user.id).populate('schoolId')
+            default: user = await User.findById(req.user.id).select('-password').populate('schoolId')
                             break;
         }
         if(!user){

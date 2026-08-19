@@ -169,5 +169,5 @@ export async function resolveSchoolListFilter(req, { schoolIdRequired = false } 
     return { schoolId: teacher.schoolId };
   }
 
-  throw httpError("Forbidden.");
+  throw httpError("Access denied. You do not have the required permissions.");
 }

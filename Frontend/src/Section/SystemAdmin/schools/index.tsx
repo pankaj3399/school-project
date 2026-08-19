@@ -175,7 +175,11 @@ export default function SchoolsList() {
                     <p className="text-gray-500 mt-2">Manage registered schools you have access to.</p>
                 </div>
                 <Button
-                    onClick={() => navigate('/system-admin/schools/new')}
+                    onClick={() => navigate(
+                        districtFilter !== 'all'
+                            ? `/system-admin/schools/new?districtId=${districtFilter}`
+                            : '/system-admin/schools/new'
+                    )}
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
                 >
                     <Plus className="mr-2 h-4 w-4" />

@@ -24,7 +24,7 @@ export const getAllSchools = async (req, res) => {
           filter = { districtId: adminUser.districtId };
         }
       }
-      const schools = await School.find(filter).populate('districtId').populate('createdBy');
+      const schools = await School.find(filter).populate('districtId').populate('createdBy', 'name email');
       res.status(200).json({ message: "Schools fetched successfully", schools });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
@@ -128,7 +128,7 @@ export const getTeachers = async (req, res) => {
         } else if (req.user.role === Role.SystemAdmin) {
             const { schoolId: querySchoolId } = req.query;
             const filter = querySchoolId ? { schoolId: querySchoolId } : {};
-            teachers = await Teacher.find(filter);
+            teachers = await Teacher.find(filter).select('+password');
         } else if (isDistrictScopedRole(req.user.role)) {
             const adminUser = await Admin.findById(req.user.id);
             if (!adminUser || (adminUser.role !== Role.SystemAdmin && !adminUser.districtId)) {
@@ -139,17 +139,17 @@ export const getTeachers = async (req, res) => {
             if (querySchoolId) {
                 const school = await School.findOne({ _id: querySchoolId, districtId: adminUser.districtId });
                 if (!school) return res.status(403).json({ message: "Access denied to school outside your district." });
-                teachers = await Teacher.find({ schoolId: querySchoolId });
+                teachers = await Teacher.find({ schoolId: querySchoolId }).select('+password');
             } else {
                 const schools = await School.find({ districtId: adminUser.districtId });
                 const schoolIds = schools.map(s => s._id);
-                teachers = await Teacher.find({ schoolId: { $in: schoolIds } });
+                teachers = await Teacher.find({ schoolId: { $in: schoolIds } }).select('+password');
             }
         }
         
         // If schoolId was determined for Teacher or SchoolAdmin, find teachers
         if (schoolId) {
-            teachers = await Teacher.find({ schoolId: schoolId });
+            teachers = await Teacher.find({ schoolId: schoolId }).select('+password');
         }
 
         return res.status(200).json({ teachers: teachers });
@@ -166,14 +166,14 @@ export const getCurrentSchool = async (req, res) => {
         switch(req.user.role) {
             case Role.Teacher:
                 const teacher = await Teacher.findById(req.user.id);
-                sch = await School.findOne({ _id: teacher.schoolId }).populate('createdBy');
+                sch = await School.findOne({ _id: teacher.schoolId }).populate('createdBy', 'name email');
                 break;
             case Role.SchoolAdmin:
                 const schoolAdmin = await Admin.findById(req.user.id);
                 if (!schoolAdmin || !schoolAdmin.schoolId) {
                   return res.status(403).json({ message: "Access denied. No school assigned or admin not found." });
                 }
-                sch = await School.findById(schoolAdmin.schoolId).populate('districtId').populate('createdBy');
+                sch = await School.findById(schoolAdmin.schoolId).populate('districtId').populate('createdBy', 'name email');
                 break;
             case Role.SystemAdmin:
                 // For system admins, look for schoolId in query
@@ -181,7 +181,7 @@ export const getCurrentSchool = async (req, res) => {
                 if (!querySchoolId) {
                     return res.status(400).json({ message: 'School ID is required for System Administrators' });
                 }
-                sch = await School.findById(querySchoolId).populate('districtId').populate('createdBy');
+                sch = await School.findById(querySchoolId).populate('districtId').populate('createdBy', 'name email');
                 break;
             case Role.DistrictAdmin:
             case Role.Admin:
@@ -191,11 +191,11 @@ export const getCurrentSchool = async (req, res) => {
                 if (adminUser.role === Role.SystemAdmin) {
                   const { schoolId: saSchoolId } = req.query;
                   if (!saSchoolId) return res.status(400).json({ message: 'School ID is required for System Administrators' });
-                  sch = await School.findById(saSchoolId).populate('districtId').populate('createdBy');
+                  sch = await School.findById(saSchoolId).populate('districtId').populate('createdBy', 'name email');
                 } else if (adminUser.districtId) {
                   const { schoolId: dSchoolId } = req.query;
                   if (!dSchoolId) return res.status(400).json({ message: 'School ID is required for Administrators' });
-                  sch = await School.findOne({ _id: dSchoolId, districtId: adminUser.districtId }).populate('districtId').populate('createdBy');
+                  sch = await School.findOne({ _id: dSchoolId, districtId: adminUser.districtId }).populate('districtId').populate('createdBy', 'name email');
                   if (!sch) return res.status(403).json({ message: "Access denied to school outside your district." });
                 } else {
                   return res.status(403).json({ message: 'Admin is not assigned to a district' });
@@ -296,7 +296,7 @@ export const updateSchool = async (req, res) => {
         req.params.id,
         updatePayload,
         { new: true }
-      ).populate('districtId').populate('createdBy');
+      ).populate('districtId').populate('createdBy', 'name email');
   
       if (!updatedSchool) return res.status(404).json({ message: "School not found." });
   
@@ -316,7 +316,7 @@ export const deleteSchool = async (req, res) => {
         }
 
         // Load administrator
-        const adminUser = await Admin.findById(req.user.id);
+        const adminUser = await Admin.findById(req.user.id).select('+password');
         if (!adminUser) {
             return res.status(403).json({ message: "Admin account not found." });
         }
