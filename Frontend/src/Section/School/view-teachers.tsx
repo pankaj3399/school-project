@@ -40,8 +40,8 @@ import {
 import { GRADE_OPTIONS } from "@/lib/types";
 import { isApiError } from "@/lib/errors";
 
-const teacherHasPassword = (teacher: { hasCompletedRegistration?: boolean; password?: unknown } | null) =>
-  Boolean(teacher?.hasCompletedRegistration ?? teacher?.password);
+const teacherHasPassword = (teacher: { hasCompletedRegistration?: boolean } | null) =>
+  Boolean(teacher?.hasCompletedRegistration);
 
 export default function ViewTeachers() {
   const { isMultiSchoolUser, requiresSchoolSelection, selectedSchoolId } = useSchoolSelectionGuard();

@@ -26,4 +26,13 @@ const SchoolSchema = new mongoose.Schema({
 
 SchoolSchema.index({ createdBy: 1 });
 
+const stripCreatedByPassword = (_doc, ret) => {
+  if (ret.createdBy && typeof ret.createdBy === 'object') {
+    delete ret.createdBy.password;
+  }
+  return ret;
+};
+SchoolSchema.set('toJSON', { transform: stripCreatedByPassword });
+SchoolSchema.set('toObject', { transform: stripCreatedByPassword });
+
 export default mongoose.model('School', SchoolSchema);

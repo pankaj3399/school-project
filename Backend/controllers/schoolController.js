@@ -9,6 +9,7 @@ import Student from "../models/Student.js";
 import Admin from "../models/Admin.js";
 import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
 import { isDistrictScopedRole } from "../utils/schoolAccess.js";
+import { stripPasswordFields } from "../models/passwordPrivacy.js";
 export const getAllSchools = async (req, res) => {
     try {
       let filter = {};
@@ -25,7 +26,7 @@ export const getAllSchools = async (req, res) => {
         }
       }
       const schools = await School.find(filter).populate('districtId').populate('createdBy', 'name email');
-      res.status(200).json({ message: "Schools fetched successfully", schools });
+      res.status(200).json({ message: "Schools fetched successfully", schools: stripPasswordFields(schools) });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
     }
@@ -223,7 +224,7 @@ export const getCurrentSchool = async (req, res) => {
             return adminObj;
         });
 
-        return res.status(200).json({ school: sch, admins: adminsWithStatus });
+        return res.status(200).json({ school: stripPasswordFields(sch), admins: adminsWithStatus });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'An error occurred', error: err.message });
@@ -300,7 +301,7 @@ export const updateSchool = async (req, res) => {
   
       if (!updatedSchool) return res.status(404).json({ message: "School not found." });
   
-      res.status(200).json({ message: "School updated successfully", school: updatedSchool });
+      res.status(200).json({ message: "School updated successfully", school: stripPasswordFields(updatedSchool) });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
     }
