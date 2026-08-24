@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOtpContext } from "./OtpContextProvider";
 import { sendOtp } from "@/api";
 import { getErrorMessage } from "@/lib/errors"
+import { AUTH_ROLE_OPTIONS } from "@/lib/roleLabels"
 
 export default function ForgotPassword() {
     const {updateEmail, updateRole, updateOtpId} = useOtpContext()
@@ -129,9 +130,11 @@ export default function ForgotPassword() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                   <SelectItem value="SchoolAdmin">System Manager</SelectItem>
-                  <SelectItem value="Teacher">Leader/Lead Teacher</SelectItem>
-                  <SelectItem value="SpecialTeacher">Team member/Teacher</SelectItem>
+                  {AUTH_ROLE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.role && (

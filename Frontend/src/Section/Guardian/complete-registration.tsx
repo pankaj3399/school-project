@@ -160,7 +160,7 @@ export default function CompleteGuardianRegistration() {
               <FileText className="w-8 h-8 text-[#00a58c]" />
             </div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#00a58c] to-[#007a68] bg-clip-text text-transparent">
-              Welcome to RADU E-Token™
+              Welcome to RADU E-Token®
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">

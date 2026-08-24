@@ -16,8 +16,10 @@ import { getAuthToken } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/errors';
 import { InviteAdminDialog } from '@/components/InviteAdminDialog';
 import { EditAdminDialog } from '@/components/EditAdminDialog';
+import { AdminActiveToggle } from '@/components/AdminActiveToggle';
 import { Role } from '@/enum';
 import { formatRoleName } from '@/lib/roleLabels';
+import { adminAccessStatus, isAdminDeactivated } from '@/lib/adminActive';
 import { cn } from '@/lib/utils';
 
 interface DistrictOption {
@@ -36,6 +38,7 @@ interface DistrictManager {
   phone?: string;
   position?: string;
   contactRole?: string;
+  isActive?: boolean;
   hasCompletedRegistration?: boolean;
   districtId?: { _id: string; name: string; code?: string } | string | null;
 }
@@ -189,21 +192,25 @@ export default function DistrictManagersList() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span
-                          className={cn(
-                            'px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider',
-                            manager.hasCompletedRegistration
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          )}
-                        >
-                          {manager.hasCompletedRegistration ? 'Active' : 'Pending'}
-                        </span>
+                        {(() => {
+                          const status = adminAccessStatus(manager);
+                          return (
+                            <span
+                              className={cn(
+                                'px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider',
+                                status.className
+                              )}
+                            >
+                              {status.label}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <EditAdminDialog admin={manager} onSuccess={fetchManagers} />
-                          {!manager.hasCompletedRegistration && (
+                          <AdminActiveToggle admin={manager} onSuccess={fetchManagers} />
+                          {!manager.hasCompletedRegistration && !isAdminDeactivated(manager) && (
                             <Button
                               variant="link"
                               onClick={() => handleReInvite(manager._id, manager.name)}

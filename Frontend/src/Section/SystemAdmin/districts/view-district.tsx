@@ -20,12 +20,14 @@ import {
 
 import { InviteAdminDialog } from '@/components/InviteAdminDialog';
 import { EditAdminDialog } from '@/components/EditAdminDialog';
+import { AdminActiveToggle } from '@/components/AdminActiveToggle';
 import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { US_STATES, CANADA_PROVINCES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations';
 import { getErrorMessage } from "@/lib/errors"
 import { formatContactRole } from '@/lib/roleLabels';
+import { adminAccessStatus, isAdminDeactivated } from '@/lib/adminActive';
 
 export default function ViewDistrict() {
     const { id } = useParams();
@@ -232,6 +234,32 @@ export default function ViewDistrict() {
         } finally {
             setReinvitingIds(prev => ({ ...prev, [adminId]: false }));
         }
+    };
+
+    const refreshAdmins = async () => {
+        const token = getAuthToken(user);
+        if (token && id) {
+            try {
+                const res = await getDistrictById(id, token);
+                if (res.error) {
+                    toast({
+                        title: "Refresh Error",
+                        description: `Admin updated, but data refresh failed: ${res.error}`,
+                        variant: "destructive"
+                    });
+                } else if (res.district) {
+                    setData(res);
+                }
+            } catch (err: any) {
+                toast({
+                    title: "Connection Error",
+                    description: "Could not refresh district data. Please reload page.",
+                    variant: "destructive"
+                });
+                console.error("District refresh failed:", err);
+            }
+        }
+    };
     };
 
     if (!data || !data.district) return (
@@ -499,43 +527,26 @@ export default function ViewDistrict() {
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className={cn(
-                                                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                        admin.hasCompletedRegistration ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                                                    )}>
-                                                        {admin.hasCompletedRegistration ? 'Active' : 'Pending'}
-                                                    </span>
+                                                    {(() => {
+                                                        const status = adminAccessStatus(admin);
+                                                        return (
+                                                            <span className={cn(
+                                                                "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                                                status.className
+                                                            )}>
+                                                                {status.label}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="text-gray-600">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <EditAdminDialog 
                                                             admin={admin} 
-                                                            onSuccess={async () => {
-                                                                const token = getAuthToken(user);
-                                                                if (token && id) {
-                                                                    try {
-                                                                        const res = await getDistrictById(id, token);
-                                                                        if (res.error) {
-                                                                            toast({
-                                                                                title: "Refresh Error",
-                                                                                description: `Admin updated, but data refresh failed: ${res.error}`,
-                                                                                variant: "destructive"
-                                                                            });
-                                                                        } else if (res.district) {
-                                                                            setData(res);
-                                                                        }
-                                                                    } catch (err: any) {
-                                                                        toast({
-                                                                            title: "Connection Error",
-                                                                            description: "Could not refresh district data. Please reload page.",
-                                                                            variant: "destructive"
-                                                                        });
-                                                                        console.error("District refresh failed:", err);
-                                                                    }
-                                                                }
-                                                            }} 
+                                                            onSuccess={refreshAdmins} 
                                                         />
-                                                        {!admin.hasCompletedRegistration && (
+                                                        <AdminActiveToggle admin={admin} onSuccess={refreshAdmins} />
+                                                        {!admin.hasCompletedRegistration && !isAdminDeactivated(admin) && (
                                                             <Button 
                                                                 variant="link" 
                                                                 onClick={() => handleReInvite(admin._id, admin.name)}

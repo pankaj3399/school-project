@@ -356,7 +356,7 @@ export const getDistrictById = async (req, res) => {
       role: { $in: [Role.DistrictAdmin, Role.Admin] } 
     })
     .populate('schoolId', 'name')
-    .select('name email role approved address phone position contactRole schoolId password').lean();
+    .select('name email role approved address phone position contactRole schoolId password isActive deactivatedAt').lean();
 
     const admins = districtAdminsRaw.map(admin => {
         const adminObj = { ...admin };

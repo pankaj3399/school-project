@@ -24,6 +24,7 @@ import { signIn, requestLoginOtp } from "@/api";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors"
 import { homePathFor } from "@/lib/roleAccess"
+import { AUTH_ROLE_OPTIONS } from "@/lib/roleLabels"
 
 export default function LoginForm() {
   const { toast } = useToast();
@@ -278,14 +279,11 @@ export default function LoginForm() {
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="DistrictManager">District Manager</SelectItem>
-                    <SelectItem value="DistrictAdmin">District Admin</SelectItem>
-                    <SelectItem value="SchoolAdmin">School Tech</SelectItem>
-                    <SelectItem value="Teacher">AN Teacher (Lead Teacher)</SelectItem>
-                    <SelectItem value="SpecialTeacher">
-                      Team Member / Teacher
-                    </SelectItem>
+                    {AUTH_ROLE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.role && (

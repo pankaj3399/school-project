@@ -43,3 +43,13 @@ export function formatContactRole(contactRole?: string | null): string {
 
 export const CONTACT_ROLE_SCHOOL_TECH = 'School Tech';
 export const CONTACT_ROLE_LEADERSHIP = 'Leadership';
+
+/** Sign-in / forgot-password dropdown values. Keep labels identical on both pages. */
+export const AUTH_ROLE_OPTIONS = [
+  { value: 'Admin', label: 'Admin' },
+  { value: 'DistrictManager', label: 'District Manager' },
+  { value: 'DistrictAdmin', label: 'District Admin' },
+  { value: 'SchoolAdmin', label: 'School Tech' },
+  { value: 'Teacher', label: 'AN Teacher (Lead Teacher)' },
+  { value: 'SpecialTeacher', label: 'Team Member / Teacher' },
+] as const;

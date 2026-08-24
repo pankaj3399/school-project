@@ -16,9 +16,9 @@ interface Terms {
 
 // Default Terms content (fallback if API fails)
 const DEFAULT_TERMS_CONTENT = `
-RADU E-Token™ Pilot Participation Agreement
+RADU E-Token® Pilot Participation Agreement
 
-This Pilot Participation Agreement (the "Agreement") is entered into between the participating teacher/school ("Pilot Participant") and Affective Academy LLC ("Provider"), regarding the use of the RADU E-Token™ System ("System") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below.
+This Pilot Participation Agreement (the "Agreement") is entered into between the participating teacher/school ("Pilot Participant") and Affective Academy LLC ("Provider"), regarding the use of the RADU E-Token® System ("System") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below.
 
 1. Purpose of the Pilot
 The purpose of this pilot is to test the RADU E-Token System in a real-world classroom environment. The System allows educators to recognize and record positive student behaviors and efforts by issuing digital tokens aligned with behavior goals, IEPs, or classroom expectations. The Provider seeks feedback regarding usability, effectiveness, and system performance.
@@ -67,7 +67,7 @@ export default function TermsPage({ isRegistration = false, terms: propTerms }: 
                 // Use default terms if API fails
                 setTerms({
                     version: '1.0-pilot',
-                    title: 'RADU E-Token™ Pilot Participation Agreement',
+                    title: 'RADU E-Token® Pilot Participation Agreement',
                     content: DEFAULT_TERMS_CONTENT,
                     effectiveDate: new Date().toISOString()
                 });

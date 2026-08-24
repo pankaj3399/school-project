@@ -1335,3 +1335,27 @@ export const reInviteAdmin = async (id: string) => {
     return toApiError(error);
   }
 };
+
+export const deactivateAdmin = async (id: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.post(`${API_URL}/system-admin/admins/${id}/deactivate`, {}, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return toApiError(error);
+  }
+};
+
+export const reactivateAdmin = async (id: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.post(`${API_URL}/system-admin/admins/${id}/reactivate`, {}, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return toApiError(error);
+  }
+};

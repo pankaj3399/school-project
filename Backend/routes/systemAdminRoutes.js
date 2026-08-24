@@ -14,6 +14,8 @@ import {
   inviteAdmin,
   updateAdmin,
   reInviteAdmin,
+  deactivateAdmin,
+  reactivateAdmin,
   completeAdminRegistration
 } from '../controllers/systemAdminController.js';
 import { authenticateToken, authorizeRoles } from '../middlewares/authMiddleware.js';
@@ -67,6 +69,8 @@ router.get('/admins', authorizeRoles(Role.SystemAdmin), getAllAdmins);
 router.post('/invite', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), inviteAdmin);
 router.put('/admins/:id', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), updateAdmin);
 router.post('/admins/:id/reinvite', authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), reInviteAdmin);
+router.post('/admins/:id/deactivate', authorizeRoles(Role.SystemAdmin, Role.Admin), deactivateAdmin);
+router.post('/admins/:id/reactivate', authorizeRoles(Role.SystemAdmin, Role.Admin), reactivateAdmin);
 
 // Terms management routes (authenticated)
 router.get('/terms/all', authorizeRoles(Role.SystemAdmin), getAllTermsVersions);

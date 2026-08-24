@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateAdmin } from '@/api';
 import { getErrorMessage } from "@/lib/errors"
 import { CONTACT_ROLE_LEADERSHIP, CONTACT_ROLE_SCHOOL_TECH, formatContactRole } from "@/lib/roleLabels"
+import { AdminActiveToggle } from "@/components/AdminActiveToggle"
 import {
   Select,
   SelectContent,
@@ -184,7 +185,8 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between">
+            <AdminActiveToggle admin={admin} onSuccess={onSuccess} />
             <Button type="submit" disabled={loading} className="bg-[#00a58c] hover:bg-[#008f7a]">
               {loading ? (
                 <>

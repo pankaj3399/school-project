@@ -11,7 +11,7 @@ const TermsOfUseSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    default: 'RADU E-Token™ Pilot Participation Agreement'
+    default: 'RADU E-Token® Pilot Participation Agreement'
   },
   content: { 
     type: String, 

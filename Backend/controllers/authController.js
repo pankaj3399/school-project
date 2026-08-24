@@ -16,6 +16,7 @@ import PendingTokens from "../models/PendingTokens.js";
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
 import { TermsOfUse } from "../models/TermsOfUse.js";
 import { assertSchoolAccess } from "../utils/schoolAccess.js";
+import { presentTermsDocument } from "../utils/trademark.js";
 
 const generateToken = (id, role, districtId = null) => {
   return jwt.sign({ id, role, districtId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -71,12 +72,28 @@ const findUserByRoleSelection = async (email, roleSelection) => {
 };
 
 const ROLE_MISMATCH_MESSAGE = "Invalid credentials or wrong role for this account.";
+const ACCOUNT_DEACTIVATED_MESSAGE = "This account has been deactivated.";
 
 const rejectIfUnapproved = (user) => {
   if (user && user.approved === false) {
     return { message: "User not approved" };
   }
   return null;
+};
+
+const rejectIfDeactivated = (user) => {
+  if (user && user.isActive === false) {
+    return { message: ACCOUNT_DEACTIVATED_MESSAGE };
+  }
+  return null;
+};
+
+const resolveUserForAuthRole = async (email, role) => {
+  const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
+  if (isSystemAdminEmail) {
+    return findUserByRoleSelection(email, Role.SystemAdmin);
+  }
+  return findUserByRoleSelection(email, role);
 };
 
 export const requestLoginOtp = async (req, res) => {
@@ -92,6 +109,10 @@ export const requestLoginOtp = async (req, res) => {
     const unapproved = rejectIfUnapproved(user);
     if (unapproved) {
       return res.status(401).json(unapproved);
+    }
+    const deactivated = rejectIfDeactivated(user);
+    if (deactivated) {
+      return res.status(401).json(deactivated);
     }
 
     // Check if user has a password before attempting bcrypt comparison
@@ -183,6 +204,10 @@ export const login = async (req, res) => {
     const unapproved = rejectIfUnapproved(user);
     if (unapproved) {
       return res.status(401).json(unapproved);
+    }
+    const deactivated = rejectIfDeactivated(user);
+    if (deactivated) {
+      return res.status(401).json(deactivated);
     }
 
     if (!user.password) {
@@ -290,6 +315,11 @@ export const verifyLoginOtp = async (req, res) => {
     }
     const { user, userRole } = result;
 
+    const deactivated = rejectIfDeactivated(user);
+    if (deactivated) {
+      return res.status(401).json(deactivated);
+    }
+
     // Find the OTP associated with the user
     const storedOtp = await Otp.findOne({ otp, userId: user._id });
     if (!storedOtp) {
@@ -370,26 +400,15 @@ export const signup = async (_req, res) => {
 export const sendOtp = async (req, res) => {
   try {
     const { email, role } = req.body;
-    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-    console.log(email, role)
-    let user = null;
-    switch (userRole) {
-      case Role.Teacher: {
-        user = await Teacher.findOne({ email });
-        break;
-      }
-      case Role.Student: {
-        user = await Student.findOne({ email });
-        break;
-      }
-      default: {
-        user = await Admin.findOne({ email });
-        break;
-      }
-    }
-
-    if (!user) {
+    const result = await resolveUserForAuthRole(email, role);
+    if (!result) {
       return res.status(404).json({ message: "User Not Found" });
+    }
+    const { user } = result;
+
+    const deactivated = rejectIfDeactivated(user);
+    if (deactivated) {
+      return res.status(401).json(deactivated);
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -417,44 +436,23 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { otp, email, role } = req.body;
-    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-    let user;
-    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
-    
-    if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email, role: Role.SystemAdmin });
-      if (!user) return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
-      userRole = Role.SystemAdmin;
-    } else {
-      switch (userRole) {
-        case Role.Teacher: {
-          user = await Teacher.findOne({ email });
-          break;
-        }
-        case Role.Student: {
-          user = await Student.findOne({ email });
-          break;
-        }
-        default: {
-          user = await Admin.findOne({ email });
-          break;
-        }
-      }
-    }
-
-
-    if (!user) {
+    const result = await resolveUserForAuthRole(email, role);
+    if (!result) {
       return res.status(404).json({ message: "User not found" });
     }
+    const { user } = result;
 
-    // Find the OTP associated with the user
-    const storedOtp = await Otp.findOne({ otp });
+    const deactivated = rejectIfDeactivated(user);
+    if (deactivated) {
+      return res.status(401).json(deactivated);
+    }
+
+    const storedOtp = await Otp.findOne({ otp, userId: user._id });
 
     if (!storedOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // Check if the OTP has expired
     if (storedOtp.expiresAt < new Date()) {
       return res.status(400).json({ message: "OTP has expired" });
     }
@@ -835,39 +833,17 @@ export const completeVerification = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { otpId, email, role, password } = req.body;
-    let userRole = role == "SpecialTeacher" ? Role.Teacher : role;
-
-    // Find the user based on email and role
-    let user;
-    const isSystemAdminEmail = email === process.env.ADMIN_EMAIL;
-    
-    if (isSystemAdminEmail) {
-      user = await Admin.findOne({ email, role: Role.SystemAdmin });
-      if (!user) return res.status(403).json({ message: "Access denied: Role mismatch for administrative account." });
-      userRole = Role.SystemAdmin;
-    } else {
-      switch (userRole) {
-        case Role.Teacher: {
-          user = await Teacher.findOne({ email });
-          break;
-        }
-        case Role.Student: {
-          user = await Student.findOne({ email });
-          break;
-        }
-        default: {
-          user = await Admin.findOne({ email });
-          break;
-        }
-      }
-    }
-
-
-    if (!user) {
+    const result = await resolveUserForAuthRole(email, role);
+    if (!result) {
       return res.status(404).json({ message: "User not found" });
     }
+    const { user } = result;
 
-    // Validate the OTP
+    const deactivated = rejectIfDeactivated(user);
+    if (deactivated) {
+      return res.status(401).json(deactivated);
+    }
+
     const otpRecord = await Otp.findOne({ _id: otpId, userId: user._id });
 
     if (!otpRecord) {
@@ -1150,13 +1126,13 @@ export const getTerms = async (req, res) => {
       return res.status(200).json({
         terms: {
           version: "1.0-pilot",
-          title: "RADU E-Token™ Pilot Participation Agreement",
-          content: "RADU E-Token™ Pilot Participation Agreement\n\nThis Pilot Participation Agreement (the \"Agreement\") is entered into between the participating teacher/school (\"Pilot Participant\") and Affective Academy LLC (\"Provider\"), regarding the use of the RADU E-Token™ System (\"System\") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below...",
+          title: "RADU E-Token® Pilot Participation Agreement",
+          content: "RADU E-Token® Pilot Participation Agreement\n\nThis Pilot Participation Agreement (the \"Agreement\") is entered into between the participating teacher/school (\"Pilot Participant\") and Affective Academy LLC (\"Provider\"), regarding the use of the RADU E-Token® System (\"System\") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below...",
           effectiveDate: new Date().toISOString()
         }
       });
     }
-    res.status(200).json({ terms });
+    res.status(200).json({ terms: presentTermsDocument(terms) });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

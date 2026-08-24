@@ -21,6 +21,9 @@ export const getCurrentUser  = async (req, res) =>{
                 message:"user Not Found"
             })
         }
+        if (user.isActive === false) {
+            return res.status(401).json({ message: 'This account has been deactivated.' });
+        }
         return res.status(200).json({ user: stripPasswordFields(user) })
     }catch(error){
         return res.status(500).json({ message: 'Server Error', error: error.message });   

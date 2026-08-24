@@ -1,14 +1,29 @@
 import jwt from 'jsonwebtoken';
 import { Role } from '../enum.js';
 import Teacher from '../models/Teacher.js';
+import Admin from '../models/Admin.js';
 
-export const authenticate = (req, res, next) => {
+const ADMIN_ROLES = [Role.SystemAdmin, Role.Admin, Role.DistrictAdmin, Role.SchoolAdmin];
+const ACCOUNT_DEACTIVATED_MESSAGE = 'This account has been deactivated.';
+
+export const authenticate = async (req, res, next) => {
     const token = req.headers.token;
     if (!token) return res.status(401).json({ message: 'Access Denied' });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; 
+        req.user = decoded;
+
+        if (ADMIN_ROLES.includes(decoded.role)) {
+            const admin = await Admin.findById(decoded.id).select('isActive');
+            if (!admin) {
+                return res.status(401).json({ message: 'Access Denied' });
+            }
+            if (admin.isActive === false) {
+                return res.status(401).json({ message: ACCOUNT_DEACTIVATED_MESSAGE });
+            }
+        }
+
         next();
     } catch (err) {
         res.status(400).json({ message: 'Invalid Token' });
