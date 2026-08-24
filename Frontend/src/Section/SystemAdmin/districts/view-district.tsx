@@ -260,7 +260,6 @@ export default function ViewDistrict() {
             }
         }
     };
-    };
 
     if (!data || !data.district) return (
         <div className="p-8 text-center">
