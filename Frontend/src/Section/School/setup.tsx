@@ -23,6 +23,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { GRADE_OPTIONS } from "@/lib/types";
+import { mapTeacherRosterRow } from "@/lib/excelRoster";
 import {
   Select,
   SelectContent,
@@ -83,28 +84,9 @@ export default function Setup() {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Validate and transform the data
-        const transformedData: TeacherData[] = jsonData.map((row: any) => {
-          // Convert Excel date number to actual date
-          // let dob = row['Date of Birth'];
-          // if (typeof dob === 'number') {
-          //   // Convert Excel date number to JavaScript date
-          //   dob = new Date((dob - 25569) * 86400 * 1000).toISOString().split('T')[0];
-          // }
-
-          return {
-            // firstName: row['First Name'] || '',
-            // lastName: row['Last Name'] || '',
-            // dateOfBirth: dob || '',
-            email: row["Email"] || "",
-            recieveMails:
-              row["Receive Mails"] === true || row["Receive Mails"] === "true",
-            // subject: row['Subject'] || '',
-            type:
-              row["Type of Teacher"] === "Lead Teacher" ? "Lead" : "Special",
-            grade: row["Grade"] || "",
-          };
-        });
+        const transformedData: TeacherData[] = jsonData.map((row: any) =>
+          mapTeacherRosterRow(row, GRADE_OPTIONS),
+        );
 
         setTeachers(transformedData);
         setValidationErrors([]);
@@ -290,20 +272,20 @@ export default function Setup() {
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">
-                    Required Column Headers (exact match):
+                    Required Column Headers:
                   </h4>
                   <ul className="list-disc pl-5 space-y-1 text-sm">
                     <li>
-                      <b>Email</b> - Teacher's email address
+                      <b>EMAIL</b> - Teacher's email address
                     </li>
                     <li>
-                      <b>Receive Mails</b> - Email notification preference
+                      <b>RECEIVE EMAILS</b> - Email notification preference
                     </li>
                     <li>
-                      <b>Type of Teacher</b> - Teacher role classification
+                      <b>TYPE OF TEACHER</b> - Teacher role classification
                     </li>
                     <li>
-                      <b>Grade</b> - Grade level assignment
+                      <b>GRADE</b> - Grade level assignment
                     </li>
                   </ul>
                 </div>
@@ -316,13 +298,14 @@ export default function Setup() {
                       teacher@school.com)
                     </li>
                     <li>
-                      <b>Receive Mails:</b> Required, use <code>true</code> or{" "}
-                      <code>false</code> (no quotes)
+                      <b>Receive Emails:</b> Required, use <code>true</code> or{" "}
+                      <code>false</code> (or 1 / 0)
                     </li>
                     <li>
                       <b>Type of Teacher:</b> Required, use{" "}
-                      <code>Lead Teacher</code> or <code>Special Teacher</code>{" "}
-                      (exact text)
+                      <code>Leader/Lead Teacher</code> or{" "}
+                      <code>Team Member/Special Teacher</code>{" "}
+                      (template dropdown values)
                     </li>
                     <li>
                       <b>Grade:</b> Required for Lead Teachers only, must be one
