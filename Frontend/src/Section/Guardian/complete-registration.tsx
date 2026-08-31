@@ -12,8 +12,8 @@ import { CheckCircle2, ChevronRight, FileText } from "lucide-react";
 import { PasswordField } from "@/components/PasswordField";
 import { validatePassword } from "@/lib/password";
 import TermsPage from "@/components/TermsPage";
+import LegalDocDialog from "@/components/LegalDocDialog";
 import { getErrorMessage } from "@/lib/errors"
-import { LEGAL_ROUTES } from "@/lib/legal"
 
 export default function CompleteGuardianRegistration() {
   const [searchParams] = useSearchParams();
@@ -29,6 +29,7 @@ export default function CompleteGuardianRegistration() {
   const [termsVersion, setTermsVersion] = useState("");
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
   const [termsError, setTermsError] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<"terms" | "privacy" | null>(null);
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [formData, setFormData] = useState({
@@ -184,23 +185,21 @@ export default function CompleteGuardianRegistration() {
                     I agree to the
                   </Label>
                   {" "}
-                  <a
-                    href={LEGAL_ROUTES.terms}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setLegalDoc("terms")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
                     Terms of Service
-                  </a>
+                  </button>
                   {" "}and{" "}
-                  <a
-                    href={LEGAL_ROUTES.privacy}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setLegalDoc("privacy")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
                     Privacy Policy
-                  </a>
+                  </button>
                   .
                 </div>
               </div>
@@ -307,6 +306,11 @@ export default function CompleteGuardianRegistration() {
           </CardContent>
         </Card>
       )}
+      <LegalDocDialog
+        doc={legalDoc}
+        onOpenChange={(open) => { if (!open) setLegalDoc(null); }}
+        terms={fetchedTerms}
+      />
     </div>
   );
 }

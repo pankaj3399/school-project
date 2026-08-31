@@ -10,11 +10,11 @@ import { FileText, CheckCircle2, ChevronRight } from "lucide-react";
 import { completeAdminRegistration, getCurrentTerms } from "@/api";
 import Loading from "../Loading";
 import TermsPage from "@/components/TermsPage";
+import LegalDocDialog from "@/components/LegalDocDialog";
 import { PasswordField } from "@/components/PasswordField";
 import { validatePassword } from "@/lib/password";
 import { getErrorMessage } from "@/lib/errors"
 import { formatRoleName } from "@/lib/roleLabels"
-import { LEGAL_ROUTES } from "@/lib/legal"
 
 export default function CompleteAdminRegistration() {
   const [searchParams] = useSearchParams();
@@ -52,6 +52,7 @@ export default function CompleteAdminRegistration() {
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [fetchedTerms, setFetchedTerms] = useState<any>(null);
+  const [legalDoc, setLegalDoc] = useState<"terms" | "privacy" | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -204,23 +205,21 @@ export default function CompleteAdminRegistration() {
                     I agree to the
                   </Label>
                   {" "}
-                  <a
-                    href={LEGAL_ROUTES.terms}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setLegalDoc("terms")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
                     Terms of Service
-                  </a>
+                  </button>
                   {" "}and{" "}
-                  <a
-                    href={LEGAL_ROUTES.privacy}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setLegalDoc("privacy")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
                     Privacy Policy
-                  </a>
+                  </button>
                   .
                 </div>
               </div>
@@ -236,6 +235,11 @@ export default function CompleteAdminRegistration() {
             </Button>
           </CardContent>
         </Card>
+        <LegalDocDialog
+          doc={legalDoc}
+          onOpenChange={(open) => { if (!open) setLegalDoc(null); }}
+          terms={fetchedTerms}
+        />
       </div>
     );
   }
