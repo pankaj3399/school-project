@@ -56,6 +56,49 @@ export function parseGrade(value: unknown, gradeOptions: readonly string[]): str
   return match ?? s;
 }
 
+export type StudentRosterRow = {
+  firstName: string;
+  lastName: string;
+  grade: string;
+  studentNumber: string;
+  email: string;
+  guardian1: { name: string; email: string };
+  guardian2: { name: string; email: string } | null;
+};
+
+function text(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value).replace(/[\u00a0\r\n]+/g, " ").trim();
+}
+
+function emailText(value: unknown): string {
+  return text(value).replace(/\s+/g, "");
+}
+
+export function mapStudentRosterRow(
+  row: Record<string, unknown>,
+  gradeOptions: readonly string[],
+): StudentRosterRow {
+  const guardian2Name = text(cell(row, ["guardian 2 name"]));
+  const guardian2Email = emailText(cell(row, ["guardian 2 email"]));
+
+  return {
+    firstName: text(cell(row, ["first name"])),
+    lastName: text(cell(row, ["last name"])),
+    grade: parseGrade(cell(row, ["grade"]), gradeOptions),
+    studentNumber: text(cell(row, ["student number", "student id"])),
+    email: emailText(cell(row, ["student email", "student e-mail"])),
+    guardian1: {
+      name: text(cell(row, ["guardian 1 name"])),
+      email: emailText(cell(row, ["guardian 1 email"])),
+    },
+    guardian2:
+      guardian2Name || guardian2Email
+        ? { name: guardian2Name, email: guardian2Email }
+        : null,
+  };
+}
+
 export function mapTeacherRosterRow(
   row: Record<string, unknown>,
   gradeOptions: readonly string[],

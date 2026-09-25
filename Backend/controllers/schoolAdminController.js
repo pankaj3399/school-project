@@ -1039,19 +1039,30 @@ export const studentRoster = async (req, res) => {
     // Process each student in parallel
     const createPromises = students.map(async (student) => {
       try {
+        const studentNumber = String(student.studentNumber || "").trim();
+        const providedEmail = String(student.email || "").replace(/\s+/g, "");
+        const legacyPlaceholder = studentNumber
+          ? `${studentNumber}@school.com`
+          : "@school.com";
+        let studentEmail = "";
         if (
-          !student.name ||
-          !student.email ||
-          !student.grade ||
-          !student.studentNumber
+          providedEmail.includes("@") &&
+          providedEmail.toLowerCase() !== legacyPlaceholder.toLowerCase()
         ) {
+          studentEmail = providedEmail;
+        } else if (studentNumber && school.domain) {
+          const domain = String(school.domain).startsWith("@")
+            ? String(school.domain)
+            : `@${school.domain}`;
+          studentEmail = `${studentNumber}${domain}`;
+        }
+
+        if (!student.name || !student.grade || !studentEmail.includes("@")) {
           return null; // Skip invalid student data
         }
 
         //kept the password as 123456 for now, field might be used in future
         const hashedPassword = await bcrypt.hash("123456", 12);
-
-        const studentEmail = student.studentNumber + school.domain;
 
         // Check if there's existing parent verification for this student email
         const existingVerification = await ParentVerification.findOne({
@@ -1077,7 +1088,7 @@ export const studentRoster = async (req, res) => {
           name: student.name,
           email: studentEmail,
           grade: student.grade,
-          studentNumber: student.studentNumber,
+          studentNumber,
           parentEmail: student.guardian1.email,
           standard: student.guardian2?.email ?? "",
           guardian1: {
@@ -1102,7 +1113,7 @@ export const studentRoster = async (req, res) => {
         const createdStudent = await Student.create(studentData);
 
         // Send verification emails
-        if (student.email) {
+        if (studentEmail) {
           await sendVerifyEmailRoster(
             req,
             res,

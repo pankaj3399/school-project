@@ -13,6 +13,7 @@ import * as XLSX from "xlsx";
 import { Input } from "@/components/ui/input";
 import Loading from "../Loading";
 import { studentRoster } from "@/api";
+import { mapStudentRosterRow } from "@/lib/excelRoster";
 import { Download } from "lucide-react";
 import { useAuth } from "@/authContext";
 import { useSchool } from "@/context/SchoolContext";
@@ -38,6 +39,7 @@ interface StudentData {
   lastName: string;
   grade: string;
   studentNumber: string;
+  email: string;
   guardian1: {
     name: string;
     email: string;
@@ -94,31 +96,9 @@ export default function SetupStudents() {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const transformedData: StudentData[] = jsonData.map((row: any) => {
-          // Use direct column values instead of parsing from combined fields
-          const guardian1 = {
-            name: row["Guardian 1 Name"] || "",
-            email: row["Guardian 1 Email"] || "",
-          };
-
-          // Check if Guardian 2 data exists
-          let guardian2 = null;
-          if (row["Guardian 2 Name"] || row["Guardian 2 Email"]) {
-            guardian2 = {
-              name: row["Guardian 2 Name"] || "",
-              email: row["Guardian 2 Email"] || "",
-            };
-          }
-
-          return {
-            firstName: row["First Name"] || "",
-            lastName: row["Last Name"] || "",
-            grade: row["Grade"]?.toString() || "",
-            studentNumber: row["Student Number"]?.toString() || "",
-            guardian1: guardian1,
-            guardian2: guardian2,
-          };
-        });
+        const transformedData: StudentData[] = jsonData.map((row: any) =>
+          mapStudentRosterRow(row, GRADE_OPTIONS),
+        );
 
         setStudents(transformedData);
         setValidationErrors([]);
@@ -188,8 +168,10 @@ export default function SetupStudents() {
         );
       }
 
-      if (!student.studentNumber || student.studentNumber.trim() === "") {
-        errors.push(`Student ${identifier}: Student Number is required.`);
+      if (!student.email || student.email.trim() === "") {
+        errors.push(`Student ${identifier}: Student Email is required.`);
+      } else if (!student.email.includes("@")) {
+        errors.push(`Student ${identifier}: Student Email format is invalid.`);
       }
 
       // Check Guardian 1 data completeness
@@ -231,7 +213,7 @@ export default function SetupStudents() {
       const formattedStudents = students.map((student) => ({
         ...student,
         name: `${student.firstName} ${student.lastName}`,
-        email: student.studentNumber + "@school.com",
+        email: student.email.trim(),
         parentEmail: student.guardian1.email,
         standard: student.grade,
         firstName: undefined,
@@ -321,7 +303,11 @@ export default function SetupStudents() {
                       <b>Grade</b> - Student's grade level
                     </li>
                     <li>
+                      <b>Student Email</b> - Student's email address
+                    </li>
+                    <li>
                       <b>Student Number</b> - Unique student identifier
+                      (optional; older templates only)
                     </li>
                     <li>
                       <b>Guardian 1 Name</b> - Primary guardian's name
@@ -352,7 +338,8 @@ export default function SetupStudents() {
                       Centers (AN/ASD/SSN #1-#5)
                     </li>
                     <li>
-                      <b>Student Number:</b> Required, unique identifier
+                      <b>Student Email:</b> Required, must be a valid email
+                      address
                     </li>
                     <li>
                       <b>Guardian 1 Name, Email:</b> Required for all students
@@ -431,7 +418,7 @@ export default function SetupStudents() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Grade</TableHead>
-                <TableHead>Student Number</TableHead>
+                <TableHead>Student Email</TableHead>
                 <TableHead>Guardian 1</TableHead>
                 <TableHead>Guardian 2</TableHead>
                 <TableHead>Actions</TableHead>
@@ -487,13 +474,15 @@ export default function SetupStudents() {
                       </TableCell>
                       <TableCell>
                         <Input
-                          value={editForm?.studentNumber}
+                          type="email"
+                          value={editForm?.email || ""}
                           onChange={(e) =>
                             setEditForm({
                               ...editForm!,
-                              studentNumber: e.target.value,
+                              email: e.target.value,
                             })
                           }
+                          placeholder="Student email"
                         />
                       </TableCell>
                       <TableCell>
@@ -583,7 +572,7 @@ export default function SetupStudents() {
                     <>
                       <TableCell>{`${student.firstName} ${student.lastName}`}</TableCell>
                       <TableCell>{student.grade}</TableCell>
-                      <TableCell>{student.studentNumber}</TableCell>
+                      <TableCell>{student.email}</TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <p>
