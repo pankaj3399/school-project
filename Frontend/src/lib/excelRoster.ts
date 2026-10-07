@@ -72,6 +72,12 @@ function text(value: unknown): string {
 }
 
 function emailText(value: unknown): string {
+  if (value && typeof value === "object") {
+    const record = value as { text?: unknown; hyperlink?: unknown; v?: unknown };
+    if (record.text) return emailText(record.text);
+    if (record.hyperlink) return emailText(record.hyperlink);
+    if (record.v) return emailText(record.v);
+  }
   return text(value).replace(/\s+/g, "");
 }
 
@@ -87,7 +93,16 @@ export function mapStudentRosterRow(
     lastName: text(cell(row, ["last name"])),
     grade: parseGrade(cell(row, ["grade"]), gradeOptions),
     studentNumber: text(cell(row, ["student number", "student id"])),
-    email: emailText(cell(row, ["student email", "student e-mail"])),
+    email: emailText(cell(row, [
+      "student email",
+      "student e-mail",
+      "student's email",
+      "students email",
+      "student email address",
+      "email address",
+      "e-mail",
+      "email",
+    ])),
     guardian1: {
       name: text(cell(row, ["guardian 1 name"])),
       email: emailText(cell(row, ["guardian 1 email"])),

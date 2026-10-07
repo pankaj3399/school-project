@@ -2,6 +2,13 @@ import mongoose from 'mongoose';
 
 // Stores different versions of Terms of Use
 const TermsOfUseSchema = new mongoose.Schema({
+  kind: {
+    type: String,
+    enum: ['registration', 'terms', 'privacy'],
+    default: 'registration',
+    immutable: true,
+    index: true,
+  },
   version: { 
     type: String, 
     required: true, 

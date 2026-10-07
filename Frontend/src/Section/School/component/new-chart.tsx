@@ -17,10 +17,10 @@ import {
 // Months in the US educational year
 const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
-const generateData = async (month: string | null = null, studentId: string | null = null, schoolId?: string) => {
+const generateData = async (month: string | null = null, studentId: string | null = null, schoolId?: string, schoolWide?: boolean) => {
   let data: any[] = [];
   try {
-    let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId, schoolId) : await getHistoryOfYear(schoolId);
+    let res = studentId !== "" && studentId !== null ? await getHistoryOfYearByStudent(studentId, schoolId, schoolWide) : await getHistoryOfYear(schoolId, schoolWide);
     const rows = Array.isArray(res?.data) ? res.data : [];
 
 
@@ -126,10 +126,11 @@ const generateData = async (month: string | null = null, studentId: string | nul
   }
 }
 
-const EducationYearChart = ({ studentId, slimLines, schoolId }: {
+const EducationYearChart = ({ studentId, slimLines, schoolId, schoolWide }: {
   studentId: string,
   slimLines?: boolean,
-  schoolId?: string
+  schoolId?: string,
+  schoolWide?: boolean
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -145,7 +146,7 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
   useEffect(() => {
     let active = true;
     const fetchData = async () => {
-      const data = await generateData(selectedMonth, studentId, schoolId);
+      const data = await generateData(selectedMonth, studentId, schoolId, schoolWide);
       if (!active) return;
       setChartData(data);
       setRenderToken(`${studentId || ''}|${schoolId || ''}|${selectedMonth ?? ''}`);
@@ -154,7 +155,7 @@ const EducationYearChart = ({ studentId, slimLines, schoolId }: {
     setRenderToken("");
     fetchData();
     return () => { active = false; };
-  }, [selectedMonth, studentId, schoolId])
+  }, [selectedMonth, studentId, schoolId, schoolWide]);
 
 
   return (

@@ -28,7 +28,7 @@ export type AccessRole =
 // District Admins) plus school operations. District Admin does not.
 export const accessMatrix: Readonly<Record<TabKey, ReadonlyArray<AccessRole>>> = {
   overview:     ['Administrator'],
-  analytics:    ['Administrator'],
+  analytics:    ['LeadTeacher', 'Administrator'],
   districts:    ['DistrictManager', 'Administrator'],
   schools:      ['DistrictAdmin', 'DistrictManager', 'Administrator'],
   teachers:     ['LeadTeacher', 'SchoolTech', 'DistrictAdmin', 'DistrictManager', 'Administrator'],
@@ -99,6 +99,9 @@ export function homePathFor(user: ClassifiableUser): string {
   const isTeacher = user.role === Role.Teacher;
   for (const tab of homeTabOrder) {
     if (!canAccess(user, tab)) continue;
+    // Analytics is available to lead teachers, but it should not become
+    // their landing page. They still open on the teachers roster.
+    if (tab === 'analytics' && isTeacher) continue;
     if (tab === 'forms' && isTeacher && user.type !== 'Lead') {
       return '/teachers/managepoints';
     }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,34 +6,40 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import TermsPage from "@/components/TermsPage";
+import { getCurrentTerms } from "@/api";
 import { LEGAL_PDF } from "@/lib/legal";
 
 type LegalDoc = "terms" | "privacy";
 
-interface Terms {
-  title: string;
-  content: string;
-  contentHtml?: string;
-  version: string;
-  effectiveDate: string;
-}
-
 interface LegalDocDialogProps {
   doc: LegalDoc | null;
   onOpenChange: (open: boolean) => void;
-  terms?: Terms | null;
 }
 
 const TITLES: Record<LegalDoc, string> = {
-  terms: "Terms of Service",
+  terms: "Terms of Use",
   privacy: "Privacy Policy",
 };
 
 export default function LegalDocDialog({
   doc,
   onOpenChange,
-  terms,
 }: LegalDocDialogProps) {
+  const [text, setText] = useState<any>(null);
+
+  useEffect(() => {
+    if (!doc) {
+      setText(null);
+      return;
+    }
+    let active = true;
+    getCurrentTerms(doc).then((data) => {
+      if (!active) return;
+      setText(data?.terms?.content ? data.terms : null);
+    });
+    return () => { active = false; };
+  }, [doc]);
+
   return (
     <Dialog open={doc !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
@@ -40,15 +47,16 @@ export default function LegalDocDialog({
           <DialogTitle>{doc ? TITLES[doc] : ""}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-          {doc === "terms" && (
-            <TermsPage isRegistration={true} terms={terms} />
-          )}
-          {doc === "privacy" && (
-            <iframe
-              title="Privacy Policy"
-              src={LEGAL_PDF.privacy}
-              className="w-full h-[60vh] border-0 rounded-md"
-            />
+          {text ? (
+            <TermsPage isRegistration terms={text} />
+          ) : (
+            doc && (
+              <iframe
+                title={TITLES[doc]}
+                src={LEGAL_PDF[doc === "terms" ? "terms" : "privacy"]}
+                className="w-full h-[60vh] border-0 rounded-md"
+              />
+            )
           )}
         </div>
       </DialogContent>

@@ -86,7 +86,7 @@ const getSchoolIdFromUser = async (req) => {
 };
 
 export const addSchool = async (req, res) => {
-  const { name, address, city, district, state, zipCode, country, timeZone, domain } =
+  const { name, address, city, state, zipCode, country, timeZone, domain } =
     req.body;
   const logo = req.file;
   const locationError = validateSchoolLocation({ city, zipCode, address });
@@ -157,7 +157,9 @@ export const addSchool = async (req, res) => {
       name: name.trim(),
       address,
       city,
-      district: district || districtDoc.name,
+      // Always store the linked district's name. A free-text value here used
+      // to leave invitations signed as "Legacy Schools District".
+      district: districtDoc.name,
       districtId: districtDoc._id,
       logo: logoUrl,
       timeZone,
@@ -221,7 +223,8 @@ export const getStats = async (req, res) => {
     const id = req.user.id;
 
     const adminUser = await Admin.findById(id);
-    if (!adminUser && req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin && req.user.role !== Role.DistrictAdmin) {
+    const isTeacher = req.user.role === Role.Teacher;
+    if (!adminUser && !isTeacher && req.user.role !== Role.SystemAdmin && req.user.role !== Role.Admin && req.user.role !== Role.DistrictAdmin) {
       return res.status(404).json({ message: "Admin user not found" });
     }
 
@@ -980,14 +983,24 @@ export const teacherRoster = async (req, res) => {
             // dateOfBirth: teacher.dateOfBirth, // Not used in new structure
           });
 
+          try {
+            await sendTeacherRegistrationMail({
+              email: createdTeacher.email,
+              url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
+              registrationToken,
+              schoolId,
+              schoolLogo: school?.logo,
+            });
+          } catch (emailErr) {
+            await Teacher.findByIdAndDelete(createdTeacher._id);
+            return {
+              email: teacher.email,
+              success: false,
+              error: emailErr.message || "Invitation email could not be sent.",
+            };
+          }
+
           teacherIds.push(createdTeacher._id);
-          await sendTeacherRegistrationMail({
-            email: createdTeacher.email,
-            url: `${process.env.FRONTEND_URL}/teacher/complete-registration`,
-            registrationToken,
-            schoolId,
-            schoolLogo: school?.logo,
-          });
 
           return {
             email: createdTeacher.email,

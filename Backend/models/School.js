@@ -18,6 +18,8 @@ const SchoolSchema = new mongoose.Schema({
     country: {type: String, default: ''},
     timeZone: {type: String, default: ''},
     domain: {type: String, default: ''},
+    trainingPdfUrl: {type: String, default: ''},
+    trainingVideoUrl: {type: String, default: ''},
     // Template functionality
     isTemplate: {type: Boolean, default: false},
     templateSourceId: {type: mongoose.Schema.Types.ObjectId, ref: 'School'},

@@ -22,7 +22,7 @@ router.post('/createForm',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Tea
 router.post('/editForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,editForm)
 router.delete('/deleteForm/:id',authenticate,authorizeRoles(Role.SchoolAdmin, Role.Teacher, Role.SystemAdmin, Role.Admin, Role.DistrictAdmin),requireLeadIfTeacher,deleteForm)
 
-router.get('/stats', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getStats);
+router.get('/stats', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin, Role.Teacher), requireLeadIfTeacher, getStats);
 router.get('/stats/monthly', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getMonthlyStats);
 router.get('/stats/pointsgiven', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getPointsGivenPerMonth);
 router.get('/stats/pointsgiven/:teacherId', authenticate, authorizeRoles(Role.SystemAdmin, Role.Admin, Role.DistrictAdmin), getPointsGivenPerMonthPerTeacher);

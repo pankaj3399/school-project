@@ -69,13 +69,22 @@ export default function SetupStudents() {
   const { isMultiSchoolUser, requiresSchoolSelection } = useSchoolSelectionGuard();
 
   const downloadTemplate = () => {
-    // Create a link element to download the existing template file
-    const link = document.createElement("a");
-    link.href = "/student.xlsx";
-    link.download = "student-roster-template.xlsx";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const headers = [
+      "First Name",
+      "Last Name",
+      "Grade",
+      "Student Email",
+      "Student Number",
+      "Guardian 1 Name",
+      "Guardian 1 Email",
+      "Guardian 2 Name",
+      "Guardian 2 Email",
+    ];
+    const example = ["Alex", "Rivera", "9", "alex.rivera@school.edu", "", "Jamie Rivera", "jamie@email.com", "", ""];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, example]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+    XLSX.writeFile(workbook, "student-roster-template.xlsx");
 
     toast({
       title: "Template Downloaded",

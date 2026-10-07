@@ -56,7 +56,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="#"
+                  to="/privacy"
                   className="text-sm hover:text-blue-400 transition-colors"
                 >
                   Privacy Policy
@@ -64,7 +64,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="#"
+                  to="/terms"
                   className="text-sm hover:text-blue-400 transition-colors"
                 >
                   Terms of Service

@@ -48,6 +48,7 @@ import ViewDistrict from "@/Section/SystemAdmin/districts/view-district";
 import BulkImportSchools from "@/Section/SystemAdmin/schools/bulk-import";
 import ViewSchool from "@/Section/SystemAdmin/schools/view-school";
 import TermsManagement from "./Section/SystemAdmin/terms";
+import PublicLegalPage from "./components/PublicLegalPage";
 import SchoolsList from "./Section/SystemAdmin/schools/index";
 import DistrictManagersList from "./Section/SystemAdmin/district-managers";
 import UnauthorizedPage from "./Section/Unauthorized";
@@ -125,9 +126,11 @@ export default function App() {
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/verify" element={<OtpVerificationPage />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
+          <Route path="/terms" element={<PublicLegalPage kind="terms" />} />
+          <Route path="/privacy" element={<PublicLegalPage kind="privacy" />} />
 
           {/* Authenticated Routes — gated by spec Access Matrix (lib/roleAccess.ts) */}
-          <Route path="/analytics" element={<ProtectedRoute requiredTab="analytics"><Analytics /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute requiredTab="analytics" requireLeadIfTeacher><Analytics /></ProtectedRoute>} />
           <Route path="/addteacher" element={<ProtectedRoute requiredTab="teachers"><AddTeacher /></ProtectedRoute>} />
           <Route path="/addstudent" element={<ProtectedRoute requiredTab="students"><AddStudent /></ProtectedRoute>} />
           <Route path="/print-report" element={<ProtectedRoute requiredTab="printReport"><Finalize /></ProtectedRoute>} />
@@ -148,7 +151,7 @@ export default function App() {
           <Route path="/teachers/addstudent" element={<ProtectedRoute requiredTab="students"><AddStudentTeacher /></ProtectedRoute>} />
           <Route path="/teachers/submitform/:id" element={<ProtectedRoute requiredTab="forms"><FormPage /></ProtectedRoute>} />
           <Route path="/teachers/history" element={<ProtectedRoute requiredTab="pointHistory"><ViewPointHistory /></ProtectedRoute>} />
-          <Route path="/teachers/analytics" element={<ProtectedRoute requiredTab="analytics"><Analytics /></ProtectedRoute>} />
+          <Route path="/teachers/analytics" element={<ProtectedRoute requiredTab="analytics" requireLeadIfTeacher><Analytics /></ProtectedRoute>} />
           <Route path="/teachers/print-report" element={<ProtectedRoute requiredTab="printReport"><Finalize /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute requiredTab="pointHistory"><ViewPointHistory /></ProtectedRoute>} />
 

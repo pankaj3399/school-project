@@ -97,21 +97,33 @@ export const sendVerifyEmailRoster = async (req, res, user, isStudent = false, t
     }
 };
 
+const hrefAttr = (url) => String(url)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;");
+
 export const sendOnboardingEmail = async (user, schoolLogo = null) => {
     try {
         let pdf_url = null;
         let video_url = null;
         let userType = '';
 
+        const schoolId = user.schoolId?._id || user.schoolId;
+        const school = schoolId
+            ? await School.findById(schoolId).select("trainingPdfUrl trainingVideoUrl").lean()
+            : null;
+        const schoolPdf = school?.trainingPdfUrl || "";
+        const schoolVideo = school?.trainingVideoUrl || "";
+
         switch (user.type) {
             case 'Lead':
-                pdf_url = process.env.LEAD_PDF_URL ?? "";
-                video_url = process.env.LEAD_VIDEO_URL ?? "";
+                pdf_url = schoolPdf || process.env.LEAD_PDF_URL || "";
+                video_url = schoolVideo || process.env.LEAD_VIDEO_URL || "";
                 userType = 'Leader/Lead Teacher';
                 break;
             case 'Special':
-                pdf_url = process.env.TEAM_MEMBER_PDF_URL ?? "";
-                video_url = process.env.TEAM_MEMBER_VIDEO_URL ?? "";
+                pdf_url = schoolPdf || process.env.TEAM_MEMBER_PDF_URL || "";
+                video_url = schoolVideo || process.env.TEAM_MEMBER_VIDEO_URL || "";
                 userType = 'Team Member/Special Teacher';
                 break;
             default:
@@ -226,7 +238,7 @@ export const sendOnboardingEmail = async (user, schoolLogo = null) => {
                         ${pdf_url ? `
                             <div style="margin: 15px 0;">
                                 <p style="margin-bottom: 10px;"><strong>📚 Training Guide</strong></p>
-                                <a href="${pdf_url}" class="button" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                                <a href="${hrefAttr(pdf_url)}" class="button" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
                                     Download Guide
                                 </a>
                             </div>
@@ -235,7 +247,7 @@ export const sendOnboardingEmail = async (user, schoolLogo = null) => {
                         ${video_url ? `
                             <div style="margin: 15px 0;">
                                 <p style="margin-bottom: 10px;"><strong>🎥 Training Video</strong></p>
-                                <a href="${video_url}" class="button" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                                <a href="${hrefAttr(video_url)}" class="button" style="background-color: #00a58c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
                                     Watch Video
                                 </a>
                             </div>

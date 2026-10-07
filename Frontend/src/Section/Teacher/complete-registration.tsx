@@ -186,7 +186,7 @@ export default function CompleteTeacherRegistration() {
                     htmlFor="terms"
                     className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    I agree to the
+                    I agree to the User Registration Agreement, the
                   </Label>
                   {" "}
                   <button
@@ -194,7 +194,7 @@ export default function CompleteTeacherRegistration() {
                     onClick={() => setLegalDoc("terms")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
-                    Terms of Service
+                    Terms of Use
                   </button>
                   {" "}and{" "}
                   <button
@@ -222,7 +222,6 @@ export default function CompleteTeacherRegistration() {
         <LegalDocDialog
           doc={legalDoc}
           onOpenChange={(open) => { if (!open) setLegalDoc(null); }}
-          terms={fetchedTerms}
         />
       </div>
     );

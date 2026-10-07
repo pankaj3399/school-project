@@ -15,32 +15,31 @@ interface Terms {
 }
 
 // Default Terms content (fallback if API fails)
-const DEFAULT_TERMS_CONTENT = `
-RADU E-Token® Pilot Participation Agreement
+const DEFAULT_TERMS_CONTENT = `RADU E-TOKEN USER REGISTRATION AGREEMENT
 
-This Pilot Participation Agreement (the "Agreement") is entered into between the participating teacher/school ("Pilot Participant") and Affective Academy LLC ("Provider"), regarding the use of the RADU E-Token® System ("System") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below.
+By creating an account and selecting "I Agree," I confirm that:
 
-1. Purpose of the Pilot
-The purpose of this pilot is to test the RADU E-Token System in a real-world classroom environment. The System allows educators to recognize and record positive student behaviors and efforts by issuing digital tokens aligned with behavior goals, IEPs, or classroom expectations. The Provider seeks feedback regarding usability, effectiveness, and system performance.
+1. I am authorized by my school or educational institution to use the RADU E-Token system.
+2. I will use RADU E-Token only for authorized educational purposes and in accordance with my school or district policies.
+3. I will protect my login credentials and will not share my account with another person.
+4. I will access only the student information and system functions that I am authorized to access.
+5. I will not enter unnecessary sensitive student information into the system, including medical information, disability status, IEP or Section 504 information, disciplinary records, biometric information, or other information that RADU E-Token is not designed to collect.
+6. I understand that RADU E-Token is a positive-recognition and reinforcement tool. It is not a grading, disciplinary, special-education, medical, mental-health, emergency, threat-assessment, or student-safety decision system.
+7. I understand that recognition tokens and balances have no monetary value and may be used only according to the recognition and redemption rules established by my school.
+8. I understand that RADU E-Token is currently being used as a pilot service and that features may be modified, improved, added, or removed during the pilot.
+9. I understand that my use of the service may generate account, access, security, recognition, and activity records necessary to operate and protect the system.
+10. I acknowledge that I have reviewed the RADU E-Token Privacy Policy, which explains how information is collected, used, protected, retained, and disclosed.
+11. I agree to comply with the RADU E-Token Terms of Use.
+12. I will promptly report suspected unauthorized access, misuse, privacy concerns, or security incidents involving RADU E-Token to my school and/or Affective Academy LLC.
+13. I understand that my access may be suspended or terminated if my authorization ends, if I violate these requirements, or if suspension is reasonably necessary to protect students, users, data, or the security of the system.
+14. I understand that my school or district remains responsible for determining how RADU E-Token is used for educational purposes and which users and students are authorized to participate.
 
-2. Scope of Use
-The Pilot Participant will be granted access to a test environment of the RADU E-Token System. Access is limited to use by designated classroom teachers and their students for the duration of the pilot. No commercial use or redistribution of the System is permitted.
+By selecting "I Agree," I acknowledge that I have read and agree to this User Registration Agreement and the RADU E-Token Terms of Use, and that I have reviewed the RADU E-Token Privacy Policy.
 
-3. Data and Privacy
-The System may collect data related to token distribution, behavior categories, and classroom interactions. All data will be handled in accordance with applicable data protection laws, including FERPA and COPPA. No personal identifiable information will be shared with third parties. Student email addresses will only be used to deliver tokens and generate usage reports.
-
-4. Confidentiality
-The Pilot Participant agrees not to disclose, share, or publicly demonstrate the features, screenshots, or interface of the System without written consent from the Provider. This includes sharing images or functionality through social media, blogs, webinars, or third-party communications.
-
-5. Feedback and Intellectual Property
-Feedback provided by Pilot Participants may be used by the Provider to improve the System. All intellectual property rights in the System remain solely with the Provider. Participation does not grant any ownership or license beyond this limited evaluation purpose.
-
-6. Term and Termination
-This Agreement shall be effective for the duration of the pilot program, unless terminated earlier by either party with written notice. Upon termination, the Pilot Participant agrees to discontinue use of the System and delete all access materials.
-
-7. Acceptance of Terms
-By participating in the pilot program, the Pilot Participant acknowledges and agrees to abide by the terms of this Agreement.
-`;
+Affective Academy LLC
+Littleton, Colorado 80127
+Privacy: privacy@theraduetoken.com
+Administration: admin@theraduetoken.com`;
 
 export default function TermsPage({ isRegistration = false, terms: propTerms }: { isRegistration?: boolean, terms?: Terms | null }) {
     const navigate = useNavigate();
@@ -66,8 +65,8 @@ export default function TermsPage({ isRegistration = false, terms: propTerms }: 
                 console.error('Error fetching terms:', error);
                 // Use default terms if API fails
                 setTerms({
-                    version: '1.0-pilot',
-                    title: 'RADU E-Token® Pilot Participation Agreement',
+                    version: 'registration-2026-09',
+                    title: 'RADU E-Token User Registration Agreement',
                     content: DEFAULT_TERMS_CONTENT,
                     effectiveDate: new Date().toISOString()
                 });

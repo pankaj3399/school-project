@@ -57,13 +57,12 @@ export default function Setup() {
   const { isMultiSchoolUser, requiresSchoolSelection } = useSchoolSelectionGuard();
 
   const downloadTemplate = () => {
-    // Create a link element to download the existing template file
-    const link = document.createElement("a");
-    link.href = "/teacher.xlsx";
-    link.download = "teacher-roster-template.xlsx";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const headers = ["Email", "Receive Emails", "Type of Teacher", "Grade"];
+    const example = ["teacher@school.edu", "true", "Leader/Lead Teacher", "9"];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, example]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Teachers");
+    XLSX.writeFile(workbook, "teacher-roster-template.xlsx");
 
     toast({
       title: "Template Downloaded",
@@ -183,6 +182,22 @@ export default function Setup() {
       });
       if (isApiError(response)) {
         throw new Error(getErrorMessage(response, "Failed to submit teacher roster"));
+      }
+
+      const failed = Array.isArray(response.results)
+        ? response.results.filter((result: { success?: boolean }) => !result.success)
+        : [];
+      if (failed.length > 0) {
+        const failedEmails = new Set(failed.map((result: { email?: string }) => result.email));
+        setTeachers(teachers.filter((teacher) => failedEmails.has(teacher.email)));
+        toast({
+          title: "Some invitations were not sent",
+          description: failed
+            .map((result: { email?: string; error?: string }) => `${result.email}: ${result.error || "Email was not sent"}`)
+            .join(" "),
+          variant: "destructive",
+        });
+        return;
       }
 
       toast({

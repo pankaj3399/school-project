@@ -282,6 +282,23 @@ export const updateSchool = async (
   }
 };
 
+export const updateTrainingMaterials = async (
+  schoolId: string,
+  data: { trainingPdfUrl: string; trainingVideoUrl: string },
+) => {
+  try {
+    const token = getToken();
+    const response = await axios.put(
+      `${API_URL}/school/training-materials`,
+      { schoolId, ...data },
+      { headers: { token } },
+    );
+    return response.data;
+  } catch (error: any) {
+    return toApiError(error);
+  }
+};
+
 export const deleteSchool = async (id: string, token: string, password?: string) => {
   try {
     const response = await axios.delete(
@@ -633,12 +650,12 @@ export const resetPassword = async (data: any) => {
   }
 };
 
-export const getHistoryOfYear = async (schoolId?: string) => {
+export const getHistoryOfYear = async (schoolId?: string, schoolWide?: boolean) => {
   try {
     const token = getToken();
     const response = await axios.post(
       `${API_URL}/school/getYearPointsHistory`,
-      { schoolId },
+      { schoolId, ...(schoolWide ? { schoolWide: true } : {}) },
       {
         headers: {
           token,
@@ -651,12 +668,12 @@ export const getHistoryOfYear = async (schoolId?: string) => {
   }
 };
 
-export const getHistoryOfYearByStudent = async (id: string, schoolId?: string) => {
+export const getHistoryOfYearByStudent = async (id: string, schoolId?: string, schoolWide?: boolean) => {
   try {
     const token = getToken();
     const response = await axios.post(
       `${API_URL}/school/getYearPointsHistory/${id}`,
-      schoolId ? { schoolId } : {},
+      { ...(schoolId ? { schoolId } : {}), ...(schoolWide ? { schoolWide: true } : {}) },
       {
         headers: {
           token,
@@ -1021,12 +1038,12 @@ export const studentRoster = async (data: any) => {
 export const sendSupportEmail = async (data: any) => {
   try {
     const token = getToken();
-    await axios.post(`${API_URL}/auth/support-request`, data, {
+    const response = await axios.post(`${API_URL}/auth/support-request`, data, {
       headers: {
         token,
       },
     });
-    return { success: true };
+    return response.data;
   } catch (error: any) {
     return toApiError(error);
   }
@@ -1083,9 +1100,9 @@ export async function completeGuardianRegistration({ token, name, password, emai
   }
 }
 
-export const getCurrentTerms = async () => {
+export const getCurrentTerms = async (kind: "registration" | "terms" | "privacy" = "registration") => {
   try {
-    const response = await axios.get(`${API_URL}/auth/get-terms`);
+    const response = await axios.get(`${API_URL}/auth/get-terms?kind=${kind}`);
     return response.data;
   } catch (error: any) {
     return toApiError(error);

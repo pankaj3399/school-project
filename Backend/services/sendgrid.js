@@ -8,15 +8,13 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
     try {
         console.log(`Sending email to ${to} with subject:`, subject);
         if (!to) {
-            console.error('No recipient email address provided.');
-            return false;
+            throw new Error('No recipient email address provided.');
         }
 
         // Check if the email is valid
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(to)) {
-            console.error('Invalid email address:', to);
-            return false;
+            throw new Error(`Invalid email address: ${to}`);
         }
 
         let attachments = [];
@@ -45,11 +43,12 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
             replyTo: replyTo ? replyTo : process.env.FROM_EMAIL || 'noreply@raduframework.com'
         };
 
-        const data = await sendgrid.send(msg);
+        await sendgrid.send(msg);
         return true;
     } catch (error) {
+        const details = error.response?.body?.errors?.map((item) => item.message).filter(Boolean).join('; ');
         console.error('Error sending email with SendGrid:', error.response ? error.response.body : error);
-        return false;
+        throw new Error(details || error.message || 'Failed to send email');
     }
 };
 
@@ -81,7 +80,8 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
         console.log('Report email sent with SendGrid:', data);
         return true;
     } catch (error) {
+        const details = error.response?.body?.errors?.map((item) => item.message).filter(Boolean).join('; ');
         console.error('Error sending report email with SendGrid:', error.response ? error.response.body : error);
-        return false;
+        throw new Error(details || error.message || 'Failed to send report email');
     }
 };

@@ -8,7 +8,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import Admin from "../models/Admin.js";
 import { validateSchoolLocation } from "../utils/schoolLocationValidator.js";
-import { isDistrictScopedRole } from "../utils/schoolAccess.js";
+import { assertSchoolAccess, isDistrictScopedRole } from "../utils/schoolAccess.js";
 import { stripPasswordFields } from "../models/passwordPrivacy.js";
 export const getAllSchools = async (req, res) => {
     try {
@@ -306,6 +306,56 @@ export const updateSchool = async (req, res) => {
       res.status(500).json({ message: "Server error", error: error.message });
     }
   };
+
+function normalizeTrainingUrl(value) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return "";
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  if (parsed.username || parsed.password) return null;
+  return parsed.href;
+}
+
+export const updateTrainingMaterials = async (req, res) => {
+  try {
+    const schoolId = req.body.schoolId;
+    if (!schoolId || !mongoose.Types.ObjectId.isValid(schoolId)) {
+      return res.status(400).json({ message: "A valid school is required." });
+    }
+    await assertSchoolAccess(req, schoolId);
+
+    const trainingPdfUrl = normalizeTrainingUrl(req.body.trainingPdfUrl);
+    const trainingVideoUrl = normalizeTrainingUrl(req.body.trainingVideoUrl);
+    if (trainingPdfUrl === null) {
+      return res.status(400).json({ message: "Training guide link must be a valid http or https URL." });
+    }
+    if (trainingVideoUrl === null) {
+      return res.status(400).json({ message: "Training video link must be a valid http or https URL." });
+    }
+
+    const school = await School.findByIdAndUpdate(
+      schoolId,
+      { trainingPdfUrl, trainingVideoUrl, updatedAt: new Date() },
+      { new: true }
+    ).select("name trainingPdfUrl trainingVideoUrl");
+
+    if (!school) return res.status(404).json({ message: "School not found." });
+
+    return res.status(200).json({
+      message: "Training links saved.",
+      school,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Server error",
+    });
+  }
+};
 
 export const deleteSchool = async (req, res) => {
     try {

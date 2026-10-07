@@ -14,9 +14,9 @@ import { sendSupportEmail } from "../services/supportRequestEmail.js";
 import School from "../models/School.js";
 import PendingTokens from "../models/PendingTokens.js";
 import { getDynamicSignature } from "../utils/emailSignatureHelper.js";
-import { TermsOfUse } from "../models/TermsOfUse.js";
 import { assertSchoolAccess } from "../utils/schoolAccess.js";
 import { presentTermsDocument } from "../utils/trademark.js";
+import { getActiveLegalDocument } from "../utils/legalDocuments.js";
 
 const generateToken = (id, role, districtId = null) => {
   return jwt.sign({ id, role, districtId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -702,8 +702,8 @@ export const completeVerification = async (req, res) => {
             return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
           }
 
-          const activeTerms = await TermsOfUse.findOne({ isActive: true });
-          const currentTermsVersion = activeTerms ? activeTerms.version : "1.0-pilot";
+          const activeTerms = await getActiveLegalDocument("registration");
+          const currentTermsVersion = activeTerms.version;
 
           if (termsVersion && termsVersion !== currentTermsVersion) {
             return res.status(400).json({
@@ -920,13 +920,20 @@ export const createSupportTicket = async (req, res) => {
 
     const school = await School.findById(schoolId);
 
-    // Send email notification about the ticket
-    // Note: Add your email sending logic here
-    sendSupportEmail(createdTicket, school);
+    let emailDelivered = true;
+    try {
+      await sendSupportEmail(createdTicket, school);
+    } catch (emailError) {
+      emailDelivered = false;
+      console.error("Support ticket saved but email was not sent:", emailError);
+    }
 
     res.status(201).json({
       success: true,
-      message: "Support ticket created successfully",
+      emailDelivered,
+      message: emailDelivered
+        ? "Support ticket created successfully"
+        : "Support ticket was saved, but the email to support could not be sent. Please try again or contact support directly.",
       ticketNumber: createdTicket.ticketNumber,
       ticketId: createdTicket._id,
     });
@@ -970,8 +977,8 @@ export const completeGuardianRegistration = async (req, res) => {
       return res.status(400).json({ message: "You must accept the Terms of Use." });
     }
 
-    const currentTerms = await TermsOfUse.findOne({ isActive: true });
-    const currentTermsVersion = currentTerms ? currentTerms.version : "1.0-pilot";
+    const currentTerms = await getActiveLegalDocument("registration");
+    const currentTermsVersion = currentTerms.version;
 
     if (termsVersion !== currentTermsVersion) {
       return res.status(400).json({ 
@@ -1120,21 +1127,11 @@ export const verifyPassword = async (req, res) => {
 
 export const getTerms = async (req, res) => {
   try {
-    const terms = await TermsOfUse.findOne({ isActive: true });
-    if (!terms) {
-      // Return a default version if nothing is found in DB yet
-      return res.status(200).json({
-        terms: {
-          version: "1.0-pilot",
-          title: "RADU E-Token® Pilot Participation Agreement",
-          content: "RADU E-Token® Pilot Participation Agreement\n\nThis Pilot Participation Agreement (the \"Agreement\") is entered into between the participating teacher/school (\"Pilot Participant\") and Affective Academy LLC (\"Provider\"), regarding the use of the RADU E-Token® System (\"System\") for educational purposes during a limited pilot period. By signing this document, the Pilot Participant agrees to the terms outlined below...",
-          effectiveDate: new Date().toISOString()
-        }
-      });
-    }
-    res.status(200).json({ terms: presentTermsDocument(terms) });
+    const kind = req.query.kind || "registration";
+    const terms = await getActiveLegalDocument(kind);
+    res.status(200).json({ terms: terms ? presentTermsDocument(terms) : null });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(error.status || 500).json({ message: error.message || "Server Error" });
   }
 };
 

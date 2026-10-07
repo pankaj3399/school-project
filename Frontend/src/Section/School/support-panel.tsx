@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useAuth } from "@/authContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { sendSupportEmail } from "@/api";
+import { getErrorMessage, isApiError } from "@/lib/errors";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -49,10 +50,21 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
   const handleConfirmSubmit = async () => {
     try {
       // Your API call here
-      await sendSupportEmail(formData);
+      const response = await sendSupportEmail(formData);
+      if (isApiError(response)) {
+        throw new Error(getErrorMessage(response, "Failed to submit support request. Please try again."));
+      }
       setShowConfirmDialog(false);
-      setShowSuccessDialog(true);
       onOpenChange(false);
+      if (response?.emailDelivered === false) {
+        toast({
+          title: "Ticket saved, email not sent",
+          description: response.message || "The support inbox did not accept the email. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setShowSuccessDialog(true);
+      }
     } catch (error) {
       console.error('Error submitting support request:', error);
       toast({

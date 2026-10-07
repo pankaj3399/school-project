@@ -9,6 +9,7 @@ import { Role } from "@/enum";
 import { LifecycleManager } from "./components/setup/LifecycleManager";
 import { DangerZone } from "./components/setup/DangerZone";
 import { YearEndWipe } from "./components/setup/YearEndWipe";
+import { TrainingMaterials } from "./components/setup/TrainingMaterials";
 import { Sparkles, School, Users, GraduationCap } from "lucide-react";
 import { GRADE_OPTIONS, FormType } from "@/lib/types";
 import * as XLSX from "xlsx";
@@ -337,6 +338,12 @@ const SetupPage = () => {
             {/* Maintenance Section Gating */}
             {(selectedSchoolId || school?._id) && !loading ? (
               <>
+                <TrainingMaterials
+                  schoolId={selectedSchoolId || school?._id || ""}
+                  pdfUrl={school?.trainingPdfUrl}
+                  videoUrl={school?.trainingVideoUrl}
+                />
+
                 {/* Bulk roster import — scoped to the selected school */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 px-2">

@@ -3,64 +3,82 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-    FileText, 
-    Save, 
-    History, 
-    CheckCircle2, 
-    AlertCircle,
-    Loader2
-} from 'lucide-react';
+import { Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { getCurrentTerms, updateTerms } from '@/api';
 import { useAuth } from '@/authContext';
 import { getAuthToken } from '@/lib/auth';
 import { getErrorMessage } from "@/lib/errors"
-import { LEGAL_PDF } from "@/lib/legal"
+
+type LegalKind = 'registration' | 'terms' | 'privacy';
+
+const KINDS: { id: LegalKind; label: string; help: string }[] = [
+    {
+        id: 'registration',
+        label: 'Registration agreement',
+        help: 'Shown only while someone is creating an account. It is not published on the website.',
+    },
+    {
+        id: 'terms',
+        label: 'Terms of Use',
+        help: 'Published at the website Terms link. One document for the whole platform.',
+    },
+    {
+        id: 'privacy',
+        label: 'Privacy Policy',
+        help: 'Published at the website Privacy link. One document for the whole platform.',
+    },
+];
 
 interface TermsData {
     title: string;
     content: string;
     version: string;
-    isActive: boolean;
 }
+
+const emptyDoc = (): TermsData => ({ title: '', content: '', version: '' });
 
 export default function TermsManagement() {
     const { user } = useAuth();
-    const [terms, setTerms] = useState<TermsData>({
-        title: '',
-        content: '',
-        version: '',
-        isActive: true
+    const [kind, setKind] = useState<LegalKind>('registration');
+    const [docs, setDocs] = useState<Record<LegalKind, TermsData>>({
+        registration: emptyDoc(),
+        terms: emptyDoc(),
+        privacy: emptyDoc(),
     });
-
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
-        const fetchTerms = async () => {
+        const fetchDocs = async () => {
             try {
-                const data = await getCurrentTerms();
-                if (data.terms) {
-                    setTerms({
-                        title: data.terms.title || '',
-                        content: data.terms.content || '',
-                        version: data.terms.version || '',
-                        isActive: data.terms.isActive ?? true
-                    });
-                } else if (data.error) {
-                    setMessage({ type: 'error', text: data.error.message || 'Failed to load terms' });
-                }
-            } catch (error: any) {
-                console.error('Error fetching terms:', error);
-                setMessage({ type: 'error', text: 'Network error while loading terms' });
+                const [registration, terms, privacy] = await Promise.all([
+                    getCurrentTerms('registration'),
+                    getCurrentTerms('terms'),
+                    getCurrentTerms('privacy'),
+                ]);
+                const read = (data: any): TermsData => ({
+                    title: data?.terms?.title || '',
+                    content: data?.terms?.content || '',
+                    version: data?.terms?.version || '',
+                });
+                setDocs({
+                    registration: read(registration),
+                    terms: read(terms),
+                    privacy: read(privacy),
+                });
+            } catch (error) {
+                console.error('Error fetching legal documents:', error);
+                setMessage({ type: 'error', text: 'Could not load the legal documents.' });
             } finally {
                 setLoading(false);
             }
         };
-
-        fetchTerms();
+        fetchDocs();
     }, []);
+
+    const current = docs[kind];
+    const meta = KINDS.find((item) => item.id === kind)!;
 
     const handleSave = async () => {
         setSaving(true);
@@ -72,16 +90,23 @@ export default function TermsManagement() {
                 setSaving(false);
                 return;
             }
-            const response = await updateTerms(terms, token);
-
-            if (!response.error) {
-                setMessage({ type: 'success', text: 'Terms updated successfully' });
-            } else {
-                const errorMsg = getErrorMessage(response, 'Failed to update terms');
-                throw new Error(errorMsg);
+            const response = await updateTerms({ ...current, kind }, token);
+            if (response.error) {
+                throw new Error(getErrorMessage(response, 'Failed to save this document'));
             }
+            if (response.terms) {
+                setDocs((prev) => ({
+                    ...prev,
+                    [kind]: {
+                        title: response.terms.title || current.title,
+                        content: response.terms.content || current.content,
+                        version: response.terms.version || current.version,
+                    },
+                }));
+            }
+            setMessage({ type: 'success', text: 'Saved. This version is now the live document.' });
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || 'Error saving terms. Please try again.' });
+            setMessage({ type: 'error', text: error.message || 'Could not save. Please try again.' });
         } finally {
             setSaving(false);
         }
@@ -97,19 +122,33 @@ export default function TermsManagement() {
 
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Terms of Use Management</h1>
-                    <p className="text-gray-500 mt-2">Update the legal agreement that all users must accept.</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Legal documents</h1>
+                    <p className="text-gray-500 mt-2">Affective Academy documents for the whole RADU E-Token platform. Only a system admin can change them.</p>
                 </div>
-                <Button 
-                    onClick={handleSave} 
+                <Button
+                    onClick={handleSave}
                     disabled={saving}
                     className="bg-[#00a58c] hover:bg-[#008f7a]"
                 >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Changes
+                    Save
                 </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+                {KINDS.map((item) => (
+                    <Button
+                        key={item.id}
+                        type="button"
+                        variant={kind === item.id ? "default" : "outline"}
+                        className={kind === item.id ? "bg-[#00a58c] hover:bg-[#008f7a]" : ""}
+                        onClick={() => { setKind(item.id); setMessage(null); }}
+                    >
+                        {item.label}
+                    </Button>
+                ))}
             </div>
 
             {message && (
@@ -121,72 +160,42 @@ export default function TermsManagement() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="md:col-span-2 border-0 shadow-sm ring-1 ring-gray-100">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-gray-400" />
-                            Content Editor
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Document Title</label>
-                            <Input 
-                                value={terms.title} 
-                                onChange={(e) => setTerms({ ...terms, title: e.target.value })}
-                                placeholder="e.g., Pilot Participation Agreement"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Contract Content (Markdown supported)</label>
-                            <Textarea 
-                                value={terms.content} 
-                                onChange={(e) => setTerms({ ...terms, content: e.target.value })}
-                                className="min-h-[500px] font-mono text-sm"
-                                placeholder="Enter terms of use content here..."
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <div className="space-y-6">
-                    <Card className="border-0 shadow-sm ring-1 ring-gray-100">
-                        <CardHeader>
-                            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                                <History className="h-5 w-5 text-gray-400" />
-                                Versioning
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Version ID</label>
-                                <Input 
-                                    value={terms.version} 
-                                    onChange={(e) => setTerms({ ...terms, version: e.target.value })}
-                                    placeholder="e.g., 2.1-beta"
-                                />
-                                <p className="text-xs text-gray-500 italic">Incrementing the version will force all users to re-accept the terms on their next login.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-blue-50 border-0 shadow-sm ring-blue-100 p-6">
-                        <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-2">
-                            <CheckCircle2 className="h-5 w-5" />
-                            Live Preview
-                        </h4>
-                        <p className="text-sm text-blue-700 mb-4">Open the Terms of Service PDF (admin preview).</p>
-                        <Button 
-                            variant="outline" 
-                            className="w-full bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
-                            onClick={() => window.open(LEGAL_PDF.terms, '_blank')}
-                        >
-                            Open Preview
-                        </Button>
-                    </Card>
-                </div>
-            </div>
+            <Card className="border-0 shadow-sm ring-1 ring-gray-100">
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">{meta.label}</CardTitle>
+                    <p className="text-sm text-gray-500">{meta.help}</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Title</label>
+                        <Input
+                            value={current.title}
+                            onChange={(e) => setDocs({ ...docs, [kind]: { ...current, title: e.target.value } })}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Version id</label>
+                        <Input
+                            value={current.version}
+                            onChange={(e) => setDocs({ ...docs, [kind]: { ...current, version: e.target.value } })}
+                            placeholder={kind === 'registration' ? 'registration-2026-09' : `${kind}-1.0`}
+                        />
+                        <p className="text-xs text-gray-500">
+                            {kind === 'registration'
+                                ? 'Use a new version id when you change the agreement. People registering after that must accept the new text.'
+                                : 'Use a new version id each time you save. Until text is saved here, the website keeps showing the existing PDF.'}
+                        </p>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Text</label>
+                        <Textarea
+                            value={current.content}
+                            onChange={(e) => setDocs({ ...docs, [kind]: { ...current, content: e.target.value } })}
+                            className="min-h-[500px] font-mono text-sm"
+                        />
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

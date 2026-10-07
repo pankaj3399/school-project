@@ -346,7 +346,7 @@ const Analytics = () => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                    <EducationYearChart studentId={studentId} schoolId={effectiveSchoolId} />
+                    <EducationYearChart studentId={studentId} schoolId={effectiveSchoolId} schoolWide />
                 </CardContent>
             </Card>
 

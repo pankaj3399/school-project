@@ -163,12 +163,22 @@ const getGradeFromUser = async (userId) => {
   throw httpError("Access denied. You do not have the required permissions.");
 };
 
+// Leader/Lead Teacher analytics is school-wide. Grade scoping stays in place
+// for point history unless the caller explicitly asks for the school view.
+const scopeForSchoolWideAnalytics = async (req) => {
+  const teacherData = await getGradeFromUser(req.user.id);
+  if (req.body?.schoolWide === true && teacherData && !teacherData.isSpecialTeacher) {
+    return null;
+  }
+  return teacherData;
+};
+
 // 1. Whole Year Points History Controller
 export const getYearPointsHistory = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
     if (!schoolId) return res.status(400).json({ message: "School ID is required" });
-    const teacherData = await getGradeFromUser(req.user.id);
+    const teacherData = await scopeForSchoolWideAnalytics(req);
 
     const yearStart = await getEducationalYearStart(schoolId);
     const today = new Date();
@@ -429,7 +439,7 @@ export const getYearPointsHistoryByStudent = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
     if (!schoolId) return res.status(400).json({ message: "School ID is required" });
-    const teacherData = await getGradeFromUser(req.user.id);
+    const teacherData = await scopeForSchoolWideAnalytics(req);
     const studentId = req.params.id;
 
     // Check if teacher has access to this student
@@ -1266,7 +1276,11 @@ export const getAnalyticsData = async (req, res) => {
   try {
     const schoolId = await getSchoolIdFromUser(req);
     const { period, studentId } = req.body;
-    const teacherData = await getGradeFromUser(req.user.id);
+    let teacherData = await getGradeFromUser(req.user.id);
+    // The Analytics tab for a Leader/Lead Teacher is the school view.
+    if (teacherData && !teacherData.isSpecialTeacher) {
+      teacherData = null;
+    }
     const schoolTimezone = await getSchoolTimezone(schoolId);
 
     // Get current time in school timezone

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMatch, useNavigate, useSearchParams } from "react-router-dom";
 import Loading from "../Loading";
-import { addSchool, getCurrrentSchool, getStats, updateSchool } from "@/api";
+import { addSchool, getCurrrentSchool, getDistrictById, getDistricts, getStats, updateSchool } from "@/api";
 import SchoolStats from "./component/school-stats";
 import { useSchool } from "@/context/SchoolContext";
 import { useAuth } from "@/authContext";
@@ -34,6 +34,8 @@ export default function SchoolPage() {
   const [address, setAddress] = useState("");
   const [district, setDistrict] = useState("");
   const [districtId, setDistrictId] = useState<string>("");
+  const [districtLocked, setDistrictLocked] = useState(false);
+  const [districtOptions, setDistrictOptions] = useState<{ _id: string; name: string }[]>([]);
   const [logo, setLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
@@ -63,10 +65,67 @@ export default function SchoolPage() {
   })
 
   useEffect(() => {
-    if (districtIdFromQuery) {
-      setDistrictId(districtIdFromQuery);
-    }
-  }, [districtIdFromQuery])
+    if (!isCreateMode || !user) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    let cancelled = false;
+    const lockDistrict = (id: string, name: string) => {
+      if (cancelled) return;
+      setDistrictId(id);
+      setDistrict(name);
+      setDistrictLocked(true);
+    };
+
+    const loadDistrict = async () => {
+      const userDistrictId = typeof user.districtId === "object"
+        ? user.districtId?._id
+        : user.districtId;
+      const scopedId = districtIdFromQuery || (user.role !== Role.SystemAdmin ? userDistrictId : "");
+
+      if (scopedId) {
+        const alreadyNamed = typeof user.districtId === "object"
+          && user.districtId?._id === scopedId
+          && !districtIdFromQuery
+          ? user.districtId.name
+          : "";
+        if (alreadyNamed) {
+          lockDistrict(String(scopedId), alreadyNamed);
+          return;
+        }
+        const data = await getDistrictById(String(scopedId), token);
+        const districtDoc = data?.district;
+        if (districtDoc?._id) {
+          lockDistrict(String(districtDoc._id), districtDoc.name || "");
+        }
+        return;
+      }
+
+      if (user.role !== Role.SystemAdmin) return;
+
+      const pageSize = 100;
+      const all: { _id: string; name: string }[] = [];
+      let page = 1;
+      while (!cancelled) {
+        const data = await getDistricts(token, { page, limit: pageSize });
+        if (!Array.isArray(data?.districts)) break;
+        all.push(...data.districts.map((item: { _id: string; name: string }) => ({
+          _id: item._id,
+          name: item.name,
+        })));
+        const totalPages = data?.pagination?.pages;
+        if (!totalPages || page >= totalPages || data.districts.length < pageSize) break;
+        page += 1;
+      }
+      if (!cancelled) {
+        setDistrictOptions(all);
+        setDistrictLocked(false);
+      }
+    };
+
+    loadDistrict();
+    return () => { cancelled = true; };
+  }, [isCreateMode, user, districtIdFromQuery]);
 
   useEffect(() => {
     if (isCreateMode) return;
@@ -105,8 +164,11 @@ export default function SchoolPage() {
           setAddress("");
           setCity("");
           setZipCode("");
-          setDistrict("");
-          setDistrictId(districtIdFromQuery || "");
+          if (!isCreateMode) {
+            setDistrict("");
+            setDistrictId("");
+            setDistrictLocked(false);
+          }
           setState("AL");
           setCountry("United States");
           setTimezone("UTC-5");
@@ -171,6 +233,10 @@ export default function SchoolPage() {
 
     if (!address.trim()) {
       newErrors.address = "Address is required";
+    }
+
+    if (isCreateMode && !districtId) {
+      newErrors.district = "District is required";
     }
 
     if (!logo && !isEditing) {
@@ -464,12 +530,31 @@ export default function SchoolPage() {
           </div>
           <div>
             <Label htmlFor="district">District</Label>
-            <Input
-              id="district"
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
-              required
-            />
+            {districtLocked ? (
+              <Input id="district" value={district} readOnly disabled />
+            ) : (
+              <Select
+                value={districtId}
+                onValueChange={(value) => {
+                  setDistrictId(value);
+                  const match = districtOptions.find((item) => item._id === value);
+                  setDistrict(match?.name || "");
+                  setErrors((prev) => ({ ...prev, district: "" }));
+                }}
+              >
+                <SelectTrigger id="district" className="w-full">
+                  <SelectValue placeholder="Select district" />
+                </SelectTrigger>
+                <SelectContent>
+                  {districtOptions.map((item) => (
+                    <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {districtLocked && (
+              <p className="text-xs text-gray-500 mt-1">Filled from the district you were viewing.</p>
+            )}
             {errors.district && (
               <p className="text-red-500 text-sm mt-1">{errors.district}</p>
             )}

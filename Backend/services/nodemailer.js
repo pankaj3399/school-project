@@ -22,14 +22,12 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
     try {
 
         if(!to){
-            console.error('[NODEMAILER] No recipient email address provided.');
-            return false;
+            throw new Error('No recipient email address provided.');
         }
         //check if the email is valid
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(to)) {
-            console.error('[NODEMAILER] Invalid email address:', to);
-            return false;
+            throw new Error(`Invalid email address: ${to}`);
         }
 
         let info;
@@ -63,7 +61,7 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
     } catch (error) {
         console.error('[NODEMAILER] Error sending email:', error);
         console.error('[NODEMAILER] Error details:', error.message);
-        return false
+        throw new Error(error.message || 'Failed to send email');
     }
 }
 export const sendEmailReport = async (to, subject, text, html, attachment, attachmentName) => {
@@ -100,6 +98,6 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
     } catch (error) {
         console.error('[NODEMAILER] Error sending report email:', error);
         console.error('[NODEMAILER] Error details:', error.message);
-        return false
+        throw new Error(error.message || 'Failed to send report email');
     }
 }
