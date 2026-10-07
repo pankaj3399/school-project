@@ -992,7 +992,7 @@ export const teacherRoster = async (data: any) => {
   try {
     const url = `${window.location.origin}/verifyemail`;
     const token = getToken();
-    await axios.post(
+    const response = await axios.post(
       `${API_URL}/schoolAdmin/teacher-roster`,
       {
         url,
@@ -1005,7 +1005,8 @@ export const teacherRoster = async (data: any) => {
         },
       },
     );
-    return { success: true };
+    const results = Array.isArray(response.data?.results) ? response.data.results : [];
+    return { success: true as const, results };
   } catch (error: any) {
     return toApiError(error);
   }
