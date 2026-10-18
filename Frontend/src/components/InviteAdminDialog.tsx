@@ -135,7 +135,7 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools, 
               Invite {formatRoleName(effectiveRole) || 'administrator'}
             </DialogTitle>
             <DialogDescription>
-              Send an invitation to a new {formatRoleName(effectiveRole) || 'administrator'}. They will receive an email to set up their account.
+              This creates a {formatRoleName(effectiveRole) || 'administrator'} account. They will receive an email to set up sign-in.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -184,34 +184,26 @@ export function InviteAdminDialog({ districtId, schoolId, role, label, schools, 
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="position">Position</Label>
-                <Select value={position} onValueChange={setPosition}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Principal">Principal</SelectItem>
-                    <SelectItem value="AP">Assistant Principal</SelectItem>
-                    <SelectItem value="Dean">Dean</SelectItem>
-                    <SelectItem value="AN Teacher">AN Teacher</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="contactRole">Platform Role</Label>
-                <Select value={contactRole} onValueChange={setContactRole}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={CONTACT_ROLE_LEADERSHIP}>Leadership</SelectItem>
-                    <SelectItem value={CONTACT_ROLE_SCHOOL_TECH}>School Tech</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="signin-role">Sign-in role</Label>
+              <Input id="signin-role" value={formatRoleName(effectiveRole) || "Administrator"} readOnly disabled />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="position">Job title</Label>
+              <Select value={position} onValueChange={setPosition}>
+                <SelectTrigger id="position">
+                  <SelectValue placeholder="Select job title" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Principal">Principal</SelectItem>
+                  <SelectItem value="AP">Assistant Principal</SelectItem>
+                  <SelectItem value="Dean">Dean</SelectItem>
+                  <SelectItem value="AN Teacher">Lead Teacher/AN Teacher</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Job title only. It does not change the sign-in role above.</p>
             </div>
 
             {showLogoSchoolPicker && (

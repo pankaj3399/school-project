@@ -44,6 +44,14 @@ export function formatContactRole(contactRole?: string | null): string {
 export const CONTACT_ROLE_SCHOOL_TECH = 'School Tech';
 export const CONTACT_ROLE_LEADERSHIP = 'Leadership';
 
+/** Job title stored as "AN Teacher" is the Lead Teacher account. */
+export function formatJobTitle(position?: string | null): string {
+  if (!position) return '';
+  if (position === 'AN Teacher') return 'Lead Teacher/AN Teacher';
+  if (position === 'AP') return 'Assistant Principal';
+  return position;
+}
+
 /** Sign-in / forgot-password dropdown values. Keep labels identical on both pages. */
 export const AUTH_ROLE_OPTIONS = [
   { value: 'Admin', label: 'Admin' },

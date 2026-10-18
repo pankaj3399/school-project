@@ -3,9 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/authContext";
+import { useSchool } from "@/context/SchoolContext";
+import { Role } from "@/enum";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { sendSupportEmail } from "@/api";
 import { getErrorMessage, isApiError } from "@/lib/errors";
 import {
@@ -24,26 +33,86 @@ interface SupportPanelProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type AssignedSchool = { _id?: string; name?: string; state?: string };
+
+function assignedSchool(school: string | AssignedSchool | null | undefined) {
+  if (!school) return null;
+  if (typeof school === "string") return { _id: school, name: "", state: "" };
+  if (!school._id) return null;
+  return { _id: school._id, name: school.name || "", state: school.state || "" };
+}
+
 const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
   const { user } = useAuth();
+  const { schools, selectedSchool, loading: schoolsLoading } = useSchool();
+  const ownSchool = assignedSchool(user?.schoolId);
+  const canPickSchool =
+    !ownSchool &&
+    (user?.role === Role.SystemAdmin || user?.role === Role.Admin || user?.role === Role.DistrictAdmin);
+  const schoolOptions = useMemo(
+    () => [...schools].sort((a, b) => a.name.localeCompare(b.name)),
+    [schools],
+  );
+  const presetSchool = selectedSchool ?? schoolOptions[0] ?? null;
+
   const [formData, setFormData] = useState({
     fullName: user?.name || "",
     position: user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type === 'Special' ? 'Team Member/Special Teacher' : 'Leader/Lead Teacher',
-    schoolName: user?.schoolId?.name ?? "",
-    schoolId: user?.schoolId?._id ?? "",
+    schoolName: ownSchool?.name ?? "",
+    schoolId: ownSchool?._id ?? "",
     subjectGrade: user?.subject || user?.grade || "N/A",
     email: user?.email || "",
     phone: "",
     issue: "",
     contactPreference: 'email', // new default value
-    state: user?.schoolId?.state ?? ""
+    state: ownSchool?.state ?? ""
   });
+
+  useEffect(() => {
+    if (!canPickSchool || !presetSchool) return;
+    setFormData((prev) => {
+      if (prev.schoolId) return prev;
+      return {
+        ...prev,
+        schoolId: presetSchool._id,
+        schoolName: presetSchool.name,
+        state: presetSchool.state || "",
+      };
+    });
+  }, [canPickSchool, presetSchool]);
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
+  const chooseSchool = (schoolId: string) => {
+    const school = schoolOptions.find((item) => item._id === schoolId);
+    if (!school) return;
+    setFormData((prev) => ({
+      ...prev,
+      schoolId: school._id,
+      schoolName: school.name,
+      state: school.state || "",
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.schoolId) {
+      toast({
+        title: "Choose a school",
+        description: "Select the school this support request is about.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.state) {
+      toast({
+        title: "School is missing a state",
+        description: "The selected school has no state on file, so the request cannot be sent.",
+        variant: "destructive",
+      });
+      return;
+    }
     setShowConfirmDialog(true);
   };
 
@@ -69,7 +138,7 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
       console.error('Error submitting support request:', error);
       toast({
         title: "Error",
-        description: "Failed to submit support request. Please try again.",
+        description: getErrorMessage(error, "Failed to submit support request. Please try again."),
         variant: "destructive"
       });
     }
@@ -113,13 +182,38 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="schoolName">School Name</Label>
-                <Input
-                  id="schoolName"
-                  value={formData.schoolName}
-                  onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
-                  disabled
-                  className="w-full"
-                />
+                {canPickSchool ? (
+                  <Select
+                    value={formData.schoolId || undefined}
+                    onValueChange={chooseSchool}
+                    disabled={schoolsLoading || schoolOptions.length === 0}
+                  >
+                    <SelectTrigger id="schoolName" className="w-full">
+                      <SelectValue placeholder={schoolsLoading ? "Loading schools..." : "Select a school"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {schoolOptions.map((school) => {
+                        const districtName = typeof school.districtId === "object" ? school.districtId?.name : "";
+                        return (
+                          <SelectItem key={school._id} value={school._id}>
+                            {districtName ? `${school.name} — ${districtName}` : school.name}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="schoolName"
+                    value={formData.schoolName}
+                    onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
+                    disabled
+                    className="w-full"
+                  />
+                )}
+                {canPickSchool && !schoolsLoading && schoolOptions.length === 0 && (
+                  <p className="text-sm text-red-600">No schools are available to attach to this request.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="schoolId">School ID</Label>
@@ -281,14 +375,14 @@ const SupportPanel = ({ trigger, isOpen, onOpenChange }: SupportPanelProps) => {
                 setFormData({
                   fullName: user?.name || "",
                   position: user?.role === 'SchoolAdmin' ? 'System Manager' : user?.type === 'Special' ? 'Team Member/Special Teacher' : 'Leader/Lead Teacher',
-                  schoolName: user?.schoolId?.name || "",
-                  schoolId: user?.schoolId?._id || "",
+                  schoolName: ownSchool?.name || presetSchool?.name || "",
+                  schoolId: ownSchool?._id || presetSchool?._id || "",
                   subjectGrade: user?.subject || user?.grade || "",
                   email: user?.email || "",
                   phone: "",
                   issue: "",
                   contactPreference: 'email',
-                  state: user?.schoolId?.state || ""
+                  state: ownSchool?.state || presetSchool?.state || ""
                 });
               }}
             >

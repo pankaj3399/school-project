@@ -887,17 +887,23 @@ export const createSupportTicket = async (req, res) => {
       state,
     } = req.body;
 
-    // Validate required fields
-    if (
-      !fullName ||
-      !schoolId ||
-      !email ||
-      !issue ||
-      !contactPreference ||
-      !state
-    ) {
+    if (!fullName || !schoolId || !email || !issue || !contactPreference) {
       return res.status(400).json({
         message: "Missing required fields",
+      });
+    }
+
+    await assertSchoolAccess(req, schoolId);
+    const school = await School.findById(schoolId);
+    if (!school) {
+      return res.status(404).json({ message: "School not found." });
+    }
+
+    const resolvedSchoolName = school.name || schoolName;
+    const resolvedState = (school.state && String(school.state).trim()) || (typeof state === "string" ? state.trim() : "");
+    if (!resolvedSchoolName || !resolvedState) {
+      return res.status(400).json({
+        message: "The selected school is missing a name or state.",
       });
     }
 
@@ -905,9 +911,9 @@ export const createSupportTicket = async (req, res) => {
     const supportRequest = new SupportRequest({
       username: fullName,
       position,
-      schoolName,
+      schoolName: resolvedSchoolName,
       schoolId,
-      state,
+      state: resolvedState,
       email,
       phone: phone || null,
       preferredContactMethod: contactPreference,
@@ -917,8 +923,6 @@ export const createSupportTicket = async (req, res) => {
     });
 
     const createdTicket = await supportRequest.save();
-
-    const school = await School.findById(schoolId);
 
     let emailDelivered = true;
     try {
@@ -939,9 +943,10 @@ export const createSupportTicket = async (req, res) => {
     });
   } catch (error) {
     console.error("Support Ticket Error:", error);
-    res.status(500).json({
+    const status = error.status || 500;
+    res.status(status).json({
       success: false,
-      message: "Server Error",
+      message: error.status ? error.message : "Server Error",
       error: error.message,
     });
   }

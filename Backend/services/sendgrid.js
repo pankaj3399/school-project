@@ -4,6 +4,14 @@ import dotenv from 'dotenv'
 dotenv.config()
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 
+const fromAddress = () => {
+    const from = process.env.FROM_EMAIL && process.env.FROM_EMAIL.trim();
+    if (!from) {
+        throw new Error('FROM_EMAIL is not configured.');
+    }
+    return from;
+};
+
 export const sendEmail = async (to, subject, text, html, attachment, attachmentName = 'coupon.png',replyTo=null) => {
     try {
         console.log(`Sending email to ${to} with subject:`, subject);
@@ -35,12 +43,12 @@ export const sendEmail = async (to, subject, text, html, attachment, attachmentN
 
         const msg = {
             to,
-            from: process.env.FROM_EMAIL || 'noreply@raduframework.com',
+            from: fromAddress(),
             subject,
             text,
             html,
             attachments,
-            replyTo: replyTo ? replyTo : process.env.FROM_EMAIL || 'noreply@raduframework.com'
+            replyTo: replyTo ? replyTo : fromAddress()
         };
 
         await sendgrid.send(msg);
@@ -69,7 +77,7 @@ export const sendEmailReport = async (to, subject, text, html, attachment, attac
 
         const msg = {
             to,
-            from: process.env.FROM_EMAIL || 'noreply@raduframework.com',
+            from: fromAddress(),
             subject,
             text,
             html,

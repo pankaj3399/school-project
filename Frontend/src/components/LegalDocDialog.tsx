@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import TermsPage from "@/components/TermsPage";
 import { getCurrentTerms } from "@/api";
-import { LEGAL_PDF } from "@/lib/legal";
 
 type LegalDoc = "terms" | "privacy";
 
@@ -26,16 +26,21 @@ export default function LegalDocDialog({
   onOpenChange,
 }: LegalDocDialogProps) {
   const [text, setText] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!doc) {
       setText(null);
+      setLoading(false);
       return;
     }
     let active = true;
+    setText(null);
+    setLoading(true);
     getCurrentTerms(doc).then((data) => {
       if (!active) return;
       setText(data?.terms?.content ? data.terms : null);
+      setLoading(false);
     });
     return () => { active = false; };
   }, [doc]);
@@ -47,16 +52,14 @@ export default function LegalDocDialog({
           <DialogTitle>{doc ? TITLES[doc] : ""}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-          {text ? (
+          {loading ? (
+            <div className="flex items-center justify-center h-[40vh]">
+              <Loader2 className="h-8 w-8 animate-spin text-[#00a58c]" />
+            </div>
+          ) : text ? (
             <TermsPage isRegistration terms={text} />
           ) : (
-            doc && (
-              <iframe
-                title={TITLES[doc]}
-                src={LEGAL_PDF[doc === "terms" ? "terms" : "privacy"]}
-                className="w-full h-[60vh] border-0 rounded-md"
-              />
-            )
+            <p className="text-sm text-gray-600">This document is not available right now.</p>
           )}
         </div>
       </DialogContent>

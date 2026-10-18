@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { reInviteAdmin } from '@/api'
 import { cn } from "@/lib/utils"
 import { US_STATES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations'
-import { formatContactRole } from '@/lib/roleLabels'
+import { formatJobTitle, formatRoleName } from '@/lib/roleLabels'
 
 interface StatCardProps {
     title: string;
@@ -383,7 +383,7 @@ const ViewSchool = () => {
                                                     <TableCell className="text-neutral-500 text-xs truncate max-w-[200px]">
                                                         {admin.address || "N/A"}
                                                     </TableCell>
-                                                    <TableCell className="text-neutral-600 font-medium">{admin.position || "Other"}</TableCell>
+                                                    <TableCell className="text-neutral-600 font-medium">{formatJobTitle(admin.position) || "Other"}</TableCell>
                                                     <TableCell className="text-neutral-500 font-medium">
                                                         {admin.email}
                                                     </TableCell>
@@ -392,7 +392,7 @@ const ViewSchool = () => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                                                            {formatContactRole(admin.contactRole)}
+                                                            {formatRoleName(admin.role)}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell>

@@ -1,6 +1,6 @@
 import xlsx from 'xlsx';
 import Waitlist from '../models/Waitlist.js';
-import { sendEmail } from '../services/nodemailer.js';
+import { sendEmail } from '../services/mail.js';
 
 export const subscribeToWaitlist = async (req, res) => {
   try {

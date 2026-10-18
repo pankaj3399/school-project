@@ -20,13 +20,13 @@ import {
 
 import { InviteAdminDialog } from '@/components/InviteAdminDialog';
 import { EditAdminDialog } from '@/components/EditAdminDialog';
-import { AdminActiveToggle } from '@/components/AdminActiveToggle';
+import { DeleteAdminButton } from '@/components/DeleteAdminButton';
 import { Role } from '@/enum';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { US_STATES, CANADA_PROVINCES, COUNTRIES, OUTSIDE_USA, normalizeLocation, isListedUsaStateOption } from '@/lib/locations';
 import { getErrorMessage } from "@/lib/errors"
-import { formatContactRole } from '@/lib/roleLabels';
+import { formatJobTitle, formatRoleName } from '@/lib/roleLabels';
 import { adminAccessStatus, isAdminDeactivated } from '@/lib/adminActive';
 
 export default function ViewDistrict() {
@@ -514,7 +514,7 @@ export default function ViewDistrict() {
                                                     {admin.address || <span className="text-gray-400 italic">N/A</span>}
                                                 </TableCell>
                                                 <TableCell className="text-gray-600">
-                                                    {admin.position || 'Other'}
+                                                    {formatJobTitle(admin.position) || 'Other'}
                                                 </TableCell>
                                                 <TableCell className="text-gray-600">{admin.email}</TableCell>
                                                 <TableCell className="text-gray-600">
@@ -522,7 +522,7 @@ export default function ViewDistrict() {
                                                 </TableCell>
                                                 <TableCell className="text-gray-600">
                                                     <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-[10px] font-bold uppercase tracking-wider">
-                                                        {formatContactRole(admin.contactRole)}
+                                                        {formatRoleName(admin.role)}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
@@ -544,7 +544,7 @@ export default function ViewDistrict() {
                                                             admin={admin} 
                                                             onSuccess={refreshAdmins} 
                                                         />
-                                                        <AdminActiveToggle admin={admin} onSuccess={refreshAdmins} />
+                                                        <DeleteAdminButton admin={admin} onSuccess={refreshAdmins} />
                                                         {!admin.hasCompletedRegistration && !isAdminDeactivated(admin) && (
                                                             <Button 
                                                                 variant="link" 

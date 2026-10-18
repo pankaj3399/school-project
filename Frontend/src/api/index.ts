@@ -1377,3 +1377,15 @@ export const reactivateAdmin = async (id: string) => {
     return toApiError(error);
   }
 };
+
+export const deleteAdmin = async (id: string) => {
+  try {
+    const token = getToken();
+    const response = await axios.delete(`${API_URL}/system-admin/admins/${id}`, {
+      headers: { token },
+    });
+    return response.data;
+  } catch (error: any) {
+    return toApiError(error);
+  }
+};

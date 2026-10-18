@@ -15,7 +15,7 @@ import { Loader2, MapPin, Phone as PhoneIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateAdmin } from '@/api';
 import { getErrorMessage } from "@/lib/errors"
-import { CONTACT_ROLE_LEADERSHIP, CONTACT_ROLE_SCHOOL_TECH, formatContactRole } from "@/lib/roleLabels"
+import { formatContactRole, formatRoleName } from "@/lib/roleLabels"
 import { AdminActiveToggle } from "@/components/AdminActiveToggle"
 import {
   Select,
@@ -96,9 +96,9 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleUpdate}>
           <DialogHeader>
-            <DialogTitle>Edit Administrator</DialogTitle>
+            <DialogTitle>Edit {formatRoleName(admin.role) || "account"}</DialogTitle>
             <DialogDescription>
-              Update the contact information for this administrator.
+              This person signs in as {formatRoleName(admin.role) || "this role"}.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -126,34 +126,26 @@ export function EditAdminDialog({ admin, onSuccess }: EditAdminDialogProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-position">Position</Label>
-                <Select value={position} onValueChange={setPosition}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Principal">Principal</SelectItem>
-                    <SelectItem value="AP">Assistant Principal</SelectItem>
-                    <SelectItem value="Dean">Dean</SelectItem>
-                    <SelectItem value="AN Teacher">AN Teacher</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-contactRole">Platform Role</Label>
-                <Select value={contactRole} onValueChange={setContactRole}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={CONTACT_ROLE_LEADERSHIP}>Leadership</SelectItem>
-                    <SelectItem value={CONTACT_ROLE_SCHOOL_TECH}>School Tech</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-signin-role">Sign-in role</Label>
+              <Input id="edit-signin-role" value={formatRoleName(admin.role) || ""} readOnly disabled />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-position">Job title</Label>
+              <Select value={position} onValueChange={setPosition}>
+                <SelectTrigger id="edit-position">
+                  <SelectValue placeholder="Select job title" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Principal">Principal</SelectItem>
+                  <SelectItem value="AP">Assistant Principal</SelectItem>
+                  <SelectItem value="Dean">Dean</SelectItem>
+                  <SelectItem value="AN Teacher">Lead Teacher/AN Teacher</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Job title only. It does not change how this person signs in.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

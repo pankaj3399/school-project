@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import LegalDocDialog from "@/components/LegalDocDialog";
 
 export default function Footer() {
+  const [legalDoc, setLegalDoc] = useState<"terms" | "privacy" | null>(null);
+
   return (
     <footer className="bg-gray-800 text-white py-12">
       <div className="container mx-auto px-4">
@@ -55,20 +59,22 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/privacy"
+                <button
+                  type="button"
+                  onClick={() => setLegalDoc("privacy")}
                   className="text-sm hover:text-blue-400 transition-colors"
                 >
                   Privacy Policy
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/terms"
+                <button
+                  type="button"
+                  onClick={() => setLegalDoc("terms")}
                   className="text-sm hover:text-blue-400 transition-colors"
                 >
                   Terms of Service
-                </Link>
+                </button>
               </li>
             </ul>
           </div>
@@ -124,6 +130,12 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      <LegalDocDialog
+        doc={legalDoc}
+        onOpenChange={(open) => {
+          if (!open) setLegalDoc(null);
+        }}
+      />
     </footer>
   );
 }
