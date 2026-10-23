@@ -18,10 +18,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Modify package.json to use a specific compatible canvas version
-RUN npm pkg set dependencies.canvas="2.9.0"
-
-# Install dependencies without rebuilding canvas
+# canvas 3.2.0 ships an N-API binary that runs on Node 24.22.1.
+# Do not pin 2.9.0: that release has no Node 24 binary and does not compile.
 RUN npm install
 
 # Copy rest of the code
