@@ -1,15 +1,13 @@
-FROM node:16-bullseye
+FROM node:24.22.1-bookworm
 
-# Install required dependencies for canvas (more compatible versions).
-# Debian 11 security still indexes giflib 5.1.9-2+deb11u1, but those .debs 404.
-# Pin the Bullseye main build, which is still on deb.debian.org.
+# Canvas needs Cairo and giflib. Node 24.22.1 is the October 21, 2026
+# security release. Bookworm supplies giflib from its own archive.
 RUN apt-get update && apt-get install -y \
     build-essential \
     libcairo2-dev \
     libpango1.0-dev \
     libjpeg-dev \
-    libgif7=5.1.9-2 \
-    libgif-dev=5.1.9-2 \
+    libgif-dev \
     librsvg2-dev \
     pkg-config \
     python3 \
