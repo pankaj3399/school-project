@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
-  // Terms of Use tracking
+  // Terms of Service tracking
   termsAccepted: { type: Boolean, default: false },
   termsAcceptedAt: { type: Date },
   termsVersion: { type: String },

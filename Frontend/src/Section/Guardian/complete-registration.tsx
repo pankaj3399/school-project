@@ -190,7 +190,7 @@ export default function CompleteGuardianRegistration() {
                     onClick={() => setLegalDoc("terms")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
-                    Terms of Use
+                    Terms of Service
                   </button>
                   {" "}and{" "}
                   <button
@@ -207,7 +207,7 @@ export default function CompleteGuardianRegistration() {
 
             {termsError && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
-                <p className="text-sm text-red-600 font-medium">Failed to load terms of use.</p>
+                <p className="text-sm text-red-600 font-medium">Failed to load terms of service.</p>
                 <Button 
                   variant="outline" 
                   size="sm" 

@@ -17,7 +17,7 @@ interface LegalDocDialogProps {
 }
 
 const TITLES: Record<LegalDoc, string> = {
-  terms: "Terms of Use",
+  terms: "Terms of Service",
   privacy: "Privacy Policy",
 };
 

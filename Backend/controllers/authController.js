@@ -699,7 +699,7 @@ export const completeVerification = async (req, res) => {
           }
 
           if (!termsAccepted) {
-            return res.status(400).json({ message: "You must accept the Terms of Use to complete registration." });
+            return res.status(400).json({ message: "You must accept the Terms of Service to complete registration." });
           }
 
           const activeTerms = await getActiveLegalDocument("registration");
@@ -707,7 +707,7 @@ export const completeVerification = async (req, res) => {
 
           if (termsVersion && termsVersion !== currentTermsVersion) {
             return res.status(400).json({
-              message: "The Terms of Use have been updated. Please refresh the page to review and accept the latest version.",
+              message: "The Terms of Service have been updated. Please refresh the page to review and accept the latest version.",
               error: "version_mismatch"
             });
           }
@@ -977,9 +977,9 @@ export const completeGuardianRegistration = async (req, res) => {
       return res.status(400).json({ message: "Registration link has expired. Please contact the school to resend the invitation." });
     }
 
-    // 2. Terms of Use validation
+    // 2. Terms of Service validation
     if (!termsAccepted) {
-      return res.status(400).json({ message: "You must accept the Terms of Use." });
+      return res.status(400).json({ message: "You must accept the Terms of Service." });
     }
 
     const currentTerms = await getActiveLegalDocument("registration");
@@ -987,7 +987,7 @@ export const completeGuardianRegistration = async (req, res) => {
 
     if (termsVersion !== currentTermsVersion) {
       return res.status(400).json({ 
-        message: "The Terms of Use have been updated. Please refresh the page to review and accept the latest version.",
+        message: "The Terms of Service have been updated. Please refresh the page to review and accept the latest version.",
         error: "version_mismatch"
       });
     }

@@ -194,7 +194,7 @@ export default function CompleteTeacherRegistration() {
                     onClick={() => setLegalDoc("terms")}
                     className="text-[#00a58c] font-bold hover:underline"
                   >
-                    Terms of Use
+                    Terms of Service
                   </button>
                   {" "}and{" "}
                   <button

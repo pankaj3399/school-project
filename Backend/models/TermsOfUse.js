@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-// Stores different versions of Terms of Use
+// Stores different versions of Terms of Service
 const TermsOfUseSchema = new mongoose.Schema({
   kind: {
     type: String,

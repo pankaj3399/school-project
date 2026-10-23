@@ -5,7 +5,7 @@ export const LEGAL_KINDS = ["registration", "terms", "privacy"];
 
 const TITLES = {
   registration: "RADU E-Token User Registration Agreement",
-  terms: "RADU E-Token Terms of Use",
+  terms: "RADU E-Token Terms of Service",
   privacy: "RADU E-Token Privacy Policy",
 };
 

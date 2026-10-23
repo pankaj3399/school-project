@@ -19,7 +19,7 @@ const KINDS: { id: LegalKind; label: string; help: string }[] = [
     },
     {
         id: 'terms',
-        label: 'Terms of Use',
+        label: 'Terms of Service',
         help: 'Published at the website Terms link. One document for the whole platform.',
     },
     {

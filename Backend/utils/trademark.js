@@ -1,4 +1,4 @@
-/** Display ™ as ® so stored Terms of Use rows match current branding. */
+/** Display ™ as ® so stored Terms of Service rows match current branding. */
 export function replaceTrademarkWithRegistered(value) {
   if (typeof value !== 'string') return value;
   return value

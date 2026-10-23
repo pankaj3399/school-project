@@ -16,12 +16,12 @@ By creating an account and selecting "I Agree," I confirm that:
 8. I understand that RADU E-Token is currently being used as a pilot service and that features may be modified, improved, added, or removed during the pilot.
 9. I understand that my use of the service may generate account, access, security, recognition, and activity records necessary to operate and protect the system.
 10. I acknowledge that I have reviewed the RADU E-Token Privacy Policy, which explains how information is collected, used, protected, retained, and disclosed.
-11. I agree to comply with the RADU E-Token Terms of Use.
+11. I agree to comply with the RADU E-Token Terms of Service.
 12. I will promptly report suspected unauthorized access, misuse, privacy concerns, or security incidents involving RADU E-Token to my school and/or Affective Academy LLC.
 13. I understand that my access may be suspended or terminated if my authorization ends, if I violate these requirements, or if suspension is reasonably necessary to protect students, users, data, or the security of the system.
 14. I understand that my school or district remains responsible for determining how RADU E-Token is used for educational purposes and which users and students are authorized to participate.
 
-By selecting "I Agree," I acknowledge that I have read and agree to this User Registration Agreement and the RADU E-Token Terms of Use, and that I have reviewed the RADU E-Token Privacy Policy.
+By selecting "I Agree," I acknowledge that I have read and agree to this User Registration Agreement and the RADU E-Token Terms of Service, and that I have reviewed the RADU E-Token Privacy Policy.
 
 Affective Academy LLC
 Littleton, Colorado 80127

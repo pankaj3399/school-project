@@ -67,7 +67,7 @@ const DistrictSchema = new mongoose.Schema({
   subscriptionStartDate: { type: Date },
   subscriptionEndDate: { type: Date },
   
-  // Terms of Use
+  // Terms of Service
   termsAcceptedAt: { type: Date },
   termsVersion: { type: String },
   termsAcceptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
