@@ -2,7 +2,7 @@ import School from "../models/School.js";
 
 export const getDynamicSignature = async (schoolId) => {
   const school = await School.findById(schoolId)
-    .populate("createdBy", "name email")
+    .populate("createdBy", "name email role")
     .populate("districtId", "name state country");
 
   const linkedDistrict = school?.districtId && typeof school.districtId === "object"
@@ -18,6 +18,7 @@ export const getDynamicSignature = async (schoolId) => {
 
   return {
     name: school?.createdBy?.name || school?.createdBy?.email || "The RADU Team",
+    role: school?.createdBy?.role,
     schoolName: school?.name || "Your School",
     address,
     district: districtName,

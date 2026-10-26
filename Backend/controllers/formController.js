@@ -682,7 +682,7 @@ export const submitFormAdmin = async (req, res) => {
         submittedByName: schoolAdmin.name,
         submittedForId: submittedFor,
         submittedForName: submittedForStudent.name,
-        submittedBySubject: "System Manager",
+        submittedBySubject: schoolAdmin?.role === Role.Admin ? "District Manager" : "System Manager",
         feedback,
         createdAt: submittedAt
       });

@@ -165,7 +165,8 @@ export const getVerificationEmailTemplate = (signature, role, otp, url, email, t
     signature.address,
     signature.district,
     signature.state,
-    signature.country
+    signature.country,
+    signature.role
   ) : "The RADU Team"}
     </body>
     </html>

@@ -3,6 +3,7 @@ import { sendEmail, sendEmailReport } from "../services/mail.js";
 import { generateCouponImage, generateRecieptImage } from "./generateImage.js";
 import { timezoneManager } from "./luxon.js";
 import { sanitizeLogoValue } from "./emailTemplates.js";
+import { signatureRoleLine } from "./emailSignature.js";
 
 export const emailGenerator = async (
   form,
@@ -177,7 +178,7 @@ export const emailGenerator = async (
                         <div class="signature">
                             ${schoolAdmin?.name || "The RADU E-Token System"}<br>
                             ${schoolAdmin?.email || ""}<br>
-                            The RADU E-Token System Manager<br>
+                            ${signatureRoleLine(schoolAdmin?.role)}<br>
                             ${school.name}, ${school.address || school.district || school.state}
                         </div>
                     </div>
@@ -307,7 +308,7 @@ export const emailGenerator = async (
                         <div class="issued-by">
                             <strong>From:</strong> ${teacherLastName} - ${
                               teacher.subject ??
-                              "The RADU E-Token System Manager"
+                              signatureRoleLine(teacher?.role)
                             }
                         </div>
                         
@@ -323,7 +324,7 @@ export const emailGenerator = async (
                             ${teacherFirstName} ${teacherLastName}<br>
                             ${
                               teacher.subject ??
-                              "The RADU E-Token System Manager"
+                              signatureRoleLine(teacher?.role)
                             }<br>
                             ${school.name}, ${school.address || school.district || school.state}
                         </div>
@@ -449,7 +450,7 @@ export const emailGenerator = async (
                               teacher.type === "Lead"
                                 ? "LEADER/ LEAD TEACHER"
                                 : teacher.subject ||
-                                  "The RADU E-Token System Manager"
+                                  signatureRoleLine(teacher?.role)
                             }<br/>
                             ${teacher.grade && teacher.grade !== 'undefined' ? `Grade ${teacher.grade}<br/>` : ''}
                             ${school.name}, ${school.address || school.district || school.state}
@@ -565,7 +566,7 @@ export const emailGenerator = async (
 
                         <div class="signature">
                             ${schoolAdmin.name}<br>
-                            The RADU E-Token System Manager<br>
+                            ${signatureRoleLine(schoolAdmin?.role)}<br>
                             ${school.name}, ${school.address || school.district || school.state}
                         </div>
                     </div>
