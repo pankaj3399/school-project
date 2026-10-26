@@ -22,7 +22,7 @@ import {
 import { getSystemDashboardStats, getStateAnalytics, getDistrictAnalytics } from '@/api';
 import { useAuth } from '@/authContext';
 import { getAuthToken } from '@/lib/auth';
-import { formatMonthYearLabel } from '@/lib/academicYear';
+import { buildContinuousMonthSlots, formatMonthYearLabel } from '@/lib/academicYear';
 import { getErrorMessage } from '@/lib/errors';
 
 type StateAnalyticsRow = {
@@ -202,9 +202,16 @@ export default function SystemAdminDashboard() {
         }
     ];
 
-    // Chart processing
+    // Chart processing. Empty months stay on the axis so the timeline cannot skip.
     const filteredChartData = useMemo(() => {
-        let list = [...chartData];
+        const parsed = chartData.flatMap((item) => {
+            const year = parseInt(item.year, 10);
+            const month = Number(item.month);
+            if (!Number.isFinite(year) || month < 1 || month > 12) return [];
+            return [{ ...item, year: String(year), month }];
+        });
+
+        let list = parsed;
         if (selectedYear !== 'All Year') {
             list = list.filter(item => getAcademicYear(item) === selectedYear);
         }
@@ -212,21 +219,48 @@ export default function SystemAdminDashboard() {
             list = list.filter(item => item.month === selectedMonth);
         }
 
-        // Academic Year Ordering (Aug to Jul)
-        const academicOrder = [8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7];
-        
-        return list.sort((a, b) => {
-            const ayA = getAcademicYear(a);
-            const ayB = getAcademicYear(b);
-            
-            if (ayA !== ayB) return ayA.localeCompare(ayB);
-            
-            return academicOrder.indexOf(a.month) - academicOrder.indexOf(b.month);
-        }).map(item => ({
-            ...item,
-            monthName: formatMonthYearLabel(item.month, item.year),
-            academicYear: getAcademicYear(item)
-        }));
+        const now = new Date();
+        const slots = buildContinuousMonthSlots({
+            points: list.map(item => ({ year: parseInt(item.year, 10), month: item.month })),
+            selectedYear,
+            selectedMonth,
+            now: { year: now.getFullYear(), month: now.getMonth() + 1 },
+        });
+
+        const byKey = new Map<string, ChartDataRow>();
+        for (const item of list) {
+            const key = `${item.year}-${item.month}`;
+            const existing = byKey.get(key);
+            if (!existing) {
+                byKey.set(key, item);
+                continue;
+            }
+            byKey.set(key, {
+                ...existing,
+                states: existing.states + item.states,
+                districts: existing.districts + item.districts,
+                schools: existing.schools + item.schools,
+                teachers: existing.teachers + item.teachers,
+                students: existing.students + item.students,
+            });
+        }
+
+        return slots.map(({ year, month }) => {
+            const row: ChartDataRow = byKey.get(`${year}-${month}`) ?? {
+                year: String(year),
+                month,
+                states: 0,
+                districts: 0,
+                schools: 0,
+                teachers: 0,
+                students: 0,
+            };
+            return {
+                ...row,
+                monthName: formatMonthYearLabel(month, year),
+                academicYear: getAcademicYear({ year: String(year), month }),
+            };
+        });
     }, [chartData, selectedYear, selectedMonth]);
 
     const availableYears = useMemo(() => {
@@ -411,16 +445,25 @@ export default function SystemAdminDashboard() {
                                 </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-72 w-full min-h-[300px]">
+                            <div className="h-80 w-full min-h-[340px]">
                                 {loading ? (
                                     <div className="h-full flex items-center justify-center text-gray-400">Loading chart...</div>
                                 ) : filteredChartData.length === 0 ? (
                                     <div className="h-full flex items-center justify-center text-gray-400 border border-dashed rounded bg-gray-50">No data available for selected year.</div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={filteredChartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                        <BarChart data={filteredChartData} margin={{ top: 20, right: 10, left: -20, bottom: 4 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                                            <XAxis dataKey="monthName" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <XAxis
+                                                dataKey="monthName"
+                                                interval={0}
+                                                tick={{ fontSize: 10 }}
+                                                angle={-90}
+                                                textAnchor="end"
+                                                height={72}
+                                                axisLine={false}
+                                                tickLine={false}
+                                            />
                                             <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                                             <Legend wrapperStyle={{ fontSize: 10, marginTop: 20 }} />
