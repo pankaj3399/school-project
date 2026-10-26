@@ -16,7 +16,7 @@ import { getAuthToken } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/errors';
 import { InviteAdminDialog } from '@/components/InviteAdminDialog';
 import { EditAdminDialog } from '@/components/EditAdminDialog';
-import { AdminActiveToggle } from '@/components/AdminActiveToggle';
+import { DeleteAdminButton } from '@/components/DeleteAdminButton';
 import { Role } from '@/enum';
 import { formatRoleName } from '@/lib/roleLabels';
 import { adminAccessStatus, isAdminDeactivated } from '@/lib/adminActive';
@@ -209,7 +209,7 @@ export default function DistrictManagersList() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <EditAdminDialog admin={manager} onSuccess={fetchManagers} />
-                          <AdminActiveToggle admin={manager} onSuccess={fetchManagers} />
+                          <DeleteAdminButton admin={manager} onSuccess={fetchManagers} />
                           {!manager.hasCompletedRegistration && !isAdminDeactivated(manager) && (
                             <Button
                               variant="link"
