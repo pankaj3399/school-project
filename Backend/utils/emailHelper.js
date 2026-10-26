@@ -607,14 +607,18 @@ export const emailGenerator = async (
   const parentEmailRequired = effectiveFlags.parentEmail;
   const parentEmailsVerified = (student.parentEmail && student.isParentOneEmailVerified) ||
                                (student.standard && student.isParentTwoEmailVerified);
-  const shouldFallbackToStudent = parentEmailRequired && !parentEmailsVerified;
+  // Feedback notes go to parents, teachers, and admins. The student does not
+  // receive the feedback itself, including the parent-email fallback.
+  const isFeedback = form.formType == FormType.Feedback;
+  const shouldFallbackToStudent = parentEmailRequired && !parentEmailsVerified && !isFeedback;
 
   const wantStudentEmail =
-    effectiveFlags.studentEmail ||
-    form.formType == FormType.DeductPoints ||
-    form.formType == FormType.PointWithdraw ||
-    form.formType == FormType.Feedback ||
-    shouldFallbackToStudent;
+    !isFeedback && (
+      effectiveFlags.studentEmail ||
+      form.formType == FormType.DeductPoints ||
+      form.formType == FormType.PointWithdraw ||
+      shouldFallbackToStudent
+    );
 
   if (wantStudentEmail) {
     if (!student?.email) {
